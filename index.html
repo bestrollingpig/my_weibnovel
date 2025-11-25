@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프 편집기 with TTS</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Malgun Gothic', sans-serif;
+      background: #f0f0f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      font-size: 1.5em;
+      margin-bottom: 5px;
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      width: 25%;
+      background: white;
+      padding: 15px;
+      overflow-y: auto;
+      border-right: 2px solid #ddd;
+    }
+
+    .graph-area {
+      width: 50%;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .right-panel {
+      width: 25%;
+      background: white;
+      padding: 15px;
+      overflow-y: auto;
+      border-left: 2px solid #ddd;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #cy {
+      flex: 1;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    .panel-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .panel-section h3 {
+      font-size: 1em;
+      margin-bottom: 10px;
+      color: #667eea;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 5px;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: bold;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+      color: white;
+    }
+
+    .btn-info {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Malgun Gothic', monospace;
+      font-size: 0.9em;
+      resize: vertical;
+      min-height: 150px;
+    }
+
+    .notes-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .notes-textarea {
+      flex: 1;
+      min-height: 200px;
+      font-family: 'Malgun Gothic', sans-serif;
+      line-height: 1.6;
+    }
+
+    .tts-controls {
+      padding: 10px;
+      background: #f0f7ff;
+      border-radius: 6px;
+      border: 1px solid #d0e7ff;
+    }
+
+    .tts-controls label {
+      display: block;
+      font-size: 0.85em;
+      color: #555;
+      margin: 8px 0 4px 0;
+      font-weight: bold;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .speed-control input[type="range"] {
+      flex: 1;
+    }
+
+    .speed-value {
+      min-width: 40px;
+      text-align: center;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .tts-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .info-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      background: #667eea;
+      color: white;
+      border-radius: 4px;
+      font-size: 0.85em;
+      margin-bottom: 10px;
+    }
+
+    .help-text {
+      font-size: 0.8em;
+      color: #888;
+      margin-top: 5px;
+      padding: 8px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>🌐 세계관 그래프 편집기 with TTS</h1>
+    <p>웹소설 세계관을 시각화하고 메모를 음성으로 들어보세요</p>
+  </header>
+
+  <div class="main-container">
+    <div class="left-panel">
+      <div class="panel-section">
+        <h3>➕ 노드 추가</h3>
+        <input type="text" id="newNode" placeholder="노드 이름">
+        <button class="btn-primary" onclick="addNode()">노드 추가</button>
+        <div class="help-text">💡 빈 공간을 더블클릭해도 노드를 추가할 수 있습니다</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>🔗 관계 연결</h3>
+        <input type="text" id="edgeSrc" placeholder="출발 노드">
+        <input type="text" id="edgeTgt" placeholder="도착 노드">
+        <input type="text" id="edgeLbl" placeholder="관계 라벨">
+        <button class="btn-primary" onclick="addEdge()">연결 추가</button>
+        <div class="help-text">💡 Ctrl+드래그로 노드를 연결할 수 있습니다</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>💾 데이터 관리</h3>
+        <button class="btn-success" onclick="saveToLocalStorage()">💾 로컬 저장</button>
+        <button class="btn-info" onclick="loadFromLocalStorage()">📂 로컬 불러오기</button>
+        <button class="btn-primary" onclick="saveToURL()">🔗 URL로 저장</button>
+        <button class="btn-success" onclick="downloadJSON()">⬇️ JSON 다운로드</button>
+        <input type="file" id="fileInput" accept=".json" style="display:none" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">⬆️ JSON 업로드</button>
+        <div class="help-text">💡 URL로 저장하면 주소창 복사로 공유 가능합니다</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>📝 선택 항목</h3>
+        <div class="info-badge" id="selectionLabel">선택 없음</div>
+        <textarea id="yamlEdit" placeholder="노드/엣지 선택 시 데이터 표시"></textarea>
+        <button class="btn-success" onclick="saveSelected()">저장</button>
+        <button class="btn-danger" onclick="deleteSelected()">삭제</button>
+      </div>
+    </div>
+
+    <div class="graph-area">
+      <div id="cy"></div>
+    </div>
+
+    <div class="right-panel">
+      <div class="panel-section notes-area">
+        <h3>📝 메모장</h3>
+        <div class="info-badge" id="notesInfo">노드/엣지를 선택하세요</div>
+        <textarea class="notes-textarea" id="notesTextarea" placeholder="여기에 메모를 작성하세요..."></textarea>
+        <button class="btn-success" onclick="saveNotes()">💾 메모 저장</button>
+
+        <div class="tts-controls">
+          <h3 style="margin: 0 0 10px 0; font-size: 0.95em;">🔊 읽어주기 (TTS)</h3>
+          <label>🎙️ 음성 선택</label>
+          <select id="voiceSelect">
+            <option value="ko-KR">한국어 (기본)</option>
+          </select>
+          <label>⚡ 속도</label>
+          <div class="speed-control">
+            <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="1.0"
+              oninput="updateSpeedValue()">
+            <span class="speed-value" id="speedValue">1.0x</span>
+          </div>
+          <div class="tts-buttons">
+            <button class="btn-primary" onclick="readNotes()">🔊 읽기</button>
+            <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
+          </div>
+          <div class="help-text">💡 특수문자는 자동으로 제거됩니다</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let initialData = [
+      { data: { id: "주인공", label: "주인공", color: "#667eea", notes: "" } },
+      { data: { id: "아린", label: "아린", color: "#f093fb", notes: "" } },
+      { data: { id: "ev1", label: "시작 이벤트", color: "#4facfe", notes: "" } },
+      { data: { id: "주인공_아린", source: "주인공", target: "아린", label: "친구", notes: "" } }
+    ];
+
+    let cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: JSON.parse(JSON.stringify(initialData)),
+      style: [
+        {
+          selector: 'node', style: {
+            'label': 'data(label)',
+            'background-color': 'data(color)',
+            'shape': 'round-rectangle',
+            'width': 'label',
+            'height': 30,
+            'padding': '10px',
+            'border-width': 2,
+            'border-color': '#333',
+            'border-style': 'solid',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'color': '#fff',
+            'font-weight': 'bold',
+            'font-size': 14
+          }
+        },
+        {
+          selector: 'edge', style: {
+            'label': 'data(label)',
+            'curve-style': 'bezier',
+            'line-color': '#999',
+            'width': 1,
+            'target-arrow-shape': 'triangle',
+            'target-arrow-color': '#999',
+            'font-size': 12
+          }
+        }
+      ],
+      layout: { name: 'cose', animate: true }
+    });
+
+    let selected = null, speechSynthesis = window.speechSynthesis, currentUtterance = null, edgeCreationMode = false, edgeSourceNode = null, nodeCounter = 1;
+
+    window.addEventListener('load', function () {
+      const hash = window.location.hash.substring(1);
+      if (hash) {
+        try {
+          const decompressed = LZString.decompressFromEncodedURIComponent(hash);
+          const data = JSON.parse(decompressed);
+          cy.elements().remove();
+          cy.add(data);
+          cy.layout({ name: 'cose', animate: true }).run();
+        } catch (e) { console.error('URL 데이터 로드 실패:', e); }
+      }
+    });
+
+    cy.on('dbltap', function (evt) {
+      if (evt.target === cy) {
+        const pos = evt.position, nodeName = prompt("새 노드 이름을 입력하세요:", "노드" + nodeCounter);
+        if (nodeName && nodeName.trim()) {
+          const id = nodeName.trim();
+          if (cy.getElementById(id).length > 0) { alert("이미 존재하는 노드 이름입니다!"); return; }
+          const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+          cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" }, position: { x: pos.x, y: pos.y } });
+          nodeCounter++;
+        }
+      }
+    });
+
+    cy.on('mousedown', 'node', function (evt) {
+      if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey) {
+        edgeCreationMode = true; edgeSourceNode = evt.target;
+        evt.target.style({ 'border-width': '4px', 'border-color': '#43e97b', 'border-style': 'dashed' });
+      }
+    });
+    cy.on('mouseover', 'node', function (evt) { if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) evt.target.style({ 'border-width': '4px', 'border-color': '#4facfe' }); });
+    cy.on('mouseout', 'node', function (evt) { if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) evt.target.style('border-width', '2px'); });
+    cy.on('mouseup', 'node', function (evt) {
+      if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) {
+        const label = prompt("관계 라벨을 입력하세요:", "관계");
+        if (label !== null) cy.add({ data: { id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), source: edgeSourceNode.id(), target: evt.target.id(), label: label || "", notes: "" } });
+        edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null;
+      }
+    });
+    cy.on('mouseup', function (evt) { if (edgeCreationMode && evt.target === cy) { if (edgeSourceNode) edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null; } });
+
+    // ------------------- ▼ TTS 함수 수정 시작 ▼ -------------------
+    
+    function loadVoices() {
+      const voices = speechSynthesis.getVoices();
+      const voiceSelect = document.getElementById('voiceSelect');
+      
+      // 기존 옵션 제거
+      voiceSelect.innerHTML = '';
+      
+      // 한국어 음성만 필터링 (lang이 'ko'로 시작하는 모든 음성)
+      const koVoices = voices.filter(v => v.lang.startsWith('ko'));
+      
+      if (koVoices.length > 0) {
+        koVoices.forEach((voice) => {
+          const option = document.createElement('option');
+          // option.value에 voice.name을 저장하여 고유하게 구분
+          option.value = voice.name; 
+          option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' (기본)' : ''}`;
+          voiceSelect.appendChild(option);
+        });
+      } else {
+        // 한국어 음성이 없을 경우 기본 옵션 추가
+        const option = document.createElement('option');
+        option.value = "default";
+        option.textContent = "한국어 음성 없음 (시스템 기본)";
+        voiceSelect.appendChild(option);
+      }
+    }
+
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    // 페이지 로드 시 즉시 호출하여 목록 채우기
+    loadVoices();
+    
+    function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
+
+    function cleanTextForTTS(text) {
+      return text
+        .replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' ')
+        .replace(/[!@$%^&]/g, ' ')
+        .replace(/[:;]/g, ',')
+        .replace(/[.]{2,}/g, '.')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function readNotes() {
+      const text = document.getElementById('notesTextarea').value.trim();
+      if (!text) { alert('읽을 메모가 없습니다!'); return; }
+      stopReading();
+      
+      const cleanedText = cleanTextForTTS(text);
+      currentUtterance = new SpeechSynthesisUtterance(cleanedText);
+      
+      const voices = speechSynthesis.getVoices();
+      const selectedVoiceName = document.getElementById('voiceSelect').value;
+      
+      // 선택된 음성 이름과 일치하는 Voice 객체를 찾아 적용
+      const selectedVoice = voices.find(v => v.name === selectedVoiceName);
+
+      if (selectedVoice) {
+        currentUtterance.voice = selectedVoice;
+        currentUtterance.lang = selectedVoice.lang; // 선택된 음성의 언어 설정
+      } else {
+        // 선택된 음성을 찾지 못하면 기본값 사용
+        currentUtterance.lang = 'ko-KR'; 
+      }
+      
+      currentUtterance.rate = parseFloat(document.getElementById('speedControl').value); 
+      currentUtterance.pitch = 1.0; 
+      currentUtterance.volume = 1.0;
+      
+      speechSynthesis.speak(currentUtterance);
+    }
+    
+    function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); currentUtterance = null; }
+    
+    // ------------------- ▲ TTS 함수 수정 끝 ▲ -------------------
+
+    function addNode() {
+      const id = document.getElementById('newNode').value.trim();
+      if (!id) { alert('노드 이름을 입력하세요!'); return; }
+      if (cy.getElementById(id).length > 0) { alert('이미 존재하는 노드입니다!'); return; }
+      const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+      cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" } });
+      cy.layout({ name: 'cose', animate: true }).run();
+      document.getElementById('newNode').value = '';
+    }
+
+    function addEdge() {
+      const src = document.getElementById('edgeSrc').value.trim(), tgt = document.getElementById('edgeTgt').value.trim(), lbl = document.getElementById('edgeLbl').value.trim();
+      if (!src || !tgt) { alert('출발 노드와 도착 노드를 입력하세요!'); return; }
+      if (cy.getElementById(src).length === 0 || cy.getElementById(tgt).length === 0) { alert('존재하지 않는 노드입니다!'); return; }
+      cy.add({ data: { id: src + "_" + tgt + "_" + Date.now(), source: src, target: tgt, label: lbl || "", notes: "" } });
+      document.getElementById('edgeSrc').value = ''; document.getElementById('edgeTgt').value = ''; document.getElementById('edgeLbl').value = '';
+    }
+
+    function saveToLocalStorage() { localStorage.setItem("graphData", JSON.stringify(cy.json().elements)); alert('로컬 저장 완료!'); }
+    function loadFromLocalStorage() {
+      const data = localStorage.getItem("graphData");
+      if (data) { cy.elements().remove(); cy.add(JSON.parse(data)); cy.layout({ name: 'cose', animate: true }).run(); alert('로컬 불러오기 완료!'); }
+      else alert('저장된 데이터가 없습니다!');
+    }
+
+    function saveToURL() {
+      const json = cy.json().elements;
+      const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(json));
+      window.location.hash = compressed;
+      alert('URL에 저장되었습니다!\n주소창의 URL을 복사하여 공유하세요.');
+    }
+
+    function downloadJSON() {
+      const json = cy.json().elements;
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "graph_" + new Date().toISOString().slice(0, 10) + ".json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+      alert('JSON 파일 다운로드 완료!');
+    }
+
+    function uploadJSON(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const data = JSON.parse(e.target.result);
+            cy.elements().remove();
+            cy.add(data);
+            cy.layout({ name: 'cose', animate: true }).run();
+            alert('JSON 파일 불러오기 완료!');
+          } catch (err) { alert('JSON 파일 형식 오류: ' + err.message); }
+        };
+        reader.readAsText(file);
+      }
+    }
+
+    cy.on('tap', 'node', function (evt) {
+      const node = evt.target;
+      selected = { type: 'node', id: node.id() };
+      document.getElementById('selectionLabel').innerText = "노드: " + node.id();
+      document.getElementById('yamlEdit').value = JSON.stringify(node.data(), null, 2);
+      document.getElementById('notesInfo').innerText = "노드: " + node.id();
+      document.getElementById('notesTextarea').value = node.data('notes') || '';
+    });
+
+    cy.on('tap', 'edge', function (evt) {
+      const edge = evt.target;
+      selected = { type: 'edge', id: edge.id() };
+      document.getElementById('selectionLabel').innerText = "엣지: " + edge.data('source') + " → " + edge.data('target');
+      document.getElementById('yamlEdit').value = JSON.stringify(edge.data(), null, 2);
+      document.getElementById('notesInfo').innerText = "엣지: " + edge.data('source') + " → " + edge.data('target');
+      document.getElementById('notesTextarea').value = edge.data('notes') || '';
+    });
+
+    function saveSelected() {
+      if (!selected) { alert('선택된 항목이 없습니다!'); return; }
+      try {
+        const obj = JSON.parse(document.getElementById('yamlEdit').value);
+        cy.getElementById(selected.id).data(obj);
+        alert('저장되었습니다!');
+      } catch (e) { alert('JSON 형식 오류: ' + e.message); }
+    }
+
+    function deleteSelected() {
+      if (!selected) { alert('선택된 항목이 없습니다!'); return; }
+      if (confirm('정말 삭제하시겠습니까?')) {
+        cy.getElementById(selected.id).remove();
+        selected = null;
+        document.getElementById('selectionLabel').innerText = '선택 없음';
+        document.getElementById('yamlEdit').value = '';
+        document.getElementById('notesInfo').innerText = '노드/엣지를 선택하세요';
+        document.getElementById('notesTextarea').value = '';
+      }
+    }
+
+    function saveNotes() {
+      if (!selected) { alert('노드 또는 엣지를 선택하세요!'); return; }
+      const notesText = document.getElementById('notesTextarea').value;
+      cy.getElementById(selected.id).data('notes', notesText);
+      document.getElementById('yamlEdit').value = JSON.stringify(cy.getElementById(selected.id).data(), null, 2);
+      alert('메모가 저장되었습니다!');
+    }
+  </script>
+</body>
+
+</html>
