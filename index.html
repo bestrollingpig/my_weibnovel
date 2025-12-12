@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE TML>
 <html lang="ko">
 
 <head>
@@ -31,7 +31,6 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    /* ------------------- ▼ 인터페이스 글씨 검은 테두리 유지/추가 ▼ ------------------- */
     header h1 {
       font-size: 1.5em;
       margin-bottom: 5px;
@@ -118,7 +117,7 @@
       cursor: pointer;
       transition: all 0.1s;
       font-weight: bold;
-      color: white; /* 모든 버튼의 텍스트 색상을 흰색으로 기본 설정 (배경색은 아래 클래스에서 설정) */
+      color: white; 
     }
 
     /* 흰색 글씨를 사용하는 모든 버튼에 검은색 테두리 추가 */
@@ -142,7 +141,6 @@
     .btn-info {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     }
-    /* ------------------- ▲ 인터페이스 버튼 텍스트 검은 테두리 추가 완료 ▲ ------------------- */
 
 
     /* [핵심] 옵시디언 스타일 버튼 탄력 효과 */
@@ -182,6 +180,11 @@
       background: #f0f7ff;
       border-radius: 6px;
       border: 1px solid #d0e7ff;
+    }
+
+    .tts-controls h3 {
+      margin: 0 0 10px 0; 
+      font-size: 0.95em;
     }
 
     .tts-controls label {
@@ -237,7 +240,6 @@
     }
   </style>
 </head>
-
 <body>
   <header>
     <h1>🌐 세계관 그래프 편집기</h1>
@@ -257,7 +259,7 @@
         <h3>🔗 관계 연결</h3>
         <input type="text" id="edgeSrc" placeholder="출발 노드">
         <input type="text" id="edgeTgt" placeholder="도착 노드">
-        <input type="text" id="edgeLbl" placeholder="관계 라벨">
+        <input type="text" id="edgeLbl" placeholder="관계 라벨 (TIMELINE 입력 시 굵은 선)">
         <button class="btn-primary" onclick="addEdge()">연결 추가</button>
         <div class="help-text">💡 Ctrl+드래그로 노드를 연결할 수 있습니다</div>
       </div>
@@ -270,6 +272,9 @@
         <button class="btn-success" onclick="downloadJSON()">⬇️ JSON 다운로드</button>
         <input type="file" id="fileInput" accept=".json" style="display:none" onchange="uploadJSON(event)">
         <button class="btn-info" onclick="document.getElementById('fileInput').click()">⬆️ JSON 업로드</button>
+        
+        <input type="file" id="appendFileInput" accept=".json" style="display:none" onchange="appendJSON(event)">
+        <button class="btn-primary" onclick="document.getElementById('appendFileInput').click()">➕ JSON 추가 업로드</button>
         <div class="help-text">💡 URL로 저장하면 주소창 복사로 공유 가능합니다</div>
       </div>
 
@@ -288,13 +293,23 @@
     
     <div class="right-panel">
       <div class="panel-section notes-area">
-        <h3>📝 메모장</h3>
+        <h3>✏️ 노드/엣지 속성 편집</h3>
         <div class="info-badge" id="notesInfo">노드/엣지를 선택하세요</div>
+        
+        <label for="labelInput" style="font-weight: bold; color: #333;">이름/라벨 수정</label>
+        <input type="text" id="labelInput" placeholder="선택한 요소의 이름(라벨)이 표시됩니다." disabled>
+        
+        <div id="colorControl" style="display:none;">
+            <label for="colorInput" style="font-weight: bold; color: #333; margin-top: 10px;">노드 색상</label>
+            <input type="color" id="colorInput" value="#667eea" style="height: 40px; padding: 0;">
+        </div>
+        <label for="notesTextarea" style="font-weight: bold; color: #333; margin-top: 10px;">📝 메모 수정</label>
         <textarea class="notes-textarea" id="notesTextarea" placeholder="여기에 메모를 작성하세요..."></textarea>
-        <button class="btn-success" onclick="saveNotes()">💾 메모 저장</button>
+        
+        <button class="btn-success" onclick="saveNotes()">💾 이름, 색상 및 메모 저장</button>
 
         <div class="tts-controls">
-          <h3 style="margin: 0 0 10px 0; font-size: 0.95em;">🔊 읽어주기 (TTS)</h3>
+          <h3>🔊 읽어주기 (TTS)</h3>
           <label>🎙️ 음성 선택</label>
           <select id="voiceSelect">
             <option value="ko-KR">한국어 (기본)</option>
@@ -320,7 +335,8 @@
       { data: { id: "주인공", label: "주인공", color: "#667eea", notes: "" } },
       { data: { id: "아린", label: "아린", color: "#f093fb", notes: "" } },
       { data: { id: "ev1", label: "시작 이벤트", color: "#4facfe", notes: "" } },
-      { data: { id: "주인공_아린", source: "주인공", target: "아린", label: "친구", notes: "" } } 
+      { data: { id: "주인공_아린", source: "주인공", target: "아린", label: "친구", notes: "" } }, 
+      { data: { id: "ev1_주인공", source: "ev1", target: "주인공", label: "TIMELINE", notes: "스토리 시작점" }, classes: "timeline" } 
     ];
 
     let cy = cytoscape({
@@ -357,10 +373,18 @@
             'target-arrow-color': '#999',
             'font-size': 12
           }
+        },
+        {
+          selector: 'edge.timeline', 
+          style: {
+            'line-color': '#ff0055', 
+            'width': 3, 
+            'target-arrow-color': '#ff0055' 
+          }
         }
       ],
       layout: { name: 'cose', animate: true },
-      boxSelectionEnabled: false // 범위 선택 비활성화
+      boxSelectionEnabled: false
     });
 
     let selected = null, 
@@ -371,6 +395,13 @@
         
     let tremorInterval = null; 
     let currentLayout = null; 
+    
+    // DOM 요소 캐시
+    const notesInfo = document.getElementById('notesInfo');
+    const labelInput = document.getElementById('labelInput');
+    const colorControl = document.getElementById('colorControl');
+    const colorInput = document.getElementById('colorInput');
+    const notesTextarea = document.getElementById('notesTextarea');
 
     window.addEventListener('load', function () {
       const hash = window.location.hash.substring(1);
@@ -380,13 +411,15 @@
           const data = JSON.parse(decompressed);
           cy.elements().remove();
           cy.add(data);
-          // 데이터 로드 후 레이아웃 실행
           runLayout('cose');
         } catch (e) { console.error('URL 데이터 로드 실패:', e); }
       } else {
-          // 초기 데이터로 레이아웃 실행
           runLayout('cose');
       }
+      
+      // 초기 상태 설정
+      labelInput.disabled = true;
+      notesTextarea.disabled = true;
     });
 
     cy.on('dbltap', function (evt) {
@@ -398,14 +431,13 @@
           const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
           cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" }, position: { x: pos.x, y: pos.y } });
           
-          // 새 노드가 추가되면 움직임 강도 업데이트를 위해 잠시 멈췄다 재시작
           stopObsidianTremor();
           startObsidianTremor();
         }
       }
     });
 
-    // ------------------- ▼ Ctrl+드래그 관계 연결 기능 유지 ▼ -------------------
+    // ------------------- ▼ Ctrl+드래그 관계 연결 기능 유지 & 클래스 자동 적용 추가 ▼ -------------------
     cy.on('mousedown', 'node', function (evt) {
       if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey) {
         edgeCreationMode = true; edgeSourceNode = evt.target;
@@ -414,19 +446,28 @@
     });
     cy.on('mouseover', 'node', function (evt) { if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) evt.target.style({ 'border-width': '4px', 'border-color': '#4facfe' }); });
     cy.on('mouseout', 'node', function (evt) { if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) evt.target.style('border-width', '2px'); });
+    
     cy.on('mouseup', 'node', function (evt) {
       if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) {
         const label = prompt("관계 라벨을 입력하세요:", "관계");
         if (label !== null) {
-          cy.add({ data: { 
-            id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), 
-            source: edgeSourceNode.id(), 
-            target: evt.target.id(), 
-            label: label || "",
-            notes: "" 
-          } });
           
-          // 엣지 추가 후 움직임 강도 업데이트를 위해 잠시 멈췄다 재시작
+          let classes = "";
+          if (label && (label.toUpperCase() === "TIMELINE" || label.toUpperCase() === "타임라인")) {
+              classes = "timeline";
+          }
+
+          cy.add({ 
+            data: { 
+              id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), 
+              source: edgeSourceNode.id(), 
+              target: evt.target.id(), 
+              label: label || "",
+              notes: "" 
+            },
+            classes: classes 
+          });
+          
           stopObsidianTremor();
           startObsidianTremor();
         }
@@ -434,11 +475,10 @@
       }
     });
     cy.on('mouseup', function (evt) { if (edgeCreationMode && evt.target === cy) { if (edgeSourceNode) edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null; } });
-    // ------------------- ▲ Ctrl+드래그 관계 연결 기능 유지 ▲ -------------------
+    // ------------------- ▲ Ctrl+드래그 관계 연결 기능 유지 & 클래스 자동 적용 추가 ▲ -------------------
 
 
-    // ------------------- ▼ 옵시디언 트레머(Tremor) 함수 (강도 동적 조정) ▼ -------------------
-    
+    // ------------------- ▼ 옵시디언 트레머(Tremor) 함수 (강도 동적 조정) (유지) ▼ -------------------
     function startObsidianTremor() {
       if (tremorInterval) return;
       
@@ -446,13 +486,9 @@
       
       tremorInterval = setInterval(() => {
         cy.nodes().forEach(node => {
-          // 1. 노드의 연결된 엣지(차수) 개수를 가져옵니다.
           const degree = node.degree(); 
-          
-          // 2. 차수에 따라 떨림 강도를 계산합니다. (차수가 높을수록 강도는 낮아져 덜 움직입니다)
           const tremorStrength = BASE_MAX_TREMOR_STRENGTH / (1 + degree);
           
-          // 3. 계산된 강도를 적용하여 노드의 위치를 미세하게 이동시킵니다.
           const dx = (Math.random() - 0.5) * tremorStrength; 
           const dy = (Math.random() - 0.5) * tremorStrength; 
           
@@ -470,8 +506,7 @@
         tremorInterval = null;
       }
     }
-
-    // ------------------- ▲ 옵시디언 트레머(Tremor) 함수 (강도 동적 조정) ▲ -------------------
+    // ------------------- ▲ 옵시디언 트레머(Tremor) 함수 (강도 동적 조정) (유지) ▲ -------------------
 
 
     // ------------------- ▼ TTS 함수 (유지) ▼ -------------------
@@ -512,7 +547,7 @@
     }
 
     function readNotes() {
-      const text = document.getElementById('notesTextarea').value.trim();
+      const text = notesTextarea.value.trim();
       if (!text) { alert('읽을 메모가 없습니다!'); return; }
       stopReading();
 
@@ -538,11 +573,10 @@
     }
 
     function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); currentUtterance = null; }
-    // ------------------- ▲ TTS 함수 (유지) ▲ -------------------
+    // ------------------- ▲ TTS 함수 (유지) ▼ -------------------
 
 
     function runLayout(layoutName) {
-      // 1. 동적 움직임 잠시 중지 (레이아웃 애니메이션과 충돌 방지)
       stopObsidianTremor(); 
       if (currentLayout) {
           currentLayout.stop();
@@ -553,40 +587,19 @@
       
       if (layoutName === 'cose') {
         layoutOptions = {
-          name: 'cose',
-          animate: true,
-          animationDuration: 500, 
-          animationEasing: 'ease-out',
-          stepSize: 1, 
-          
-          fit: true,
-          padding: 10,
-          
-          nodeRepulsion: 20000, 
-          idealEdgeLength: 150, 
-          edgeElasticity: 0.2,   
-          gravity: 0.05,
+          name: 'cose', animate: true, animationDuration: 500, animationEasing: 'ease-out', stepSize: 1, 
+          fit: true, padding: 10, nodeRepulsion: 20000, idealEdgeLength: 150, edgeElasticity: 0.2, gravity: 0.05,
         };
         
         const layout = cy.layout(layoutOptions);
         layout.run();
-        
-        // 2. 레이아웃이 끝난 후, 동적 움직임 효과 시작
         setTimeout(startObsidianTremor, 500); 
 
       } else if (layoutName === 'dagre') {
         cy.nodes().unlock(); 
-        
-        layoutOptions = {
-          name: 'dagre',
-          rankDir: 'TB', 
-          padding: 10,
-          animate: true
-        };
+        layoutOptions = { name: 'dagre', rankDir: 'TB', padding: 10, animate: true };
         const layout = cy.layout(layoutOptions);
         layout.run();
-        
-        // 2. 레이아웃이 끝난 후, 동적 움직임 효과 시작 (트리형에도 적용)
         setTimeout(startObsidianTremor, 500);
       }
     }
@@ -611,13 +624,21 @@
       if (!src || !tgt) { alert('출발 노드와 도착 노드를 입력하세요!'); return; }
       if (cy.getElementById(src).length === 0 || cy.getElementById(tgt).length === 0) { alert('존재하지 않는 노드입니다!'); return; }
       
-      cy.add({ data: { 
-          id: src + "_" + tgt + "_" + Date.now(), 
-          source: src, 
-          target: tgt, 
-          label: lbl || "",
-          notes: "" 
-      } });
+      let classes = "";
+      if (lbl && (lbl.toUpperCase() === "TIMELINE" || lbl.toUpperCase() === "타임라인")) {
+          classes = "timeline";
+      }
+
+      cy.add({ 
+          data: { 
+              id: src + "_" + tgt + "_" + Date.now(), 
+              source: src, 
+              target: tgt, 
+              label: lbl || "",
+              notes: "" 
+          },
+          classes: classes 
+      });
       
       runLayout('cose');
 
@@ -626,30 +647,90 @@
       document.getElementById('edgeLbl').value = '';
     }
 
-    // ------------------- ▼ 메모/선택 기능 (유지) ▼ -------------------
+    // ------------------- ▼ 메모/선택 기능 (이름 및 색상 수정 필드 연동) ▼ -------------------
 
     cy.on('tap', 'node', function (evt) {
       const node = evt.target;
       selected = { type: 'node', id: node.id() };
-      document.getElementById('notesInfo').innerText = "노드: " + node.id();
-      document.getElementById('notesTextarea').value = node.data('notes') || '';
+      
+      notesInfo.innerText = "노드: " + node.id();
+      labelInput.value = node.data('label') || '';
+      notesTextarea.value = node.data('notes') || '';
+      
+      labelInput.disabled = false;
+      notesTextarea.disabled = false;
+      
+      // 노드 전용 필드 표시 및 값 설정
+      colorControl.style.display = 'block';
+      colorInput.value = node.data('color') || '#667eea';
     });
 
     cy.on('tap', 'edge', function (evt) {
       const edge = evt.target;
       selected = { type: 'edge', id: edge.id() };
-      document.getElementById('notesInfo').innerText = "엣지: " + edge.data('source') + " → " + edge.data('target');
-      document.getElementById('notesTextarea').value = edge.data('notes') || '';
+      
+      notesInfo.innerText = "엣지: " + edge.data('source') + " → " + edge.data('target');
+      labelInput.value = edge.data('label') || '';
+      notesTextarea.value = edge.data('notes') || '';
+      
+      labelInput.disabled = false;
+      notesTextarea.disabled = false;
+      
+      // 엣지는 색상 수정 필드를 숨김
+      colorControl.style.display = 'none';
     });
     
+    // 빈 공간 클릭 시 선택 해제
+    cy.on('tap', function(evt){
+        if(evt.target === cy){
+            selected = null;
+            notesInfo.innerText = "노드/엣지를 선택하세요";
+            labelInput.value = '';
+            notesTextarea.value = '';
+            labelInput.disabled = true;
+            notesTextarea.disabled = true;
+            colorControl.style.display = 'none';
+        }
+    });
+
     function saveNotes() {
       if (!selected) { alert('노드 또는 엣지를 선택하세요!'); return; }
-      const notesText = document.getElementById('notesTextarea').value;
-      cy.getElementById(selected.id).data('notes', notesText);
-      alert('메모가 저장되었습니다!');
+      const element = cy.getElementById(selected.id);
+      
+      const newLabel = labelInput.value.trim();
+      const newNotes = notesTextarea.value;
+
+      if (!newLabel) {
+        alert('이름/라벨은 비워둘 수 없습니다.');
+        return;
+      }
+
+      // 1. 이름/라벨 저장
+      element.data('label', newLabel);
+      
+      // 2. 메모 저장
+      element.data('notes', newNotes);
+
+      // 3. 노드 전용: 색상 저장 및 적용
+      if (selected.type === 'node') {
+        const newColor = colorInput.value;
+        element.data('color', newColor);
+      }
+
+      // 4. 엣지 전용: 라벨에 따른 클래스(TIMELINE) 자동 업데이트
+      if (selected.type === 'edge') {
+        if (newLabel.toUpperCase() === "TIMELINE" || newLabel.toUpperCase() === "타임라인") {
+            element.addClass('timeline');
+        } else {
+            element.removeClass('timeline');
+        }
+      }
+
+      alert('속성 및 메모가 저장되었습니다!');
     }
 
-    // ------------------- ▲ 메모/선택 기능 (유지) ▲ -------------------
+    // ------------------- ▲ 메모/선택 기능 (이름 및 색상 수정 필드 연동) ▲ -------------------
+
 
     function saveToLocalStorage() { localStorage.setItem("graphData", JSON.stringify(cy.json().elements)); alert('로컬 저장 완료!'); }
     function loadFromLocalStorage() {
@@ -677,6 +758,53 @@
       alert('JSON 파일 다운로드 완료!');
     }
 
+    // ------------------- ▼ 요소 추출 공통 로직 (유지) ▼ -------------------
+    function extractElementsFromJSON(data) {
+        let elements = [];
+        
+        if (data.graphData) {
+            const gd = data.graphData;
+            if (gd.nodes || gd.edges) {
+                elements = [
+                    ...(Array.isArray(gd.nodes) ? gd.nodes : []),
+                    ...(Array.isArray(gd.edges) ? gd.edges : [])
+                ];
+            } 
+            else if (Array.isArray(gd.elements)) {
+                elements = gd.elements;
+            }
+            else if (gd.elements && (gd.elements.nodes || gd.elements.edges)) {
+                elements = [
+                    ...(Array.isArray(gd.elements.nodes) ? gd.elements.nodes : []),
+                    ...(Array.isArray(gd.elements.edges) ? gd.elements.edges : [])
+                ];
+            }
+        }
+        
+        if (elements.length === 0) {
+            if (Array.isArray(data)) {
+                elements = data;
+            } else if (data.nodes || data.edges) {
+                elements = [
+                    ...(Array.isArray(data.nodes) ? data.nodes : []),
+                    ...(Array.isArray(data.edges) ? data.edges : [])
+                ];
+            } else if (data.elements) {
+                if (Array.isArray(data.elements)) {
+                    elements = data.elements;
+                } else if (data.elements.nodes || data.elements.edges) {
+                    elements = [
+                        ...(Array.isArray(data.elements.nodes) ? data.elements.nodes : []),
+                        ...(Array.isArray(data.elements.edges) ? data.elements.edges : [])
+                    ];
+                }
+            }
+        }
+        return elements;
+    }
+    // ------------------- ▲ 요소 추출 공통 로직 (유지) ▲ -------------------
+
+
     function uploadJSON(event) {
       const file = event.target.files[0];
       if (file) {
@@ -684,14 +812,103 @@
         reader.onload = function (e) {
           try {
             const data = JSON.parse(e.target.result);
+            const elementsToAdd = extractElementsFromJSON(data); 
+
+            if (elementsToAdd.length === 0) {
+                alert('JSON 파일에 유효한 노드 또는 엣지 데이터가 없어 그래프를 불러올 수 없습니다.');
+                return;
+            }
+
             cy.elements().remove();
-            cy.add(data);
+            cy.add(elementsToAdd); 
             runLayout('cose');
             alert('JSON 파일 불러오기 완료!');
           } catch (err) { alert('JSON 파일 형식 오류: ' + err.message); }
         };
         reader.readAsText(file);
       }
+    }
+    
+    function appendJSON(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const elementsToAdd = extractElementsFromJSON(data);
+                    
+                    if (elementsToAdd.length === 0) {
+                        alert('JSON 파일에 추가할 유효한 노드 또는 엣지 데이터가 없습니다.');
+                        return;
+                    }
+                    
+                    const suffix = "_COPY_" + Date.now(); 
+                    const idMap = {}; 
+                    const newElements = [];
+                    let addedNodeCount = 0;
+                    let addedEdgeCount = 0;
+                    const offset = 500; 
+
+                    elementsToAdd.forEach(el => {
+                        const isNode = el.data && el.data.id && !el.data.source && !el.data.target; 
+                        
+                        if (isNode) {
+                            const oldId = el.data.id;
+                            const newId = oldId + suffix;
+                            
+                            if (cy.getElementById(newId).length > 0) return; 
+
+                            const newEl = JSON.parse(JSON.stringify(el)); 
+                            newEl.data.id = newId;
+                            
+                            if (newEl.position) {
+                                newEl.position = { x: newEl.position.x + offset, y: newEl.position.y + offset };
+                            } else {
+                                newEl.position = { x: cy.width() / 2 + offset, y: cy.height() / 2 + offset };
+                            }
+                            
+                            idMap[oldId] = newId; 
+                            newElements.push(newEl);
+                            addedNodeCount++;
+                        }
+                    });
+                    
+                    elementsToAdd.forEach(el => {
+                        const isEdge = el.data && el.data.source && el.data.target;
+                        
+                        if (isEdge) {
+                            const oldSource = el.data.source;
+                            const oldTarget = el.data.target;
+                            
+                            if (idMap[oldSource] && idMap[oldTarget]) {
+                                const newEl = JSON.parse(JSON.stringify(el)); 
+                                
+                                newEl.data.id = (newEl.data.id || (oldSource + "_" + oldTarget + "_EDGE")) + suffix; 
+                                newEl.data.source = idMap[oldSource]; 
+                                newEl.data.target = idMap[oldTarget]; 
+                                
+                                newElements.push(newEl);
+                                addedEdgeCount++;
+                            }
+                        }
+                    });
+
+
+                    if (newElements.length > 0) {
+                        cy.add(newElements);
+                        runLayout('cose');
+                        alert(`JSON 파일 추가 불러오기 완료! (${addedNodeCount}개 노드, ${addedEdgeCount}개 엣지 복제본 추가)`);
+                    } else if (addedNodeCount === 0 && addedEdgeCount === 0) {
+                        alert('JSON 파일에 추가할 유효한 노드 또는 엣지 데이터가 없습니다.');
+                    }
+                    
+                } catch (err) {
+                    alert('JSON 파일 형식 오류: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
     }
   </script>
 </body>
