@@ -1,267 +1,97 @@
-<!DOCTYPE TML>
+<!DOCTYPE html>
 <html lang="ko">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>세계관 그래프 편집기</title>
+  <title>세계관 그래프 편집기 (Complete Ver)</title>
   <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
   <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
   <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Malgun Gothic', sans-serif;
-      background: #f0f0f0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Malgun Gothic', sans-serif; background: #f0f0f0; height: 100vh; display: flex; flex-direction: column; }
+    
     header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 15px 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      color: white; padding: 15px 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
+    header h1 { font-size: 1.5em; margin-bottom: 5px; text-shadow: 1px 1px 0 #000; }
 
-    header h1 {
-      font-size: 1.5em;
-      margin-bottom: 5px;
-      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
-    }
+    .main-container { display: flex; flex: 1; overflow: hidden; }
+    .left-panel { width: 25%; background: white; padding: 15px; overflow-y: auto; border-right: 2px solid #ddd; }
+    .graph-area { width: 50%; padding: 15px; display: flex; flex-direction: column; }
+    .right-panel { width: 25%; background: white; padding: 15px; overflow-y: auto; border-left: 2px solid #ddd; display: flex; flex-direction: column; }
 
-    header p {
-      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
-    }
+    #cy { flex: 1; border: 2px solid #ddd; border-radius: 8px; background: #fafafa; }
 
-    .main-container {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+    .panel-section { margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0; }
+    .panel-section h3 { font-size: 1em; margin-bottom: 10px; color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 5px; }
 
-    .left-panel {
-      width: 25%;
-      background: white;
-      padding: 15px;
-      overflow-y: auto;
-      border-right: 2px solid #ddd;
-    }
-
-    .graph-area {
-      width: 50%;
-      padding: 15px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .right-panel {
-      width: 25%;
-      background: white;
-      padding: 15px;
-      overflow-y: auto;
-      border-left: 2px solid #ddd;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #cy {
-      flex: 1;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      background: #fafafa;
-    }
-
-    .panel-section {
-      margin-bottom: 20px;
-      padding: 15px;
-      background: #f9f9f9;
-      border-radius: 8px;
-      border: 1px solid #e0e0e0;
-    }
-
-    .panel-section h3 {
-      font-size: 1em;
-      margin-bottom: 10px;
-      color: #667eea;
-      border-bottom: 2px solid #667eea;
-      padding-bottom: 5px;
-      text-shadow: 0.5px 0.5px 0 #000;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 0.9em;
-    }
+    input[type="text"], input[type="number"], select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; }
+    input[readonly] { background-color: #e9ecef; color: #495057; cursor: not-allowed; }
 
     button {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-      border: none;
-      border-radius: 4px;
-      font-size: 0.9em;
-      cursor: pointer;
-      transition: all 0.1s;
-      font-weight: bold;
-      color: white; 
+      width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 4px; font-size: 0.9em;
+      cursor: pointer; transition: all 0.1s; font-weight: bold; color: white; text-shadow: 1px 1px 0 #000;
     }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .btn-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .btn-danger { background: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%); }
+    .btn-warning { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: white; }
+    button:active { transform: scale(0.98); }
 
-    /* 흰색 글씨를 사용하는 모든 버튼에 검은색 테두리 추가 */
-    .btn-primary, .btn-success, .btn-info {
-        text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
-    }
+    textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Malgun Gothic', monospace; font-size: 0.9em; resize: vertical; min-height: 150px; }
+    .notes-area { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .notes-textarea { flex: 1; min-height: 200px; line-height: 1.6; }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
+    .tts-controls { padding: 10px; background: #f0f7ff; border-radius: 6px; border: 1px solid #d0e7ff; }
+    .speed-control { display: flex; align-items: center; gap: 10px; }
+    .speed-control input[type="range"] { flex: 1; }
+    .tts-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
-    }
-
-    .btn-success {
-      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    }
-
-    .btn-info {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-
-
-    /* [핵심] 옵시디언 스타일 버튼 탄력 효과 */
-    button:active {
-      transform: scale(0.98);
-      box-shadow: none !important;
-      transition: transform 0s;
-    }
-
-    textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: 'Malgun Gothic', monospace;
-      font-size: 0.9em;
-      resize: vertical;
-      min-height: 150px;
-    }
-
-    .notes-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .notes-textarea {
-      flex: 1;
-      min-height: 200px;
-      font-family: 'Malgun Gothic', sans-serif;
-      line-height: 1.6;
-    }
-
-    .tts-controls {
-      padding: 10px;
-      background: #f0f7ff;
-      border-radius: 6px;
-      border: 1px solid #d0e7ff;
-    }
-
-    .tts-controls h3 {
-      margin: 0 0 10px 0; 
-      font-size: 0.95em;
-    }
-
-    .tts-controls label {
-      display: block;
-      font-size: 0.85em;
-      color: #555;
-      margin: 8px 0 4px 0;
-      font-weight: bold;
-    }
-
-    .speed-control {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .speed-control input[type="range"] {
-      flex: 1;
-    }
-
-    .speed-value {
-      min-width: 40px;
-      text-align: center;
-      font-weight: bold;
-      color: #667eea;
-    }
-
-    .tts-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .info-badge {
-      display: inline-block;
-      padding: 6px 12px;
-      background: #667eea;
-      color: white;
-      border-radius: 4px;
-      font-size: 0.85em;
-      margin-bottom: 10px;
-      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
-    }
-
-    .help-text {
-      font-size: 0.8em;
-      color: #888;
-      margin-top: 5px;
-      padding: 8px;
-      background: #f9f9f9;
-      border-radius: 4px;
-    }
+    .info-badge { display: inline-block; padding: 6px 12px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px; text-shadow: 1px 1px 0 #000; }
+    .help-text { font-size: 0.8em; color: #888; margin-top: 5px; padding: 8px; background: #f9f9f9; border-radius: 4px; }
+    
+    .connection-tools { display: flex; gap: 5px; margin-bottom: 5px; }
+    .connection-tools button { padding: 5px; font-size: 0.8em; margin: 0; }
+    
+    .drag-mode-active { background: #ff0055 !important; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
   </style>
 </head>
 <body>
   <header>
-    <h1>🌐 세계관 그래프 편집기</h1>
-    <p>차수에 따라 움직임 강도가 동적으로 조절되는 버전 (강도 매우 높음)</p>
+    <h1>🌐 세계관 그래프 편집기 (수정/삭제 가능)</h1>
+    <p>클릭 연결 + 드래그 연결 + 선택 삭제 기능 통합 버전</p>
   </header>
 
   <div class="main-container">
     <div class="left-panel">
       <div class="panel-section">
         <h3>➕ 노드 추가</h3>
-        <input type="text" id="newNode" placeholder="노드 이름">
+        <input type="text" id="newNode" placeholder="노드 이름 (예: 철수)">
         <button class="btn-primary" onclick="addNode()">노드 추가</button>
-        <div class="help-text">💡 빈 공간을 더블클릭해도 노드를 추가할 수 있습니다</div>
+        <div class="help-text">💡 빈 공간 더블클릭으로도 추가 가능</div>
       </div>
 
       <div class="panel-section">
-        <h3>🔗 관계 연결</h3>
-        <input type="text" id="edgeSrc" placeholder="출발 노드">
-        <input type="text" id="edgeTgt" placeholder="도착 노드">
-        <input type="text" id="edgeLbl" placeholder="관계 라벨 (TIMELINE 입력 시 굵은 선)">
+        <h3>🔗 쉬운 관계 연결</h3>
+        <button id="btnDragMode" class="btn-warning" onclick="toggleDragMode()">🖱️ 드래그 연결 모드 (켜기/끄기)</button>
+        <div class="help-text" style="margin-bottom:10px;">👆 켜면 노드를 드래그해서 바로 연결됩니다!</div>
+        <div style="border-top: 1px dashed #ccc; margin: 10px 0;"></div>
+        
+        <div class="connection-tools">
+            <button class="btn-info" onclick="clearEdgeInputs()" title="입력 초기화">🔄 초기화</button>
+            <button class="btn-info" onclick="swapEdgeInputs()" title="출발/도착 바꾸기">↔️ 교체</button>
+        </div>
+        <input type="text" id="edgeSrc" placeholder="1. 출발 노드 클릭" readonly style="background-color: #e3f2fd; cursor: pointer;">
+        <input type="text" id="edgeTgt" placeholder="2. 도착 노드 클릭" readonly style="background-color: #ffebee; cursor: pointer;">
+        <input type="text" id="edgeLbl" placeholder="관계 라벨 (예: 친구, 적)">
         <button class="btn-primary" onclick="addEdge()">연결 추가</button>
-        <div class="help-text">💡 Ctrl+드래그로 노드를 연결할 수 있습니다</div>
+        <div class="help-text">💡 그래프에서 노드를 <b>클릭</b>하면 위 칸에 자동으로 입력됩니다.</div>
       </div>
 
       <div class="panel-section">
@@ -272,16 +102,14 @@
         <button class="btn-success" onclick="downloadJSON()">⬇️ JSON 다운로드</button>
         <input type="file" id="fileInput" accept=".json" style="display:none" onchange="uploadJSON(event)">
         <button class="btn-info" onclick="document.getElementById('fileInput').click()">⬆️ JSON 업로드</button>
-        
         <input type="file" id="appendFileInput" accept=".json" style="display:none" onchange="appendJSON(event)">
         <button class="btn-primary" onclick="document.getElementById('appendFileInput').click()">➕ JSON 추가 업로드</button>
-        <div class="help-text">💡 URL로 저장하면 주소창 복사로 공유 가능합니다</div>
       </div>
-
+      
       <div class="panel-section">
-        <h3>✨ 레이아웃 정렬</h3>
+        <h3>✨ 레이아웃</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-          <button class="btn-info" onclick="runLayout('cose')">💫 기본 (물리 레이아웃)</button>
+          <button class="btn-info" onclick="runLayout('cose')">💫 기본</button>
           <button class="btn-info" onclick="runLayout('dagre')">🌲 트리형</button>
         </div>
       </div>
@@ -293,38 +121,36 @@
     
     <div class="right-panel">
       <div class="panel-section notes-area">
-        <h3>✏️ 노드/엣지 속성 편집</h3>
+        <h3>✏️ 속성 편집 / 삭제</h3>
         <div class="info-badge" id="notesInfo">노드/엣지를 선택하세요</div>
         
-        <label for="labelInput" style="font-weight: bold; color: #333;">이름/라벨 수정</label>
-        <input type="text" id="labelInput" placeholder="선택한 요소의 이름(라벨)이 표시됩니다." disabled>
+        <label style="font-weight: bold; color: #333;">이름/라벨</label>
+        <input type="text" id="labelInput" placeholder="선택한 요소의 이름" disabled>
         
         <div id="colorControl" style="display:none;">
-            <label for="colorInput" style="font-weight: bold; color: #333; margin-top: 10px;">노드 색상</label>
+            <label style="font-weight: bold; color: #333; margin-top: 10px;">노드 색상</label>
             <input type="color" id="colorInput" value="#667eea" style="height: 40px; padding: 0;">
         </div>
-        <label for="notesTextarea" style="font-weight: bold; color: #333; margin-top: 10px;">📝 메모 수정</label>
-        <textarea class="notes-textarea" id="notesTextarea" placeholder="여기에 메모를 작성하세요..."></textarea>
+        <label style="font-weight: bold; color: #333; margin-top: 10px;">📝 메모</label>
+        <textarea class="notes-textarea" id="notesTextarea" placeholder="내용을 입력하세요..."></textarea>
         
-        <button class="btn-success" onclick="saveNotes()">💾 이름, 색상 및 메모 저장</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+            <button class="btn-success" onclick="saveNotes()">💾 저장</button>
+            <button class="btn-danger" onclick="deleteSelected()">🗑️ 삭제</button>
+        </div>
+        <div class="help-text">💡 선택 후 Delete 키를 눌러도 삭제됩니다.</div>
 
         <div class="tts-controls">
           <h3>🔊 읽어주기 (TTS)</h3>
-          <label>🎙️ 음성 선택</label>
-          <select id="voiceSelect">
-            <option value="ko-KR">한국어 (기본)</option>
-          </select>
-          <label>⚡ 속도</label>
+          <select id="voiceSelect"><option value="ko-KR">한국어</option></select>
           <div class="speed-control">
-            <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="1.0"
-              oninput="updateSpeedValue()">
+            <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateSpeedValue()">
             <span class="speed-value" id="speedValue">1.0x</span>
           </div>
           <div class="tts-buttons">
             <button class="btn-primary" onclick="readNotes()">🔊 읽기</button>
             <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
           </div>
-          <div class="help-text">💡 특수문자는 자동으로 제거됩니다</div>
         </div>
       </div>
     </div>
@@ -343,574 +169,263 @@
       container: document.getElementById('cy'),
       elements: JSON.parse(JSON.stringify(initialData)),
       style: [
-        {
-          selector: 'node', style: {
-            'label': 'data(label)',
-            'background-color': 'data(color)',
-            'shape': 'round-rectangle',
-            'width': 'label',
-            'height': 30,
-            'padding': '10px',
-            'border-width': 2,
-            'border-color': '#333',
-            'border-style': 'solid',
-            'text-valign': 'center',
-            'text-halign': 'center',
-            'color': '#fff',
-            'font-weight': 'bold',
-            'font-size': 14,
-            'text-outline-width': 2,
-            'text-outline-color': '#000'
-          }
-        },
-        {
-          selector: 'edge', style: {
-            'label': 'data(label)',
-            'curve-style': 'bezier',
-            'line-color': '#999',
-            'width': 1,
-            'target-arrow-shape': 'triangle',
-            'target-arrow-color': '#999',
-            'font-size': 12
-          }
-        },
-        {
-          selector: 'edge.timeline', 
-          style: {
-            'line-color': '#ff0055', 
-            'width': 3, 
-            'target-arrow-color': '#ff0055' 
-          }
-        }
+        { selector: 'node', style: { 'label': 'data(label)', 'background-color': 'data(color)', 'shape': 'round-rectangle', 'width': 'label', 'height': 30, 'padding': '10px', 'border-width': 2, 'border-color': '#333', 'border-style': 'solid', 'text-valign': 'center', 'text-halign': 'center', 'color': '#fff', 'font-weight': 'bold', 'font-size': 14, 'text-outline-width': 2, 'text-outline-color': '#000' } },
+        { selector: 'edge', style: { 'label': 'data(label)', 'curve-style': 'bezier', 'line-color': '#999', 'width': 1, 'target-arrow-shape': 'triangle', 'target-arrow-color': '#999', 'font-size': 12 } },
+        { selector: 'edge.timeline', style: { 'line-color': '#ff0055', 'width': 3, 'target-arrow-color': '#ff0055' } },
+        { selector: 'node:selected', style: { 'border-width': 4, 'border-color': '#FFD700', 'border-style': 'double' } },
+        { selector: 'edge:selected', style: { 'width': 4, 'line-color': '#FFD700', 'target-arrow-color': '#FFD700' } }
       ],
       layout: { name: 'cose', animate: true },
       boxSelectionEnabled: false
     });
 
-    let selected = null, 
-        speechSynthesis = window.speechSynthesis, 
-        currentUtterance = null, 
-        edgeCreationMode = false, 
-        edgeSourceNode = null;
-        
-    let tremorInterval = null; 
-    let currentLayout = null; 
-    
-    // DOM 요소 캐시
+    let selected = null, speechSynthesis = window.speechSynthesis, currentUtterance = null;
+    let edgeCreationMode = false, edgeSourceNode = null, isDragMode = false, tremorInterval = null, currentLayout = null;
+
     const notesInfo = document.getElementById('notesInfo');
     const labelInput = document.getElementById('labelInput');
     const colorControl = document.getElementById('colorControl');
     const colorInput = document.getElementById('colorInput');
     const notesTextarea = document.getElementById('notesTextarea');
+    const edgeSrcInput = document.getElementById('edgeSrc');
+    const edgeTgtInput = document.getElementById('edgeTgt');
 
     window.addEventListener('load', function () {
       const hash = window.location.hash.substring(1);
-      if (hash) {
-        try {
-          const decompressed = LZString.decompressFromEncodedURIComponent(hash);
-          const data = JSON.parse(decompressed);
-          cy.elements().remove();
-          cy.add(data);
-          runLayout('cose');
-        } catch (e) { console.error('URL 데이터 로드 실패:', e); }
-      } else {
-          runLayout('cose');
-      }
-      
-      // 초기 상태 설정
-      labelInput.disabled = true;
-      notesTextarea.disabled = true;
+      if (hash) { try { cy.elements().remove(); cy.add(JSON.parse(LZString.decompressFromEncodedURIComponent(hash))); runLayout('cose'); } catch (e) {} }
+      else runLayout('cose');
+      resetRightPanel();
     });
+
+    // ------------------- ▼ 핵심: 삭제 기능 구현 ▼ -------------------
+    
+    // 1. 삭제 버튼 클릭 시 실행될 함수
+    function deleteSelected() {
+      if (!selected) { alert('삭제할 요소를 먼저 선택해주세요.'); return; }
+      
+      const element = cy.getElementById(selected.id);
+      if (element.length === 0) return;
+
+      const confirmMsg = selected.type === 'node' 
+        ? `'${element.data('label')}' 노드를 삭제하시겠습니까?\n(연결된 모든 선도 함께 삭제됩니다)` 
+        : `'${element.data('label') || '관계'}' 선을 삭제하시겠습니까?`;
+
+      if (confirm(confirmMsg)) {
+        cy.remove(element);
+        resetRightPanel(); // 패널 초기화
+        // 연결 입력창에 삭제된 노드가 있다면 초기화
+        if (edgeSrcInput.value === selected.id || edgeTgtInput.value === selected.id) {
+            clearEdgeInputs();
+        }
+        selected = null;
+      }
+    }
+
+    // 2. 키보드 단축키 (Delete, Backspace) 리스너
+    document.addEventListener('keydown', function(event) {
+        // 입력창(input, textarea)에서 타이핑 중일 때는 삭제 키 동작 안 함 (글자 지워야 하니까)
+        const tag = document.activeElement.tagName.toUpperCase();
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+            if (selected) {
+                deleteSelected();
+            }
+        }
+    });
+
+    // ------------------- ▲ 핵심: 삭제 기능 구현 ▲ -------------------
+
+
+    function toggleDragMode() {
+        isDragMode = !isDragMode;
+        const btn = document.getElementById('btnDragMode');
+        if (isDragMode) {
+            btn.classList.add('drag-mode-active');
+            btn.innerText = "🖱️ 드래그 모드 ON (노드를 잡고 끄세요)";
+            cy.userZoomingEnabled(false); cy.userPanningEnabled(false);
+        } else {
+            btn.classList.remove('drag-mode-active');
+            btn.innerText = "🖱️ 드래그 연결 모드 (켜기/끄기)";
+            cy.userZoomingEnabled(true); cy.userPanningEnabled(true);
+        }
+    }
+
+    function resetRightPanel() {
+        selected = null;
+        notesInfo.innerText = "노드/엣지를 선택하세요";
+        labelInput.value = ''; notesTextarea.value = '';
+        labelInput.disabled = true; notesTextarea.disabled = true;
+        colorControl.style.display = 'none';
+    }
+
+    cy.on('tap', 'node', function (evt) {
+      const node = evt.target; const nodeId = node.id();
+      if (!isDragMode) {
+          if (edgeSrcInput.value === '') { edgeSrcInput.value = nodeId; node.animate({ style: { 'border-color': '#4facfe', 'border-width': 4 } }, { duration: 200 }); }
+          else if (edgeTgtInput.value === '' && edgeSrcInput.value !== nodeId) { edgeTgtInput.value = nodeId; node.animate({ style: { 'border-color': '#ff0055', 'border-width': 4 } }, { duration: 200 }); }
+      }
+      selected = { type: 'node', id: nodeId };
+      notesInfo.innerText = "노드: " + nodeId;
+      labelInput.value = node.data('label') || ''; notesTextarea.value = node.data('notes') || '';
+      labelInput.disabled = false; notesTextarea.disabled = false;
+      colorControl.style.display = 'block'; colorInput.value = node.data('color') || '#667eea';
+    });
+
+    cy.on('tap', 'edge', function (evt) {
+      const edge = evt.target;
+      selected = { type: 'edge', id: edge.id() };
+      notesInfo.innerText = "관계: " + edge.data('source') + " → " + edge.data('target');
+      labelInput.value = edge.data('label') || ''; notesTextarea.value = edge.data('notes') || '';
+      labelInput.disabled = false; notesTextarea.disabled = false;
+      colorControl.style.display = 'none';
+    });
+
+    cy.on('tap', function(evt){ if(evt.target === cy){ resetRightPanel(); } });
 
     cy.on('dbltap', function (evt) {
       if (evt.target === cy) {
         const pos = evt.position, nodeName = prompt("새 노드 이름을 입력하세요:", "새 노드");
         if (nodeName && nodeName.trim()) {
           const id = nodeName.trim();
-          if (cy.getElementById(id).length > 0) { alert("이미 존재하는 노드 이름입니다!"); return; }
+          if (cy.getElementById(id).length > 0) { alert("이미 존재합니다!"); return; }
           const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
           cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" }, position: { x: pos.x, y: pos.y } });
-          
-          stopObsidianTremor();
-          startObsidianTremor();
+          stopObsidianTremor(); startObsidianTremor();
         }
       }
     });
 
-    // ------------------- ▼ Ctrl+드래그 관계 연결 기능 유지 & 클래스 자동 적용 추가 ▼ -------------------
     cy.on('mousedown', 'node', function (evt) {
-      if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey) {
+      if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey || isDragMode) {
         edgeCreationMode = true; edgeSourceNode = evt.target;
         evt.target.style({ 'border-width': '4px', 'border-color': '#43e97b', 'border-style': 'dashed' });
       }
     });
-    cy.on('mouseover', 'node', function (evt) { if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) evt.target.style({ 'border-width': '4px', 'border-color': '#4facfe' }); });
-    cy.on('mouseout', 'node', function (evt) { if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) evt.target.style('border-width', '2px'); });
-    
+    cy.on('mouseover', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style({ 'border-width': '4px', 'border-color': '#4facfe' }); });
+    cy.on('mouseout', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style('border-width', '2px'); });
     cy.on('mouseup', 'node', function (evt) {
-      if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) {
-        const label = prompt("관계 라벨을 입력하세요:", "관계");
+      if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) {
+        const label = prompt("관계 라벨 입력:", "");
         if (label !== null) {
-          
-          let classes = "";
-          if (label && (label.toUpperCase() === "TIMELINE" || label.toUpperCase() === "타임라인")) {
-              classes = "timeline";
-          }
-
-          cy.add({ 
-            data: { 
-              id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), 
-              source: edgeSourceNode.id(), 
-              target: evt.target.id(), 
-              label: label || "",
-              notes: "" 
-            },
-            classes: classes 
-          });
-          
-          stopObsidianTremor();
-          startObsidianTremor();
+          let classes = (label && (label.toUpperCase() === "TIMELINE" || label.toUpperCase() === "타임라인")) ? "timeline" : "";
+          cy.add({ data: { id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), source: edgeSourceNode.id(), target: evt.target.id(), label: label || "", notes: "" }, classes: classes });
+          stopObsidianTremor(); startObsidianTremor();
         }
         edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null;
       }
     });
     cy.on('mouseup', function (evt) { if (edgeCreationMode && evt.target === cy) { if (edgeSourceNode) edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null; } });
-    // ------------------- ▲ Ctrl+드래그 관계 연결 기능 유지 & 클래스 자동 적용 추가 ▲ -------------------
 
-
-    // ------------------- ▼ 옵시디언 트레머(Tremor) 함수 (강도 동적 조정) (유지) ▼ -------------------
-    function startObsidianTremor() {
-      if (tremorInterval) return;
-      
-      const BASE_MAX_TREMOR_STRENGTH = 5.0; 
-      
-      tremorInterval = setInterval(() => {
-        cy.nodes().forEach(node => {
-          const degree = node.degree(); 
-          const tremorStrength = BASE_MAX_TREMOR_STRENGTH / (1 + degree);
-          
-          const dx = (Math.random() - 0.5) * tremorStrength; 
-          const dy = (Math.random() - 0.5) * tremorStrength; 
-          
-          node.position({
-            x: node.position('x') + dx,
-            y: node.position('y') + dy
-          });
-        });
-      }, 50); 
-    }
-
-    function stopObsidianTremor() {
-      if (tremorInterval) {
-        clearInterval(tremorInterval);
-        tremorInterval = null;
-      }
-    }
-    // ------------------- ▲ 옵시디언 트레머(Tremor) 함수 (강도 동적 조정) (유지) ▲ -------------------
-
-
-    // ------------------- ▼ TTS 함수 (유지) ▼ -------------------
-    function loadVoices() {
-      const voices = speechSynthesis.getVoices();
-      const voiceSelect = document.getElementById('voiceSelect');
-      voiceSelect.innerHTML = '';
-      const koVoices = voices.filter(v => v.lang.startsWith('ko'));
-      if (koVoices.length > 0) {
-        koVoices.forEach((voice) => {
-          const option = document.createElement('option');
-          option.value = voice.name;
-          option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' (기본)' : ''}`;
-          voiceSelect.appendChild(option);
-        });
-      } else {
-        const option = document.createElement('option');
-        option.value = "default";
-        option.textContent = "한국어 음성 없음 (시스템 기본)";
-          voiceSelect.appendChild(option);
-      }
-    }
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = loadVoices;
-    }
-    loadVoices();
-
-    function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
-
-    function cleanTextForTTS(text) {
-      return text
-        .replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' ')
-        .replace(/[!@$%^&]/g, ' ')
-        .replace(/[:;]/g, ',')
-        .replace(/[.]{2,}/g, '.')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    function readNotes() {
-      const text = notesTextarea.value.trim();
-      if (!text) { alert('읽을 메모가 없습니다!'); return; }
-      stopReading();
-
-      const cleanedText = cleanTextForTTS(text);
-      currentUtterance = new SpeechSynthesisUtterance(cleanedText);
-
-      const voices = speechSynthesis.getVoices();
-      const selectedVoiceName = document.getElementById('voiceSelect').value;
-      const selectedVoice = voices.find(v => v.name === selectedVoiceName);
-
-      if (selectedVoice) {
-        currentUtterance.voice = selectedVoice;
-        currentUtterance.lang = selectedVoice.lang;
-      } else {
-        currentUtterance.lang = 'ko-KR';
-      }
-
-      currentUtterance.rate = parseFloat(document.getElementById('speedControl').value);
-      currentUtterance.pitch = 1.0;
-      currentUtterance.volume = 1.0;
-
-      speechSynthesis.speak(currentUtterance);
-    }
-
-    function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); currentUtterance = null; }
-    // ------------------- ▲ TTS 함수 (유지) ▼ -------------------
-
-
-    function runLayout(layoutName) {
-      stopObsidianTremor(); 
-      if (currentLayout) {
-          currentLayout.stop();
-          currentLayout = null;
-      }
-
-      let layoutOptions = {};
-      
-      if (layoutName === 'cose') {
-        layoutOptions = {
-          name: 'cose', animate: true, animationDuration: 500, animationEasing: 'ease-out', stepSize: 1, 
-          fit: true, padding: 10, nodeRepulsion: 20000, idealEdgeLength: 150, edgeElasticity: 0.2, gravity: 0.05,
-        };
-        
-        const layout = cy.layout(layoutOptions);
-        layout.run();
-        setTimeout(startObsidianTremor, 500); 
-
-      } else if (layoutName === 'dagre') {
-        cy.nodes().unlock(); 
-        layoutOptions = { name: 'dagre', rankDir: 'TB', padding: 10, animate: true };
-        const layout = cy.layout(layoutOptions);
-        layout.run();
-        setTimeout(startObsidianTremor, 500);
-      }
+    function clearEdgeInputs() { edgeSrcInput.value = ''; edgeTgtInput.value = ''; document.getElementById('edgeLbl').value = ''; }
+    function swapEdgeInputs() { const temp = edgeSrcInput.value; edgeSrcInput.value = edgeTgtInput.value; edgeTgtInput.value = temp; }
+    function addEdge() {
+      const src = edgeSrcInput.value.trim(), tgt = edgeTgtInput.value.trim(), lbl = document.getElementById('edgeLbl').value.trim();
+      if (!src || !tgt) { alert('노드를 선택하세요!'); return; }
+      if (cy.getElementById(src).length === 0 || cy.getElementById(tgt).length === 0) { alert('노드가 없습니다!'); return; }
+      let classes = (lbl && (lbl.toUpperCase() === "TIMELINE" || lbl.toUpperCase() === "타임라인")) ? "timeline" : "";
+      cy.add({ data: { id: src + "_" + tgt + "_" + Date.now(), source: src, target: tgt, label: lbl || "", notes: "" }, classes: classes });
+      runLayout('cose'); document.getElementById('edgeLbl').value = '';
     }
 
     function addNode() {
       const id = document.getElementById('newNode').value.trim();
-      if (!id) { alert('노드 이름을 입력하세요!'); return; }
-      if (cy.getElementById(id).length > 0) { alert('이미 존재하는 노드입니다!'); return; }
+      if (!id) { alert('이름을 입력하세요!'); return; }
+      if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
       const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
       cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" } });
-      
-      runLayout('cose');
-
-      document.getElementById('newNode').value = '';
+      runLayout('cose'); document.getElementById('newNode').value = '';
     }
 
-    function addEdge() {
-      const src = document.getElementById('edgeSrc').value.trim(), 
-            tgt = document.getElementById('edgeTgt').value.trim(), 
-            lbl = document.getElementById('edgeLbl').value.trim();
-      
-      if (!src || !tgt) { alert('출발 노드와 도착 노드를 입력하세요!'); return; }
-      if (cy.getElementById(src).length === 0 || cy.getElementById(tgt).length === 0) { alert('존재하지 않는 노드입니다!'); return; }
-      
-      let classes = "";
-      if (lbl && (lbl.toUpperCase() === "TIMELINE" || lbl.toUpperCase() === "타임라인")) {
-          classes = "timeline";
-      }
-
-      cy.add({ 
-          data: { 
-              id: src + "_" + tgt + "_" + Date.now(), 
-              source: src, 
-              target: tgt, 
-              label: lbl || "",
-              notes: "" 
-          },
-          classes: classes 
-      });
-      
-      runLayout('cose');
-
-      document.getElementById('edgeSrc').value = ''; 
-      document.getElementById('edgeTgt').value = ''; 
-      document.getElementById('edgeLbl').value = '';
+    function startObsidianTremor() {
+      if (tremorInterval) return;
+      tremorInterval = setInterval(() => {
+        cy.nodes().forEach(node => {
+            if(node.selected()) return;
+            const degree = node.degree(); const tremorStrength = 5.0 / (1 + degree);
+            node.position({ x: node.position('x') + (Math.random()-0.5)*tremorStrength, y: node.position('y') + (Math.random()-0.5)*tremorStrength });
+        });
+      }, 50); 
     }
-
-    // ------------------- ▼ 메모/선택 기능 (이름 및 색상 수정 필드 연동) ▼ -------------------
-
-    cy.on('tap', 'node', function (evt) {
-      const node = evt.target;
-      selected = { type: 'node', id: node.id() };
-      
-      notesInfo.innerText = "노드: " + node.id();
-      labelInput.value = node.data('label') || '';
-      notesTextarea.value = node.data('notes') || '';
-      
-      labelInput.disabled = false;
-      notesTextarea.disabled = false;
-      
-      // 노드 전용 필드 표시 및 값 설정
-      colorControl.style.display = 'block';
-      colorInput.value = node.data('color') || '#667eea';
-    });
-
-    cy.on('tap', 'edge', function (evt) {
-      const edge = evt.target;
-      selected = { type: 'edge', id: edge.id() };
-      
-      notesInfo.innerText = "엣지: " + edge.data('source') + " → " + edge.data('target');
-      labelInput.value = edge.data('label') || '';
-      notesTextarea.value = edge.data('notes') || '';
-      
-      labelInput.disabled = false;
-      notesTextarea.disabled = false;
-      
-      // 엣지는 색상 수정 필드를 숨김
-      colorControl.style.display = 'none';
-    });
-    
-    // 빈 공간 클릭 시 선택 해제
-    cy.on('tap', function(evt){
-        if(evt.target === cy){
-            selected = null;
-            notesInfo.innerText = "노드/엣지를 선택하세요";
-            labelInput.value = '';
-            notesTextarea.value = '';
-            labelInput.disabled = true;
-            notesTextarea.disabled = true;
-            colorControl.style.display = 'none';
-        }
-    });
+    function stopObsidianTremor() { if (tremorInterval) { clearInterval(tremorInterval); tremorInterval = null; } }
+    function runLayout(layoutName) {
+      stopObsidianTremor(); if (currentLayout) { currentLayout.stop(); currentLayout = null; }
+      let opts = layoutName === 'cose' ? { name: 'cose', animate: true, animationDuration: 500, fit: true, padding: 10, nodeRepulsion: 20000, idealEdgeLength: 150, gravity: 0.05 } : { name: 'dagre', rankDir: 'TB', padding: 10, animate: true };
+      if(layoutName==='dagre') cy.nodes().unlock();
+      const layout = cy.layout(opts); layout.run(); setTimeout(startObsidianTremor, 500); 
+    }
 
     function saveNotes() {
-      if (!selected) { alert('노드 또는 엣지를 선택하세요!'); return; }
+      if (!selected) { alert('선택된 요소가 없습니다.'); return; }
       const element = cy.getElementById(selected.id);
+      if (element.length === 0) { alert('이미 삭제된 요소입니다.'); resetRightPanel(); return; }
       
       const newLabel = labelInput.value.trim();
-      const newNotes = notesTextarea.value;
-
-      if (!newLabel) {
-        alert('이름/라벨은 비워둘 수 없습니다.');
-        return;
-      }
-
-      // 1. 이름/라벨 저장
-      element.data('label', newLabel);
-      
-      // 2. 메모 저장
-      element.data('notes', newNotes);
-
-      // 3. 노드 전용: 색상 저장 및 적용
-      if (selected.type === 'node') {
-        const newColor = colorInput.value;
-        element.data('color', newColor);
-      }
-
-      // 4. 엣지 전용: 라벨에 따른 클래스(TIMELINE) 자동 업데이트
+      if (!newLabel) { alert('이름은 필수입니다.'); return; }
+      element.data('label', newLabel); element.data('notes', notesTextarea.value);
+      if (selected.type === 'node') element.data('color', colorInput.value);
       if (selected.type === 'edge') {
-        if (newLabel.toUpperCase() === "TIMELINE" || newLabel.toUpperCase() === "타임라인") {
-            element.addClass('timeline');
-        } else {
-            element.removeClass('timeline');
-        }
+        if (newLabel.toUpperCase() === "TIMELINE" || newLabel.toUpperCase() === "타임라인") element.addClass('timeline'); else element.removeClass('timeline');
       }
-
-      alert('속성 및 메모가 저장되었습니다!');
+      alert('저장되었습니다!');
     }
 
-    // ------------------- ▲ 메모/선택 기능 (이름 및 색상 수정 필드 연동) ▲ -------------------
-
-
-    function saveToLocalStorage() { localStorage.setItem("graphData", JSON.stringify(cy.json().elements)); alert('로컬 저장 완료!'); }
+    function saveToLocalStorage() { localStorage.setItem("graphData", JSON.stringify(cy.json().elements)); alert('저장 완료!'); }
     function loadFromLocalStorage() {
       const data = localStorage.getItem("graphData");
-      if (data) { cy.elements().remove(); cy.add(JSON.parse(data)); runLayout('cose'); alert('로컬 불러오기 완료!'); }
-      else alert('저장된 데이터가 없습니다!');
+      if (data) { cy.elements().remove(); cy.add(JSON.parse(data)); runLayout('cose'); alert('불러오기 완료!'); } else alert('데이터 없음');
     }
-
-    function saveToURL() {
-      const json = cy.json().elements;
-      const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(json));
-      window.location.hash = compressed;
-      alert('URL에 저장되었습니다!\n주소창의 URL을 복사하여 공유하세요.');
-    }
-
+    function saveToURL() { window.location.hash = LZString.compressToEncodedURIComponent(JSON.stringify(cy.json().elements)); alert('URL 저장 완료!'); }
     function downloadJSON() {
-      const json = cy.json().elements;
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json, null, 2));
-      const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", "graph_" + new Date().toISOString().slice(0, 10) + ".json");
-      document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      downloadAnchorNode.remove();
-      alert('JSON 파일 다운로드 완료!');
+      const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+      a.download = "graph_" + new Date().toISOString().slice(0, 10) + ".json"; document.body.appendChild(a); a.click(); a.remove();
     }
-
-    // ------------------- ▼ 요소 추출 공통 로직 (유지) ▼ -------------------
     function extractElementsFromJSON(data) {
         let elements = [];
-        
         if (data.graphData) {
             const gd = data.graphData;
-            if (gd.nodes || gd.edges) {
-                elements = [
-                    ...(Array.isArray(gd.nodes) ? gd.nodes : []),
-                    ...(Array.isArray(gd.edges) ? gd.edges : [])
-                ];
-            } 
-            else if (Array.isArray(gd.elements)) {
-                elements = gd.elements;
-            }
-            else if (gd.elements && (gd.elements.nodes || gd.elements.edges)) {
-                elements = [
-                    ...(Array.isArray(gd.elements.nodes) ? gd.elements.nodes : []),
-                    ...(Array.isArray(gd.elements.edges) ? gd.elements.edges : [])
-                ];
-            }
+            if (gd.nodes || gd.edges) elements = [...(gd.nodes||[]), ...(gd.edges||[])];
+            else if (gd.elements) elements = gd.elements;
         }
-        
         if (elements.length === 0) {
-            if (Array.isArray(data)) {
-                elements = data;
-            } else if (data.nodes || data.edges) {
-                elements = [
-                    ...(Array.isArray(data.nodes) ? data.nodes : []),
-                    ...(Array.isArray(data.edges) ? data.edges : [])
-                ];
-            } else if (data.elements) {
-                if (Array.isArray(data.elements)) {
-                    elements = data.elements;
-                } else if (data.elements.nodes || data.elements.edges) {
-                    elements = [
-                        ...(Array.isArray(data.elements.nodes) ? data.elements.nodes : []),
-                        ...(Array.isArray(data.elements.edges) ? data.elements.edges : [])
-                    ];
-                }
-            }
+            if (Array.isArray(data)) elements = data;
+            else if (data.nodes || data.edges) elements = [...(data.nodes||[]), ...(data.edges||[])];
+            else if (data.elements) elements = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
         }
         return elements;
     }
-    // ------------------- ▲ 요소 추출 공통 로직 (유지) ▲ -------------------
-
-
     function uploadJSON(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          try {
-            const data = JSON.parse(e.target.result);
-            const elementsToAdd = extractElementsFromJSON(data); 
-
-            if (elementsToAdd.length === 0) {
-                alert('JSON 파일에 유효한 노드 또는 엣지 데이터가 없어 그래프를 불러올 수 없습니다.');
-                return;
-            }
-
-            cy.elements().remove();
-            cy.add(elementsToAdd); 
-            runLayout('cose');
-            alert('JSON 파일 불러오기 완료!');
-          } catch (err) { alert('JSON 파일 형식 오류: ' + err.message); }
-        };
-        reader.readAsText(file);
-      }
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader(); reader.onload = function (e) { try { const els = extractElementsFromJSON(JSON.parse(e.target.result)); if(els.length){ cy.elements().remove(); cy.add(els); runLayout('cose'); alert('성공!'); } else alert('데이터 없음'); } catch (err) { alert('오류: ' + err.message); } }; reader.readAsText(file);
     }
-    
     function appendJSON(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    const elementsToAdd = extractElementsFromJSON(data);
-                    
-                    if (elementsToAdd.length === 0) {
-                        alert('JSON 파일에 추가할 유효한 노드 또는 엣지 데이터가 없습니다.');
-                        return;
-                    }
-                    
-                    const suffix = "_COPY_" + Date.now(); 
-                    const idMap = {}; 
-                    const newElements = [];
-                    let addedNodeCount = 0;
-                    let addedEdgeCount = 0;
-                    const offset = 500; 
-
-                    elementsToAdd.forEach(el => {
-                        const isNode = el.data && el.data.id && !el.data.source && !el.data.target; 
-                        
-                        if (isNode) {
-                            const oldId = el.data.id;
-                            const newId = oldId + suffix;
-                            
-                            if (cy.getElementById(newId).length > 0) return; 
-
-                            const newEl = JSON.parse(JSON.stringify(el)); 
-                            newEl.data.id = newId;
-                            
-                            if (newEl.position) {
-                                newEl.position = { x: newEl.position.x + offset, y: newEl.position.y + offset };
-                            } else {
-                                newEl.position = { x: cy.width() / 2 + offset, y: cy.height() / 2 + offset };
-                            }
-                            
-                            idMap[oldId] = newId; 
-                            newElements.push(newEl);
-                            addedNodeCount++;
-                        }
-                    });
-                    
-                    elementsToAdd.forEach(el => {
-                        const isEdge = el.data && el.data.source && el.data.target;
-                        
-                        if (isEdge) {
-                            const oldSource = el.data.source;
-                            const oldTarget = el.data.target;
-                            
-                            if (idMap[oldSource] && idMap[oldTarget]) {
-                                const newEl = JSON.parse(JSON.stringify(el)); 
-                                
-                                newEl.data.id = (newEl.data.id || (oldSource + "_" + oldTarget + "_EDGE")) + suffix; 
-                                newEl.data.source = idMap[oldSource]; 
-                                newEl.data.target = idMap[oldTarget]; 
-                                
-                                newElements.push(newEl);
-                                addedEdgeCount++;
-                            }
-                        }
-                    });
-
-
-                    if (newElements.length > 0) {
-                        cy.add(newElements);
-                        runLayout('cose');
-                        alert(`JSON 파일 추가 불러오기 완료! (${addedNodeCount}개 노드, ${addedEdgeCount}개 엣지 복제본 추가)`);
-                    } else if (addedNodeCount === 0 && addedEdgeCount === 0) {
-                        alert('JSON 파일에 추가할 유효한 노드 또는 엣지 데이터가 없습니다.');
-                    }
-                    
-                } catch (err) {
-                    alert('JSON 파일 형식 오류: ' + err.message);
-                }
-            };
-            reader.readAsText(file);
-        }
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader(); reader.onload = function (e) {
+            try {
+                const els = extractElementsFromJSON(JSON.parse(e.target.result)); if (!els.length) { alert('데이터 없음'); return; }
+                const suffix = "_COPY_" + Date.now(), idMap = {}, newEls = [], offset = 500;
+                els.forEach(el => { if (el.data && el.data.id && !el.data.source) { const old = el.data.id, nid = old + suffix; if (cy.getElementById(nid).length) return; const n = JSON.parse(JSON.stringify(el)); n.data.id = nid; n.position = n.position ? {x:n.position.x+offset,y:n.position.y+offset} : {x:cy.width()/2+offset,y:cy.height()/2+offset}; idMap[old] = nid; newEls.push(n); } });
+                els.forEach(el => { if (el.data && el.data.source) { if (idMap[el.data.source] && idMap[el.data.target]) { const n = JSON.parse(JSON.stringify(el)); n.data.id = (n.data.id||"EDGE")+suffix; n.data.source = idMap[el.data.source]; n.data.target = idMap[el.data.target]; newEls.push(n); } } });
+                if(newEls.length){ cy.add(newEls); runLayout('cose'); alert('추가 완료!'); }
+            } catch (err) { alert('오류: ' + err.message); }
+        }; reader.readAsText(file);
     }
+
+    function loadVoices() {
+      const vs = speechSynthesis.getVoices(), sel = document.getElementById('voiceSelect'); sel.innerHTML = '';
+      const ko = vs.filter(v => v.lang.startsWith('ko'));
+      if (ko.length) ko.forEach(v => sel.add(new Option(v.name, v.name))); else sel.add(new Option("기본 한국어", "default"));
+    }
+    if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
+    function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
+    function readNotes() {
+      const text = notesTextarea.value.trim(); if (!text) return; stopReading();
+      currentUtterance = new SpeechSynthesisUtterance(text.replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' '));
+      const v = speechSynthesis.getVoices().find(v => v.name === document.getElementById('voiceSelect').value);
+      if (v) currentUtterance.voice = v; currentUtterance.rate = parseFloat(document.getElementById('speedControl').value);
+      speechSynthesis.speak(currentUtterance);
+    }
+    function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); }
   </script>
 </body>
-
 </html>
