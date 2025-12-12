@@ -4,8 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>세계관 그래프 편집기 with TTS</title>
+  <title>세계관 그래프 편집기</title>
   <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
   <style>
     * {
@@ -29,9 +31,15 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
+    /* ------------------- ▼ 인터페이스 글씨 검은 테두리 유지/추가 ▼ ------------------- */
     header h1 {
       font-size: 1.5em;
       margin-bottom: 5px;
+      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+    }
+
+    header p {
+      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
     }
 
     .main-container {
@@ -86,9 +94,11 @@
       color: #667eea;
       border-bottom: 2px solid #667eea;
       padding-bottom: 5px;
+      text-shadow: 0.5px 0.5px 0 #000;
     }
 
     input[type="text"],
+    input[type="number"],
     select {
       width: 100%;
       padding: 8px;
@@ -106,13 +116,18 @@
       border-radius: 4px;
       font-size: 0.9em;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.1s;
       font-weight: bold;
+      color: white; /* 모든 버튼의 텍스트 색상을 흰색으로 기본 설정 (배경색은 아래 클래스에서 설정) */
+    }
+
+    /* 흰색 글씨를 사용하는 모든 버튼에 검은색 테두리 추가 */
+    .btn-primary, .btn-success, .btn-info {
+        text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
     }
 
     .btn-primary {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
     }
 
     .btn-primary:hover {
@@ -122,17 +137,19 @@
 
     .btn-success {
       background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-      color: white;
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
-      color: white;
     }
 
     .btn-info {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      color: white;
+    }
+    /* ------------------- ▲ 인터페이스 버튼 텍스트 검은 테두리 추가 완료 ▲ ------------------- */
+
+
+    /* [핵심] 옵시디언 스타일 버튼 탄력 효과 */
+    button:active {
+      transform: scale(0.98);
+      box-shadow: none !important;
+      transition: transform 0s;
     }
 
     textarea {
@@ -207,6 +224,7 @@
       border-radius: 4px;
       font-size: 0.85em;
       margin-bottom: 10px;
+      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
     }
 
     .help-text {
@@ -222,8 +240,8 @@
 
 <body>
   <header>
-    <h1>🌐 세계관 그래프 편집기 with TTS</h1>
-    <p>웹소설 세계관을 시각화하고 메모를 음성으로 들어보세요</p>
+    <h1>🌐 세계관 그래프 편집기</h1>
+    <p>차수에 따라 움직임 강도가 동적으로 조절되는 버전 (강도 매우 높음)</p>
   </header>
 
   <div class="main-container">
@@ -256,28 +274,18 @@
       </div>
 
       <div class="panel-section">
-        <h3>� 레이아웃 정렬</h3>
+        <h3>✨ 레이아웃 정렬</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-          <button class="btn-info" onclick="runLayout('concentric')">◎ 방사형</button>
-          <button class="btn-info" onclick="runLayout('grid')">▦ 격자형</button>
-          <button class="btn-info" onclick="runLayout('circle')">⭕ 원형</button>
-          <button class="btn-info" onclick="runLayout('cose')">💫 기본</button>
+          <button class="btn-info" onclick="runLayout('cose')">💫 기본 (물리 레이아웃)</button>
+          <button class="btn-info" onclick="runLayout('dagre')">🌲 트리형</button>
         </div>
-      </div>
-
-      <div class="panel-section">
-        <h3>�📝 선택 항목</h3>
-        <div class="info-badge" id="selectionLabel">선택 없음</div>
-        <textarea id="yamlEdit" placeholder="노드/엣지 선택 시 데이터 표시"></textarea>
-        <button class="btn-success" onclick="saveSelected()">저장</button>
-        <button class="btn-danger" onclick="deleteSelected()">삭제</button>
       </div>
     </div>
 
     <div class="graph-area">
       <div id="cy"></div>
     </div>
-
+    
     <div class="right-panel">
       <div class="panel-section notes-area">
         <h3>📝 메모장</h3>
@@ -312,7 +320,7 @@
       { data: { id: "주인공", label: "주인공", color: "#667eea", notes: "" } },
       { data: { id: "아린", label: "아린", color: "#f093fb", notes: "" } },
       { data: { id: "ev1", label: "시작 이벤트", color: "#4facfe", notes: "" } },
-      { data: { id: "주인공_아린", source: "주인공", target: "아린", label: "친구", notes: "" } }
+      { data: { id: "주인공_아린", source: "주인공", target: "아린", label: "친구", notes: "" } } 
     ];
 
     let cy = cytoscape({
@@ -351,10 +359,18 @@
           }
         }
       ],
-      layout: { name: 'cose', animate: true }
+      layout: { name: 'cose', animate: true },
+      boxSelectionEnabled: false // 범위 선택 비활성화
     });
 
-    let selected = null, speechSynthesis = window.speechSynthesis, currentUtterance = null, edgeCreationMode = false, edgeSourceNode = null, nodeCounter = 1;
+    let selected = null, 
+        speechSynthesis = window.speechSynthesis, 
+        currentUtterance = null, 
+        edgeCreationMode = false, 
+        edgeSourceNode = null;
+        
+    let tremorInterval = null; 
+    let currentLayout = null; 
 
     window.addEventListener('load', function () {
       const hash = window.location.hash.substring(1);
@@ -364,24 +380,32 @@
           const data = JSON.parse(decompressed);
           cy.elements().remove();
           cy.add(data);
-          cy.layout({ name: 'cose', animate: true }).run();
+          // 데이터 로드 후 레이아웃 실행
+          runLayout('cose');
         } catch (e) { console.error('URL 데이터 로드 실패:', e); }
+      } else {
+          // 초기 데이터로 레이아웃 실행
+          runLayout('cose');
       }
     });
 
     cy.on('dbltap', function (evt) {
       if (evt.target === cy) {
-        const pos = evt.position, nodeName = prompt("새 노드 이름을 입력하세요:", "노드" + nodeCounter);
+        const pos = evt.position, nodeName = prompt("새 노드 이름을 입력하세요:", "새 노드");
         if (nodeName && nodeName.trim()) {
           const id = nodeName.trim();
           if (cy.getElementById(id).length > 0) { alert("이미 존재하는 노드 이름입니다!"); return; }
           const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
           cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" }, position: { x: pos.x, y: pos.y } });
-          nodeCounter++;
+          
+          // 새 노드가 추가되면 움직임 강도 업데이트를 위해 잠시 멈췄다 재시작
+          stopObsidianTremor();
+          startObsidianTremor();
         }
       }
     });
 
+    // ------------------- ▼ Ctrl+드래그 관계 연결 기능 유지 ▼ -------------------
     cy.on('mousedown', 'node', function (evt) {
       if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey) {
         edgeCreationMode = true; edgeSourceNode = evt.target;
@@ -393,45 +417,86 @@
     cy.on('mouseup', 'node', function (evt) {
       if (edgeCreationMode && evt.target.id() !== edgeSourceNode.id()) {
         const label = prompt("관계 라벨을 입력하세요:", "관계");
-        if (label !== null) cy.add({ data: { id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), source: edgeSourceNode.id(), target: evt.target.id(), label: label || "", notes: "" } });
+        if (label !== null) {
+          cy.add({ data: { 
+            id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), 
+            source: edgeSourceNode.id(), 
+            target: evt.target.id(), 
+            label: label || "",
+            notes: "" 
+          } });
+          
+          // 엣지 추가 후 움직임 강도 업데이트를 위해 잠시 멈췄다 재시작
+          stopObsidianTremor();
+          startObsidianTremor();
+        }
         edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null;
       }
     });
     cy.on('mouseup', function (evt) { if (edgeCreationMode && evt.target === cy) { if (edgeSourceNode) edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null; } });
+    // ------------------- ▲ Ctrl+드래그 관계 연결 기능 유지 ▲ -------------------
 
-    // ------------------- ▼ TTS 함수 수정 시작 ▼ -------------------
 
+    // ------------------- ▼ 옵시디언 트레머(Tremor) 함수 (강도 동적 조정) ▼ -------------------
+    
+    function startObsidianTremor() {
+      if (tremorInterval) return;
+      
+      const BASE_MAX_TREMOR_STRENGTH = 5.0; 
+      
+      tremorInterval = setInterval(() => {
+        cy.nodes().forEach(node => {
+          // 1. 노드의 연결된 엣지(차수) 개수를 가져옵니다.
+          const degree = node.degree(); 
+          
+          // 2. 차수에 따라 떨림 강도를 계산합니다. (차수가 높을수록 강도는 낮아져 덜 움직입니다)
+          const tremorStrength = BASE_MAX_TREMOR_STRENGTH / (1 + degree);
+          
+          // 3. 계산된 강도를 적용하여 노드의 위치를 미세하게 이동시킵니다.
+          const dx = (Math.random() - 0.5) * tremorStrength; 
+          const dy = (Math.random() - 0.5) * tremorStrength; 
+          
+          node.position({
+            x: node.position('x') + dx,
+            y: node.position('y') + dy
+          });
+        });
+      }, 50); 
+    }
+
+    function stopObsidianTremor() {
+      if (tremorInterval) {
+        clearInterval(tremorInterval);
+        tremorInterval = null;
+      }
+    }
+
+    // ------------------- ▲ 옵시디언 트레머(Tremor) 함수 (강도 동적 조정) ▲ -------------------
+
+
+    // ------------------- ▼ TTS 함수 (유지) ▼ -------------------
     function loadVoices() {
       const voices = speechSynthesis.getVoices();
       const voiceSelect = document.getElementById('voiceSelect');
-
-      // 기존 옵션 제거
       voiceSelect.innerHTML = '';
-
-      // 한국어 음성만 필터링 (lang이 'ko'로 시작하는 모든 음성)
       const koVoices = voices.filter(v => v.lang.startsWith('ko'));
-
       if (koVoices.length > 0) {
         koVoices.forEach((voice) => {
           const option = document.createElement('option');
-          // option.value에 voice.name을 저장하여 고유하게 구분
           option.value = voice.name;
           option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' (기본)' : ''}`;
           voiceSelect.appendChild(option);
         });
       } else {
-        // 한국어 음성이 없을 경우 기본 옵션 추가
         const option = document.createElement('option');
         option.value = "default";
         option.textContent = "한국어 음성 없음 (시스템 기본)";
-        voiceSelect.appendChild(option);
+          voiceSelect.appendChild(option);
       }
     }
-
     if (speechSynthesis.onvoiceschanged !== undefined) {
       speechSynthesis.onvoiceschanged = loadVoices;
     }
-    // 페이지 로드 시 즉시 호출하여 목록 채우기
     loadVoices();
 
     function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
@@ -456,15 +521,12 @@
 
       const voices = speechSynthesis.getVoices();
       const selectedVoiceName = document.getElementById('voiceSelect').value;
-
-      // 선택된 음성 이름과 일치하는 Voice 객체를 찾아 적용
       const selectedVoice = voices.find(v => v.name === selectedVoiceName);
 
       if (selectedVoice) {
         currentUtterance.voice = selectedVoice;
-        currentUtterance.lang = selectedVoice.lang; // 선택된 음성의 언어 설정
+        currentUtterance.lang = selectedVoice.lang;
       } else {
-        // 선택된 음성을 찾지 못하면 기본값 사용
         currentUtterance.lang = 'ko-KR';
       }
 
@@ -476,11 +538,57 @@
     }
 
     function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); currentUtterance = null; }
+    // ------------------- ▲ TTS 함수 (유지) ▲ -------------------
 
-    // ------------------- ▲ TTS 함수 수정 끝 ▲ -------------------
 
     function runLayout(layoutName) {
-      cy.layout({ name: layoutName, animate: true }).run();
+      // 1. 동적 움직임 잠시 중지 (레이아웃 애니메이션과 충돌 방지)
+      stopObsidianTremor(); 
+      if (currentLayout) {
+          currentLayout.stop();
+          currentLayout = null;
+      }
+
+      let layoutOptions = {};
+      
+      if (layoutName === 'cose') {
+        layoutOptions = {
+          name: 'cose',
+          animate: true,
+          animationDuration: 500, 
+          animationEasing: 'ease-out',
+          stepSize: 1, 
+          
+          fit: true,
+          padding: 10,
+          
+          nodeRepulsion: 20000, 
+          idealEdgeLength: 150, 
+          edgeElasticity: 0.2,   
+          gravity: 0.05,
+        };
+        
+        const layout = cy.layout(layoutOptions);
+        layout.run();
+        
+        // 2. 레이아웃이 끝난 후, 동적 움직임 효과 시작
+        setTimeout(startObsidianTremor, 500); 
+
+      } else if (layoutName === 'dagre') {
+        cy.nodes().unlock(); 
+        
+        layoutOptions = {
+          name: 'dagre',
+          rankDir: 'TB', 
+          padding: 10,
+          animate: true
+        };
+        const layout = cy.layout(layoutOptions);
+        layout.run();
+        
+        // 2. 레이아웃이 끝난 후, 동적 움직임 효과 시작 (트리형에도 적용)
+        setTimeout(startObsidianTremor, 500);
+      }
     }
 
     function addNode() {
@@ -489,22 +597,64 @@
       if (cy.getElementById(id).length > 0) { alert('이미 존재하는 노드입니다!'); return; }
       const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
       cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" } });
-      cy.layout({ name: 'cose', animate: true }).run();
+      
+      runLayout('cose');
+
       document.getElementById('newNode').value = '';
     }
 
     function addEdge() {
-      const src = document.getElementById('edgeSrc').value.trim(), tgt = document.getElementById('edgeTgt').value.trim(), lbl = document.getElementById('edgeLbl').value.trim();
+      const src = document.getElementById('edgeSrc').value.trim(), 
+            tgt = document.getElementById('edgeTgt').value.trim(), 
+            lbl = document.getElementById('edgeLbl').value.trim();
+      
       if (!src || !tgt) { alert('출발 노드와 도착 노드를 입력하세요!'); return; }
       if (cy.getElementById(src).length === 0 || cy.getElementById(tgt).length === 0) { alert('존재하지 않는 노드입니다!'); return; }
-      cy.add({ data: { id: src + "_" + tgt + "_" + Date.now(), source: src, target: tgt, label: lbl || "", notes: "" } });
-      document.getElementById('edgeSrc').value = ''; document.getElementById('edgeTgt').value = ''; document.getElementById('edgeLbl').value = '';
+      
+      cy.add({ data: { 
+          id: src + "_" + tgt + "_" + Date.now(), 
+          source: src, 
+          target: tgt, 
+          label: lbl || "",
+          notes: "" 
+      } });
+      
+      runLayout('cose');
+
+      document.getElementById('edgeSrc').value = ''; 
+      document.getElementById('edgeTgt').value = ''; 
+      document.getElementById('edgeLbl').value = '';
     }
+
+    // ------------------- ▼ 메모/선택 기능 (유지) ▼ -------------------
+
+    cy.on('tap', 'node', function (evt) {
+      const node = evt.target;
+      selected = { type: 'node', id: node.id() };
+      document.getElementById('notesInfo').innerText = "노드: " + node.id();
+      document.getElementById('notesTextarea').value = node.data('notes') || '';
+    });
+
+    cy.on('tap', 'edge', function (evt) {
+      const edge = evt.target;
+      selected = { type: 'edge', id: edge.id() };
+      document.getElementById('notesInfo').innerText = "엣지: " + edge.data('source') + " → " + edge.data('target');
+      document.getElementById('notesTextarea').value = edge.data('notes') || '';
+    });
+    
+    function saveNotes() {
+      if (!selected) { alert('노드 또는 엣지를 선택하세요!'); return; }
+      const notesText = document.getElementById('notesTextarea').value;
+      cy.getElementById(selected.id).data('notes', notesText);
+      alert('메모가 저장되었습니다!');
+    }
+
+    // ------------------- ▲ 메모/선택 기능 (유지) ▲ -------------------
 
     function saveToLocalStorage() { localStorage.setItem("graphData", JSON.stringify(cy.json().elements)); alert('로컬 저장 완료!'); }
     function loadFromLocalStorage() {
       const data = localStorage.getItem("graphData");
-      if (data) { cy.elements().remove(); cy.add(JSON.parse(data)); cy.layout({ name: 'cose', animate: true }).run(); alert('로컬 불러오기 완료!'); }
+      if (data) { cy.elements().remove(); cy.add(JSON.parse(data)); runLayout('cose'); alert('로컬 불러오기 완료!'); }
       else alert('저장된 데이터가 없습니다!');
     }
 
@@ -536,59 +686,12 @@
             const data = JSON.parse(e.target.result);
             cy.elements().remove();
             cy.add(data);
-            cy.layout({ name: 'cose', animate: true }).run();
+            runLayout('cose');
             alert('JSON 파일 불러오기 완료!');
           } catch (err) { alert('JSON 파일 형식 오류: ' + err.message); }
         };
         reader.readAsText(file);
       }
-    }
-
-    cy.on('tap', 'node', function (evt) {
-      const node = evt.target;
-      selected = { type: 'node', id: node.id() };
-      document.getElementById('selectionLabel').innerText = "노드: " + node.id();
-      document.getElementById('yamlEdit').value = JSON.stringify(node.data(), null, 2);
-      document.getElementById('notesInfo').innerText = "노드: " + node.id();
-      document.getElementById('notesTextarea').value = node.data('notes') || '';
-    });
-
-    cy.on('tap', 'edge', function (evt) {
-      const edge = evt.target;
-      selected = { type: 'edge', id: edge.id() };
-      document.getElementById('selectionLabel').innerText = "엣지: " + edge.data('source') + " → " + edge.data('target');
-      document.getElementById('yamlEdit').value = JSON.stringify(edge.data(), null, 2);
-      document.getElementById('notesInfo').innerText = "엣지: " + edge.data('source') + " → " + edge.data('target');
-      document.getElementById('notesTextarea').value = edge.data('notes') || '';
-    });
-
-    function saveSelected() {
-      if (!selected) { alert('선택된 항목이 없습니다!'); return; }
-      try {
-        const obj = JSON.parse(document.getElementById('yamlEdit').value);
-        cy.getElementById(selected.id).data(obj);
-        alert('저장되었습니다!');
-      } catch (e) { alert('JSON 형식 오류: ' + e.message); }
-    }
-
-    function deleteSelected() {
-      if (!selected) { alert('선택된 항목이 없습니다!'); return; }
-      if (confirm('정말 삭제하시겠습니까?')) {
-        cy.getElementById(selected.id).remove();
-        selected = null;
-        document.getElementById('selectionLabel').innerText = '선택 없음';
-        document.getElementById('yamlEdit').value = '';
-        document.getElementById('notesInfo').innerText = '노드/엣지를 선택하세요';
-        document.getElementById('notesTextarea').value = '';
-      }
-    }
-
-    function saveNotes() {
-      if (!selected) { alert('노드 또는 엣지를 선택하세요!'); return; }
-      const notesText = document.getElementById('notesTextarea').value;
-      cy.getElementById(selected.id).data('notes', notesText);
-      document.getElementById('yamlEdit').value = JSON.stringify(cy.getElementById(selected.id).data(), null, 2);
-      alert('메모가 저장되었습니다!');
     }
   </script>
 </body>
