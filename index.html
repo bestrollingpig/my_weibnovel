@@ -256,7 +256,17 @@
       </div>
 
       <div class="panel-section">
-        <h3>📝 선택 항목</h3>
+        <h3>� 레이아웃 정렬</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+          <button class="btn-info" onclick="runLayout('concentric')">◎ 방사형</button>
+          <button class="btn-info" onclick="runLayout('grid')">▦ 격자형</button>
+          <button class="btn-info" onclick="runLayout('circle')">⭕ 원형</button>
+          <button class="btn-info" onclick="runLayout('cose')">💫 기본</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3>�📝 선택 항목</h3>
         <div class="info-badge" id="selectionLabel">선택 없음</div>
         <textarea id="yamlEdit" placeholder="노드/엣지 선택 시 데이터 표시"></textarea>
         <button class="btn-success" onclick="saveSelected()">저장</button>
@@ -324,7 +334,9 @@
             'text-halign': 'center',
             'color': '#fff',
             'font-weight': 'bold',
-            'font-size': 14
+            'font-size': 14,
+            'text-outline-width': 2,
+            'text-outline-color': '#000'
           }
         },
         {
@@ -388,22 +400,22 @@
     cy.on('mouseup', function (evt) { if (edgeCreationMode && evt.target === cy) { if (edgeSourceNode) edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null; } });
 
     // ------------------- ▼ TTS 함수 수정 시작 ▼ -------------------
-    
+
     function loadVoices() {
       const voices = speechSynthesis.getVoices();
       const voiceSelect = document.getElementById('voiceSelect');
-      
+
       // 기존 옵션 제거
       voiceSelect.innerHTML = '';
-      
+
       // 한국어 음성만 필터링 (lang이 'ko'로 시작하는 모든 음성)
       const koVoices = voices.filter(v => v.lang.startsWith('ko'));
-      
+
       if (koVoices.length > 0) {
         koVoices.forEach((voice) => {
           const option = document.createElement('option');
           // option.value에 voice.name을 저장하여 고유하게 구분
-          option.value = voice.name; 
+          option.value = voice.name;
           option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' (기본)' : ''}`;
           voiceSelect.appendChild(option);
         });
@@ -417,11 +429,11 @@
     }
 
     if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = loadVoices;
+      speechSynthesis.onvoiceschanged = loadVoices;
     }
     // 페이지 로드 시 즉시 호출하여 목록 채우기
     loadVoices();
-    
+
     function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
 
     function cleanTextForTTS(text) {
@@ -438,13 +450,13 @@
       const text = document.getElementById('notesTextarea').value.trim();
       if (!text) { alert('읽을 메모가 없습니다!'); return; }
       stopReading();
-      
+
       const cleanedText = cleanTextForTTS(text);
       currentUtterance = new SpeechSynthesisUtterance(cleanedText);
-      
+
       const voices = speechSynthesis.getVoices();
       const selectedVoiceName = document.getElementById('voiceSelect').value;
-      
+
       // 선택된 음성 이름과 일치하는 Voice 객체를 찾아 적용
       const selectedVoice = voices.find(v => v.name === selectedVoiceName);
 
@@ -453,19 +465,23 @@
         currentUtterance.lang = selectedVoice.lang; // 선택된 음성의 언어 설정
       } else {
         // 선택된 음성을 찾지 못하면 기본값 사용
-        currentUtterance.lang = 'ko-KR'; 
+        currentUtterance.lang = 'ko-KR';
       }
-      
-      currentUtterance.rate = parseFloat(document.getElementById('speedControl').value); 
-      currentUtterance.pitch = 1.0; 
+
+      currentUtterance.rate = parseFloat(document.getElementById('speedControl').value);
+      currentUtterance.pitch = 1.0;
       currentUtterance.volume = 1.0;
-      
+
       speechSynthesis.speak(currentUtterance);
     }
-    
+
     function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); currentUtterance = null; }
-    
+
     // ------------------- ▲ TTS 함수 수정 끝 ▲ -------------------
+
+    function runLayout(layoutName) {
+      cy.layout({ name: layoutName, animate: true }).run();
+    }
 
     function addNode() {
       const id = document.getElementById('newNode').value.trim();
