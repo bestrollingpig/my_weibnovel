@@ -136,15 +136,19 @@
         <button class="btn-primary" onclick="document.getElementById('appendFileInput').click()">➕ JSON 추가 업로드</button>
         
         <textarea id="geminiPromptTemplate" style="height:1px; opacity:0; resize:none; position:absolute; left:-9999px;">
-다음 텍스트를 분석하여 등장인물(노드)과 관계(엣지)를 추출하고, Cytoscape 라이브러리 형식에 맞는 JSON 구조로 응답해줘.
+		**주의: 이 요청에 대해 JSON 코드 블록 외의 어떠한 설명, 인사말, 추가 텍스트도 절대 출력하지 마세요. 오직 JSON 코드 블록만 출력해야 합니다.**
 
-### 분석할 텍스트 ###
-(여기에 사용자가 분석할 스토리를 붙여넣으세요.)
-예시: '철수는 영희의 친구이며, 민수는 철수의 동료이다. 혜교는 아린의 스승이다.'
+			당신은 텍스트를 분석하여 관계형 데이터(노드와 엣지)를 Cytoscape.js 라이브러리에 적합한 JSON 형식으로 변환하는 전문 분석가입니다.
 
-### 출력 형식 (JSON Only) ###
-{
-  "elements": [
+			다음 텍스트를 분석하여 등장인물(노드)과 관계(엣지)를 추출하고, 요청된 형식에 맞춰 **JSON 코드 블록**으로 응답해 주세요.
+
+		### 분석할 텍스트 (여기에 사용자가 분석할 스토리를 붙여넣으세요.) ###
+		예시: '철수는 영희의 친구이며, 민수는 철수의 동료이다. 혜교는 아린의 스승이다.'
+
+		### 출력 형식 (JSON Only) ###
+		```json
+		{
+	"elements": [
     {"data": {"id": "철수", "label": "철수", "color": "#667eea"}},
     {"data": {"id": "영희", "label": "영희", "color": "#f093fb"}},
     {"data": {"id": "민수", "label": "민수", "color": "#4facfe"}},
