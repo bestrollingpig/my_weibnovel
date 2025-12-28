@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프 편집기 (Complete Ver)</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Malgun Gothic', sans-serif; background: #f0f0f0; height: 100vh; display: flex; flex-direction: column; }
+    
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; padding: 15px 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    header h1 { font-size: 1.5em; margin-bottom: 5px; text-shadow: 1px 1px 0 #000; }
+
+    .main-container { display: flex; flex: 1; overflow: hidden; }
+    .left-panel { width: 25%; background: white; padding: 15px; overflow-y: auto; border-right: 2px solid #ddd; }
+    .graph-area { width: 50%; padding: 15px; display: flex; flex-direction: column; }
+    .right-panel { width: 25%; background: white; padding: 15px; overflow-y: auto; border-left: 2px solid #ddd; display: flex; flex-direction: column; }
+
+    #cy { flex: 1; border: 2px solid #ddd; border-radius: 8px; background: #fafafa; }
+
+    .panel-section { margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0; }
+    .panel-section h3 { font-size: 1em; margin-bottom: 10px; color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 5px; }
+
+    input[type="text"], input[type="number"], select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; }
+    input[readonly] { background-color: #e9ecef; color: #495057; cursor: not-allowed; }
+
+    button {
+      width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 4px; font-size: 0.9em;
+      cursor: pointer; transition: all 0.1s; font-weight: bold; color: white; text-shadow: 1px 1px 0 #000;
+    }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .btn-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .btn-danger { background: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%); }
+    .btn-warning { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: white; }
+    button:active { transform: scale(0.98); }
+
+    textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Malgun Gothic', monospace; font-size: 0.9em; resize: vertical; min-height: 150px; }
+    .notes-area { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .notes-textarea { flex: 1; min-height: 200px; line-height: 1.6; }
+
+    .tts-controls { padding: 10px; background: #f0f7ff; border-radius: 6px; border: 1px solid #d0e7ff; }
+    .speed-control { display: flex; align-items: center; gap: 10px; }
+    .speed-control input[type="range"] { flex: 1; }
+    .tts-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+
+    .info-badge { display: inline-block; padding: 6px 12px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px; text-shadow: 1px 1px 0 #000; }
+    .help-text { font-size: 0.8em; color: #888; margin-top: 5px; padding: 8px; background: #f9f9f9; border-radius: 4px; }
+    
+    .connection-tools { display: flex; gap: 5px; margin-bottom: 5px; }
+    .connection-tools button { padding: 5px; font-size: 0.8em; margin: 0; }
+    
+    .drag-mode-active { background: #ff0055 !important; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
+
+    /* === NEW STYLES for Gemini Shortcut and Help Text === */
+    .btn-gemini {
+        background-color: #5555ff; /* Gemini를 상징하는 파란색 계열 */
+        color: white; 
+        padding: 10px; 
+        border: none; 
+        border-radius: 4px; 
+        cursor: pointer; 
+        width: 100%; 
+        margin-top: 10px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+        text-shadow: 1px 1px 0 #000; /* 기존 버튼 스타일과 통일 */
+    }
+
+    .btn-gemini:hover {
+        background-color: #4444cc;
+    }
+
+    .help-text-api {
+        font-size: 0.85em; 
+        color: #333; 
+        margin-top: 8px;
+        padding: 8px;
+        border: 1px dashed #5555ff; /* Gemini 색상에 맞춘 점선 테두리 */
+        border-radius: 4px;
+        background: #e6e6ff; /* 연한 배경색 */
+        margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌐 세계관 그래프 편집기 (수정/삭제 가능)</h1>
+    <p>클릭 연결 + 드래그 연결 + 선택 삭제 기능 통합 버전</p>
+  </header>
+
+  <div class="main-container">
+    <div class="left-panel">
+      <div class="panel-section">
+        <h3>➕ 노드 추가</h3>
+        <input type="text" id="newNode" placeholder="노드 이름 (예: 철수)">
+        <button class="btn-primary" onclick="addNode()">노드 추가</button>
+        <div class="help-text">💡 빈 공간 더블클릭으로도 추가 가능</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>🔗 쉬운 관계 연결</h3>
+        <button id="btnDragMode" class="btn-warning" onclick="toggleDragMode()">🖱️ 드래그 연결 모드 (켜기/끄기)</button>
+        <div class="help-text" style="margin-bottom:10px;">👆 켜면 노드를 드래그해서 바로 연결됩니다!</div>
+        <div style="border-top: 1px dashed #ccc; margin: 10px 0;"></div>
+        
+        <div class="connection-tools">
+            <button class="btn-info" onclick="clearEdgeInputs()" title="입력 초기화">🔄 초기화</button>
+            <button class="btn-info" onclick="swapEdgeInputs()" title="출발/도착 바꾸기">↔️ 교체</button>
+        </div>
+        <input type="text" id="edgeSrc" placeholder="1. 출발 노드 클릭" readonly style="background-color: #e3f2fd; cursor: pointer;">
+        <input type="text" id="edgeTgt" placeholder="2. 도착 노드 클릭" readonly style="background-color: #ffebee; cursor: pointer;">
+        <input type="text" id="edgeLbl" placeholder="관계 라벨 (예: 친구, 적)">
+        <button class="btn-primary" onclick="addEdge()">연결 추가</button>
+        <div class="help-text">💡 그래프에서 노드를 <b>클릭</b>하면 위 칸에 자동으로 입력됩니다.</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>💾 데이터 관리</h3>
+        <button class="btn-success" onclick="saveToLocalStorage()">💾 로컬 저장</button>
+        <button class="btn-info" onclick="loadFromLocalStorage()">📂 로컬 불러오기</button>
+        <button class="btn-primary" onclick="saveToURL()">🔗 URL로 저장</button>
+        <button class="btn-success" onclick="downloadJSON()">⬇️ JSON 다운로드</button>
+        <input type="file" id="fileInput" accept=".json" style="display:none" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">⬆️ JSON 업로드</button>
+        <input type="file" id="appendFileInput" accept=".json" style="display:none" onchange="appendJSON(event)">
+        <button class="btn-primary" onclick="document.getElementById('appendFileInput').click()">➕ JSON 추가 업로드</button>
+        
+        <textarea id="geminiPromptTemplate" style="height:1px; opacity:0; resize:none; position:absolute; left:-9999px;">
+		**주의: 이 요청에 대해 JSON 코드 블록 외의 어떠한 설명, 인사말, 추가 텍스트도 절대 출력하지 마세요. 오직 JSON 코드 블록만 출력해야 합니다.**
+
+			당신은 텍스트를 분석하여 관계형 데이터(노드와 엣지)를 Cytoscape.js 라이브러리에 적합한 JSON 형식으로 변환하는 전문 분석가입니다.
+
+			다음 텍스트를 분석하여 등장인물(노드)과 관계(엣지)를 추출하고, 요청된 형식에 맞춰 **JSON 코드 블록**으로 응답해 주세요.
+
+		### 분석할 텍스트 (여기에 사용자가 분석할 스토리를 붙여넣으세요.) ###
+		예시: '철수는 영희의 친구이며, 민수는 철수의 동료이다. 혜교는 아린의 스승이다.'
+
+		### 출력 형식 (JSON Only) ###
+		```json
+		{
+	"elements": [
+    {"data": {"id": "철수", "label": "철수", "color": "#667eea"}},
+    {"data": {"id": "영희", "label": "영희", "color": "#f093fb"}},
+    {"data": {"id": "민수", "label": "민수", "color": "#4facfe"}},
+    {"data": {"source": "철수", "target": "영희", "label": "친구"}},
+    {"data": {"source": "민수", "target": "철수", "label": "동료"}}
+  ]
+}
+</textarea>
+        <button class="btn-gemini" onclick="copyPromptAndOpenGemini()">✨ Gemini 프롬프트 복사 및 채팅 열기</button>
+        <div class="help-text-api">
+            1. 위 버튼 클릭: **JSON 형식 요청 명령어 복사** 및 Gemini 채팅 창 열림.<br>
+            2. Gemini에 붙여넣기 후 **(여기에...붙여넣으세요.)** 부분에 분석할 텍스트 추가.<br>
+            3. Gemini 응답 JSON을 복사하여 아래 **'JSON 텍스트 변환 (수동)'** 입력창에 붙여넣기.
+        </div>
+      </div>
+      
+      <div class="panel-section">
+        <h3>🤖 JSON 텍스트 변환 (수동)</h3>
+        <textarea id="jsonInputTextarea" placeholder="여기에 JSON 형식의 노드/엣지 데이터를 붙여넣으세요. (자연어 처리 아님)" rows="8"></textarea>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;">
+            <button class="btn-primary" onclick="loadJSONFromTextarea(false)">✔️ JSON으로 덮어쓰기</button>
+            <button class="btn-success" onclick="loadJSONFromTextarea(true)">➕ JSON 추가하기</button>
+        </div>
+        <div class="help-text">⚠️ **주의:** 이 기능은 자연어 처리가 아닌, **유효한 JSON 텍스트**를 읽어 그래프에 반영합니다.</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>✨ 레이아웃</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+          <button class="btn-info" onclick="runLayout('cose')">💫 기본</button>
+          <button class="btn-info" onclick="runLayout('dagre')">🌲 트리형</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="graph-area">
+      <div id="cy"></div>
+    </div>
+    
+    <div class="right-panel">
+      <div class="panel-section notes-area">
+        <h3>✏️ 속성 편집 / 삭제</h3>
+        <div class="info-badge" id="notesInfo">노드/엣지를 선택하세요</div>
+        
+        <label style="font-weight: bold; color: #333;">이름/라벨</label>
+        <input type="text" id="labelInput" placeholder="선택한 요소의 이름" disabled>
+        
+        <div id="colorControl" style="display:none;">
+            <label style="font-weight: bold; color: #333; margin-top: 10px;">노드 색상</label>
+            <input type="color" id="colorInput" value="#667eea" style="height: 40px; padding: 0;">
+        </div>
+        <label style="font-weight: bold; color: #333; margin-top: 10px;">📝 메모</label>
+        <textarea class="notes-textarea" id="notesTextarea" placeholder="내용을 입력하세요..."></textarea>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+            <button class="btn-success" onclick="saveNotes()">💾 저장</button>
+            <button class="btn-danger" onclick="deleteSelected()">🗑️ 삭제</button>
+        </div>
+        <div class="help-text">💡 선택 후 Delete 키를 눌러도 삭제됩니다.</div>
+
+        <div class="tts-controls">
+          <h3>🔊 읽어주기 (TTS)</h3>
+          <select id="voiceSelect"><option value="ko-KR">한국어</option></select>
+          <div class="speed-control">
+            <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateSpeedValue()">
+            <span class="speed-value" id="speedValue">1.0x</span>
+          </div>
+          <div class="tts-buttons">
+            <button class="btn-primary" onclick="readNotes()">🔊 읽기</button>
+            <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let initialData = [
+  {
+  "nodes": [
+    {
+      "data": {
+        "id": "STC_01",
+        "label": "STC 01 오프닝 이미지",
+        "color": "#ffaa00",
+        "notes": "미술 교사 안윤수의 무채색 일상. 정지된 화면 속에서 아무것도 그리지 못하는 캔버스는 TRB_02(과거의 침묵)에 짓눌린 그녀의 현재를 시각적 은유로 보여줌."
+      },
+      "position": {
+        "x": 168.84393517707008,
+        "y": -19.425202675389627
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRB_02",
+        "label": "TRB 02 유령과 세계",
+        "color": "#4facfe",
+        "notes": "과거 자신의 잘못이 아님에도 타인의 안위를 위해 침묵해야 했던 트라우마. 진실보다 집단의 평판과 안정을 우선시하는 위선적인 교육계와 법조계의 배경."
+      },
+      "position": {
+        "x": -18.732381091892634,
+        "y": 96.96598307075942
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_02",
+        "label": "STC 02 테마 제시",
+        "color": "#ffaa00",
+        "notes": "윤수의 동료 혹은 낯선 모은이 던지는 질문. '진실을 자백하는 데 따르는 대가를 감당할 수 있겠어?' 이는 TRB_03(약점)인 그녀의 도덕적 결벽증과 수동성을 자극함."
+      },
+      "position": {
+        "x": 315.04222689673963,
+        "y": 80.5865490935858
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRB_03",
+        "label": "TRB 03 약점과 필요",
+        "color": "#4facfe",
+        "notes": "약점: 갈등을 회피하고 순응하는 태도. 필요: 타인의 시선에서 벗어나 자신의 진실을 스스로 선포하는 주체적 목소리의 회복."
+      },
+      "position": {
+        "x": 64.03373498399164,
+        "y": 244.07221488737838
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_03",
+        "label": "STC 03 세트업",
+        "color": "#ffaa00",
+        "notes": "윤수의 평범한 삶과 그녀의 주변을 맴도는 정체불명의 여자 모은. PRP_01(보호자의 부재) 상황에서 윤수의 안전망이 얼마나 취약한지 보여줌."
+      },
+      "position": {
+        "x": 417.1133509751031,
+        "y": 158.48821607427357
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRP_01",
+        "label": "PRP 01 부재",
+        "color": "#667eea",
+        "notes": "윤수가 위기에 처했을 때 그녀를 변호해 줄 가족이나 정의로운 공권력의 완전한 결여. 사회적 고립 상태의 시발점."
+      },
+      "position": {
+        "x": 268.5237454657867,
+        "y": 351.5987780888795
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_04",
+        "label": "STC 04 촉매 사건",
+        "color": "#ffaa00",
+        "notes": "의문의 살인 사건 발생. 윤수는 가장 유력한 용의자로 지목됨. 이는 PRP_08(악행)에 의해 설계된 덫이며 윤수의 평온한 세계를 완전히 파괴함."
+      },
+      "position": {
+        "x": 514.1440302932926,
+        "y": 303.7857977974989
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRP_08",
+        "label": "PRP 08 악행/결핍",
+        "color": "#667eea",
+        "notes": "배후의 악당이 사건을 조작하여 윤수에게 누명을 씌움. 윤수는 '자유'와 '명예'라는 근원적 가치를 박탈당하는 극심한 결핍 상태에 직면."
+      },
+      "position": {
+        "x": 382.92714472576296,
+        "y": 392.3062354829383
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_05",
+        "label": "STC 05 고민/저항",
+        "color": "#ffaa00",
+        "notes": "모은이 건네는 손길(PRP_09)에 대한 거부감. 법적 시스템 안에서 해결하려는 관성과 법망 밖의 모은을 믿어야 하는 도박 사이의 처절한 내적 갈등."
+      },
+      "position": {
+        "x": 597.8127937871561,
+        "y": 437.00908355078764
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRP_09",
+        "label": "PRP 09 매개",
+        "color": "#667eea",
+        "notes": "모은이 윤수에게 사건의 진실을 파헤칠 '열쇠' 혹은 '위험한 제안'을 건넴. 이는 주인공이 모험의 세계로 진입하게 하는 결정적 매개 장치."
+      },
+      "position": {
+        "x": 215.16758614952508,
+        "y": 500.3224998715594
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_06",
+        "label": "STC 06 2막 진입",
+        "color": "#ffaa00",
+        "notes": "윤수가 법적 테두리를 벗어나 모은과 손을 잡기로 결심함. TRB_05(욕망 구체화)가 일어나며 수동적 피해자에서 능동적 추격자로 변모."
+      },
+      "position": {
+        "x": 595.2478812365936,
+        "y": 533.4381924765761
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRB_05",
+        "label": "TRB 05 욕망 구체화",
+        "color": "#4facfe",
+        "notes": "단순한 무죄 입증이 목표가 아님. 자신을 파괴하려 한 시스템의 심장부를 찾아내어 그 대가를 치르게 하겠다는 구체적 복수심과 정의감의 결합."
+      },
+      "position": {
+        "x": 455.19409650615574,
+        "y": 659.1434128146807
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_07",
+        "label": "STC 07 B스토리",
+        "color": "#ffaa00",
+        "notes": "윤수와 모은의 기묘한 동행. TRB_06(조력자) 모은의 파괴적인 삶의 태도가 윤수의 억압된 욕망을 일깨우며 정서적 연대가 깊어짐."
+      },
+      "position": {
+        "x": 704.4389830820649,
+        "y": 657.4287792353512
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRB_06",
+        "label": "TRB 06 조력자 등장",
+        "color": "#4facfe",
+        "notes": "모은. 그녀는 윤수가 가지지 못한 '거침없는 진실함'을 가진 인물로, 윤수가 자신의 껍질을 깨고 나오도록 돕는 거울 같은 존재."
+      },
+      "position": {
+        "x": 414.41400088136925,
+        "y": 827.4726023773557
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_08",
+        "label": "STC 08 즐거움과 게임",
+        "color": "#ffaa00",
+        "notes": "두 여자의 본격적인 공조. 모은의 본능과 윤수의 지성이 결합되어 적들을 교란하고 증거를 수집하는 PRP_16(투쟁)의 장르적 쾌감 구간."
+      },
+      "position": {
+        "x": 743.3896977575515,
+        "y": 764.067572979411
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRP_16",
+        "label": "PRP 16 투쟁",
+        "color": "#667eea",
+        "notes": "증거를 인멸하려는 하수인들과의 물리적 충돌 및 정보전. 윤수는 이 과정에서 자신의 숨겨진 강인함을 발견함."
+      },
+      "position": {
+        "x": 514.5399084727054,
+        "y": 820.6519511653681
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_09",
+        "label": "STC 09 미드포인트",
+        "color": "#ffaa00",
+        "notes": "사건의 배후에 국가 권력 혹은 거대 재단이 있음을 자각. TRB_09(첫 깨달음)가 일어나며 사건이 더 이상 개인의 문제가 아님을 인지."
+      },
+      "position": {
+        "x": 810.2301453772267,
+        "y": 849.2792159251796
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRB_09",
+        "label": "TRB 09 첫 깨달음",
+        "color": "#4facfe",
+        "notes": "자신이 쫓는 진실이 세상을 뒤집을 수 있을 만큼 위험하다는 것을 자각. 도망칠 것인가, 끝까지 갈 것인가에 대한 운명적 선택."
+      },
+      "position": {
+        "x": 586.2149319810069,
+        "y": 994.8920590194255
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_10",
+        "label": "STC 10 악당의 압박",
+        "color": "#ffaa00",
+        "notes": "악당들이 윤수의 가족을 위협하고 모은에 대한 의심을 심음. PRP_21(추격)이 극대화되며 두 사람 사이의 신뢰가 시험대에 오름."
+      },
+      "position": {
+        "x": 880.6336759391278,
+        "y": 954.1057358007616
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRP_21",
+        "label": "PRP 21 추격",
+        "color": "#667eea",
+        "notes": "물리적인 위협뿐만 아니라 윤수의 과거를 조작하여 그녀를 사회적으로 완전히 매장하려는 배후 세력의 총공세."
+      },
+      "position": {
+        "x": 587.9684018538517,
+        "y": 1105.7439688472493
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_11",
+        "label": "STC 11 모두 잃었다",
+        "color": "#ffaa00",
+        "notes": "확보한 증거는 불타고 모은은 자취를 감춤. TRB_14(겉보기 패배)와 맞물려 윤수는 법정에서 유죄 선고 직전의 파멸 상태에 이름."
+      },
+      "position": {
+        "x": 1037.1124131103195,
+        "y": 1050.5632110372615
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRB_14",
+        "label": "TRB 14 겉보기 패배",
+        "color": "#4facfe",
+        "notes": "모든 희망이 사라진 지점. 자신의 무결함에 집착하던 윤수가 '죄인'으로 낙인찍히며 사회적 자아가 완전히 사망함."
+      },
+      "position": {
+        "x": 789.249092984122,
+        "y": 1139.8494229930056
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_12",
+        "label": "STC 12 영혼의 암흑기",
+        "color": "#ffaa00",
+        "notes": "어둠 속에서 자신의 유령(침묵했던 과거)과 마주함. TRB_15(두 번째 깨달음)를 통해 진짜 싸움은 밖이 아니라 안에서 시작됨을 자각."
+      },
+      "position": {
+        "x": 1152.212270812847,
+        "y": 1148.7799748353043
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRB_15",
+        "label": "TRB 15 두 번째 깨달음",
+        "color": "#4facfe",
+        "notes": "완벽해지려는 강박을 버릴 때 비로소 자유로워진다는 진리. 모은이 왜 그토록 파괴적으로 살았는지 비로소 영혼으로 이해함."
+      },
+      "position": {
+        "x": 890.7344869718443,
+        "y": 1229.3079348331626
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_13",
+        "label": "STC 13 3막 진입",
+        "color": "#ffaa00",
+        "notes": "모은이 남긴 마지막 반격의 카드를 발견. PRP_25(어려운 과제)를 수행하기 위해 스스로를 희생할 준비를 마침."
+      },
+      "position": {
+        "x": 1225.132734469043,
+        "y": 1308.1121918060524
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRP_25",
+        "label": "PRP 25 어려운 과제",
+        "color": "#667eea",
+        "notes": "자신을 파멸시킬 수도 있는 치명적인 진실(자백)을 대중 앞에 터뜨려 적들의 위선을 폭로해야 하는 난제."
+      },
+      "position": {
+        "x": 947.1798710043537,
+        "y": 1376.5247978749717
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_14",
+        "label": "STC 14 피날레",
+        "color": "#ffaa00",
+        "notes": "폭발적인 '자백'. TRB_19(결전)에서 적들을 압도하며 자신의 성장(목소리)을 증명하고 PRP_26(과제 해결)을 통해 진실을 승리시킴."
+      },
+      "position": {
+        "x": 1307.903639969555,
+        "y": 1384.4755082012198
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRB_19",
+        "label": "TRB 19 결전",
+        "color": "#4facfe",
+        "notes": "배후의 정점인 인물과 법정 혹은 공개적 장소에서 대면. 윤수는 더 이상 공포에 떨지 않고 논리적이고 당당하게 적의 파멸을 선고함."
+      },
+      "position": {
+        "x": 1027.811988488542,
+        "y": 1501.577354194975
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRP_26",
+        "label": "PRP 26 과제 해결",
+        "color": "#667eea",
+        "notes": "윤수의 자백이 촉매가 되어 숨어있던 목격자들이 등장하고 조작된 증거들이 무력화되는 서사적 해소."
+      },
+      "position": {
+        "x": 1215.1850205835167,
+        "y": 1573.239429750546
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_15",
+        "label": "STC 15 엔딩 이미지",
+        "color": "#ffaa00",
+        "notes": "다시 캔버스 앞에 선 윤수. 이제 그녀는 거침없이 자신만의 색을 칠하며, TRB_22(새로운 균형) 속에서 모은과 나란히 서서 수평선을 바라봄."
+      },
+      "position": {
+        "x": 1498.3224594594258,
+        "y": 1553.8353509063081
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRB_22",
+        "label": "TRB 22 새로운 균형",
+        "color": "#4facfe",
+        "notes": "진실의 대가를 치른 후 얻은 진정한 자유. 과거의 침묵하던 교사는 죽고, 진실을 말하는 예술가로서의 삶이 시작됨."
+      },
+      "position": {
+        "x": 1448.996404753789,
+        "y": 1661.412327358025
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_01_COPY_1766877955258",
+        "label": "01화: 무채색의 균열",
+        "color": "#e91e63",
+        "notes": "[STC_01: 오프닝] 미술교사 윤수의 고립된 일상에 모은이 강렬하게 침입합니다. 후킹 포인트: 정적인 공간에 번지는 모은의 이질적인 에너지. 엔딩 절벽: 윤수의 집 거실에서 발견된 정체불명의 사체와 누명의 시작."
+      },
+      "position": {
+        "x": 428.4433293458169,
+        "y": -93.9349463878475
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_02_COPY_1766877955258",
+        "label": "02화: 악마의 계약",
+        "color": "#e91e63",
+        "notes": "[STC_04: 촉매 사건] 유력 용의자가 된 윤수 앞에 모은이 알리바이를 쥐고 나타납니다. 후킹 포인트: 취조실에서 모은이 제안하는 위험한 거래 '나를 믿으면 살려줄게'. 엔딩 절벽: 윤수가 자신의 인생을 모은에게 맡기며 계약을 체결하는 순간."
+      },
+      "position": {
+        "x": 525.4733109154948,
+        "y": -18.826136664994287
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_03_COPY_1766877955258",
+        "label": "03화: 금기된 동행",
+        "color": "#e91e63",
+        "notes": "[STC_05: 고민/저항] 시스템 안에서의 해결을 포기하고 법망 밖으로 나가는 갈등. 후킹 포인트: 경찰 이송 중 벌어지는 긴박한 탈주 시퀀스. 엔딩 절벽: 안전한 곳인 줄 알았으나 모은이 윤수의 목에 칼을 겨누며 드러내는 싸늘한 본색."
+      },
+      "position": {
+        "x": 639.4994931127095,
+        "y": 89.65334408920673
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_04_COPY_1766877955258",
+        "label": "04화: 선을 넘는 자",
+        "color": "#e91e63",
+        "notes": "[STC_06: 2막 진입] 주인공이 수동성(TRB_03)을 버리고 적극적으로 변모합니다. 후킹 포인트: 안경을 벗고 머리를 묶으며 적에게 처음으로 반격하는 윤수의 시각적 변화. 엔딩 절벽: 배후 세력의 하수인을 제압한 순간, 모은이 그를 죽이려는 윤수를 가로막으며 발생하는 의문."
+      },
+      "position": {
+        "x": 712.3467926436482,
+        "y": 203.49202357141453
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_05_COPY_1766877955258",
+        "label": "05화: 상처의 공유",
+        "color": "#e91e63",
+        "notes": "[STC_07: B스토리] 두 여자의 정서적 연대가 깊어지는 구간입니다. 후킹 포인트: 폐창고 밤샘 중 드러나는 서로의 과거 상처(유령)와 기묘한 공감대. 엔딩 절벽: 모은의 가방 깊숙한 곳에서 발견된 윤수의 어린 시절 사진. '너 나를 알고 있었어?'"
+      },
+      "position": {
+        "x": 726.8744995619289,
+        "y": 343.6888474738975
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_06_COPY_1766877955258",
+        "label": "06화: 화려한 잠입",
+        "color": "#e91e63",
+        "notes": "[STC_08: 즐거움과 게임] 장르적 쾌감이 극대화되는 공조 구간. 후킹 포인트: 상류층 자선 파티에 드레스를 입고 잠입하여 증거를 탈취하는 케이퍼 무비적 전개. 엔딩 절벽: 증거를 손에 넣고 탈출하려는 찰나, 윤수의 눈앞에서 괴한들에게 납치당하는 모은."
+      },
+      "position": {
+        "x": 834.2954777745368,
+        "y": 437.9628542221389
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_07_COPY_1766877955258",
+        "label": "07화: 설계된 진실",
+        "color": "#e91e63",
+        "notes": "[STC_09: 미드포인트] 사건의 거대한 배후가 드러납니다. 후킹 포인트: 배후의 몸통이 윤수가 가장 신뢰했던 은사라는 충격적 반전. 엔딩 절벽: 은사가 건넨 파일 속 모은의 소름 돋는 과거 살인 전과 기록. '누가 진짜 악마일까?'"
+      },
+      "position": {
+        "x": 869.1351268115499,
+        "y": 659.6396717604316
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_08_COPY_1766877955258",
+        "label": "08화: 신뢰의 파편",
+        "color": "#e91e63",
+        "notes": "[STC_10: 악당의 압박] 악당들이 심어놓은 이간질(PRP_21)로 두 사람의 관계가 균열됩니다. 후킹 포인트: 서로에게 총구를 겨누듯 날카롭게 쏘아붙이는 심리 대립. 엔딩 절벽: 윤수를 사지로 몰려는 은사를 막기 위해 스스로 살인죄를 뒤집어쓰고 절벽 아래로 사라지는 모은."
+      },
+      "position": {
+        "x": 976.4222419538903,
+        "y": 769.527324350608
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_09_COPY_1766877955258",
+        "label": "09화: 영혼의 파멸",
+        "color": "#e91e63",
+        "notes": "[STC_11: 모두 잃었다] 조력자도 증거도 없는 주인공의 가장 참담한 상태. 후킹 포인트: 법정에서 사형 구형을 무기력하게 듣고 있는 윤수의 파멸된 눈빛. 엔딩 절벽: 면회실 스피커를 통해 들려오는 익숙한 노랫소리. 죽은 줄 알았던 모은이 살아있다는 생존 신호."
+      },
+      "position": {
+        "x": 1015.3190948272265,
+        "y": 844.5886021587072
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_10_COPY_1766877955258",
+        "label": "10화: 어둠 속의 빛",
+        "color": "#e91e63",
+        "notes": "[STC_12: 영혼의 암흑기] 내적 성찰을 통해 반격의 실마리를 찾습니다. 후킹 포인트: 모은의 스케치북에 숨겨진 암호를 풀며 적의 위선을 폭로할 전략 수립. 엔딩 절벽: 자신의 결백이 아닌 '적의 유죄'를 증명하기 위해 대중 앞에서의 '자백 방송'을 선포하는 윤수."
+      },
+      "position": {
+        "x": 1195.5578501055898,
+        "y": 978.577007479898
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_11_COPY_1766877955258",
+        "label": "11화: 마지막 자백",
+        "color": "#e91e63",
+        "notes": "[STC_14: 피날레] 준비된 모든 퍼즐이 맞춰지는 거대한 결전. 후킹 포인트: 재판장에서 모든 카메라를 응시하며 쏟아내는 윤수의 파격적이고 논리적인 폭로. 엔딩 절벽: 피고인석의 윤수가 방청석 구석의 낯선 여자를 보며 미소 짓는 찰나, 법정에 울려 퍼지는 모은의 목소리."
+      },
+      "position": {
+        "x": 1369.071402890311,
+        "y": 1084.9427282234913
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_12_COPY_1766877955258",
+        "label": "12화: 대가의 끝",
+        "color": "#e91e63",
+        "notes": "[STC_15: 엔딩 이미지] 진실의 대가를 치른 후 얻은 평화. 후킹 포인트: 무너지는 권력자들의 몰락과 비로소 완성된 윤수의 강렬한 붉은 회화. 엔딩 절벽: 수평선 너머로 함께 걸어가는 윤수와 모은의 뒷모습. '이제 우린 어디로 가?'"
+      },
+      "position": {
+        "x": 1630.9962069291687,
+        "y": 1139.4756479581474
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "각화별후킹포인트",
+        "label": "각화별후킹포인트",
+        "color": "#fa709a",
+        "notes": ""
+      },
+      "position": {
+        "x": 426.55490367688145,
+        "y": -248.58752075607595
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": true,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "E_S1_T2",
+        "source": "STC_01",
+        "target": "TRB_02",
+        "label": "억압된 오프닝 이미지는 과거의 유령(침묵)에 근거함"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S2_T3",
+        "source": "STC_02",
+        "target": "TRB_03",
+        "label": "테마의 질문이 인물의 내적 약점과 결핍을 자극함"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S3_P1",
+        "source": "STC_03",
+        "target": "PRP_01",
+        "label": "세트업에서 보여준 불안한 평화는 보호자의 부재로 인해 위태로움"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S4_P8",
+        "source": "STC_04",
+        "target": "PRP_08",
+        "label": "사건 발생이 곧 주인공의 근원적 결핍(누명)으로 이어짐"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_P8_P9",
+        "source": "PRP_08",
+        "target": "PRP_09",
+        "label": "사회적 파멸(결핍) 상태에서 모은의 위험한 제안이 유일한 해결책이 됨"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S6_T5",
+        "source": "STC_06",
+        "target": "TRB_05",
+        "label": "2막 진입 결단이 수동적 인물을 능동적 욕망을 가진 자로 변화시킴"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S7_T6",
+        "source": "STC_07",
+        "target": "TRB_06",
+        "label": "B스토리의 핵심은 조력자 모은과의 정서적 공명과 교감임"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S8_P16",
+        "source": "STC_08",
+        "target": "PRP_16",
+        "label": "공조를 통한 즐거움과 게임 구간이 구체적 투쟁으로 나타남"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S9_T9",
+        "source": "STC_09",
+        "target": "TRB_09",
+        "label": "외적 위기의 정점이 주인공의 내적 가치관 전환을 촉발함"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S10_P21",
+        "source": "STC_10",
+        "target": "PRP_21",
+        "label": "악당의 전방위적 압박이 구체적인 물리적 추격전으로 전개됨"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S11_T14",
+        "source": "STC_11",
+        "target": "TRB_14",
+        "label": "외적 상실(모든 증거 소멸)이 인물의 완전한 패배감으로 직결됨"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S12_T15",
+        "source": "STC_12",
+        "target": "TRB_15",
+        "label": "암흑기 속의 고통스러운 성찰이 반격을 위한 내적 깨달음을 줌"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S13_P25",
+        "source": "STC_13",
+        "target": "PRP_25",
+        "label": "3막의 비장한 결단이 해결해야 할 마지막 난관으로 연결됨"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S14_T19",
+        "source": "STC_14",
+        "target": "TRB_19",
+        "label": "피날레의 폭발력이 주인공의 내적 승리와 주체적 성장을 완성함"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S14_P26",
+        "source": "STC_14",
+        "target": "PRP_26",
+        "label": "피날레의 행동이 서사적 난제를 기술적으로 해결하고 단죄함"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "E_S15_T22",
+        "source": "STC_15",
+        "target": "TRB_22",
+        "label": "엔딩의 자유로운 이미지가 인물의 변화된 내적 균형을 입증함"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S1_S2",
+        "source": "STC_01",
+        "target": "STC_02"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S2_S3",
+        "source": "STC_02",
+        "target": "STC_03"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S3_S4",
+        "source": "STC_03",
+        "target": "STC_04"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S4_S5",
+        "source": "STC_04",
+        "target": "STC_05"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S5_S6",
+        "source": "STC_05",
+        "target": "STC_06"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S6_S7",
+        "source": "STC_06",
+        "target": "STC_07"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S7_S8",
+        "source": "STC_07",
+        "target": "STC_08"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S8_S9",
+        "source": "STC_08",
+        "target": "STC_09"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S9_S10",
+        "source": "STC_09",
+        "target": "STC_10"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S10_S11",
+        "source": "STC_10",
+        "target": "STC_11"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S11_S12",
+        "source": "STC_11",
+        "target": "STC_12"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S12_S13",
+        "source": "STC_12",
+        "target": "STC_13"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S13_S14",
+        "source": "STC_13",
+        "target": "STC_14"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S14_S15",
+        "source": "STC_14",
+        "target": "STC_15"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "각화별후킹포인트_EP_01_COPY_1766877955258_1766878027291",
+        "source": "각화별후킹포인트",
+        "target": "EP_01_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_01_COPY_1766877955258_EP_02_COPY_1766877955258_1766878052495",
+        "source": "EP_01_COPY_1766877955258",
+        "target": "EP_02_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_02_COPY_1766877955258_EP_03_COPY_1766877955258_1766878058279",
+        "source": "EP_02_COPY_1766877955258",
+        "target": "EP_03_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_03_COPY_1766877955258_EP_04_COPY_1766877955258_1766878062558",
+        "source": "EP_03_COPY_1766877955258",
+        "target": "EP_04_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_04_COPY_1766877955258_EP_05_COPY_1766877955258_1766878077769",
+        "source": "EP_04_COPY_1766877955258",
+        "target": "EP_05_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_05_COPY_1766877955258_EP_06_COPY_1766877955258_1766878083689",
+        "source": "EP_05_COPY_1766877955258",
+        "target": "EP_06_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_06_COPY_1766877955258_EP_07_COPY_1766877955258_1766878109572",
+        "source": "EP_06_COPY_1766877955258",
+        "target": "EP_07_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_07_COPY_1766877955258_EP_08_COPY_1766877955258_1766878124041",
+        "source": "EP_07_COPY_1766877955258",
+        "target": "EP_08_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_08_COPY_1766877955258_EP_09_COPY_1766877955258_1766878129948",
+        "source": "EP_08_COPY_1766877955258",
+        "target": "EP_09_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_09_COPY_1766877955258_EP_10_COPY_1766877955258_1766878135391",
+        "source": "EP_09_COPY_1766877955258",
+        "target": "EP_10_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_10_COPY_1766877955258_EP_11_COPY_1766877955258_1766878139979",
+        "source": "EP_10_COPY_1766877955258",
+        "target": "EP_11_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EP_11_COPY_1766877955258_EP_12_COPY_1766877955258_1766878143904",
+        "source": "EP_11_COPY_1766877955258",
+        "target": "EP_12_COPY_1766877955258",
+        "label": "",
+        "notes": ""
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+}
+];
+
+    let cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: JSON.parse(JSON.stringify(initialData)),
+      style: [
+        { selector: 'node', style: { 'label': 'data(label)', 'background-color': 'data(color)', 'shape': 'round-rectangle', 'width': 'label', 'height': 30, 'padding': '10px', 'border-width': 2, 'border-color': '#333', 'border-style': 'solid', 'text-valign': 'center', 'text-halign': 'center', 'color': '#fff', 'font-weight': 'bold', 'font-size': 14, 'text-outline-width': 2, 'text-outline-color': '#000' } },
+        { selector: 'edge', style: { 'label': 'data(label)', 'curve-style': 'bezier', 'line-color': '#999', 'width': 1, 'target-arrow-shape': 'triangle', 'target-arrow-color': '#999', 'font-size': 12 } },
+        { selector: 'edge.timeline', style: { 'line-color': '#ff0055', 'width': 3, 'target-arrow-color': '#ff0055' } },
+        { selector: 'node:selected', style: { 'border-width': 4, 'border-color': '#FFD700', 'border-style': 'double' } },
+        { selector: 'edge:selected', style: { 'width': 4, 'line-color': '#FFD700', 'target-arrow-color': '#FFD700' } }
+      ],
+      layout: { name: 'cose', animate: true },
+      boxSelectionEnabled: false
+    });
+
+    let selected = null, speechSynthesis = window.speechSynthesis, currentUtterance = null;
+    let edgeCreationMode = false, edgeSourceNode = null, isDragMode = false, tremorInterval = null, currentLayout = null;
+
+    const notesInfo = document.getElementById('notesInfo');
+    const labelInput = document.getElementById('labelInput');
+    const colorControl = document.getElementById('colorControl');
+    const colorInput = document.getElementById('colorInput');
+    const notesTextarea = document.getElementById('notesTextarea');
+    const edgeSrcInput = document.getElementById('edgeSrc');
+    const edgeTgtInput = document.getElementById('edgeTgt');
+
+    window.addEventListener('load', function () {
+      const hash = window.location.hash.substring(1);
+      if (hash) { try { cy.elements().remove(); cy.add(JSON.parse(LZString.decompressFromEncodedURIComponent(hash))); runLayout('cose'); } catch (e) {} }
+      else runLayout('cose');
+      resetRightPanel();
+    });
+
+    // ------------------- ▼ 핵심: 삭제 기능 구현 ▼ -------------------
+    
+    // 1. 삭제 버튼 클릭 시 실행될 함수
+    function deleteSelected() {
+      if (!selected) { alert('삭제할 요소를 먼저 선택해주세요.'); return; }
+      
+      const element = cy.getElementById(selected.id);
+      if (element.length === 0) return;
+
+      const confirmMsg = selected.type === 'node' 
+        ? `'${element.data('label')}' 노드를 삭제하시겠습니까?\n(연결된 모든 선도 함께 삭제됩니다)` 
+        : `'${element.data('label') || '관계'}' 선을 삭제하시겠습니까?`;
+
+      if (confirm(confirmMsg)) {
+        cy.remove(element);
+        resetRightPanel(); // 패널 초기화
+        // 연결 입력창에 삭제된 노드가 있다면 초기화
+        if (edgeSrcInput.value === selected.id || edgeTgtInput.value === selected.id) {
+            clearEdgeInputs();
+        }
+        selected = null;
+      }
+    }
+
+    // 2. 키보드 단축키 (Delete, Backspace) 리스너
+    document.addEventListener('keydown', function(event) {
+        // 입력창(input, textarea)에서 타이핑 중일 때는 삭제 키 동작 안 함 (글자 지워야 하니까)
+        const tag = document.activeElement.tagName.toUpperCase();
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+            if (selected) {
+                deleteSelected();
+            }
+        }
+    });
+
+    // ------------------- ▲ 핵심: 삭제 기능 구현 ▲ -------------------
+
+
+    function toggleDragMode() {
+        isDragMode = !isDragMode;
+        const btn = document.getElementById('btnDragMode');
+        if (isDragMode) {
+            btn.classList.add('drag-mode-active');
+            btn.innerText = "🖱️ 드래그 모드 ON (노드를 잡고 끄세요)";
+            cy.userZoomingEnabled(false); cy.userPanningEnabled(false);
+        } else {
+            btn.classList.remove('drag-mode-active');
+            btn.innerText = "🖱️ 드래그 연결 모드 (켜기/끄기)";
+            cy.userZoomingEnabled(true); cy.userPanningEnabled(true);
+        }
+    }
+
+    function resetRightPanel() {
+        selected = null;
+        notesInfo.innerText = "노드/엣지를 선택하세요";
+        labelInput.value = ''; notesTextarea.value = '';
+        labelInput.disabled = true; notesTextarea.disabled = true;
+        colorControl.style.display = 'none';
+    }
+
+    cy.on('tap', 'node', function (evt) {
+      const node = evt.target; const nodeId = node.id();
+      if (!isDragMode) {
+          if (edgeSrcInput.value === '') { edgeSrcInput.value = nodeId; node.animate({ style: { 'border-color': '#4facfe', 'border-width': 4 } }, { duration: 200 }); }
+          else if (edgeTgtInput.value === '' && edgeSrcInput.value !== nodeId) { edgeTgtInput.value = nodeId; node.animate({ style: { 'border-color': '#ff0055', 'border-width': 4 } }, { duration: 200 }); }
+      }
+      selected = { type: 'node', id: nodeId };
+      notesInfo.innerText = "노드: " + nodeId;
+      labelInput.value = node.data('label') || ''; notesTextarea.value = node.data('notes') || '';
+      labelInput.disabled = false; notesTextarea.disabled = false;
+      colorControl.style.display = 'block'; colorInput.value = node.data('color') || '#667eea';
+    });
+
+    cy.on('tap', 'edge', function (evt) {
+      const edge = evt.target;
+      selected = { type: 'edge', id: edge.id() };
+      notesInfo.innerText = "관계: " + edge.data('source') + " → " + edge.data('target');
+      labelInput.value = edge.data('label') || ''; notesTextarea.value = edge.data('notes') || '';
+      labelInput.disabled = false; notesTextarea.disabled = false;
+      colorControl.style.display = 'none';
+    });
+
+    cy.on('tap', function(evt){ if(evt.target === cy){ resetRightPanel(); } });
+
+    cy.on('dbltap', function (evt) {
+      if (evt.target === cy) {
+        const pos = evt.position, nodeName = prompt("새 노드 이름을 입력하세요:", "새 노드");
+        if (nodeName && nodeName.trim()) {
+          const id = nodeName.trim();
+          if (cy.getElementById(id).length > 0) { alert("이미 존재합니다!"); return; }
+          const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+          cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" }, position: { x: pos.x, y: pos.y } });
+          stopObsidianTremor(); startObsidianTremor();
+        }
+      }
+    });
+
+    cy.on('mousedown', 'node', function (evt) {
+      if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey || isDragMode) {
+        edgeCreationMode = true; edgeSourceNode = evt.target;
+        evt.target.style({ 'border-width': '4px', 'border-color': '#43e97b', 'border-style': 'dashed' });
+      }
+    });
+    cy.on('mouseover', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style({ 'border-width': '4px', 'border-color': '#4facfe' }); });
+    cy.on('mouseout', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style('border-width', '2px'); });
+    cy.on('mouseup', 'node', function (evt) {
+      if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) {
+        const label = prompt("관계 라벨 입력:", "");
+        if (label !== null) {
+          let classes = (label && (label.toUpperCase() === "TIMELINE" || label.toUpperCase() === "타임라인")) ? "timeline" : "";
+          cy.add({ data: { id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), source: edgeSourceNode.id(), target: evt.target.id(), label: label || "", notes: "" }, classes: classes });
+          stopObsidianTremor(); startObsidianTremor();
+        }
+        edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null;
+      }
+    });
+    cy.on('mouseup', function (evt) { if (edgeCreationMode && evt.target === cy) { if (edgeSourceNode) edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null; } });
+
+    function clearEdgeInputs() { edgeSrcInput.value = ''; edgeTgtInput.value = ''; document.getElementById('edgeLbl').value = ''; }
+    function swapEdgeInputs() { const temp = edgeSrcInput.value; edgeSrcInput.value = edgeTgtInput.value; edgeTgtInput.value = temp; }
+    function addEdge() {
+      const src = edgeSrcInput.value.trim(), tgt = edgeTgtInput.value.trim(), lbl = document.getElementById('edgeLbl').value.trim();
+      if (!src || !tgt) { alert('노드를 선택하세요!'); return; }
+      if (cy.getElementById(src).length === 0 || cy.getElementById(tgt).length === 0) { alert('노드가 없습니다!'); return; }
+      let classes = (lbl && (lbl.toUpperCase() === "TIMELINE" || lbl.toUpperCase() === "타임라인")) ? "timeline" : "";
+      cy.add({ data: { id: src + "_" + tgt + "_" + Date.now(), source: src, target: tgt, label: lbl || "", notes: "" }, classes: classes });
+      runLayout('cose'); document.getElementById('edgeLbl').value = '';
+    }
+
+    function addNode() {
+      const id = document.getElementById('newNode').value.trim();
+      if (!id) { alert('이름을 입력하세요!'); return; }
+      if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+      const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+      cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" } });
+      runLayout('cose'); document.getElementById('newNode').value = '';
+    }
+
+    function startObsidianTremor() {
+      if (tremorInterval) return;
+      tremorInterval = setInterval(() => {
+        cy.nodes().forEach(node => {
+            if(node.selected()) return;
+            const degree = node.degree(); const tremorStrength = 5.0 / (1 + degree);
+            node.position({ x: node.position('x') + (Math.random()-0.5)*tremorStrength, y: node.position('y') + (Math.random()-0.5)*tremorStrength });
+        });
+      }, 50); 
+    }
+    function stopObsidianTremor() { if (tremorInterval) { clearInterval(tremorInterval); tremorInterval = null; } }
+    function runLayout(layoutName) {
+      stopObsidianTremor(); if (currentLayout) { currentLayout.stop(); currentLayout = null; }
+      let opts = layoutName === 'cose' ? { name: 'cose', animate: true, animationDuration: 500, fit: true, padding: 10, nodeRepulsion: 20000, idealEdgeLength: 150, gravity: 0.05 } : { name: 'dagre', rankDir: 'TB', padding: 10, animate: true };
+      if(layoutName==='dagre') cy.nodes().unlock();
+      const layout = cy.layout(opts); layout.run(); setTimeout(startObsidianTremor, 500); 
+    }
+
+    function saveNotes() {
+      if (!selected) { alert('선택된 요소가 없습니다.'); return; }
+      const element = cy.getElementById(selected.id);
+      if (element.length === 0) { alert('이미 삭제된 요소입니다.'); resetRightPanel(); return; }
+      
+      const newLabel = labelInput.value.trim();
+      if (!newLabel) { alert('이름은 필수입니다.'); return; }
+      element.data('label', newLabel); element.data('notes', notesTextarea.value);
+      if (selected.type === 'node') element.data('color', colorInput.value);
+      if (selected.type === 'edge') {
+        if (newLabel.toUpperCase() === "TIMELINE" || newLabel.toUpperCase() === "타임라인") element.addClass('timeline'); else element.removeClass('timeline');
+      }
+      alert('저장되었습니다!');
+    }
+
+    function saveToLocalStorage() { localStorage.setItem("graphData", JSON.stringify(cy.json().elements)); alert('저장 완료!'); }
+    function loadFromLocalStorage() {
+      const data = localStorage.getItem("graphData");
+      if (data) { cy.elements().remove(); cy.add(JSON.parse(data)); runLayout('cose'); alert('불러오기 완료!'); } else alert('데이터 없음');
+    }
+    function saveToURL() { window.location.hash = LZString.compressToEncodedURIComponent(JSON.stringify(cy.json().elements)); alert('URL 저장 완료!'); }
+    function downloadJSON() {
+      const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+      a.download = "graph_" + new Date().toISOString().slice(0, 10) + ".json"; document.body.appendChild(a); a.click(); a.remove();
+    }
+    function extractElementsFromJSON(data) {
+        let elements = [];
+        if (data.graphData) {
+            const gd = data.graphData;
+            if (gd.nodes || gd.edges) elements = [...(gd.nodes||[]), ...(gd.edges||[])];
+            else if (gd.elements) elements = gd.elements;
+        }
+        if (elements.length === 0) {
+            if (Array.isArray(data)) elements = data;
+            else if (data.nodes || data.edges) elements = [...(data.nodes||[]), ...(data.edges||[])];
+            else if (data.elements) elements = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        }
+        return elements;
+    }
+    function uploadJSON(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader(); reader.onload = function (e) { try { const els = extractElementsFromJSON(JSON.parse(e.target.result)); if(els.length){ cy.elements().remove(); cy.add(els); runLayout('cose'); alert('성공!'); } else alert('데이터 없음'); } catch (err) { alert('오류: ' + err.message); } }; reader.readAsText(file);
+    }
+    function appendJSON(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader(); reader.onload = function (e) {
+            try {
+                const els = extractElementsFromJSON(JSON.parse(e.target.result)); if (!els.length) { alert('데이터 없음'); return; }
+                const suffix = "_COPY_" + Date.now(), idMap = {}, newEls = [], offset = 500;
+                els.forEach(el => { if (el.data && el.data.id && !el.data.source) { const old = el.data.id, nid = old + suffix; if (cy.getElementById(nid).length) return; const n = JSON.parse(JSON.stringify(el)); n.data.id = nid; n.position = n.position ? {x:n.position.x+offset,y:n.position.y+offset} : {x:cy.width()/2+offset,y:cy.height()/2+offset}; idMap[old] = nid; newEls.push(n); } });
+                els.forEach(el => { if (el.data && el.data.source) { if (idMap[el.data.source] && idMap[el.data.target]) { const n = JSON.parse(JSON.stringify(el)); n.data.id = (n.data.id||"EDGE")+suffix; n.data.source = idMap[el.data.source]; n.data.target = idMap[el.data.target]; newEls.push(n); } } });
+                if(newEls.length){ cy.add(newEls); runLayout('cose'); alert('추가 완료!'); }
+            } catch (err) { alert('오류: ' + err.message); }
+        }; reader.readAsText(file);
+    }
+
+    function loadVoices() {
+      const vs = speechSynthesis.getVoices(), sel = document.getElementById('voiceSelect'); sel.innerHTML = '';
+      const ko = vs.filter(v => v.lang.startsWith('ko'));
+      if (ko.length) ko.forEach(v => sel.add(new Option(v.name, v.name))); else sel.add(new Option("기본 한국어", "default"));
+    }
+    if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
+    function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
+    function readNotes() {
+      const text = notesTextarea.value.trim(); if (!text) return; stopReading();
+      currentUtterance = new SpeechSynthesisUtterance(text.replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' '));
+      const v = speechSynthesis.getVoices().find(v => v.name === document.getElementById('voiceSelect').value);
+      if (v) currentUtterance.voice = v; currentUtterance.rate = parseFloat(document.getElementById('speedControl').value);
+      speechSynthesis.speak(currentUtterance);
+    }
+    function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); }
+
+    // ====================================================================
+    // ✨ Gemini 프롬프트 복사 및 채팅 열기 함수 (NEW)
+    // ====================================================================
+    function copyPromptAndOpenGemini() {
+        const promptTextarea = document.getElementById('geminiPromptTemplate');
+        const promptText = promptTextarea.value.trim();
+
+        // 1. 텍스트를 클립보드에 복사
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.value = promptText;
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                alert("✅ Gemini 요청 프롬프트가 클립보드에 복사되었습니다!\n\n이제 새 창에서 '분석할 텍스트' 부분만 수정 후 Gemini에게 요청하세요.");
+            } else {
+                alert("❌ 클립보드 복사에 실패했습니다. 프롬프트 내용을 수동으로 복사해주세요.");
+            }
+        } catch (err) {
+            alert("❌ 클립보드 복사 중 오류 발생: " + err);
+        } finally {
+            document.body.removeChild(tempTextarea);
+        }
+        
+        // 2. Gemini 채팅 창을 새 탭으로 열기
+        const geminiUrl = "https://gemini.google.com/app";
+        window.open(geminiUrl, "_blank"); 
+    }
+
+    // ====================================================================
+    // 🤖 JSON 텍스트 변환 및 추가 관련 함수 (NEW)
+    // ====================================================================
+
+    // 텍스트 영역에서 JSON 데이터를 읽어 그래프에 추가하거나 덮어쓰는 함수
+    function loadJSONFromTextarea(isAppend) {
+        const jsonText = document.getElementById('jsonInputTextarea').value.trim();
+        if (!jsonText) {
+            alert('JSON 텍스트를 입력해주세요.');
+            return;
+        }
+
+        try {
+            const data = JSON.parse(jsonText);
+            // 기존에 정의된 extractElementsFromJSON 함수를 재사용합니다.
+            const els = extractElementsFromJSON(data);
+
+            if (!els.length) {
+                alert('유효한 노드/엣지 데이터가 JSON에서 발견되지 않았습니다.');
+                return;
+            }
+
+            if (isAppend) {
+                // 추가 로직 (기존 appendJSON 로직과 유사하게 ID 중복 방지 및 위치 조정)
+                const suffix = "_COPY_" + Date.now(), idMap = {}, newEls = [], offset = 500;
+                
+                // 노드의 ID 변경 및 위치 조정
+                els.forEach(el => {
+                    if (el.data && el.data.id && !el.data.source) { // Node
+                        const old = el.data.id, nid = old + suffix;
+                        if (cy.getElementById(nid).length) return; // Skip if ID collision still occurs (unlikely)
+                        const n = JSON.parse(JSON.stringify(el));
+                        n.data.id = nid;
+                        // 위치 조정
+                        n.position = n.position ? { x: n.position.x + offset, y: n.position.y + offset } : { x: cy.width() / 2 + offset, y: cy.height() / 2 + offset };
+                        idMap[old] = nid;
+                        newEls.push(n);
+                    }
+                });
+                
+                // 엣지의 ID 변경 및 연결 노드 ID 업데이트
+                els.forEach(el => {
+                    if (el.data && el.data.source) { // Edge
+                        // 맵핑된 새 ID가 존재하는 엣지만 추가
+                        if (idMap[el.data.source] && idMap[el.data.target]) {
+                            const n = JSON.parse(JSON.stringify(el));
+                            n.data.id = (n.data.id || "EDGE_TEXT") + suffix; // 엣지 ID도 고유하게 변경
+                            n.data.source = idMap[el.data.source];
+                            n.data.target = idMap[el.data.target];
+                            newEls.push(n);
+                        }
+                    }
+                });
+
+                if (newEls.length) {
+                    cy.add(newEls);
+                    runLayout('cose');
+                    alert(`JSON 텍스트에서 ${newEls.length}개의 요소를 추가했습니다.`);
+                } else {
+                    alert('추가할 새로운 노드/엣지가 발견되지 않았습니다.');
+                }
+
+            } else {
+                // 덮어쓰기 로직
+                cy.elements().remove();
+                cy.add(els);
+                runLayout('cose');
+                alert('JSON 텍스트로 그래프를 성공적으로 덮어썼습니다!');
+            }
+
+        } catch (err) {
+            alert('JSON 파싱 오류! 유효한 JSON 형식인지 확인해주세요.\n오류: ' + err.message);
+        }
+    }
+  </script>
+</body>
+</html>
