@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프 편집기 (Complete Ver)</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Malgun Gothic', sans-serif; background: #f0f0f0; height: 100vh; display: flex; flex-direction: column; }
+    
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; padding: 15px 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    header h1 { font-size: 1.5em; margin-bottom: 5px; text-shadow: 1px 1px 0 #000; }
+
+    .main-container { display: flex; flex: 1; overflow: hidden; }
+    .left-panel { width: 25%; background: white; padding: 15px; overflow-y: auto; border-right: 2px solid #ddd; }
+    .graph-area { width: 50%; padding: 15px; display: flex; flex-direction: column; }
+    .right-panel { width: 25%; background: white; padding: 15px; overflow-y: auto; border-left: 2px solid #ddd; display: flex; flex-direction: column; }
+
+    #cy { flex: 1; border: 2px solid #ddd; border-radius: 8px; background: #fafafa; }
+
+    .panel-section { margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0; }
+    .panel-section h3 { font-size: 1em; margin-bottom: 10px; color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 5px; }
+
+    input[type="text"], input[type="number"], select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; }
+    input[readonly] { background-color: #e9ecef; color: #495057; cursor: not-allowed; }
+
+    button {
+      width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 4px; font-size: 0.9em;
+      cursor: pointer; transition: all 0.1s; font-weight: bold; color: white; text-shadow: 1px 1px 0 #000;
+    }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .btn-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .btn-danger { background: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%); }
+    .btn-warning { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: white; }
+    button:active { transform: scale(0.98); }
+
+    textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Malgun Gothic', monospace; font-size: 0.9em; resize: vertical; min-height: 150px; }
+    .notes-area { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .notes-textarea { flex: 1; min-height: 200px; line-height: 1.6; }
+
+    .tts-controls { padding: 10px; background: #f0f7ff; border-radius: 6px; border: 1px solid #d0e7ff; }
+    .speed-control { display: flex; align-items: center; gap: 10px; }
+    .speed-control input[type="range"] { flex: 1; }
+    .tts-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+
+    .info-badge { display: inline-block; padding: 6px 12px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px; text-shadow: 1px 1px 0 #000; }
+    .help-text { font-size: 0.8em; color: #888; margin-top: 5px; padding: 8px; background: #f9f9f9; border-radius: 4px; }
+    
+    .connection-tools { display: flex; gap: 5px; margin-bottom: 5px; }
+    .connection-tools button { padding: 5px; font-size: 0.8em; margin: 0; }
+    
+    .drag-mode-active { background: #ff0055 !important; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
+
+    /* === NEW STYLES for Gemini Shortcut and Help Text === */
+    .btn-gemini {
+        background-color: #5555ff; /* Gemini를 상징하는 파란색 계열 */
+        color: white; 
+        padding: 10px; 
+        border: none; 
+        border-radius: 4px; 
+        cursor: pointer; 
+        width: 100%; 
+        margin-top: 10px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+        text-shadow: 1px 1px 0 #000; /* 기존 버튼 스타일과 통일 */
+    }
+
+    .btn-gemini:hover {
+        background-color: #4444cc;
+    }
+
+    .help-text-api {
+        font-size: 0.85em; 
+        color: #333; 
+        margin-top: 8px;
+        padding: 8px;
+        border: 1px dashed #5555ff; /* Gemini 색상에 맞춘 점선 테두리 */
+        border-radius: 4px;
+        background: #e6e6ff; /* 연한 배경색 */
+        margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌐 세계관 그래프 편집기 (수정/삭제 가능)</h1>
+    <p>클릭 연결 + 드래그 연결 + 선택 삭제 기능 통합 버전</p>
+  </header>
+
+  <div class="main-container">
+    <div class="left-panel">
+      <div class="panel-section">
+        <h3>➕ 노드 추가</h3>
+        <input type="text" id="newNode" placeholder="노드 이름 (예: 철수)">
+        <button class="btn-primary" onclick="addNode()">노드 추가</button>
+        <div class="help-text">💡 빈 공간 더블클릭으로도 추가 가능</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>🔗 쉬운 관계 연결</h3>
+        <button id="btnDragMode" class="btn-warning" onclick="toggleDragMode()">🖱️ 드래그 연결 모드 (켜기/끄기)</button>
+        <div class="help-text" style="margin-bottom:10px;">👆 켜면 노드를 드래그해서 바로 연결됩니다!</div>
+        <div style="border-top: 1px dashed #ccc; margin: 10px 0;"></div>
+        
+        <div class="connection-tools">
+            <button class="btn-info" onclick="clearEdgeInputs()" title="입력 초기화">🔄 초기화</button>
+            <button class="btn-info" onclick="swapEdgeInputs()" title="출발/도착 바꾸기">↔️ 교체</button>
+        </div>
+        <input type="text" id="edgeSrc" placeholder="1. 출발 노드 클릭" readonly style="background-color: #e3f2fd; cursor: pointer;">
+        <input type="text" id="edgeTgt" placeholder="2. 도착 노드 클릭" readonly style="background-color: #ffebee; cursor: pointer;">
+        <input type="text" id="edgeLbl" placeholder="관계 라벨 (예: 친구, 적)">
+        <button class="btn-primary" onclick="addEdge()">연결 추가</button>
+        <div class="help-text">💡 그래프에서 노드를 <b>클릭</b>하면 위 칸에 자동으로 입력됩니다.</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>💾 데이터 관리</h3>
+        <button class="btn-success" onclick="saveToLocalStorage()">💾 로컬 저장</button>
+        <button class="btn-info" onclick="loadFromLocalStorage()">📂 로컬 불러오기</button>
+        <button class="btn-primary" onclick="saveToURL()">🔗 URL로 저장</button>
+        <button class="btn-success" onclick="downloadJSON()">⬇️ JSON 다운로드</button>
+        <input type="file" id="fileInput" accept=".json" style="display:none" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">⬆️ JSON 업로드</button>
+        <input type="file" id="appendFileInput" accept=".json" style="display:none" onchange="appendJSON(event)">
+        <button class="btn-primary" onclick="document.getElementById('appendFileInput').click()">➕ JSON 추가 업로드</button>
+        
+        <textarea id="geminiPromptTemplate" style="height:1px; opacity:0; resize:none; position:absolute; left:-9999px;">
+		**주의: 이 요청에 대해 JSON 코드 블록 외의 어떠한 설명, 인사말, 추가 텍스트도 절대 출력하지 마세요. 오직 JSON 코드 블록만 출력해야 합니다.**
+
+			당신은 텍스트를 분석하여 관계형 데이터(노드와 엣지)를 Cytoscape.js 라이브러리에 적합한 JSON 형식으로 변환하는 전문 분석가입니다.
+
+			다음 텍스트를 분석하여 등장인물(노드)과 관계(엣지)를 추출하고, 요청된 형식에 맞춰 **JSON 코드 블록**으로 응답해 주세요.
+
+		### 분석할 텍스트 (여기에 사용자가 분석할 스토리를 붙여넣으세요.) ###
+		예시: '철수는 영희의 친구이며, 민수는 철수의 동료이다. 혜교는 아린의 스승이다.'
+
+		### 출력 형식 (JSON Only) ###
+		```json
+		{
+	"elements": [
+    {"data": {"id": "철수", "label": "철수", "color": "#667eea"}},
+    {"data": {"id": "영희", "label": "영희", "color": "#f093fb"}},
+    {"data": {"id": "민수", "label": "민수", "color": "#4facfe"}},
+    {"data": {"source": "철수", "target": "영희", "label": "친구"}},
+    {"data": {"source": "민수", "target": "철수", "label": "동료"}}
+  ]
+}
+</textarea>
+        <button class="btn-gemini" onclick="copyPromptAndOpenGemini()">✨ Gemini 프롬프트 복사 및 채팅 열기</button>
+        <div class="help-text-api">
+            1. 위 버튼 클릭: **JSON 형식 요청 명령어 복사** 및 Gemini 채팅 창 열림.<br>
+            2. Gemini에 붙여넣기 후 **(여기에...붙여넣으세요.)** 부분에 분석할 텍스트 추가.<br>
+            3. Gemini 응답 JSON을 복사하여 아래 **'JSON 텍스트 변환 (수동)'** 입력창에 붙여넣기.
+        </div>
+      </div>
+      
+      <div class="panel-section">
+        <h3>🤖 JSON 텍스트 변환 (수동)</h3>
+        <textarea id="jsonInputTextarea" placeholder="여기에 JSON 형식의 노드/엣지 데이터를 붙여넣으세요. (자연어 처리 아님)" rows="8"></textarea>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;">
+            <button class="btn-primary" onclick="loadJSONFromTextarea(false)">✔️ JSON으로 덮어쓰기</button>
+            <button class="btn-success" onclick="loadJSONFromTextarea(true)">➕ JSON 추가하기</button>
+        </div>
+        <div class="help-text">⚠️ **주의:** 이 기능은 자연어 처리가 아닌, **유효한 JSON 텍스트**를 읽어 그래프에 반영합니다.</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>✨ 레이아웃</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+          <button class="btn-info" onclick="runLayout('cose')">💫 기본</button>
+          <button class="btn-info" onclick="runLayout('dagre')">🌲 트리형</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="graph-area">
+      <div id="cy"></div>
+    </div>
+    
+    <div class="right-panel">
+      <div class="panel-section notes-area">
+        <h3>✏️ 속성 편집 / 삭제</h3>
+        <div class="info-badge" id="notesInfo">노드/엣지를 선택하세요</div>
+        
+        <label style="font-weight: bold; color: #333;">이름/라벨</label>
+        <input type="text" id="labelInput" placeholder="선택한 요소의 이름" disabled>
+        
+        <div id="colorControl" style="display:none;">
+            <label style="font-weight: bold; color: #333; margin-top: 10px;">노드 색상</label>
+            <input type="color" id="colorInput" value="#667eea" style="height: 40px; padding: 0;">
+        </div>
+        <label style="font-weight: bold; color: #333; margin-top: 10px;">📝 메모</label>
+        <textarea class="notes-textarea" id="notesTextarea" placeholder="내용을 입력하세요..."></textarea>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+            <button class="btn-success" onclick="saveNotes()">💾 저장</button>
+            <button class="btn-danger" onclick="deleteSelected()">🗑️ 삭제</button>
+        </div>
+        <div class="help-text">💡 선택 후 Delete 키를 눌러도 삭제됩니다.</div>
+
+        <div class="tts-controls">
+          <h3>🔊 읽어주기 (TTS)</h3>
+          <select id="voiceSelect"><option value="ko-KR">한국어</option></select>
+          <div class="speed-control">
+            <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateSpeedValue()">
+            <span class="speed-value" id="speedValue">1.0x</span>
+          </div>
+          <div class="tts-buttons">
+            <button class="btn-primary" onclick="readNotes()">🔊 읽기</button>
+            <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let initialData = [
+  { "data": { "id": "STC_01", "label": "STC 01 오프닝 이미지", "color": "#ffaa00", "notes": "아내를 잃은 댄의 무채색 일상. 타버린 토스트와 아이들의 무표정한 식탁을 통해 '기능을 상실한 가족'을 시각화합니다." }, "position": { "x": 1000, "y": 0 }, "group": "nodes" },
+  { "data": { "id": "STC_02", "label": "STC 02 테마 제시", "color": "#ffaa00", "notes": "홀리가 '여름에도 눈이 올 수 있다'고 말하며, 보이지 않는 사랑과 믿음을 믿어야 한다는 주제를 던집니다." }, "position": { "x": 1000, "y": 200 }, "group": "nodes" },
+  { "data": { "id": "STC_03", "label": "STC 03 세트업", "color": "#ffaa00", "notes": "댄의 냉소, 데이비드의 반항, 줄리의 불안이 묘사됩니다. 홀리는 이 상처들을 '친절'로 메우려 애씁니다." }, "position": { "x": 1000, "y": 400 }, "group": "nodes" },
+  { "data": { "id": "STC_04", "label": "STC 04 촉매 사건", "color": "#ffaa00", "notes": "홀리가 친구 엘레나의 고통을 발견합니다. 댄이 무료 수술을 거절하며 홀리의 '모험'이 시작됩니다." }, "position": { "x": 1000, "y": 600 }, "group": "nodes" },
+  { "data": { "id": "STC_05", "label": "STC 05 고민/저항", "color": "#ffaa00", "notes": "어린 소녀가 500달러를 모으는 현실적 불가능함 앞에서 홀리는 갈등하지만 엄마의 가르침을 따르기로 합니다." }, "position": { "x": 1000, "y": 800 }, "group": "nodes" },
+  { "data": { "id": "STC_06", "label": "STC 06 2막 진입", "color": "#ffaa00", "notes": "홀리가 집안 물건을 내다 팔기 시작합니다. 상처받은 공간(집)이 나눔의 공간으로 바뀌는 전환점입니다." }, "position": { "x": 1000, "y": 1000 }, "group": "nodes" },
+  { "data": { "id": "STC_07", "label": "STC 07 B스토리", "color": "#ffaa00", "notes": "이웃 노인 젠킨스와의 관계. 홀리는 그를 통해 엄마가 남긴 '보이지 않는 선행'의 실체를 확인합니다." }, "position": { "x": 1300, "y": 1100 }, "group": "nodes" },
+  { "data": { "id": "STC_08", "label": "STC 08 즐거움과 게임", "color": "#ffaa00", "notes": "칫솔 판매, 세차 등 홀리의 기발한 활동이 마을을 흔듭니다. 희망이 고조되며 돈이 모이는 구간입니다." }, "position": { "x": 1000, "y": 1200 }, "group": "nodes" },
+  { "data": { "id": "STC_09", "label": "STC 09 미드포인트", "color": "#ffaa00", "notes": "돈은 모았으나 실수로 엄마의 마지막 유산인 VHS 테이프를 팔아버립니다. 승리가 비극으로 반전됩니다." }, "position": { "x": 1000, "y": 1400 }, "group": "nodes" },
+  { "data": { "id": "STC_10", "label": "STC 10 악당의 압박", "color": "#ffaa00", "notes": "아내를 잃은 슬픔이 분노로 변한 댄이 홀리를 억압합니다. 가족 내부의 트라우마가 악당으로 군림합니다." }, "position": { "x": 1000, "y": 1600 }, "group": "nodes" },
+  { "data": { "id": "STC_11", "label": "STC 11 모두 잃었다", "color": "#ffaa00", "notes": "데이비드의 사고 위기. 홀리의 선의가 가족을 파멸시켰다는 자책 속에 절망의 정점에 도달합니다." }, "position": { "x": 1000, "y": 1800 }, "group": "nodes" },
+  { "data": { "id": "STC_12", "label": "STC 12 영혼의 암흑기", "color": "#ffaa00", "notes": "댄이 아내의 마지막 편지를 발견합니다. 자신의 냉소가 사랑을 죽이고 있었다는 처절한 자아 비판의 시간입니다." }, "position": { "x": 1000, "y": 2000 }, "group": "nodes" },
+  { "data": { "id": "STC_13", "label": "STC 13 3막 진입", "color": "#ffaa00", "notes": "댄이 직접 엘레나를 수술하기로 결심합니다. 지식(의술)과 감정(사랑)이 결합된 진정한 치유의 시작입니다." }, "position": { "x": 1000, "y": 2200 }, "group": "nodes" },
+  { "data": { "id": "STC_14", "label": "STC 14 피날레", "color": "#ffaa00", "notes": "수술은 성공하고, 기적적으로 비디오 테이프를 되찾습니다. 나눔이 화답으로 돌아오는 피드백 루프의 완성입니다." }, "position": { "x": 1000, "y": 2400 }, "group": "nodes" },
+  { "data": { "id": "STC_15", "label": "STC 15 엔딩 이미지", "color": "#ffaa00", "notes": "민들레 씨앗이 내리는 정원. 슬픔의 눈이 아닌 '사랑의 눈'을 맞으며 웃는 가족의 새로운 일상입니다." }, "position": { "x": 1000, "y": 2600 }, "group": "nodes" },
+
+  { "data": { "id": "TRB_01", "label": "TRB 01 자기인식", "color": "#4facfe", "notes": "댄의 결함: 슬픔을 통제(Control)하려는 강박이 타인에 대한 거절로 나타남." }, "position": { "x": 700, "y": 400 }, "group": "nodes" },
+  { "data": { "id": "TRB_15", "label": "TRB 15 도덕적 각성", "color": "#4facfe", "notes": "아내의 편지를 통해 '주는 것이 받는 것보다 위대하다'는 도덕적 진실을 깨달음." }, "position": { "x": 700, "y": 2000 }, "group": "nodes" },
+
+  { "data": { "id": "E01", "source": "STC_01", "target": "STC_02", "label": "정체된 현실에 희망의 테마를 대조" }, "group": "edges" },
+  { "data": { "id": "E02", "source": "STC_02", "target": "STC_03", "label": "테마가 존재함에도 극복하지 못한 현실의 결핍을 구체화" }, "group": "edges" },
+  { "data": { "id": "E03", "source": "STC_03", "target": "TRB_01", "label": "가족의 불화가 댄의 심리적 결함에서 기인함을 연결" }, "group": "edges" },
+  { "data": { "id": "E04", "source": "STC_03", "target": "STC_04", "label": "세팅된 갈등 상태에서 외부적 사건(엘레나의 통증)이 침투" }, "group": "edges" },
+  { "data": { "id": "E05", "source": "STC_04", "target": "STC_05", "label": "댄의 거절이 홀리에게 내적 성장의 동기를 부여" }, "group": "edges" },
+  { "data": { "id": "E06", "source": "STC_05", "target": "STC_06", "label": "고민 끝에 행동을 선택하며 2막의 세계로 진입" }, "group": "edges" },
+  { "data": { "id": "E07", "source": "STC_06", "target": "STC_07", "label": "실행 과정에서 테마를 가르쳐 줄 정신적 조력자와 접촉" }, "group": "edges" },
+  { "data": { "id": "E08", "source": "STC_07", "target": "STC_08", "label": "조력자의 가르침을 얻어 사회적 활동(게임)을 본격화" }, "group": "edges" },
+  { "data": { "id": "E09", "source": "STC_08", "target": "STC_09", "label": "상승하던 기류가 치명적인 실수(비디오 유실)로 인해 급락" }, "group": "edges" },
+  { "data": { "id": "E10", "source": "STC_09", "target": "STC_10", "label": "외적 사건의 실패가 아빠의 억눌린 분노를 자극" }, "group": "edges" },
+  { "data": { "id": "E11", "source": "STC_10", "target": "STC_11", "label": "강해진 억압이 가족 전체의 파멸적 위기(사고)를 초래" }, "group": "edges" },
+  { "data": { "id": "E12", "source": "STC_11", "target": "STC_12", "label": "바닥에 떨어진 상태에서 가장 진실한 도구(편지)를 발견" }, "group": "edges" },
+  { "data": { "id": "E13", "source": "STC_12", "target": "TRB_15", "label": "암흑기 속에서 댄의 내면적 가치관이 근본적으로 변함" }, "group": "edges" },
+  { "data": { "id": "E14", "source": "TRB_15", "target": "STC_13", "label": "변화된 의지가 3막의 구체적 행동(무료 수술)으로 현현" }, "group": "edges" },
+  { "data": { "id": "E15", "source": "STC_13", "target": "STC_14", "label": "결단이 물리적 과제 해결과 정서적 보상으로 이어짐" }, "group": "edges" },
+  { "data": { "id": "E16", "source": "STC_14", "target": "STC_15", "label": "모든 갈등이 해소된 후 진화된 새로운 일상을 제시" }, "group": "edges" }
+];
+
+    let cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: JSON.parse(JSON.stringify(initialData)),
+      style: [
+        { selector: 'node', style: { 'label': 'data(label)', 'background-color': 'data(color)', 'shape': 'round-rectangle', 'width': 'label', 'height': 30, 'padding': '10px', 'border-width': 2, 'border-color': '#333', 'border-style': 'solid', 'text-valign': 'center', 'text-halign': 'center', 'color': '#fff', 'font-weight': 'bold', 'font-size': 14, 'text-outline-width': 2, 'text-outline-color': '#000' } },
+        { selector: 'edge', style: { 'label': 'data(label)', 'curve-style': 'bezier', 'line-color': '#999', 'width': 1, 'target-arrow-shape': 'triangle', 'target-arrow-color': '#999', 'font-size': 12 } },
+        { selector: 'edge.timeline', style: { 'line-color': '#ff0055', 'width': 3, 'target-arrow-color': '#ff0055' } },
+        { selector: 'node:selected', style: { 'border-width': 4, 'border-color': '#FFD700', 'border-style': 'double' } },
+        { selector: 'edge:selected', style: { 'width': 4, 'line-color': '#FFD700', 'target-arrow-color': '#FFD700' } }
+      ],
+      layout: { name: 'cose', animate: true },
+      boxSelectionEnabled: false
+    });
+
+    let selected = null, speechSynthesis = window.speechSynthesis, currentUtterance = null;
+    let edgeCreationMode = false, edgeSourceNode = null, isDragMode = false, tremorInterval = null, currentLayout = null;
+
+    const notesInfo = document.getElementById('notesInfo');
+    const labelInput = document.getElementById('labelInput');
+    const colorControl = document.getElementById('colorControl');
+    const colorInput = document.getElementById('colorInput');
+    const notesTextarea = document.getElementById('notesTextarea');
+    const edgeSrcInput = document.getElementById('edgeSrc');
+    const edgeTgtInput = document.getElementById('edgeTgt');
+
+    window.addEventListener('load', function () {
+      const hash = window.location.hash.substring(1);
+      if (hash) { try { cy.elements().remove(); cy.add(JSON.parse(LZString.decompressFromEncodedURIComponent(hash))); runLayout('cose'); } catch (e) {} }
+      else runLayout('cose');
+      resetRightPanel();
+    });
+
+    // ------------------- ▼ 핵심: 삭제 기능 구현 ▼ -------------------
+    
+    // 1. 삭제 버튼 클릭 시 실행될 함수
+    function deleteSelected() {
+      if (!selected) { alert('삭제할 요소를 먼저 선택해주세요.'); return; }
+      
+      const element = cy.getElementById(selected.id);
+      if (element.length === 0) return;
+
+      const confirmMsg = selected.type === 'node' 
+        ? `'${element.data('label')}' 노드를 삭제하시겠습니까?\n(연결된 모든 선도 함께 삭제됩니다)` 
+        : `'${element.data('label') || '관계'}' 선을 삭제하시겠습니까?`;
+
+      if (confirm(confirmMsg)) {
+        cy.remove(element);
+        resetRightPanel(); // 패널 초기화
+        // 연결 입력창에 삭제된 노드가 있다면 초기화
+        if (edgeSrcInput.value === selected.id || edgeTgtInput.value === selected.id) {
+            clearEdgeInputs();
+        }
+        selected = null;
+      }
+    }
+
+    // 2. 키보드 단축키 (Delete, Backspace) 리스너
+    document.addEventListener('keydown', function(event) {
+        // 입력창(input, textarea)에서 타이핑 중일 때는 삭제 키 동작 안 함 (글자 지워야 하니까)
+        const tag = document.activeElement.tagName.toUpperCase();
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+            if (selected) {
+                deleteSelected();
+            }
+        }
+    });
+
+    // ------------------- ▲ 핵심: 삭제 기능 구현 ▲ -------------------
+
+
+    function toggleDragMode() {
+        isDragMode = !isDragMode;
+        const btn = document.getElementById('btnDragMode');
+        if (isDragMode) {
+            btn.classList.add('drag-mode-active');
+            btn.innerText = "🖱️ 드래그 모드 ON (노드를 잡고 끄세요)";
+            cy.userZoomingEnabled(false); cy.userPanningEnabled(false);
+        } else {
+            btn.classList.remove('drag-mode-active');
+            btn.innerText = "🖱️ 드래그 연결 모드 (켜기/끄기)";
+            cy.userZoomingEnabled(true); cy.userPanningEnabled(true);
+        }
+    }
+
+    function resetRightPanel() {
+        selected = null;
+        notesInfo.innerText = "노드/엣지를 선택하세요";
+        labelInput.value = ''; notesTextarea.value = '';
+        labelInput.disabled = true; notesTextarea.disabled = true;
+        colorControl.style.display = 'none';
+    }
+
+    cy.on('tap', 'node', function (evt) {
+      const node = evt.target; const nodeId = node.id();
+      if (!isDragMode) {
+          if (edgeSrcInput.value === '') { edgeSrcInput.value = nodeId; node.animate({ style: { 'border-color': '#4facfe', 'border-width': 4 } }, { duration: 200 }); }
+          else if (edgeTgtInput.value === '' && edgeSrcInput.value !== nodeId) { edgeTgtInput.value = nodeId; node.animate({ style: { 'border-color': '#ff0055', 'border-width': 4 } }, { duration: 200 }); }
+      }
+      selected = { type: 'node', id: nodeId };
+      notesInfo.innerText = "노드: " + nodeId;
+      labelInput.value = node.data('label') || ''; notesTextarea.value = node.data('notes') || '';
+      labelInput.disabled = false; notesTextarea.disabled = false;
+      colorControl.style.display = 'block'; colorInput.value = node.data('color') || '#667eea';
+    });
+
+    cy.on('tap', 'edge', function (evt) {
+      const edge = evt.target;
+      selected = { type: 'edge', id: edge.id() };
+      notesInfo.innerText = "관계: " + edge.data('source') + " → " + edge.data('target');
+      labelInput.value = edge.data('label') || ''; notesTextarea.value = edge.data('notes') || '';
+      labelInput.disabled = false; notesTextarea.disabled = false;
+      colorControl.style.display = 'none';
+    });
+
+    cy.on('tap', function(evt){ if(evt.target === cy){ resetRightPanel(); } });
+
+    cy.on('dbltap', function (evt) {
+      if (evt.target === cy) {
+        const pos = evt.position, nodeName = prompt("새 노드 이름을 입력하세요:", "새 노드");
+        if (nodeName && nodeName.trim()) {
+          const id = nodeName.trim();
+          if (cy.getElementById(id).length > 0) { alert("이미 존재합니다!"); return; }
+          const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+          cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" }, position: { x: pos.x, y: pos.y } });
+          stopObsidianTremor(); startObsidianTremor();
+        }
+      }
+    });
+
+    cy.on('mousedown', 'node', function (evt) {
+      if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey || isDragMode) {
+        edgeCreationMode = true; edgeSourceNode = evt.target;
+        evt.target.style({ 'border-width': '4px', 'border-color': '#43e97b', 'border-style': 'dashed' });
+      }
+    });
+    cy.on('mouseover', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style({ 'border-width': '4px', 'border-color': '#4facfe' }); });
+    cy.on('mouseout', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style('border-width', '2px'); });
+    cy.on('mouseup', 'node', function (evt) {
+      if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) {
+        const label = prompt("관계 라벨 입력:", "");
+        if (label !== null) {
+          let classes = (label && (label.toUpperCase() === "TIMELINE" || label.toUpperCase() === "타임라인")) ? "timeline" : "";
+          cy.add({ data: { id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), source: edgeSourceNode.id(), target: evt.target.id(), label: label || "", notes: "" }, classes: classes });
+          stopObsidianTremor(); startObsidianTremor();
+        }
+        edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null;
+      }
+    });
+    cy.on('mouseup', function (evt) { if (edgeCreationMode && evt.target === cy) { if (edgeSourceNode) edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null; } });
+
+    function clearEdgeInputs() { edgeSrcInput.value = ''; edgeTgtInput.value = ''; document.getElementById('edgeLbl').value = ''; }
+    function swapEdgeInputs() { const temp = edgeSrcInput.value; edgeSrcInput.value = edgeTgtInput.value; edgeTgtInput.value = temp; }
+    function addEdge() {
+      const src = edgeSrcInput.value.trim(), tgt = edgeTgtInput.value.trim(), lbl = document.getElementById('edgeLbl').value.trim();
+      if (!src || !tgt) { alert('노드를 선택하세요!'); return; }
+      if (cy.getElementById(src).length === 0 || cy.getElementById(tgt).length === 0) { alert('노드가 없습니다!'); return; }
+      let classes = (lbl && (lbl.toUpperCase() === "TIMELINE" || lbl.toUpperCase() === "타임라인")) ? "timeline" : "";
+      cy.add({ data: { id: src + "_" + tgt + "_" + Date.now(), source: src, target: tgt, label: lbl || "", notes: "" }, classes: classes });
+      runLayout('cose'); document.getElementById('edgeLbl').value = '';
+    }
+
+    function addNode() {
+      const id = document.getElementById('newNode').value.trim();
+      if (!id) { alert('이름을 입력하세요!'); return; }
+      if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+      const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+      cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" } });
+      runLayout('cose'); document.getElementById('newNode').value = '';
+    }
+
+    function startObsidianTremor() {
+      if (tremorInterval) return;
+      tremorInterval = setInterval(() => {
+        cy.nodes().forEach(node => {
+            if(node.selected()) return;
+            const degree = node.degree(); const tremorStrength = 5.0 / (1 + degree);
+            node.position({ x: node.position('x') + (Math.random()-0.5)*tremorStrength, y: node.position('y') + (Math.random()-0.5)*tremorStrength });
+        });
+      }, 50); 
+    }
+    function stopObsidianTremor() { if (tremorInterval) { clearInterval(tremorInterval); tremorInterval = null; } }
+    function runLayout(layoutName) {
+      stopObsidianTremor(); if (currentLayout) { currentLayout.stop(); currentLayout = null; }
+      let opts = layoutName === 'cose' ? { name: 'cose', animate: true, animationDuration: 500, fit: true, padding: 10, nodeRepulsion: 20000, idealEdgeLength: 150, gravity: 0.05 } : { name: 'dagre', rankDir: 'TB', padding: 10, animate: true };
+      if(layoutName==='dagre') cy.nodes().unlock();
+      const layout = cy.layout(opts); layout.run(); setTimeout(startObsidianTremor, 500); 
+    }
+
+    function saveNotes() {
+      if (!selected) { alert('선택된 요소가 없습니다.'); return; }
+      const element = cy.getElementById(selected.id);
+      if (element.length === 0) { alert('이미 삭제된 요소입니다.'); resetRightPanel(); return; }
+      
+      const newLabel = labelInput.value.trim();
+      if (!newLabel) { alert('이름은 필수입니다.'); return; }
+      element.data('label', newLabel); element.data('notes', notesTextarea.value);
+      if (selected.type === 'node') element.data('color', colorInput.value);
+      if (selected.type === 'edge') {
+        if (newLabel.toUpperCase() === "TIMELINE" || newLabel.toUpperCase() === "타임라인") element.addClass('timeline'); else element.removeClass('timeline');
+      }
+      alert('저장되었습니다!');
+    }
+
+    function saveToLocalStorage() { localStorage.setItem("graphData", JSON.stringify(cy.json().elements)); alert('저장 완료!'); }
+    function loadFromLocalStorage() {
+      const data = localStorage.getItem("graphData");
+      if (data) { cy.elements().remove(); cy.add(JSON.parse(data)); runLayout('cose'); alert('불러오기 완료!'); } else alert('데이터 없음');
+    }
+    function saveToURL() { window.location.hash = LZString.compressToEncodedURIComponent(JSON.stringify(cy.json().elements)); alert('URL 저장 완료!'); }
+    function downloadJSON() {
+      const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+      a.download = "graph_" + new Date().toISOString().slice(0, 10) + ".json"; document.body.appendChild(a); a.click(); a.remove();
+    }
+    function extractElementsFromJSON(data) {
+        let elements = [];
+        if (data.graphData) {
+            const gd = data.graphData;
+            if (gd.nodes || gd.edges) elements = [...(gd.nodes||[]), ...(gd.edges||[])];
+            else if (gd.elements) elements = gd.elements;
+        }
+        if (elements.length === 0) {
+            if (Array.isArray(data)) elements = data;
+            else if (data.nodes || data.edges) elements = [...(data.nodes||[]), ...(data.edges||[])];
+            else if (data.elements) elements = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        }
+        return elements;
+    }
+    function uploadJSON(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader(); reader.onload = function (e) { try { const els = extractElementsFromJSON(JSON.parse(e.target.result)); if(els.length){ cy.elements().remove(); cy.add(els); runLayout('cose'); alert('성공!'); } else alert('데이터 없음'); } catch (err) { alert('오류: ' + err.message); } }; reader.readAsText(file);
+    }
+    function appendJSON(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader(); reader.onload = function (e) {
+            try {
+                const els = extractElementsFromJSON(JSON.parse(e.target.result)); if (!els.length) { alert('데이터 없음'); return; }
+                const suffix = "_COPY_" + Date.now(), idMap = {}, newEls = [], offset = 500;
+                els.forEach(el => { if (el.data && el.data.id && !el.data.source) { const old = el.data.id, nid = old + suffix; if (cy.getElementById(nid).length) return; const n = JSON.parse(JSON.stringify(el)); n.data.id = nid; n.position = n.position ? {x:n.position.x+offset,y:n.position.y+offset} : {x:cy.width()/2+offset,y:cy.height()/2+offset}; idMap[old] = nid; newEls.push(n); } });
+                els.forEach(el => { if (el.data && el.data.source) { if (idMap[el.data.source] && idMap[el.data.target]) { const n = JSON.parse(JSON.stringify(el)); n.data.id = (n.data.id||"EDGE")+suffix; n.data.source = idMap[el.data.source]; n.data.target = idMap[el.data.target]; newEls.push(n); } } });
+                if(newEls.length){ cy.add(newEls); runLayout('cose'); alert('추가 완료!'); }
+            } catch (err) { alert('오류: ' + err.message); }
+        }; reader.readAsText(file);
+    }
+
+    function loadVoices() {
+      const vs = speechSynthesis.getVoices(), sel = document.getElementById('voiceSelect'); sel.innerHTML = '';
+      const ko = vs.filter(v => v.lang.startsWith('ko'));
+      if (ko.length) ko.forEach(v => sel.add(new Option(v.name, v.name))); else sel.add(new Option("기본 한국어", "default"));
+    }
+    if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
+    function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
+    function readNotes() {
+      const text = notesTextarea.value.trim(); if (!text) return; stopReading();
+      currentUtterance = new SpeechSynthesisUtterance(text.replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' '));
+      const v = speechSynthesis.getVoices().find(v => v.name === document.getElementById('voiceSelect').value);
+      if (v) currentUtterance.voice = v; currentUtterance.rate = parseFloat(document.getElementById('speedControl').value);
+      speechSynthesis.speak(currentUtterance);
+    }
+    function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); }
+
+    // ====================================================================
+    // ✨ Gemini 프롬프트 복사 및 채팅 열기 함수 (NEW)
+    // ====================================================================
+    function copyPromptAndOpenGemini() {
+        const promptTextarea = document.getElementById('geminiPromptTemplate');
+        const promptText = promptTextarea.value.trim();
+
+        // 1. 텍스트를 클립보드에 복사
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.value = promptText;
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                alert("✅ Gemini 요청 프롬프트가 클립보드에 복사되었습니다!\n\n이제 새 창에서 '분석할 텍스트' 부분만 수정 후 Gemini에게 요청하세요.");
+            } else {
+                alert("❌ 클립보드 복사에 실패했습니다. 프롬프트 내용을 수동으로 복사해주세요.");
+            }
+        } catch (err) {
+            alert("❌ 클립보드 복사 중 오류 발생: " + err);
+        } finally {
+            document.body.removeChild(tempTextarea);
+        }
+        
+        // 2. Gemini 채팅 창을 새 탭으로 열기
+        const geminiUrl = "https://gemini.google.com/app";
+        window.open(geminiUrl, "_blank"); 
+    }
+
+    // ====================================================================
+    // 🤖 JSON 텍스트 변환 및 추가 관련 함수 (NEW)
+    // ====================================================================
+
+    // 텍스트 영역에서 JSON 데이터를 읽어 그래프에 추가하거나 덮어쓰는 함수
+    function loadJSONFromTextarea(isAppend) {
+        const jsonText = document.getElementById('jsonInputTextarea').value.trim();
+        if (!jsonText) {
+            alert('JSON 텍스트를 입력해주세요.');
+            return;
+        }
+
+        try {
+            const data = JSON.parse(jsonText);
+            // 기존에 정의된 extractElementsFromJSON 함수를 재사용합니다.
+            const els = extractElementsFromJSON(data);
+
+            if (!els.length) {
+                alert('유효한 노드/엣지 데이터가 JSON에서 발견되지 않았습니다.');
+                return;
+            }
+
+            if (isAppend) {
+                // 추가 로직 (기존 appendJSON 로직과 유사하게 ID 중복 방지 및 위치 조정)
+                const suffix = "_COPY_" + Date.now(), idMap = {}, newEls = [], offset = 500;
+                
+                // 노드의 ID 변경 및 위치 조정
+                els.forEach(el => {
+                    if (el.data && el.data.id && !el.data.source) { // Node
+                        const old = el.data.id, nid = old + suffix;
+                        if (cy.getElementById(nid).length) return; // Skip if ID collision still occurs (unlikely)
+                        const n = JSON.parse(JSON.stringify(el));
+                        n.data.id = nid;
+                        // 위치 조정
+                        n.position = n.position ? { x: n.position.x + offset, y: n.position.y + offset } : { x: cy.width() / 2 + offset, y: cy.height() / 2 + offset };
+                        idMap[old] = nid;
+                        newEls.push(n);
+                    }
+                });
+                
+                // 엣지의 ID 변경 및 연결 노드 ID 업데이트
+                els.forEach(el => {
+                    if (el.data && el.data.source) { // Edge
+                        // 맵핑된 새 ID가 존재하는 엣지만 추가
+                        if (idMap[el.data.source] && idMap[el.data.target]) {
+                            const n = JSON.parse(JSON.stringify(el));
+                            n.data.id = (n.data.id || "EDGE_TEXT") + suffix; // 엣지 ID도 고유하게 변경
+                            n.data.source = idMap[el.data.source];
+                            n.data.target = idMap[el.data.target];
+                            newEls.push(n);
+                        }
+                    }
+                });
+
+                if (newEls.length) {
+                    cy.add(newEls);
+                    runLayout('cose');
+                    alert(`JSON 텍스트에서 ${newEls.length}개의 요소를 추가했습니다.`);
+                } else {
+                    alert('추가할 새로운 노드/엣지가 발견되지 않았습니다.');
+                }
+
+            } else {
+                // 덮어쓰기 로직
+                cy.elements().remove();
+                cy.add(els);
+                runLayout('cose');
+                alert('JSON 텍스트로 그래프를 성공적으로 덮어썼습니다!');
+            }
+
+        } catch (err) {
+            alert('JSON 파싱 오류! 유효한 JSON 형식인지 확인해주세요.\n오류: ' + err.message);
+        }
+    }
+  </script>
+</body>
+</html>
