@@ -464,35 +464,60 @@
         <button class="btn-info" onclick="document.getElementById('fileInput').click()">⬆️ JSON 업로드</button>
         <input type="file" id="appendFileInput" accept=".json" style="display:none" onchange="appendJSON(event)">
         <button class="btn-primary" onclick="document.getElementById('appendFileInput').click()">➕ JSON 추가 업로드</button>
+        <button class="btn-success" onclick="downloadJSON()" style="margin-top: 5px;">💾 JSON 다운로드(저장)</button>
 
-        <textarea id="geminiPromptTemplate"
-          style="height:1px; opacity:0; resize:none; position:absolute; left:-9999px;">
-		**주의: 이 요청에 대해 JSON 코드 블록 외의 어떠한 설명, 인사말, 추가 텍스트도 절대 출력하지 마세요. 오직 JSON 코드 블록만 출력해야 합니다.**
+        <div class="panel-section">
+          <h3>📝 분석 대상 텍스트 입력</h3>
+          <textarea id="sourceTextInput" placeholder="여기에 소설/시나리오 텍스트를 붙여넣으세요..." style="height: 120px;"></textarea>
+        </div>
 
-			당신은 텍스트를 분석하여 관계형 데이터(노드와 엣지)를 Cytoscape.js 라이브러리에 적합한 JSON 형식으로 변환하는 전문 분석가입니다.
+        <div class="panel-section">
+          <h3>🤖 AI 분석 (Gemini)</h3>
 
-			다음 텍스트를 분석하여 등장인물(노드)과 관계(엣지)를 추출하고, 요청된 형식에 맞춰 **JSON 코드 블록**으로 응답해 주세요.
+          <!-- Tab-like or Toggle for Settings -->
+          <h4 style="margin: 10px 0 5px 0; font-size: 0.9em; color: #555;">⚙️ API 설정 (자동 분석용)</h4>
+          <div style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+            <input type="password" id="geminiApiKey" placeholder="Gemini API Key" onchange="saveApiKeys()">
+            <input type="password" id="googleSearchKey" placeholder="Google Search API Key (Image)"
+              onchange="saveApiKeys()">
+            <input type="text" id="googleCxId" placeholder="Custom Search CX ID" onchange="saveApiKeys()">
+            <div style="font-size: 0.75em; color: #888; margin-top: 5px;">* 키는 브라우저에 자동 저장됩니다.</div>
+          </div>
 
-		### 분석할 텍스트 (여기에 사용자가 분석할 스토리를 붙여넣으세요.) ###
-		예시: '철수는 영희의 친구이며, 민수는 철수의 동료이다. 혜교는 아린의 스승이다.'
+          <h4 style="margin: 10px 0 5px 0; font-size: 0.9em; color: #555;">🚀 실행 모드</h4>
 
-		### 출력 형식 (JSON Only) ###
-		```json
-		{
-	"elements": [
-    {"data": {"id": "철수", "label": "철수", "color": "#667eea"}},
-    {"data": {"id": "영희", "label": "영희", "color": "#f093fb"}},
-    {"data": {"id": "민수", "label": "민수", "color": "#4facfe"}},
-    {"data": {"source": "철수", "target": "영희", "label": "친구"}},
-    {"data": {"source": "민수", "target": "철수", "label": "동료"}}
+          <!-- Button 1: Manual -->
+          <button class="btn-gemini" onclick="copyPromptAndOpenGemini()">📋 1. [수동] 프롬프트 복사 & 채팅</button>
+          <div class="help-text" style="margin-bottom: 10px;">텍스트를 복사해 Gemini 웹사이트에 붙여넣습니다. (이미지 수동 첨부 가능)</div>
+
+          <!-- Button 2: Auto -->
+          <button class="btn-primary" onclick="runAutoAnalysis()"
+            style="background: linear-gradient(135deg, #FF6B6B 0%, #556270 100%);">🚀 2. [자동] 원클릭 분석 + 이미지</button>
+          <div class="help-text">API를 사용해 그래프를 생성하고 캐릭터 이미지를 자동으로 찾습니다.</div>
+
+          <!-- Hidden Template -->
+          <textarea id="geminiPromptTemplate" style="display:none;">
+**주의: 이 요청에 대해 JSON 코드 블록 외의 어떠한 설명, 인사말, 추가 텍스트도 절대 출력하지 마세요. 오직 JSON 코드 블록만 출력해야 합니다.**
+
+당신은 텍스트(또는 이미지)를 분석하여 관계형 데이터(노드와 엣지)를 Cytoscape.js 라이브러리에 적합한 JSON 형식으로 변환하는 전문 분석가입니다.
+
+다음 [분석 대상 텍스트]를 분석하여 등장인물(노드)과 관계(엣지)를 추출하고, 요청된 형식에 맞춰 **JSON 코드 블록**으로 응답해 주세요.
+**또한, 분석된 내용과 어울리는 이미지 URL이 있다면 'image' 필드에 추가해주세요.**
+
+### 분석 대상 텍스트 ###
+{{SOURCE_TEXT}}
+
+### 출력 형식 (JSON Only) ###
+```json
+{
+  "elements": [
+    {"data": {"id": "철수", "label": "철수", "color": "#667eea", "image": "https://example.com/chulsu.jpg"}},
+    {"data": {"id": "영희", "label": "영희", "color": "#f093fb", "image": ""}},
+    {"data": {"source": "철수", "target": "영희", "label": "친구"}}
   ]
 }
+```
 </textarea>
-        <button class="btn-gemini" onclick="copyPromptAndOpenGemini()">✨ Gemini 프롬프트 복사 및 채팅 열기</button>
-        <div class="help-text-api">
-          1. 위 버튼 클릭: **JSON 형식 요청 명령어 복사** 및 Gemini 채팅 창 열림.<br>
-          2. Gemini에 붙여넣기 후 **(여기에...붙여넣으세요.)** 부분에 분석할 텍스트 추가.<br>
-          3. Gemini 응답 JSON을 복사하여 아래 **'JSON 텍스트 변환 (수동)'** 입력창에 붙여넣기.
         </div>
       </div>
 
@@ -509,14 +534,17 @@
       <div class="panel-section">
         <h3>✨ 레이아웃 및 도구</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px;">
-          <button class="btn-info" onclick="runLayout('cose')">� 기본 정렬</button>
+          <button class="btn-info" onclick="runLayout('cose')"> 기본 정렬</button>
           <button class="btn-info" onclick="runLayout('dagre')">🌲 트리(세로)</button>
           <button class="btn-info" onclick="runLayout('mindmap')">🧠 마인드맵(가로)</button>
           <button class="btn-info" id="btnDragMode" onclick="toggleDragMode()">🖱️ 드래그 모드</button>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px;">
+          <button class="btn-info" id="btnTremorMode" onclick="toggleTremor()">🌊 숨쉬기 모드 ON</button>
           <button class="btn-danger" onclick="deleteSelected()">🗑️ 삭제 (Del)</button>
-          <button class="btn-success" onclick="saveToUrl()">� URL 공유</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 5px;">
+          <button class="btn-success" onclick="saveToUrl()">🔗 URL 공유</button>
         </div>
       </div>
     </div>
@@ -584,63 +612,63 @@
       };
 
       let initialData = [
-        { "data": { "id": "STC_01", "label": "STC 01 오프닝 이미지", "color": "#ffaa00", "notes": "이야기의 시작을 알리는 강렬한 첫인상. 주인공의 현재 상황과 세계의 톤을 시각적으로 압축해 보여줍니다." }, "position": { "x": 1056.12, "y": 299.83 }, "group": "nodes" },
-        { "data": { "id": "STC_02", "label": "STC 02 테마 제시", "color": "#ffaa00", "notes": "주인공이 여정을 통해 깨달아야 할 핵심 교훈이나 철학적 주제가 대사 혹은 암시를 통해 드러납니다." }, "position": { "x": 1055.5, "y": 667.61 }, "group": "nodes" },
-        { "data": { "id": "STC_03", "label": "STC 03 세트업", "color": "#ffaa00", "notes": "주인공의 결핍(약점)과 고쳐야 할 일상을 소개합니다. 등장인물의 관계망이 형성되는 지점입니다." }, "position": { "x": 934.09, "y": 1050.29 }, "group": "nodes" },
-        { "data": { "id": "STC_04", "label": "STC 04 촉매 사건", "color": "#ffaa00", "notes": "일상을 뒤흔드는 결정적 사건. 주인공이 변화를 거부할 수 없게 만드는 외부적 충격입니다." }, "position": { "x": 990.38, "y": 1282.07 }, "group": "nodes" },
-        { "data": { "id": "STC_05", "label": "STC 05 고민/저항", "color": "#ffaa00", "notes": "새로운 세계로 나아가기 전의 두려움과 주저함. 주인공이 선택의 기로에서 겪는 내부적 갈등입니다." }, "position": { "x": 917.59, "y": 1429.27 }, "group": "nodes" },
-        { "data": { "id": "STC_06", "label": "STC 06 2막 진입", "color": "#ffaa00", "notes": "주인공이 능동적으로 구세계를 떠나 신세계를 선택하는 지점. 되돌아갈 수 없는 강을 건너는 순간입니다." }, "position": { "x": 1023.06, "y": 1621.07 }, "group": "nodes" },
-        { "data": { "id": "STC_07", "label": "STC 07 B스토리", "color": "#ffaa00", "notes": "주로 로맨스나 우정을 통해 테마를 학습하는 부차적 이야기. 주인공의 정서적 성장을 돕는 관계입니다." }, "position": { "x": 990.38, "y": 1805.23 }, "group": "nodes" },
-        { "data": { "id": "STC_08", "label": "STC 08 즐거움과 게임", "color": "#ffaa00", "notes": "작품의 핵심 재미(장르적 쾌감)가 발휘되는 구간. 주인공이 새로운 환경을 탐험하거나 소소한 승리를 얻습니다." }, "position": { "x": 1065.25, "y": 2106.49 }, "group": "nodes" },
-        { "data": { "id": "STC_09", "label": "STC 09 미드포인트", "color": "#ffaa00", "notes": "이야기의 정중앙. 성공이 최고조에 달하거나(가짜 승리) 완전한 절망(가짜 패배)을 맛보며 방향이 급선회합니다." }, "position": { "x": 879.8, "y": 2338.5 }, "group": "nodes" },
-        { "data": { "id": "STC_10", "label": "STC 10 악당의 압박", "color": "#ffaa00", "notes": "악당 세력이 반격을 시작하며 주인공의 약점을 파고듭니다. 주인공의 자원이 바닥나기 시작합니다." }, "position": { "x": 795.68, "y": 2282.88 }, "group": "nodes" },
-        { "data": { "id": "STC_11", "label": "STC 11 모두 잃었다", "color": "#ffaa00", "notes": "주인공이 가장 소중한 것을 잃거나 희망을 완전히 상실하는 지점. 죽음의 향기가 가장 짙은 순간입니다." }, "position": { "x": 580.87, "y": 2193.38 }, "group": "nodes" },
-        { "data": { "id": "STC_12", "label": "STC 12 영혼의 암흑기", "color": "#ffaa00", "notes": "절망의 심연에서 자신을 되돌아보는 시간. 이전의 방식을 버리고 새로운 존재로 거듭나기 위한 내적 산통입니다." }, "position": { "x": 383.52, "y": 2190.41 }, "group": "nodes" },
-        { "data": { "id": "STC_13", "label": "STC 13 3막 진입", "color": "#ffaa00", "notes": "드디어 해결책(A스토리와 B스토리의 결합)을 찾아내고, 마지막 대결을 향해 당당히 나아갑니다." }, "position": { "x": 341.38, "y": 2477.07 }, "group": "nodes" },
-        { "data": { "id": "STC_14", "label": "STC 14 피날레", "color": "#ffaa00", "notes": "최종 결전. 주인공은 새로운 통찰을 이용해 구세계를 정화하고 빌런을 물리칩니다." }, "position": { "x": 232.56, "y": 2719.57 }, "group": "nodes" },
-        { "data": { "id": "STC_15", "label": "STC 15 엔딩 이미지", "color": "#ffaa00", "notes": "오프닝과 완벽히 대비되는 마무리 장면. 주인공의 삶이 어떻게 진화했는지를 시각적으로 증명합니다." }, "position": { "x": -92.22, "y": 2587.07 }, "group": "nodes" },
+        { "data": { "id": "STC_01", "label": "STC 01 오프닝 이미지", "color": "#ffaa00", "image": "", "notes": "이야기의 시작을 알리는 강렬한 첫인상. 주인공의 현재 상황과 세계의 톤을 시각적으로 압축해 보여줍니다." }, "position": { "x": 1056.12, "y": 299.83 }, "group": "nodes" },
+        { "data": { "id": "STC_02", "label": "STC 02 테마 제시", "color": "#ffaa00", "image": "", "notes": "주인공이 여정을 통해 깨달아야 할 핵심 교훈이나 철학적 주제가 대사 혹은 암시를 통해 드러납니다." }, "position": { "x": 1055.5, "y": 667.61 }, "group": "nodes" },
+        { "data": { "id": "STC_03", "label": "STC 03 세트업", "color": "#ffaa00", "image": "", "notes": "주인공의 결핍(약점)과 고쳐야 할 일상을 소개합니다. 등장인물의 관계망이 형성되는 지점입니다." }, "position": { "x": 934.09, "y": 1050.29 }, "group": "nodes" },
+        { "data": { "id": "STC_04", "label": "STC 04 촉매 사건", "color": "#ffaa00", "image": "", "notes": "일상을 뒤흔드는 결정적 사건. 주인공이 변화를 거부할 수 없게 만드는 외부적 충격입니다." }, "position": { "x": 990.38, "y": 1282.07 }, "group": "nodes" },
+        { "data": { "id": "STC_05", "label": "STC 05 고민/저항", "color": "#ffaa00", "image": "", "notes": "새로운 세계로 나아가기 전의 두려움과 주저함. 주인공이 선택의 기로에서 겪는 내부적 갈등입니다." }, "position": { "x": 917.59, "y": 1429.27 }, "group": "nodes" },
+        { "data": { "id": "STC_06", "label": "STC 06 2막 진입", "color": "#ffaa00", "image": "", "notes": "주인공이 능동적으로 구세계를 떠나 신세계를 선택하는 지점. 되돌아갈 수 없는 강을 건너는 순간입니다." }, "position": { "x": 1023.06, "y": 1621.07 }, "group": "nodes" },
+        { "data": { "id": "STC_07", "label": "STC 07 B스토리", "color": "#ffaa00", "image": "", "notes": "주로 로맨스나 우정을 통해 테마를 학습하는 부차적 이야기. 주인공의 정서적 성장을 돕는 관계입니다." }, "position": { "x": 990.38, "y": 1805.23 }, "group": "nodes" },
+        { "data": { "id": "STC_08", "label": "STC 08 즐거움과 게임", "color": "#ffaa00", "image": "", "notes": "작품의 핵심 재미(장르적 쾌감)가 발휘되는 구간. 주인공이 새로운 환경을 탐험하거나 소소한 승리를 얻습니다." }, "position": { "x": 1065.25, "y": 2106.49 }, "group": "nodes" },
+        { "data": { "id": "STC_09", "label": "STC 09 미드포인트", "color": "#ffaa00", "image": "", "notes": "이야기의 정중앙. 성공이 최고조에 달하거나(가짜 승리) 완전한 절망(가짜 패배)을 맛보며 방향이 급선회합니다." }, "position": { "x": 879.8, "y": 2338.5 }, "group": "nodes" },
+        { "data": { "id": "STC_10", "label": "STC 10 악당의 압박", "color": "#ffaa00", "image": "", "notes": "악당 세력이 반격을 시작하며 주인공의 약점을 파고듭니다. 주인공의 자원이 바닥나기 시작합니다." }, "position": { "x": 795.68, "y": 2282.88 }, "group": "nodes" },
+        { "data": { "id": "STC_11", "label": "STC 11 모두 잃었다", "color": "#ffaa00", "image": "", "notes": "주인공이 가장 소중한 것을 잃거나 희망을 완전히 상실하는 지점. 죽음의 향기가 가장 짙은 순간입니다." }, "position": { "x": 580.87, "y": 2193.38 }, "group": "nodes" },
+        { "data": { "id": "STC_12", "label": "STC 12 영혼의 암흑기", "color": "#ffaa00", "image": "", "notes": "절망의 심연에서 자신을 되돌아보는 시간. 이전의 방식을 버리고 새로운 존재로 거듭나기 위한 내적 산통입니다." }, "position": { "x": 383.52, "y": 2190.41 }, "group": "nodes" },
+        { "data": { "id": "STC_13", "label": "STC 13 3막 진입", "color": "#ffaa00", "image": "", "notes": "드디어 해결책(A스토리와 B스토리의 결합)을 찾아내고, 마지막 대결을 향해 당당히 나아갑니다." }, "position": { "x": 341.38, "y": 2477.07 }, "group": "nodes" },
+        { "data": { "id": "STC_14", "label": "STC 14 피날레", "color": "#ffaa00", "image": "", "notes": "최종 결전. 주인공은 새로운 통찰을 이용해 구세계를 정화하고 빌런을 물리칩니다." }, "position": { "x": 232.56, "y": 2719.57 }, "group": "nodes" },
+        { "data": { "id": "STC_15", "label": "STC 15 엔딩 이미지", "color": "#ffaa00", "image": "", "notes": "오프닝과 완벽히 대비되는 마무리 장면. 주인공의 삶이 어떻게 진화했는지를 시각적으로 증명합니다." }, "position": { "x": -92.22, "y": 2587.07 }, "group": "nodes" },
 
-        { "data": { "id": "TRB_01", "label": "TRB 01 자기인식·필요·욕망", "color": "#4facfe", "notes": "주인공의 결핍(필요)과 겉으로 드러난 목표(욕망)를 설정합니다. 이야기의 원동력이 정의됩니다." }, "position": { "x": 543.11, "y": 1307.29 }, "group": "nodes" },
-        { "data": { "id": "TRB_02", "label": "TRB 02 유령과 스토리 세계", "color": "#4facfe", "notes": "주인공의 발목을 잡는 과거의 상처(유령)와 그것이 지배하는 공간적 배경을 설정합니다." }, "position": { "x": 1057.7, "y": 48.06 }, "group": "nodes" },
-        { "data": { "id": "TRB_03", "label": "TRB 03 약점과 필요", "color": "#4facfe", "notes": "주인공이 인간으로서 가진 도덕적/심리적 맹점. 성공을 위해 반드시 극복해야 하는 숙제입니다." }, "position": { "x": 761.24, "y": 629.34 }, "group": "nodes" },
-        { "data": { "id": "TRB_04", "label": "TRB 04 발단 사건", "color": "#4facfe", "notes": "주인공을 수동적인 상태에서 능동적인 욕망의 추구자로 바꾸는 외부적 자극입니다." }, "position": { "x": 804.63, "y": 1231.58 }, "group": "nodes" },
-        { "data": { "id": "TRB_05", "label": "TRB 05 욕망 구체화", "color": "#4facfe", "notes": "여정을 통해 얻고자 하는 구체적인 상(賞)이 뚜렷해지는 단계입니다." }, "position": { "x": 1266.48, "y": 1236.47 }, "group": "nodes" },
-        { "data": { "id": "TRB_06", "label": "TRB 06 조력자 등장", "color": "#4facfe", "notes": "주인공의 부족한 부분을 채워주거나, 정신적인 성장을 자극하는 조언자의 출현입니다." }, "position": { "x": 1256.67, "y": 1688.02 }, "group": "nodes" },
-        { "data": { "id": "TRB_07", "label": "TRB 07 적대자/미스터리", "color": "#4facfe", "notes": "단순한 빌런을 넘어 주인공과 정반대의 가치를 상징하며 경쟁하는 적의 실체입니다." }, "position": { "x": 784.97, "y": 1672.85 }, "group": "nodes" },
-        { "data": { "id": "TRB_08", "label": "TRB 08 가짜 아군", "color": "#4facfe", "notes": "도와주는 듯 보이지만 사실은 자신의 이익을 쫓거나 주인공을 파멸로 이끄는 인물입니다." }, "position": { "x": 1595.85, "y": -38.07 }, "group": "nodes" },
-        { "data": { "id": "TRB_09", "label": "TRB 09 첫 깨달음과 결정", "color": "#4facfe", "notes": "진행 중인 여정의 본질을 파악하고, 자신의 방식을 수정하거나 의지를 다지는 지점입니다." }, "position": { "x": 1115.31, "y": 2405.28 }, "group": "nodes" },
-        { "data": { "id": "TRB_10", "label": "TRB 10 계획 수립", "color": "#4facfe", "notes": "적을 이기기 위한 실질적인 행동 전략을 짜는 단계입니다." }, "position": { "x": 989.71, "y": 2527.6 }, "group": "nodes" },
-        { "data": { "id": "TRB_11", "label": "TRB 11 적의 계획/반격", "color": "#4facfe", "notes": "적이 주인공의 전략을 간파하고 더 강력한 압박을 가해오는 순간입니다." }, "position": { "x": 653.96, "y": 2595.52 }, "group": "nodes" },
-        { "data": { "id": "TRB_12", "label": "TRB 12 추진", "color": "#4facfe", "notes": "갈등이 격렬해짐에 따라 주인공이 도덕적 선을 넘어서까지 목표를 쫓는 구간입니다." }, "position": { "x": 896.83, "y": 2499.17 }, "group": "nodes" },
-        { "data": { "id": "TRB_13", "label": "TRB 13 아군 비판/충돌", "color": "#4facfe", "notes": "변해가는 주인공의 방식에 실망한 동료들이 등을 돌리거나 충돌하는 내적 위기입니다." }, "position": { "x": 1423.21, "y": 42.71 }, "group": "nodes" },
-        { "data": { "id": "TRB_14", "label": "TRB 14 겉보기 패배", "color": "#4facfe", "notes": "주인공의 계획이 완전히 실패한 것처럼 보이며 사회적/물리적 기반이 무너지는 지점입니다." }, "position": { "x": 432.36, "y": 1810.71 }, "group": "nodes" },
-        { "data": { "id": "TRB_15", "label": "TRB 15 두 번째 깨달음", "color": "#4facfe", "notes": "패배를 통해 자신의 잘못된 방식을 직면하고, 진정한 성장을 위한 실마리를 찾습니다." }, "position": { "x": 218.92, "y": 2013.29 }, "group": "nodes" },
-        { "data": { "id": "TRB_16", "label": "TRB 16 죽음의 문턱", "color": "#4facfe", "notes": "목숨이 위험하거나 자아가 완전히 붕괴되는 극한의 상황에 직면합니다." }, "position": { "x": 1435.74, "y": -192.58 }, "group": "nodes" },
-        { "data": { "id": "TRB_17", "label": "TRB 17 세 번째 깨달음", "color": "#4facfe", "notes": "자신과 적, 세상에 대한 궁극적인 진실을 깨닫고 도덕적으로 완성되는 지점입니다." }, "position": { "x": 1435.43, "y": 130.61 }, "group": "nodes" },
-        { "data": { "id": "TRB_18", "label": "TRB 18 관문과 시련", "color": "#4facfe", "notes": "결전에 도달하기 위해 돌파해야 하는 최종적인 장벽들을 의미합니다." }, "position": { "x": 578.56, "y": 2435.24 }, "group": "nodes" },
-        { "data": { "id": "TRB_19", "label": "TRB 19 결전", "color": "#4facfe", "notes": "적대자와의 마지막 승부. 주인공은 깨달은 가치를 증명하며 싸웁니다." }, "position": { "x": 62.46, "y": 2833.34 }, "group": "nodes" },
-        { "data": { "id": "TRB_20", "label": "TRB 20 최종 자기인식", "color": "#4facfe", "notes": "폭풍이 지나간 후, 주인공이 자신이 누구인지 어떤 존재가 되었는지 확신하는 단계입니다." }, "position": { "x": 480.97, "y": 2583.87 }, "group": "nodes" },
-        { "data": { "id": "TRB_21", "label": "TRB 21 도덕적 선택", "color": "#4facfe", "notes": "개인의 욕망이 아닌 대의나 올바른 가치를 선택하며 인물의 품격을 완성합니다." }, "position": { "x": 346.96, "y": 3029.99 }, "group": "nodes" },
-        { "data": { "id": "TRB_22", "label": "TRB 22 새로운 균형", "color": "#4facfe", "notes": "사건이 해결되고 주인공이 얻은 깨달음이 삶에 녹아든 새로운 일상의 시작입니다." }, "position": { "x": -139.86, "y": 2439.62 }, "group": "nodes" },
+        { "data": { "id": "TRB_01", "label": "TRB 01 자기인식·필요·욕망", "color": "#4facfe", "image": "", "notes": "주인공의 결핍(필요)과 겉으로 드러난 목표(욕망)를 설정합니다. 이야기의 원동력이 정의됩니다." }, "position": { "x": 543.11, "y": 1307.29 }, "group": "nodes" },
+        { "data": { "id": "TRB_02", "label": "TRB 02 유령과 스토리 세계", "color": "#4facfe", "image": "", "notes": "주인공의 발목을 잡는 과거의 상처(유령)와 그것이 지배하는 공간적 배경을 설정합니다." }, "position": { "x": 1057.7, "y": 48.06 }, "group": "nodes" },
+        { "data": { "id": "TRB_03", "label": "TRB 03 약점과 필요", "color": "#4facfe", "image": "", "notes": "주인공이 인간으로서 가진 도덕적/심리적 맹점. 성공을 위해 반드시 극복해야 하는 숙제입니다." }, "position": { "x": 761.24, "y": 629.34 }, "group": "nodes" },
+        { "data": { "id": "TRB_04", "label": "TRB 04 발단 사건", "color": "#4facfe", "image": "", "notes": "주인공을 수동적인 상태에서 능동적인 욕망의 추구자로 바꾸는 외부적 자극입니다." }, "position": { "x": 804.63, "y": 1231.58 }, "group": "nodes" },
+        { "data": { "id": "TRB_05", "label": "TRB 05 욕망 구체화", "color": "#4facfe", "image": "", "notes": "여정을 통해 얻고자 하는 구체적인 상(賞)이 뚜렷해지는 단계입니다." }, "position": { "x": 1266.48, "y": 1236.47 }, "group": "nodes" },
+        { "data": { "id": "TRB_06", "label": "TRB 06 조력자 등장", "color": "#4facfe", "image": "", "notes": "주인공의 부족한 부분을 채워주거나, 정신적인 성장을 자극하는 조언자의 출현입니다." }, "position": { "x": 1256.67, "y": 1688.02 }, "group": "nodes" },
+        { "data": { "id": "TRB_07", "label": "TRB 07 적대자/미스터리", "color": "#4facfe", "image": "", "notes": "단순한 빌런을 넘어 주인공과 정반대의 가치를 상징하며 경쟁하는 적의 실체입니다." }, "position": { "x": 784.97, "y": 1672.85 }, "group": "nodes" },
+        { "data": { "id": "TRB_08", "label": "TRB 08 가짜 아군", "color": "#4facfe", "image": "", "notes": "도와주는 듯 보이지만 사실은 자신의 이익을 쫓거나 주인공을 파멸로 이끄는 인물입니다." }, "position": { "x": 1595.85, "y": -38.07 }, "group": "nodes" },
+        { "data": { "id": "TRB_09", "label": "TRB 09 첫 깨달음과 결정", "color": "#4facfe", "image": "", "notes": "진행 중인 여정의 본질을 파악하고, 자신의 방식을 수정하거나 의지를 다지는 지점입니다." }, "position": { "x": 1115.31, "y": 2405.28 }, "group": "nodes" },
+        { "data": { "id": "TRB_10", "label": "TRB 10 계획 수립", "color": "#4facfe", "image": "", "notes": "적을 이기기 위한 실질적인 행동 전략을 짜는 단계입니다." }, "position": { "x": 989.71, "y": 2527.6 }, "group": "nodes" },
+        { "data": { "id": "TRB_11", "label": "TRB 11 적의 계획/반격", "color": "#4facfe", "image": "", "notes": "적이 주인공의 전략을 간파하고 더 강력한 압박을 가해오는 순간입니다." }, "position": { "x": 653.96, "y": 2595.52 }, "group": "nodes" },
+        { "data": { "id": "TRB_12", "label": "TRB 12 추진", "color": "#4facfe", "image": "", "notes": "갈등이 격렬해짐에 따라 주인공이 도덕적 선을 넘어서까지 목표를 쫓는 구간입니다." }, "position": { "x": 896.83, "y": 2499.17 }, "group": "nodes" },
+        { "data": { "id": "TRB_13", "label": "TRB 13 아군 비판/충돌", "color": "#4facfe", "image": "", "notes": "변해가는 주인공의 방식에 실망한 동료들이 등을 돌리거나 충돌하는 내적 위기입니다." }, "position": { "x": 1423.21, "y": 42.71 }, "group": "nodes" },
+        { "data": { "id": "TRB_14", "label": "TRB 14 겉보기 패배", "color": "#4facfe", "image": "", "notes": "주인공의 계획이 완전히 실패한 것처럼 보이며 사회적/물리적 기반이 무너지는 지점입니다." }, "position": { "x": 432.36, "y": 1810.71 }, "group": "nodes" },
+        { "data": { "id": "TRB_15", "label": "TRB 15 두 번째 깨달음", "color": "#4facfe", "image": "", "notes": "패배를 통해 자신의 잘못된 방식을 직면하고, 진정한 성장을 위한 실마리를 찾습니다." }, "position": { "x": 218.92, "y": 2013.29 }, "group": "nodes" },
+        { "data": { "id": "TRB_16", "label": "TRB 16 죽음의 문턱", "color": "#4facfe", "image": "", "notes": "목숨이 위험하거나 자아가 완전히 붕괴되는 극한의 상황에 직면합니다." }, "position": { "x": 1435.74, "y": -192.58 }, "group": "nodes" },
+        { "data": { "id": "TRB_17", "label": "TRB 17 세 번째 깨달음", "color": "#4facfe", "image": "", "notes": "자신과 적, 세상에 대한 궁극적인 진실을 깨닫고 도덕적으로 완성되는 지점입니다." }, "position": { "x": 1435.43, "y": 130.61 }, "group": "nodes" },
+        { "data": { "id": "TRB_18", "label": "TRB 18 관문과 시련", "color": "#4facfe", "image": "", "notes": "결전에 도달하기 위해 돌파해야 하는 최종적인 장벽들을 의미합니다." }, "position": { "x": 578.56, "y": 2435.24 }, "group": "nodes" },
+        { "data": { "id": "TRB_19", "label": "TRB 19 결전", "color": "#4facfe", "image": "", "notes": "적대자와의 마지막 승부. 주인공은 깨달은 가치를 증명하며 싸웁니다." }, "position": { "x": 62.46, "y": 2833.34 }, "group": "nodes" },
+        { "data": { "id": "TRB_20", "label": "TRB 20 최종 자기인식", "color": "#4facfe", "image": "", "notes": "폭풍이 지나간 후, 주인공이 자신이 누구인지 어떤 존재가 되었는지 확신하는 단계입니다." }, "position": { "x": 480.97, "y": 2583.87 }, "group": "nodes" },
+        { "data": { "id": "TRB_21", "label": "TRB 21 도덕적 선택", "color": "#4facfe", "image": "", "notes": "개인의 욕망이 아닌 대의나 올바른 가치를 선택하며 인물의 품격을 완성합니다." }, "position": { "x": 346.96, "y": 3029.99 }, "group": "nodes" },
+        { "data": { "id": "TRB_22", "label": "TRB 22 새로운 균형", "color": "#4facfe", "image": "", "notes": "사건이 해결되고 주인공이 얻은 깨달음이 삶에 녹아든 새로운 일상의 시작입니다." }, "position": { "x": -139.86, "y": 2439.62 }, "group": "nodes" },
 
-        { "data": { "id": "PRP_01", "label": "PRP 01 부재", "color": "#667eea", "notes": "가족의 일원이 집을 떠나거나, 기존의 질서를 유지하던 존재가 사라지는 결핍의 시작입니다." }, "position": { "x": 580.12, "y": 946.78 }, "group": "nodes" },
-        { "data": { "id": "PRP_08", "label": "PRP 08 악행/결핍", "color": "#667eea", "notes": "악당에 의해 피해가 발생하거나 무언가 결정적으로 부족해져 여정이 불가피해집니다." }, "position": { "x": 647.46, "y": 807.56 }, "group": "nodes" },
-        { "data": { "id": "PRP_09", "label": "PRP 09 매개", "color": "#667eea", "notes": "사건의 전말이 알려지고 주인공에게 도움의 요청이 오거나 임무가 부여됩니다." }, "position": { "x": 1345.11, "y": 1065.11 }, "group": "nodes" },
-        { "data": { "id": "PRP_10", "label": "PRP 10 대응 시작", "color": "#667eea", "notes": "주인공이 임무를 받아들이고 문제를 해결하기 위해 행동을 개시하는 동의의 순간입니다." }, "position": { "x": 1183.53, "y": 907.84 }, "group": "nodes" },
-        { "data": { "id": "PRP_11", "label": "PRP 11 출발", "color": "#667eea", "notes": "안전한 고향을 떠나 미지의 영역 혹은 적의 본거지를 향해 이동합니다." }, "position": { "x": 768.39, "y": 1438.34 }, "group": "nodes" },
-        { "data": { "id": "PRP_12", "label": "PRP 12 증여자 시험", "color": "#667eea", "notes": "마법적 수단이나 도구를 얻기 전, 주인공의 자격을 묻는 첫 번째 관문입니다." }, "position": { "x": 1364.83, "y": 1385.66 }, "group": "nodes" },
-        { "data": { "id": "PRP_14", "label": "PRP 14 조력 획득", "color": "#667eea", "notes": "시험을 통과한 대가로 신비로운 힘이나 신뢰할 수 있는 도구를 손에 넣습니다." }, "position": { "x": 1288.29, "y": 2171.63 }, "group": "nodes" },
-        { "data": { "id": "PRP_15", "label": "PRP 15 안내", "color": "#667eea", "notes": "목적지까지 안내를 받거나 신비로운 조력자를 따라 적에게 접근합니다." }, "position": { "x": 1164.62, "y": 1961.59 }, "group": "nodes" },
-        { "data": { "id": "PRP_16", "label": "PRP 16 투쟁", "color": "#667eea", "notes": "적과 직접 맞붙는 격렬한 물리적 혹은 논리적 전투 구간입니다." }, "position": { "x": 934.55, "y": 1985.21 }, "group": "nodes" },
-        { "data": { "id": "PRP_18", "label": "PRP 18 승리", "color": "#667eea", "notes": "전투에서 적을 물리치거나 무력화시키는 일차적 성공입니다." }, "position": { "x": 1854.52, "y": 136.6 }, "group": "nodes" },
-        { "data": { "id": "PRP_19", "label": "PRP 19 결핍 해소", "color": "#667eea", "notes": "초반에 발생했던 악행의 흔적이 지워지거나 잃었던 것을 되찾는 수습 단계입니다." }, "position": { "x": 1613.89, "y": 244.32 }, "group": "nodes" },
-        { "data": { "id": "PRP_20", "label": "PRP 20 귀환", "color": "#667eea", "notes": "임무를 마친 주인공이 영광스럽게 혹은 비밀스럽게 자신의 장소로 돌아옵니다." }, "position": { "x": 1648.33, "y": 99.85 }, "group": "nodes" },
-        { "data": { "id": "PRP_21", "label": "PRP 21 추격", "color": "#667eea", "notes": "패배한 적의 잔당이 추격해오거나 예기치 못한 마지막 방해가 뒤따릅니다." }, "position": { "x": 691.79, "y": 2060.3 }, "group": "nodes" },
-        { "data": { "id": "PRP_25", "label": "PRP 25 어려운 과제", "color": "#667eea", "notes": "최종적인 정당성을 확보하기 위해 주인공에게 주어지는 불가능에 가까운 미션입니다." }, "position": { "x": 129.77, "y": 2445.19 }, "group": "nodes" },
-        { "data": { "id": "PRP_26", "label": "PRP 26 과제 해결", "color": "#667eea", "notes": "주인공의 용기나 지혜, 혹은 미리 얻은 조력 덕분에 과제를 완수합니다." }, "position": { "x": 175.63, "y": 2854.16 }, "group": "nodes" },
-        { "data": { "id": "PRP_27", "label": "PRP 27 인식", "color": "#667eea", "notes": "주인공이 진짜 영웅임을 세상이 알아보고 신분이나 자격을 공인받는 지점입니다." }, "position": { "x": 459.34, "y": 2730.76 }, "group": "nodes" },
-        { "data": { "id": "PRP_30", "label": "PRP 30 처벌", "color": "#667eea", "notes": "모든 정체가 드러난 악당이나 가짜 영웅이 응당한 벌을 받는 사법적/도덕적 단죄입니다." }, "position": { "x": 133.75, "y": 2578.46 }, "group": "nodes" },
-        { "data": { "id": "PRP_31", "label": "PRP 31 보상/엔딩", "color": "#667eea", "notes": "결혼, 왕위 승계, 혹은 평화의 안착 등 영웅적 여정에 대한 최종적 보상입니다." }, "position": { "x": -140.09, "y": 2835.95 }, "group": "nodes" },
+        { "data": { "id": "PRP_01", "label": "PRP 01 부재", "color": "#667eea", "image": "", "notes": "가족의 일원이 집을 떠나거나, 기존의 질서를 유지하던 존재가 사라지는 결핍의 시작입니다." }, "position": { "x": 580.12, "y": 946.78 }, "group": "nodes" },
+        { "data": { "id": "PRP_08", "label": "PRP 08 악행/결핍", "color": "#667eea", "image": "", "notes": "악당에 의해 피해가 발생하거나 무언가 결정적으로 부족해져 여정이 불가피해집니다." }, "position": { "x": 647.46, "y": 807.56 }, "group": "nodes" },
+        { "data": { "id": "PRP_09", "label": "PRP 09 매개", "color": "#667eea", "image": "", "notes": "사건의 전말이 알려지고 주인공에게 도움의 요청이 오거나 임무가 부여됩니다." }, "position": { "x": 1345.11, "y": 1065.11 }, "group": "nodes" },
+        { "data": { "id": "PRP_10", "label": "PRP 10 대응 시작", "color": "#667eea", "image": "", "notes": "주인공이 임무를 받아들이고 문제를 해결하기 위해 행동을 개시하는 동의의 순간입니다." }, "position": { "x": 1183.53, "y": 907.84 }, "group": "nodes" },
+        { "data": { "id": "PRP_11", "label": "PRP 11 출발", "color": "#667eea", "image": "", "notes": "안전한 고향을 떠나 미지의 영역 혹은 적의 본거지를 향해 이동합니다." }, "position": { "x": 768.39, "y": 1438.34 }, "group": "nodes" },
+        { "data": { "id": "PRP_12", "label": "PRP 12 증여자 시험", "color": "#667eea", "image": "", "notes": "마법적 수단이나 도구를 얻기 전, 주인공의 자격을 묻는 첫 번째 관문입니다." }, "position": { "x": 1364.83, "y": 1385.66 }, "group": "nodes" },
+        { "data": { "id": "PRP_14", "label": "PRP 14 조력 획득", "color": "#667eea", "image": "", "notes": "시험을 통과한 대가로 신비로운 힘이나 신뢰할 수 있는 도구를 손에 넣습니다." }, "position": { "x": 1288.29, "y": 2171.63 }, "group": "nodes" },
+        { "data": { "id": "PRP_15", "label": "PRP 15 안내", "color": "#667eea", "image": "", "notes": "목적지까지 안내를 받거나 신비로운 조력자를 따라 적에게 접근합니다." }, "position": { "x": 1164.62, "y": 1961.59 }, "group": "nodes" },
+        { "data": { "id": "PRP_16", "label": "PRP 16 투쟁", "color": "#667eea", "image": "", "notes": "적과 직접 맞붙는 격렬한 물리적 혹은 논리적 전투 구간입니다." }, "position": { "x": 934.55, "y": 1985.21 }, "group": "nodes" },
+        { "data": { "id": "PRP_18", "label": "PRP 18 승리", "color": "#667eea", "image": "", "notes": "전투에서 적을 물리치거나 무력화시키는 일차적 성공입니다." }, "position": { "x": 1854.52, "y": 136.6 }, "group": "nodes" },
+        { "data": { "id": "PRP_19", "label": "PRP 19 결핍 해소", "color": "#667eea", "image": "", "notes": "초반에 발생했던 악행의 흔적이 지워지거나 잃었던 것을 되찾는 수습 단계입니다." }, "position": { "x": 1613.89, "y": 244.32 }, "group": "nodes" },
+        { "data": { "id": "PRP_20", "label": "PRP 20 귀환", "color": "#667eea", "image": "", "notes": "임무를 마친 주인공이 영광스럽게 혹은 비밀스럽게 자신의 장소로 돌아옵니다." }, "position": { "x": 1648.33, "y": 99.85 }, "group": "nodes" },
+        { "data": { "id": "PRP_21", "label": "PRP 21 추격", "color": "#667eea", "image": "", "notes": "패배한 적의 잔당이 추격해오거나 예기치 못한 마지막 방해가 뒤따릅니다." }, "position": { "x": 691.79, "y": 2060.3 }, "group": "nodes" },
+        { "data": { "id": "PRP_25", "label": "PRP 25 어려운 과제", "color": "#667eea", "image": "", "notes": "최종적인 정당성을 확보하기 위해 주인공에게 주어지는 불가능에 가까운 미션입니다." }, "position": { "x": 129.77, "y": 2445.19 }, "group": "nodes" },
+        { "data": { "id": "PRP_26", "label": "PRP 26 과제 해결", "color": "#667eea", "image": "", "notes": "주인공의 용기나 지혜, 혹은 미리 얻은 조력 덕분에 과제를 완수합니다." }, "position": { "x": 175.63, "y": 2854.16 }, "group": "nodes" },
+        { "data": { "id": "PRP_27", "label": "PRP 27 인식", "color": "#667eea", "image": "", "notes": "주인공이 진짜 영웅임을 세상이 알아보고 신분이나 자격을 공인받는 지점입니다." }, "position": { "x": 459.34, "y": 2730.76 }, "group": "nodes" },
+        { "data": { "id": "PRP_30", "label": "PRP 30 처벌", "color": "#667eea", "image": "", "notes": "모든 정체가 드러난 악당이나 가짜 영웅이 응당한 벌을 받는 사법적/도덕적 단죄입니다." }, "position": { "x": 133.75, "y": 2578.46 }, "group": "nodes" },
+        { "data": { "id": "PRP_31", "label": "PRP 31 보상/엔딩", "color": "#667eea", "image": "", "notes": "결혼, 왕위 승계, 혹은 평화의 안착 등 영웅적 여정에 대한 최종적 보상입니다." }, "position": { "x": -140.09, "y": 2835.95 }, "group": "nodes" },
 
         { "data": { "id": "STC_01_02", "source": "STC_01", "target": "STC_02", "label": "세계관 속에서 잠재적 테마 암시" }, "group": "edges" },
         { "data": { "id": "STC_02_03", "source": "STC_02", "target": "STC_03", "label": "일상의 문제점과 인물 관계 구축" }, "group": "edges" },
@@ -923,12 +951,32 @@
         runLayout('cose'); document.getElementById('newNode').value = '';
       }
 
+      let isTremorOn = true; // Default to ON
+
+      function toggleTremor() {
+        isTremorOn = !isTremorOn;
+        const btn = document.getElementById('btnTremorMode');
+        if (isTremorOn) {
+          btn.innerText = "🌊 숨쉬기 모드 ON";
+          btn.classList.remove('btn-secondary');
+          btn.classList.add('btn-info');
+          startObsidianTremor();
+        } else {
+          btn.innerText = "🌊 숨쉬기 모드 OFF";
+          btn.classList.remove('btn-info');
+          btn.classList.add('btn-secondary'); // You might need to add a gray style or use inline style if btn-secondary is not defined
+          btn.style.backgroundColor = '#6c757d'; // Fallback gray
+          stopObsidianTremor();
+        }
+      }
+
       function startObsidianTremor() {
+        if (!isTremorOn) return; // Respect the toggle
         if (tremorInterval) return;
         tremorInterval = setInterval(() => {
           cy.nodes().forEach(node => {
             if (node.selected()) return;
-            const degree = node.degree(); const tremorStrength = 5.0 / (1 + degree);
+            const degree = node.degree(); const tremorStrength = 2.0 / (1 + degree); // Slightly reduced strength for stability
             node.position({ x: node.position('x') + (Math.random() - 0.5) * tremorStrength, y: node.position('y') + (Math.random() - 0.5) * tremorStrength });
           });
         }, 50);
@@ -939,9 +987,12 @@
         let opts = layoutName === 'cose' ? { name: 'cose', animate: true, animationDuration: 500, fit: true, padding: 10, nodeRepulsion: 20000, idealEdgeLength: 150, gravity: 0.05 } : { name: 'dagre', rankDir: 'TB', padding: 10, animate: true };
         if (layoutName === 'dagre') cy.nodes().unlock();
         const layout = cy.layout(opts);
-        layout.on('layoutstop', updateNodeOverlays); // 레이아웃 종료 후 오버레이 갱신
+        layout.on('layoutstop', updateNodeOverlays);
         layout.run();
-        setTimeout(startObsidianTremor, 500);
+        // Only restart if it's ON
+        if (isTremorOn) {
+          setTimeout(startObsidianTremor, 500);
+        }
       }
 
       function saveNotes() {
@@ -1310,34 +1361,149 @@
       function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); }
 
       // ====================================================================
-      // ✨ Gemini 프롬프트 복사 및 채팅 열기 함수 (NEW)
+      // 🔑 API Key Management
       // ====================================================================
-      function copyPromptAndOpenGemini() {
-        const promptTextarea = document.getElementById('geminiPromptTemplate');
-        const promptText = promptTextarea.value.trim();
+      function saveApiKeys() {
+        localStorage.setItem("geminiApiKey", document.getElementById('geminiApiKey').value);
+        localStorage.setItem("googleSearchKey", document.getElementById('googleSearchKey').value);
+        localStorage.setItem("googleCxId", document.getElementById('googleCxId').value);
+      }
 
-        // 1. 텍스트를 클립보드에 복사
-        const tempTextarea = document.createElement('textarea');
-        tempTextarea.value = promptText;
-        document.body.appendChild(tempTextarea);
-        tempTextarea.select();
+      function loadApiKeys() {
+        const k1 = localStorage.getItem("geminiApiKey");
+        const k2 = localStorage.getItem("googleSearchKey");
+        const k3 = localStorage.getItem("googleCxId");
+        if (k1) document.getElementById('geminiApiKey').value = k1;
+        if (k2) document.getElementById('googleSearchKey').value = k2;
+        if (k3) document.getElementById('googleCxId').value = k3;
+      }
 
-        try {
-          const successful = document.execCommand('copy');
-          if (successful) {
-            alert("✅ Gemini 요청 프롬프트가 클립보드에 복사되었습니다!\n\n이제 새 창에서 '분석할 텍스트' 부분만 수정 후 Gemini에게 요청하세요.");
-          } else {
-            alert("❌ 클립보드 복사에 실패했습니다. 프롬프트 내용을 수동으로 복사해주세요.");
-          }
-        } catch (err) {
-          alert("❌ 클립보드 복사 중 오류 발생: " + err);
-        } finally {
-          document.body.removeChild(tempTextarea);
+      // Load keys on startup
+      window.addEventListener('load', loadApiKeys);
+
+      // ====================================================================
+      // ✨ 1. Manual Mode: Copy Prompt & Open Gemini
+      // ====================================================================
+      async function copyPromptAndOpenGemini() {
+        const template = document.getElementById('geminiPromptTemplate').value;
+        const sourceText = document.getElementById('sourceTextInput').value.trim();
+
+        if (!sourceText) {
+          alert('⚠️ 분석할 [소스 텍스트]를 먼저 입력해주세요.');
+          return;
         }
 
-        // 2. Gemini 채팅 창을 새 탭으로 열기
-        const geminiUrl = "https://gemini.google.com/app";
-        window.open(geminiUrl, "_blank");
+        const finalPrompt = template.replace('{{SOURCE_TEXT}}', sourceText);
+
+        try {
+          await navigator.clipboard.writeText(finalPrompt);
+          alert("✅ 프롬프트가 복사되었습니다!\n\nGemini 채팅창이 열리면 승인(Ctrl+V) 하세요.");
+          window.open("https://gemini.google.com/app", "_blank");
+        } catch (err) {
+          alert("❌ 클립보드 복사 실패. 텍스트를 직접 복사해주세요.");
+        }
+      }
+
+      // ====================================================================
+      // 🚀 2. Auto Mode: Run Analysis + Image Search
+      // ====================================================================
+      async function runAutoAnalysis() {
+        const geminiKey = document.getElementById('geminiApiKey').value.trim();
+        const googleKey = document.getElementById('googleSearchKey').value.trim();
+        const cxId = document.getElementById('googleCxId').value.trim();
+        const sourceText = document.getElementById('sourceTextInput').value.trim();
+
+        if (!geminiKey) { alert('Gemini API Key가 필요합니다.'); return; }
+        if (!sourceText) { alert('분석할 텍스트를 입력해주세요.'); return; }
+
+        const btn = document.querySelector('button[onclick="runAutoAnalysis()"]');
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ 분석 중... (Gemini API 호출)";
+        btn.disabled = true;
+
+        try {
+          // 1. Construct Prompt
+          const template = document.getElementById('geminiPromptTemplate').value;
+          const prompt = template.replace('{{SOURCE_TEXT}}', sourceText);
+
+          // 2. Call Gemini API
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+
+          const response = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }]
+            })
+          });
+
+          if (!response.ok) throw new Error(`Gemini API Error: ${response.statusText}`);
+          const result = await response.json();
+
+          let generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!generatedText) throw new Error("Gemini 응답에 텍스트가 없습니다.");
+
+          // Clean Markdown
+          generatedText = generatedText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+          let graphData;
+          try {
+            graphData = JSON.parse(generatedText);
+          } catch (e) {
+            // Try lenient parse
+            graphData = JSON.parse(generatedText.replace(/\\n/g, ' '));
+          }
+
+          const elements = extractElementsFromJSON(graphData);
+          if (!elements || elements.length === 0) throw new Error("유효한 노드/엣지를 찾지 못했습니다.");
+
+          // 3. Image Search (Google Custom Search)
+          if (googleKey && cxId) {
+            btn.innerText = "🖼️ 이미지 검색 중...";
+
+            // Process nodes sequentially or parallel? Parallel is faster.
+            const updates = elements.map(async (el) => {
+              if (el.data && el.data.id && !el.data.source) { // Is Node
+                // Skip if image already exists (from prompt?) or skip system nodes
+                // Gemini might fill dummy image, check if empty or placeholder
+                if (!el.data.image || el.data.image.trim() === "") {
+                  // Search using label
+                  const query = el.data.label || el.data.id;
+                  // Simple heuristics to skip non-characters? 
+                  // For now, search everything except known system tags if any. 
+                  // Let's just search all nodes.
+                  try {
+                    const searchUrl = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${cxId}&searchType=image&key=${googleKey}&num=1`;
+                    const searchRes = await fetch(searchUrl);
+                    const searchJson = await searchRes.json();
+
+                    if (searchJson.items && searchJson.items.length > 0) {
+                      el.data.image = searchJson.items[0].link;
+                    }
+                  } catch (err) {
+                    console.warn(`Image search failed for ${query}:`, err);
+                  }
+                }
+              }
+              return el;
+            });
+
+            await Promise.all(updates);
+          }
+
+          // 4. Update Graph
+          cy.elements().remove();
+          cy.add(elements);
+          runLayout('cose');
+          alert(`✅ 분석 완료! ${elements.length}개의 요소를 생성했습니다.`);
+
+        } catch (err) {
+          alert(`❌ 오류 발생: ${err.message}`);
+          console.error(err);
+        } finally {
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
       }
 
       // ====================================================================
