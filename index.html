@@ -10,88 +10,424 @@
   <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Malgun Gothic', sans-serif; background: #f0f0f0; height: 100vh; display: flex; flex-direction: column; }
-    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Malgun Gothic', sans-serif;
+      background: #f0f0f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
     header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white; padding: 15px 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      color: white;
+      padding: 15px 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-    header h1 { font-size: 1.5em; margin-bottom: 5px; text-shadow: 1px 1px 0 #000; }
 
-    .main-container { display: flex; flex: 1; overflow: hidden; }
-    .left-panel { width: 25%; background: white; padding: 15px; overflow-y: auto; border-right: 2px solid #ddd; }
-    .graph-area { width: 50%; padding: 15px; display: flex; flex-direction: column; }
-    .right-panel { width: 25%; background: white; padding: 15px; overflow-y: auto; border-left: 2px solid #ddd; display: flex; flex-direction: column; }
+    header h1 {
+      font-size: 1.5em;
+      margin-bottom: 5px;
+      text-shadow: 1px 1px 0 #000;
+    }
 
-    #cy { flex: 1; border: 2px solid #ddd; border-radius: 8px; background: #fafafa; }
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
 
-    .panel-section { margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0; }
-    .panel-section h3 { font-size: 1em; margin-bottom: 10px; color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 5px; }
+    .left-panel {
+      width: 25%;
+      background: white;
+      padding: 15px;
+      overflow-y: auto;
+      border-right: 2px solid #ddd;
+    }
 
-    input[type="text"], input[type="number"], select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; }
-    input[readonly] { background-color: #e9ecef; color: #495057; cursor: not-allowed; }
+    .graph-area {
+      width: 50%;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .right-panel {
+      width: 25%;
+      background: white;
+      padding: 15px;
+      overflow-y: auto;
+      border-left: 2px solid #ddd;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #cy {
+      flex: 1;
+      /* border/radius/bg moved to .cy-wrapper */
+    }
+
+    .panel-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .panel-section h3 {
+      font-size: 1em;
+      margin-bottom: 10px;
+      color: #667eea;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    input[readonly] {
+      background-color: #e9ecef;
+      color: #495057;
+      cursor: not-allowed;
+    }
 
     button {
-      width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 4px; font-size: 0.9em;
-      cursor: pointer; transition: all 0.1s; font-weight: bold; color: white; text-shadow: 1px 1px 0 #000;
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.1s;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 0 #000;
     }
-    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-    .btn-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-    .btn-danger { background: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%); }
-    .btn-warning { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: white; }
-    button:active { transform: scale(0.98); }
 
-    textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Malgun Gothic', monospace; font-size: 0.9em; resize: vertical; min-height: 150px; }
-    .notes-area { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-    .notes-textarea { flex: 1; min-height: 200px; line-height: 1.6; }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
 
-    .tts-controls { padding: 10px; background: #f0f7ff; border-radius: 6px; border: 1px solid #d0e7ff; }
-    .speed-control { display: flex; align-items: center; gap: 10px; }
-    .speed-control input[type="range"] { flex: 1; }
-    .tts-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .btn-success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
 
-    .info-badge { display: inline-block; padding: 6px 12px; background: #667eea; color: white; border-radius: 4px; font-size: 0.85em; margin-bottom: 10px; text-shadow: 1px 1px 0 #000; }
-    .help-text { font-size: 0.8em; color: #888; margin-top: 5px; padding: 8px; background: #f9f9f9; border-radius: 4px; }
-    
-    .connection-tools { display: flex; gap: 5px; margin-bottom: 5px; }
-    .connection-tools button { padding: 5px; font-size: 0.8em; margin: 0; }
-    
-    .drag-mode-active { background: #ff0055 !important; animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
+    .btn-info {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%);
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      color: white;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Malgun Gothic', monospace;
+      font-size: 0.9em;
+      resize: vertical;
+      min-height: 150px;
+    }
+
+    .notes-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .notes-textarea {
+      flex: 1;
+      min-height: 200px;
+      line-height: 1.6;
+    }
+
+    .tts-controls {
+      padding: 10px;
+      background: #f0f7ff;
+      border-radius: 6px;
+      border: 1px solid #d0e7ff;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .speed-control input[type="range"] {
+      flex: 1;
+    }
+
+    .tts-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .info-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      background: #667eea;
+      color: white;
+      border-radius: 4px;
+      font-size: 0.85em;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 0 #000;
+    }
+
+    .help-text {
+      font-size: 0.8em;
+      color: #888;
+      margin-top: 5px;
+      padding: 8px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+
+    .connection-tools {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+
+    .connection-tools button {
+      padding: 5px;
+      font-size: 0.8em;
+      margin: 0;
+    }
+
+    .drag-mode-active {
+      background: #ff0055 !important;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(255, 0, 85, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0);
+      }
+    }
 
     /* === NEW STYLES for Gemini Shortcut and Help Text === */
     .btn-gemini {
-        background-color: #5555ff; /* Gemini를 상징하는 파란색 계열 */
-        color: white; 
-        padding: 10px; 
-        border: none; 
-        border-radius: 4px; 
-        cursor: pointer; 
-        width: 100%; 
-        margin-top: 10px;
-        font-weight: bold;
-        transition: background-color 0.2s;
-        text-shadow: 1px 1px 0 #000; /* 기존 버튼 스타일과 통일 */
+      background-color: #5555ff;
+      /* Gemini를 상징하는 파란색 계열 */
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+      text-shadow: 1px 1px 0 #000;
+      /* 기존 버튼 스타일과 통일 */
     }
 
     .btn-gemini:hover {
-        background-color: #4444cc;
+      background-color: #4444cc;
     }
 
     .help-text-api {
-        font-size: 0.85em; 
-        color: #333; 
-        margin-top: 8px;
-        padding: 8px;
-        border: 1px dashed #5555ff; /* Gemini 색상에 맞춘 점선 테두리 */
-        border-radius: 4px;
-        background: #e6e6ff; /* 연한 배경색 */
-        margin-bottom: 10px;
+      font-size: 0.85em;
+      color: #333;
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px dashed #5555ff;
+      /* Gemini 색상에 맞춘 점선 테두리 */
+      border-radius: 4px;
+      background: #e6e6ff;
+      /* 연한 배경색 */
+      margin-bottom: 10px;
+    }
+
+    /* === NEW STYLES for Floating Image Windows === */
+    .node-image-toggle {
+      position: absolute;
+      z-index: 999;
+      width: 24px;
+      height: 24px;
+      background: #fff;
+      border: 2px solid #333;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s;
+    }
+
+    .node-image-toggle:hover {
+      transform: scale(1.1);
+      background: #f0f0f0;
+    }
+
+    .node-image-popup {
+      position: absolute;
+      z-index: 9999;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 5px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      /* min-width, max-width 제거: JS에서 노드 크기에 맞춤 */
+      display: none;
+      pointer-events: auto;
+      resize: both;
+      overflow: auto;
+      min-width: 200px;
+      min-height: 150px;
+    }
+
+    /* Content Types Styles */
+    .node-content-text {
+      font-size: 0.9em;
+      line-height: 1.4;
+      color: #333;
+      white-space: pre-wrap;
+      /* 줄바꿈 보존 */
+      background: #f9f9f9;
+      padding: 5px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      width: 100%;
+      height: 100%;
+    }
+
+    .node-content-iframe {
+      width: 100%;
+      height: 200px;
+      /* 기본 높이 */
+      border: none;
+      border-radius: 4px;
+    }
+
+    .node-content-video {
+      width: 100%;
+      border-radius: 4px;
+    }
+
+    .node-content-link-card {
+      padding: 10px;
+      background: #f0f7ff;
+      border: 1px solid #d0e7ff;
+      border-radius: 4px;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .node-content-link-card a {
+      color: #0066cc;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .node-content-link-card a:hover {
+      text-decoration: underline;
+    }
+
+    .node-image-popup img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 4px;
+    }
+
+    .node-image-popup .close-btn {
+      display: block;
+      text-align: center;
+      background: #ff5f6d;
+      color: white;
+      font-size: 0.8em;
+      padding: 2px;
+      cursor: pointer;
+      margin-top: 5px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    /* Wrapper for overlay positioning */
+    .cy-wrapper {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+      /* overflow: hidden;  <-- 잠시 해제하여 잘림 문제 확인 */
+    }
+
+    #cy {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      /* 배경은 wrapper가 담당 */
+      border: none;
+      /* wrapper에 테두리 */
+    }
+
+    #overlays {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      /* 클릭 통과 */
+      z-index: 10;
+      overflow: hidden;
+      /* 중요 */
+    }
+
+    .node-image-toggle {
+      pointer-events: auto;
+      /* 중요: 버튼은 클릭 가능해야 함 */
+      /* ... existing styles ... */
     }
   </style>
 </head>
+
 <body>
   <header>
     <h1>🌐 세계관 그래프 편집기 (수정/삭제 가능)</h1>
@@ -108,34 +444,29 @@
       </div>
 
       <div class="panel-section">
-        <h3>🔗 쉬운 관계 연결</h3>
-        <button id="btnDragMode" class="btn-warning" onclick="toggleDragMode()">🖱️ 드래그 연결 모드 (켜기/끄기)</button>
-        <div class="help-text" style="margin-bottom:10px;">👆 켜면 노드를 드래그해서 바로 연결됩니다!</div>
-        <div style="border-top: 1px dashed #ccc; margin: 10px 0;"></div>
-        
+        <h3>🔗 관계 연결</h3>
         <div class="connection-tools">
-            <button class="btn-info" onclick="clearEdgeInputs()" title="입력 초기화">🔄 초기화</button>
-            <button class="btn-info" onclick="swapEdgeInputs()" title="출발/도착 바꾸기">↔️ 교체</button>
+          <button class="btn-info" onclick="clearEdgeInputs()" title="입력 초기화">🔄 초기화</button>
+          <button class="btn-info" onclick="swapEdgeInputs()" title="출발/도착 바꾸기">↔️ 교체</button>
         </div>
-        <input type="text" id="edgeSrc" placeholder="1. 출발 노드 클릭" readonly style="background-color: #e3f2fd; cursor: pointer;">
-        <input type="text" id="edgeTgt" placeholder="2. 도착 노드 클릭" readonly style="background-color: #ffebee; cursor: pointer;">
+        <input type="text" id="edgeSrc" placeholder="1. 출발 노드 클릭" readonly
+          style="background-color: #e3f2fd; cursor: pointer;">
+        <input type="text" id="edgeTgt" placeholder="2. 도착 노드 클릭" readonly
+          style="background-color: #ffebee; cursor: pointer;">
         <input type="text" id="edgeLbl" placeholder="관계 라벨 (예: 친구, 적)">
         <button class="btn-primary" onclick="addEdge()">연결 추가</button>
         <div class="help-text">💡 그래프에서 노드를 <b>클릭</b>하면 위 칸에 자동으로 입력됩니다.</div>
       </div>
 
       <div class="panel-section">
-        <h3>💾 데이터 관리</h3>
-        <button class="btn-success" onclick="saveToLocalStorage()">💾 로컬 저장</button>
-        <button class="btn-info" onclick="loadFromLocalStorage()">📂 로컬 불러오기</button>
-        <button class="btn-primary" onclick="saveToURL()">🔗 URL로 저장</button>
-        <button class="btn-success" onclick="downloadJSON()">⬇️ JSON 다운로드</button>
+        <h3>📂 데이터 관리</h3>
         <input type="file" id="fileInput" accept=".json" style="display:none" onchange="uploadJSON(event)">
         <button class="btn-info" onclick="document.getElementById('fileInput').click()">⬆️ JSON 업로드</button>
         <input type="file" id="appendFileInput" accept=".json" style="display:none" onchange="appendJSON(event)">
         <button class="btn-primary" onclick="document.getElementById('appendFileInput').click()">➕ JSON 추가 업로드</button>
-        
-        <textarea id="geminiPromptTemplate" style="height:1px; opacity:0; resize:none; position:absolute; left:-9999px;">
+
+        <textarea id="geminiPromptTemplate"
+          style="height:1px; opacity:0; resize:none; position:absolute; left:-9999px;">
 		**주의: 이 요청에 대해 JSON 코드 블록 외의 어떠한 설명, 인사말, 추가 텍스트도 절대 출력하지 마세요. 오직 JSON 코드 블록만 출력해야 합니다.**
 
 			당신은 텍스트를 분석하여 관계형 데이터(노드와 엣지)를 Cytoscape.js 라이브러리에 적합한 JSON 형식으로 변환하는 전문 분석가입니다.
@@ -159,485 +490,829 @@
 </textarea>
         <button class="btn-gemini" onclick="copyPromptAndOpenGemini()">✨ Gemini 프롬프트 복사 및 채팅 열기</button>
         <div class="help-text-api">
-            1. 위 버튼 클릭: **JSON 형식 요청 명령어 복사** 및 Gemini 채팅 창 열림.<br>
-            2. Gemini에 붙여넣기 후 **(여기에...붙여넣으세요.)** 부분에 분석할 텍스트 추가.<br>
-            3. Gemini 응답 JSON을 복사하여 아래 **'JSON 텍스트 변환 (수동)'** 입력창에 붙여넣기.
+          1. 위 버튼 클릭: **JSON 형식 요청 명령어 복사** 및 Gemini 채팅 창 열림.<br>
+          2. Gemini에 붙여넣기 후 **(여기에...붙여넣으세요.)** 부분에 분석할 텍스트 추가.<br>
+          3. Gemini 응답 JSON을 복사하여 아래 **'JSON 텍스트 변환 (수동)'** 입력창에 붙여넣기.
         </div>
       </div>
-      
+
       <div class="panel-section">
         <h3>🤖 JSON 텍스트 변환 (수동)</h3>
         <textarea id="jsonInputTextarea" placeholder="여기에 JSON 형식의 노드/엣지 데이터를 붙여넣으세요. (자연어 처리 아님)" rows="8"></textarea>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;">
-            <button class="btn-primary" onclick="loadJSONFromTextarea(false)">✔️ JSON으로 덮어쓰기</button>
-            <button class="btn-success" onclick="loadJSONFromTextarea(true)">➕ JSON 추가하기</button>
+          <button class="btn-primary" onclick="loadJSONFromTextarea(false)">✔️ JSON으로 덮어쓰기</button>
+          <button class="btn-success" onclick="loadJSONFromTextarea(true)">➕ JSON 추가하기</button>
         </div>
         <div class="help-text">⚠️ **주의:** 이 기능은 자연어 처리가 아닌, **유효한 JSON 텍스트**를 읽어 그래프에 반영합니다.</div>
       </div>
 
       <div class="panel-section">
-        <h3>✨ 레이아웃</h3>
+        <h3>✨ 레이아웃 및 도구</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px;">
+          <button class="btn-info" onclick="runLayout('cose')">� 기본 정렬</button>
+          <button class="btn-info" onclick="runLayout('dagre')">🌲 트리(세로)</button>
+          <button class="btn-info" onclick="runLayout('mindmap')">🧠 마인드맵(가로)</button>
+          <button class="btn-info" id="btnDragMode" onclick="toggleDragMode()">🖱️ 드래그 모드</button>
+        </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-          <button class="btn-info" onclick="runLayout('cose')">💫 기본</button>
-          <button class="btn-info" onclick="runLayout('dagre')">🌲 트리형</button>
+          <button class="btn-danger" onclick="deleteSelected()">🗑️ 삭제 (Del)</button>
+          <button class="btn-success" onclick="saveToUrl()">� URL 공유</button>
         </div>
       </div>
     </div>
 
     <div class="graph-area">
-      <div id="cy"></div>
+      <!-- Wrapper div added for correct positioning -->
+      <div class="cy-wrapper">
+        <div id="cy"></div>
+        <div id="overlays"></div>
+      </div>
     </div>
-    
+
     <div class="right-panel">
       <div class="panel-section notes-area">
         <h3>✏️ 속성 편집 / 삭제</h3>
         <div class="info-badge" id="notesInfo">노드/엣지를 선택하세요</div>
-        
+
         <label style="font-weight: bold; color: #333;">이름/라벨</label>
         <input type="text" id="labelInput" placeholder="선택한 요소의 이름" disabled>
-        
+
         <div id="colorControl" style="display:none;">
-            <label style="font-weight: bold; color: #333; margin-top: 10px;">노드 색상</label>
-            <input type="color" id="colorInput" value="#667eea" style="height: 40px; padding: 0;">
-        </div>
-        <label style="font-weight: bold; color: #333; margin-top: 10px;">📝 메모</label>
-        <textarea class="notes-textarea" id="notesTextarea" placeholder="내용을 입력하세요..."></textarea>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+          <label style="font-weight: bold; color: #333; margin-top: 10px;">노드 색상</label>
+          <input type="color" id="colorInput" value="#667eea" style="height: 40px; padding: 0;">
+
+          <label style="font-weight: bold; color: #333; margin-top: 10px;">📎 첨부 (이미지/영상/링크/텍스트)</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="imageInput" placeholder="URL, 유튜브주소, 텍스트, 또는 파일선택" style="flex:1;">
+            <input type="file" id="hiddenFileInput" style="display:none;" onchange="handleFileUpload(this)">
+            <button class="btn-info" onclick="document.getElementById('hiddenFileInput').click()"
+              style="width: auto; padding: 0 10px;">📂 선택</button>
+          </div>
+          <label style="font-weight: bold; color: #333; margin-top: 10px;">📝 메모</label>
+          <textarea class="notes-textarea" id="notesTextarea" placeholder="내용을 입력하세요..."></textarea>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
             <button class="btn-success" onclick="saveNotes()">💾 저장</button>
             <button class="btn-danger" onclick="deleteSelected()">🗑️ 삭제</button>
-        </div>
-        <div class="help-text">💡 선택 후 Delete 키를 눌러도 삭제됩니다.</div>
-
-        <div class="tts-controls">
-          <h3>🔊 읽어주기 (TTS)</h3>
-          <select id="voiceSelect"><option value="ko-KR">한국어</option></select>
-          <div class="speed-control">
-            <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateSpeedValue()">
-            <span class="speed-value" id="speedValue">1.0x</span>
           </div>
-          <div class="tts-buttons">
-            <button class="btn-primary" onclick="readNotes()">🔊 읽기</button>
-            <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
+          <div class="help-text">💡 선택 후 Delete 키를 눌러도 삭제됩니다.</div>
+
+          <div class="tts-controls">
+            <h3>🔊 읽어주기 (TTS)</h3>
+            <select id="voiceSelect">
+              <option value="ko-KR">한국어</option>
+            </select>
+            <div class="speed-control">
+              <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="1.0"
+                oninput="updateSpeedValue()">
+              <span class="speed-value" id="speedValue">1.0x</span>
+            </div>
+            <div class="tts-buttons">
+              <button class="btn-primary" onclick="readNotes()">🔊 읽기</button>
+              <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    let initialData = [
-  { "data": { "id": "STC_01", "label": "STC 01 오프닝 이미지", "color": "#ffaa00", "notes": "이야기의 시작을 알리는 강렬한 첫인상. 주인공의 현재 상황과 세계의 톤을 시각적으로 압축해 보여줍니다." }, "position": { "x": 1056.12, "y": 299.83 }, "group": "nodes" },
-  { "data": { "id": "STC_02", "label": "STC 02 테마 제시", "color": "#ffaa00", "notes": "주인공이 여정을 통해 깨달아야 할 핵심 교훈이나 철학적 주제가 대사 혹은 암시를 통해 드러납니다." }, "position": { "x": 1055.5, "y": 667.61 }, "group": "nodes" },
-  { "data": { "id": "STC_03", "label": "STC 03 세트업", "color": "#ffaa00", "notes": "주인공의 결핍(약점)과 고쳐야 할 일상을 소개합니다. 등장인물의 관계망이 형성되는 지점입니다." }, "position": { "x": 934.09, "y": 1050.29 }, "group": "nodes" },
-  { "data": { "id": "STC_04", "label": "STC 04 촉매 사건", "color": "#ffaa00", "notes": "일상을 뒤흔드는 결정적 사건. 주인공이 변화를 거부할 수 없게 만드는 외부적 충격입니다." }, "position": { "x": 990.38, "y": 1282.07 }, "group": "nodes" },
-  { "data": { "id": "STC_05", "label": "STC 05 고민/저항", "color": "#ffaa00", "notes": "새로운 세계로 나아가기 전의 두려움과 주저함. 주인공이 선택의 기로에서 겪는 내부적 갈등입니다." }, "position": { "x": 917.59, "y": 1429.27 }, "group": "nodes" },
-  { "data": { "id": "STC_06", "label": "STC 06 2막 진입", "color": "#ffaa00", "notes": "주인공이 능동적으로 구세계를 떠나 신세계를 선택하는 지점. 되돌아갈 수 없는 강을 건너는 순간입니다." }, "position": { "x": 1023.06, "y": 1621.07 }, "group": "nodes" },
-  { "data": { "id": "STC_07", "label": "STC 07 B스토리", "color": "#ffaa00", "notes": "주로 로맨스나 우정을 통해 테마를 학습하는 부차적 이야기. 주인공의 정서적 성장을 돕는 관계입니다." }, "position": { "x": 990.38, "y": 1805.23 }, "group": "nodes" },
-  { "data": { "id": "STC_08", "label": "STC 08 즐거움과 게임", "color": "#ffaa00", "notes": "작품의 핵심 재미(장르적 쾌감)가 발휘되는 구간. 주인공이 새로운 환경을 탐험하거나 소소한 승리를 얻습니다." }, "position": { "x": 1065.25, "y": 2106.49 }, "group": "nodes" },
-  { "data": { "id": "STC_09", "label": "STC 09 미드포인트", "color": "#ffaa00", "notes": "이야기의 정중앙. 성공이 최고조에 달하거나(가짜 승리) 완전한 절망(가짜 패배)을 맛보며 방향이 급선회합니다." }, "position": { "x": 879.8, "y": 2338.5 }, "group": "nodes" },
-  { "data": { "id": "STC_10", "label": "STC 10 악당의 압박", "color": "#ffaa00", "notes": "악당 세력이 반격을 시작하며 주인공의 약점을 파고듭니다. 주인공의 자원이 바닥나기 시작합니다." }, "position": { "x": 795.68, "y": 2282.88 }, "group": "nodes" },
-  { "data": { "id": "STC_11", "label": "STC 11 모두 잃었다", "color": "#ffaa00", "notes": "주인공이 가장 소중한 것을 잃거나 희망을 완전히 상실하는 지점. 죽음의 향기가 가장 짙은 순간입니다." }, "position": { "x": 580.87, "y": 2193.38 }, "group": "nodes" },
-  { "data": { "id": "STC_12", "label": "STC 12 영혼의 암흑기", "color": "#ffaa00", "notes": "절망의 심연에서 자신을 되돌아보는 시간. 이전의 방식을 버리고 새로운 존재로 거듭나기 위한 내적 산통입니다." }, "position": { "x": 383.52, "y": 2190.41 }, "group": "nodes" },
-  { "data": { "id": "STC_13", "label": "STC 13 3막 진입", "color": "#ffaa00", "notes": "드디어 해결책(A스토리와 B스토리의 결합)을 찾아내고, 마지막 대결을 향해 당당히 나아갑니다." }, "position": { "x": 341.38, "y": 2477.07 }, "group": "nodes" },
-  { "data": { "id": "STC_14", "label": "STC 14 피날레", "color": "#ffaa00", "notes": "최종 결전. 주인공은 새로운 통찰을 이용해 구세계를 정화하고 빌런을 물리칩니다." }, "position": { "x": 232.56, "y": 2719.57 }, "group": "nodes" },
-  { "data": { "id": "STC_15", "label": "STC 15 엔딩 이미지", "color": "#ffaa00", "notes": "오프닝과 완벽히 대비되는 마무리 장면. 주인공의 삶이 어떻게 진화했는지를 시각적으로 증명합니다." }, "position": { "x": -92.22, "y": 2587.07 }, "group": "nodes" },
+    <script>
+      // 🛡️ 글로벌 에러 핸들러 (디버깅용)
+      window.onerror = function (msg, url, line, col, error) {
+        alert("오류 발생: " + msg + "\n라인: " + line);
+        return false;
+      };
 
-  { "data": { "id": "TRB_01", "label": "TRB 01 자기인식·필요·욕망", "color": "#4facfe", "notes": "주인공의 결핍(필요)과 겉으로 드러난 목표(욕망)를 설정합니다. 이야기의 원동력이 정의됩니다." }, "position": { "x": 543.11, "y": 1307.29 }, "group": "nodes" },
-  { "data": { "id": "TRB_02", "label": "TRB 02 유령과 스토리 세계", "color": "#4facfe", "notes": "주인공의 발목을 잡는 과거의 상처(유령)와 그것이 지배하는 공간적 배경을 설정합니다." }, "position": { "x": 1057.7, "y": 48.06 }, "group": "nodes" },
-  { "data": { "id": "TRB_03", "label": "TRB 03 약점과 필요", "color": "#4facfe", "notes": "주인공이 인간으로서 가진 도덕적/심리적 맹점. 성공을 위해 반드시 극복해야 하는 숙제입니다." }, "position": { "x": 761.24, "y": 629.34 }, "group": "nodes" },
-  { "data": { "id": "TRB_04", "label": "TRB 04 발단 사건", "color": "#4facfe", "notes": "주인공을 수동적인 상태에서 능동적인 욕망의 추구자로 바꾸는 외부적 자극입니다." }, "position": { "x": 804.63, "y": 1231.58 }, "group": "nodes" },
-  { "data": { "id": "TRB_05", "label": "TRB 05 욕망 구체화", "color": "#4facfe", "notes": "여정을 통해 얻고자 하는 구체적인 상(賞)이 뚜렷해지는 단계입니다." }, "position": { "x": 1266.48, "y": 1236.47 }, "group": "nodes" },
-  { "data": { "id": "TRB_06", "label": "TRB 06 조력자 등장", "color": "#4facfe", "notes": "주인공의 부족한 부분을 채워주거나, 정신적인 성장을 자극하는 조언자의 출현입니다." }, "position": { "x": 1256.67, "y": 1688.02 }, "group": "nodes" },
-  { "data": { "id": "TRB_07", "label": "TRB 07 적대자/미스터리", "color": "#4facfe", "notes": "단순한 빌런을 넘어 주인공과 정반대의 가치를 상징하며 경쟁하는 적의 실체입니다." }, "position": { "x": 784.97, "y": 1672.85 }, "group": "nodes" },
-  { "data": { "id": "TRB_08", "label": "TRB 08 가짜 아군", "color": "#4facfe", "notes": "도와주는 듯 보이지만 사실은 자신의 이익을 쫓거나 주인공을 파멸로 이끄는 인물입니다." }, "position": { "x": 1595.85, "y": -38.07 }, "group": "nodes" },
-  { "data": { "id": "TRB_09", "label": "TRB 09 첫 깨달음과 결정", "color": "#4facfe", "notes": "진행 중인 여정의 본질을 파악하고, 자신의 방식을 수정하거나 의지를 다지는 지점입니다." }, "position": { "x": 1115.31, "y": 2405.28 }, "group": "nodes" },
-  { "data": { "id": "TRB_10", "label": "TRB 10 계획 수립", "color": "#4facfe", "notes": "적을 이기기 위한 실질적인 행동 전략을 짜는 단계입니다." }, "position": { "x": 989.71, "y": 2527.6 }, "group": "nodes" },
-  { "data": { "id": "TRB_11", "label": "TRB 11 적의 계획/반격", "color": "#4facfe", "notes": "적이 주인공의 전략을 간파하고 더 강력한 압박을 가해오는 순간입니다." }, "position": { "x": 653.96, "y": 2595.52 }, "group": "nodes" },
-  { "data": { "id": "TRB_12", "label": "TRB 12 추진", "color": "#4facfe", "notes": "갈등이 격렬해짐에 따라 주인공이 도덕적 선을 넘어서까지 목표를 쫓는 구간입니다." }, "position": { "x": 896.83, "y": 2499.17 }, "group": "nodes" },
-  { "data": { "id": "TRB_13", "label": "TRB 13 아군 비판/충돌", "color": "#4facfe", "notes": "변해가는 주인공의 방식에 실망한 동료들이 등을 돌리거나 충돌하는 내적 위기입니다." }, "position": { "x": 1423.21, "y": 42.71 }, "group": "nodes" },
-  { "data": { "id": "TRB_14", "label": "TRB 14 겉보기 패배", "color": "#4facfe", "notes": "주인공의 계획이 완전히 실패한 것처럼 보이며 사회적/물리적 기반이 무너지는 지점입니다." }, "position": { "x": 432.36, "y": 1810.71 }, "group": "nodes" },
-  { "data": { "id": "TRB_15", "label": "TRB 15 두 번째 깨달음", "color": "#4facfe", "notes": "패배를 통해 자신의 잘못된 방식을 직면하고, 진정한 성장을 위한 실마리를 찾습니다." }, "position": { "x": 218.92, "y": 2013.29 }, "group": "nodes" },
-  { "data": { "id": "TRB_16", "label": "TRB 16 죽음의 문턱", "color": "#4facfe", "notes": "목숨이 위험하거나 자아가 완전히 붕괴되는 극한의 상황에 직면합니다." }, "position": { "x": 1435.74, "y": -192.58 }, "group": "nodes" },
-  { "data": { "id": "TRB_17", "label": "TRB 17 세 번째 깨달음", "color": "#4facfe", "notes": "자신과 적, 세상에 대한 궁극적인 진실을 깨닫고 도덕적으로 완성되는 지점입니다." }, "position": { "x": 1435.43, "y": 130.61 }, "group": "nodes" },
-  { "data": { "id": "TRB_18", "label": "TRB 18 관문과 시련", "color": "#4facfe", "notes": "결전에 도달하기 위해 돌파해야 하는 최종적인 장벽들을 의미합니다." }, "position": { "x": 578.56, "y": 2435.24 }, "group": "nodes" },
-  { "data": { "id": "TRB_19", "label": "TRB 19 결전", "color": "#4facfe", "notes": "적대자와의 마지막 승부. 주인공은 깨달은 가치를 증명하며 싸웁니다." }, "position": { "x": 62.46, "y": 2833.34 }, "group": "nodes" },
-  { "data": { "id": "TRB_20", "label": "TRB 20 최종 자기인식", "color": "#4facfe", "notes": "폭풍이 지나간 후, 주인공이 자신이 누구인지 어떤 존재가 되었는지 확신하는 단계입니다." }, "position": { "x": 480.97, "y": 2583.87 }, "group": "nodes" },
-  { "data": { "id": "TRB_21", "label": "TRB 21 도덕적 선택", "color": "#4facfe", "notes": "개인의 욕망이 아닌 대의나 올바른 가치를 선택하며 인물의 품격을 완성합니다." }, "position": { "x": 346.96, "y": 3029.99 }, "group": "nodes" },
-  { "data": { "id": "TRB_22", "label": "TRB 22 새로운 균형", "color": "#4facfe", "notes": "사건이 해결되고 주인공이 얻은 깨달음이 삶에 녹아든 새로운 일상의 시작입니다." }, "position": { "x": -139.86, "y": 2439.62 }, "group": "nodes" },
+      let initialData = [
+        { "data": { "id": "STC_01", "label": "STC 01 오프닝 이미지", "color": "#ffaa00", "notes": "이야기의 시작을 알리는 강렬한 첫인상. 주인공의 현재 상황과 세계의 톤을 시각적으로 압축해 보여줍니다." }, "position": { "x": 1056.12, "y": 299.83 }, "group": "nodes" },
+        { "data": { "id": "STC_02", "label": "STC 02 테마 제시", "color": "#ffaa00", "notes": "주인공이 여정을 통해 깨달아야 할 핵심 교훈이나 철학적 주제가 대사 혹은 암시를 통해 드러납니다." }, "position": { "x": 1055.5, "y": 667.61 }, "group": "nodes" },
+        { "data": { "id": "STC_03", "label": "STC 03 세트업", "color": "#ffaa00", "notes": "주인공의 결핍(약점)과 고쳐야 할 일상을 소개합니다. 등장인물의 관계망이 형성되는 지점입니다." }, "position": { "x": 934.09, "y": 1050.29 }, "group": "nodes" },
+        { "data": { "id": "STC_04", "label": "STC 04 촉매 사건", "color": "#ffaa00", "notes": "일상을 뒤흔드는 결정적 사건. 주인공이 변화를 거부할 수 없게 만드는 외부적 충격입니다." }, "position": { "x": 990.38, "y": 1282.07 }, "group": "nodes" },
+        { "data": { "id": "STC_05", "label": "STC 05 고민/저항", "color": "#ffaa00", "notes": "새로운 세계로 나아가기 전의 두려움과 주저함. 주인공이 선택의 기로에서 겪는 내부적 갈등입니다." }, "position": { "x": 917.59, "y": 1429.27 }, "group": "nodes" },
+        { "data": { "id": "STC_06", "label": "STC 06 2막 진입", "color": "#ffaa00", "notes": "주인공이 능동적으로 구세계를 떠나 신세계를 선택하는 지점. 되돌아갈 수 없는 강을 건너는 순간입니다." }, "position": { "x": 1023.06, "y": 1621.07 }, "group": "nodes" },
+        { "data": { "id": "STC_07", "label": "STC 07 B스토리", "color": "#ffaa00", "notes": "주로 로맨스나 우정을 통해 테마를 학습하는 부차적 이야기. 주인공의 정서적 성장을 돕는 관계입니다." }, "position": { "x": 990.38, "y": 1805.23 }, "group": "nodes" },
+        { "data": { "id": "STC_08", "label": "STC 08 즐거움과 게임", "color": "#ffaa00", "notes": "작품의 핵심 재미(장르적 쾌감)가 발휘되는 구간. 주인공이 새로운 환경을 탐험하거나 소소한 승리를 얻습니다." }, "position": { "x": 1065.25, "y": 2106.49 }, "group": "nodes" },
+        { "data": { "id": "STC_09", "label": "STC 09 미드포인트", "color": "#ffaa00", "notes": "이야기의 정중앙. 성공이 최고조에 달하거나(가짜 승리) 완전한 절망(가짜 패배)을 맛보며 방향이 급선회합니다." }, "position": { "x": 879.8, "y": 2338.5 }, "group": "nodes" },
+        { "data": { "id": "STC_10", "label": "STC 10 악당의 압박", "color": "#ffaa00", "notes": "악당 세력이 반격을 시작하며 주인공의 약점을 파고듭니다. 주인공의 자원이 바닥나기 시작합니다." }, "position": { "x": 795.68, "y": 2282.88 }, "group": "nodes" },
+        { "data": { "id": "STC_11", "label": "STC 11 모두 잃었다", "color": "#ffaa00", "notes": "주인공이 가장 소중한 것을 잃거나 희망을 완전히 상실하는 지점. 죽음의 향기가 가장 짙은 순간입니다." }, "position": { "x": 580.87, "y": 2193.38 }, "group": "nodes" },
+        { "data": { "id": "STC_12", "label": "STC 12 영혼의 암흑기", "color": "#ffaa00", "notes": "절망의 심연에서 자신을 되돌아보는 시간. 이전의 방식을 버리고 새로운 존재로 거듭나기 위한 내적 산통입니다." }, "position": { "x": 383.52, "y": 2190.41 }, "group": "nodes" },
+        { "data": { "id": "STC_13", "label": "STC 13 3막 진입", "color": "#ffaa00", "notes": "드디어 해결책(A스토리와 B스토리의 결합)을 찾아내고, 마지막 대결을 향해 당당히 나아갑니다." }, "position": { "x": 341.38, "y": 2477.07 }, "group": "nodes" },
+        { "data": { "id": "STC_14", "label": "STC 14 피날레", "color": "#ffaa00", "notes": "최종 결전. 주인공은 새로운 통찰을 이용해 구세계를 정화하고 빌런을 물리칩니다." }, "position": { "x": 232.56, "y": 2719.57 }, "group": "nodes" },
+        { "data": { "id": "STC_15", "label": "STC 15 엔딩 이미지", "color": "#ffaa00", "notes": "오프닝과 완벽히 대비되는 마무리 장면. 주인공의 삶이 어떻게 진화했는지를 시각적으로 증명합니다." }, "position": { "x": -92.22, "y": 2587.07 }, "group": "nodes" },
 
-  { "data": { "id": "PRP_01", "label": "PRP 01 부재", "color": "#667eea", "notes": "가족의 일원이 집을 떠나거나, 기존의 질서를 유지하던 존재가 사라지는 결핍의 시작입니다." }, "position": { "x": 580.12, "y": 946.78 }, "group": "nodes" },
-  { "data": { "id": "PRP_08", "label": "PRP 08 악행/결핍", "color": "#667eea", "notes": "악당에 의해 피해가 발생하거나 무언가 결정적으로 부족해져 여정이 불가피해집니다." }, "position": { "x": 647.46, "y": 807.56 }, "group": "nodes" },
-  { "data": { "id": "PRP_09", "label": "PRP 09 매개", "color": "#667eea", "notes": "사건의 전말이 알려지고 주인공에게 도움의 요청이 오거나 임무가 부여됩니다." }, "position": { "x": 1345.11, "y": 1065.11 }, "group": "nodes" },
-  { "data": { "id": "PRP_10", "label": "PRP 10 대응 시작", "color": "#667eea", "notes": "주인공이 임무를 받아들이고 문제를 해결하기 위해 행동을 개시하는 동의의 순간입니다." }, "position": { "x": 1183.53, "y": 907.84 }, "group": "nodes" },
-  { "data": { "id": "PRP_11", "label": "PRP 11 출발", "color": "#667eea", "notes": "안전한 고향을 떠나 미지의 영역 혹은 적의 본거지를 향해 이동합니다." }, "position": { "x": 768.39, "y": 1438.34 }, "group": "nodes" },
-  { "data": { "id": "PRP_12", "label": "PRP 12 증여자 시험", "color": "#667eea", "notes": "마법적 수단이나 도구를 얻기 전, 주인공의 자격을 묻는 첫 번째 관문입니다." }, "position": { "x": 1364.83, "y": 1385.66 }, "group": "nodes" },
-  { "data": { "id": "PRP_14", "label": "PRP 14 조력 획득", "color": "#667eea", "notes": "시험을 통과한 대가로 신비로운 힘이나 신뢰할 수 있는 도구를 손에 넣습니다." }, "position": { "x": 1288.29, "y": 2171.63 }, "group": "nodes" },
-  { "data": { "id": "PRP_15", "label": "PRP 15 안내", "color": "#667eea", "notes": "목적지까지 안내를 받거나 신비로운 조력자를 따라 적에게 접근합니다." }, "position": { "x": 1164.62, "y": 1961.59 }, "group": "nodes" },
-  { "data": { "id": "PRP_16", "label": "PRP 16 투쟁", "color": "#667eea", "notes": "적과 직접 맞붙는 격렬한 물리적 혹은 논리적 전투 구간입니다." }, "position": { "x": 934.55, "y": 1985.21 }, "group": "nodes" },
-  { "data": { "id": "PRP_18", "label": "PRP 18 승리", "color": "#667eea", "notes": "전투에서 적을 물리치거나 무력화시키는 일차적 성공입니다." }, "position": { "x": 1854.52, "y": 136.6 }, "group": "nodes" },
-  { "data": { "id": "PRP_19", "label": "PRP 19 결핍 해소", "color": "#667eea", "notes": "초반에 발생했던 악행의 흔적이 지워지거나 잃었던 것을 되찾는 수습 단계입니다." }, "position": { "x": 1613.89, "y": 244.32 }, "group": "nodes" },
-  { "data": { "id": "PRP_20", "label": "PRP 20 귀환", "color": "#667eea", "notes": "임무를 마친 주인공이 영광스럽게 혹은 비밀스럽게 자신의 장소로 돌아옵니다." }, "position": { "x": 1648.33, "y": 99.85 }, "group": "nodes" },
-  { "data": { "id": "PRP_21", "label": "PRP 21 추격", "color": "#667eea", "notes": "패배한 적의 잔당이 추격해오거나 예기치 못한 마지막 방해가 뒤따릅니다." }, "position": { "x": 691.79, "y": 2060.3 }, "group": "nodes" },
-  { "data": { "id": "PRP_25", "label": "PRP 25 어려운 과제", "color": "#667eea", "notes": "최종적인 정당성을 확보하기 위해 주인공에게 주어지는 불가능에 가까운 미션입니다." }, "position": { "x": 129.77, "y": 2445.19 }, "group": "nodes" },
-  { "data": { "id": "PRP_26", "label": "PRP 26 과제 해결", "color": "#667eea", "notes": "주인공의 용기나 지혜, 혹은 미리 얻은 조력 덕분에 과제를 완수합니다." }, "position": { "x": 175.63, "y": 2854.16 }, "group": "nodes" },
-  { "data": { "id": "PRP_27", "label": "PRP 27 인식", "color": "#667eea", "notes": "주인공이 진짜 영웅임을 세상이 알아보고 신분이나 자격을 공인받는 지점입니다." }, "position": { "x": 459.34, "y": 2730.76 }, "group": "nodes" },
-  { "data": { "id": "PRP_30", "label": "PRP 30 처벌", "color": "#667eea", "notes": "모든 정체가 드러난 악당이나 가짜 영웅이 응당한 벌을 받는 사법적/도덕적 단죄입니다." }, "position": { "x": 133.75, "y": 2578.46 }, "group": "nodes" },
-  { "data": { "id": "PRP_31", "label": "PRP 31 보상/엔딩", "color": "#667eea", "notes": "결혼, 왕위 승계, 혹은 평화의 안착 등 영웅적 여정에 대한 최종적 보상입니다." }, "position": { "x": -140.09, "y": 2835.95 }, "group": "nodes" },
+        { "data": { "id": "TRB_01", "label": "TRB 01 자기인식·필요·욕망", "color": "#4facfe", "notes": "주인공의 결핍(필요)과 겉으로 드러난 목표(욕망)를 설정합니다. 이야기의 원동력이 정의됩니다." }, "position": { "x": 543.11, "y": 1307.29 }, "group": "nodes" },
+        { "data": { "id": "TRB_02", "label": "TRB 02 유령과 스토리 세계", "color": "#4facfe", "notes": "주인공의 발목을 잡는 과거의 상처(유령)와 그것이 지배하는 공간적 배경을 설정합니다." }, "position": { "x": 1057.7, "y": 48.06 }, "group": "nodes" },
+        { "data": { "id": "TRB_03", "label": "TRB 03 약점과 필요", "color": "#4facfe", "notes": "주인공이 인간으로서 가진 도덕적/심리적 맹점. 성공을 위해 반드시 극복해야 하는 숙제입니다." }, "position": { "x": 761.24, "y": 629.34 }, "group": "nodes" },
+        { "data": { "id": "TRB_04", "label": "TRB 04 발단 사건", "color": "#4facfe", "notes": "주인공을 수동적인 상태에서 능동적인 욕망의 추구자로 바꾸는 외부적 자극입니다." }, "position": { "x": 804.63, "y": 1231.58 }, "group": "nodes" },
+        { "data": { "id": "TRB_05", "label": "TRB 05 욕망 구체화", "color": "#4facfe", "notes": "여정을 통해 얻고자 하는 구체적인 상(賞)이 뚜렷해지는 단계입니다." }, "position": { "x": 1266.48, "y": 1236.47 }, "group": "nodes" },
+        { "data": { "id": "TRB_06", "label": "TRB 06 조력자 등장", "color": "#4facfe", "notes": "주인공의 부족한 부분을 채워주거나, 정신적인 성장을 자극하는 조언자의 출현입니다." }, "position": { "x": 1256.67, "y": 1688.02 }, "group": "nodes" },
+        { "data": { "id": "TRB_07", "label": "TRB 07 적대자/미스터리", "color": "#4facfe", "notes": "단순한 빌런을 넘어 주인공과 정반대의 가치를 상징하며 경쟁하는 적의 실체입니다." }, "position": { "x": 784.97, "y": 1672.85 }, "group": "nodes" },
+        { "data": { "id": "TRB_08", "label": "TRB 08 가짜 아군", "color": "#4facfe", "notes": "도와주는 듯 보이지만 사실은 자신의 이익을 쫓거나 주인공을 파멸로 이끄는 인물입니다." }, "position": { "x": 1595.85, "y": -38.07 }, "group": "nodes" },
+        { "data": { "id": "TRB_09", "label": "TRB 09 첫 깨달음과 결정", "color": "#4facfe", "notes": "진행 중인 여정의 본질을 파악하고, 자신의 방식을 수정하거나 의지를 다지는 지점입니다." }, "position": { "x": 1115.31, "y": 2405.28 }, "group": "nodes" },
+        { "data": { "id": "TRB_10", "label": "TRB 10 계획 수립", "color": "#4facfe", "notes": "적을 이기기 위한 실질적인 행동 전략을 짜는 단계입니다." }, "position": { "x": 989.71, "y": 2527.6 }, "group": "nodes" },
+        { "data": { "id": "TRB_11", "label": "TRB 11 적의 계획/반격", "color": "#4facfe", "notes": "적이 주인공의 전략을 간파하고 더 강력한 압박을 가해오는 순간입니다." }, "position": { "x": 653.96, "y": 2595.52 }, "group": "nodes" },
+        { "data": { "id": "TRB_12", "label": "TRB 12 추진", "color": "#4facfe", "notes": "갈등이 격렬해짐에 따라 주인공이 도덕적 선을 넘어서까지 목표를 쫓는 구간입니다." }, "position": { "x": 896.83, "y": 2499.17 }, "group": "nodes" },
+        { "data": { "id": "TRB_13", "label": "TRB 13 아군 비판/충돌", "color": "#4facfe", "notes": "변해가는 주인공의 방식에 실망한 동료들이 등을 돌리거나 충돌하는 내적 위기입니다." }, "position": { "x": 1423.21, "y": 42.71 }, "group": "nodes" },
+        { "data": { "id": "TRB_14", "label": "TRB 14 겉보기 패배", "color": "#4facfe", "notes": "주인공의 계획이 완전히 실패한 것처럼 보이며 사회적/물리적 기반이 무너지는 지점입니다." }, "position": { "x": 432.36, "y": 1810.71 }, "group": "nodes" },
+        { "data": { "id": "TRB_15", "label": "TRB 15 두 번째 깨달음", "color": "#4facfe", "notes": "패배를 통해 자신의 잘못된 방식을 직면하고, 진정한 성장을 위한 실마리를 찾습니다." }, "position": { "x": 218.92, "y": 2013.29 }, "group": "nodes" },
+        { "data": { "id": "TRB_16", "label": "TRB 16 죽음의 문턱", "color": "#4facfe", "notes": "목숨이 위험하거나 자아가 완전히 붕괴되는 극한의 상황에 직면합니다." }, "position": { "x": 1435.74, "y": -192.58 }, "group": "nodes" },
+        { "data": { "id": "TRB_17", "label": "TRB 17 세 번째 깨달음", "color": "#4facfe", "notes": "자신과 적, 세상에 대한 궁극적인 진실을 깨닫고 도덕적으로 완성되는 지점입니다." }, "position": { "x": 1435.43, "y": 130.61 }, "group": "nodes" },
+        { "data": { "id": "TRB_18", "label": "TRB 18 관문과 시련", "color": "#4facfe", "notes": "결전에 도달하기 위해 돌파해야 하는 최종적인 장벽들을 의미합니다." }, "position": { "x": 578.56, "y": 2435.24 }, "group": "nodes" },
+        { "data": { "id": "TRB_19", "label": "TRB 19 결전", "color": "#4facfe", "notes": "적대자와의 마지막 승부. 주인공은 깨달은 가치를 증명하며 싸웁니다." }, "position": { "x": 62.46, "y": 2833.34 }, "group": "nodes" },
+        { "data": { "id": "TRB_20", "label": "TRB 20 최종 자기인식", "color": "#4facfe", "notes": "폭풍이 지나간 후, 주인공이 자신이 누구인지 어떤 존재가 되었는지 확신하는 단계입니다." }, "position": { "x": 480.97, "y": 2583.87 }, "group": "nodes" },
+        { "data": { "id": "TRB_21", "label": "TRB 21 도덕적 선택", "color": "#4facfe", "notes": "개인의 욕망이 아닌 대의나 올바른 가치를 선택하며 인물의 품격을 완성합니다." }, "position": { "x": 346.96, "y": 3029.99 }, "group": "nodes" },
+        { "data": { "id": "TRB_22", "label": "TRB 22 새로운 균형", "color": "#4facfe", "notes": "사건이 해결되고 주인공이 얻은 깨달음이 삶에 녹아든 새로운 일상의 시작입니다." }, "position": { "x": -139.86, "y": 2439.62 }, "group": "nodes" },
 
-  { "data": { "id": "STC_01_02", "source": "STC_01", "target": "STC_02", "label": "세계관 속에서 잠재적 테마 암시" }, "group": "edges" },
-  { "data": { "id": "STC_02_03", "source": "STC_02", "target": "STC_03", "label": "일상의 문제점과 인물 관계 구축" }, "group": "edges" },
-  { "data": { "id": "STC_03_04", "source": "STC_03", "target": "STC_04", "label": "현상 유지를 깨뜨리는 외부적 충격" }, "group": "edges" },
-  { "data": { "id": "STC_04_05", "source": "STC_04", "target": "STC_05", "label": "변화에 대한 두려움과 내적 갈등" }, "group": "edges" },
-  { "data": { "id": "STC_05_06", "source": "STC_05", "target": "STC_06", "label": "결단과 함께 새로운 세계로의 도약" }, "group": "edges" },
-  { "data": { "id": "STC_06_07", "source": "STC_06", "target": "STC_07", "label": "정서적 유대와 서브플롯의 시작" }, "group": "edges" },
-  { "data": { "id": "STC_07_08", "source": "STC_07", "target": "STC_08", "label": "본격적인 모험과 개념적 재미 탐색" }, "group": "edges" },
-  { "data": { "id": "STC_08_09", "source": "STC_08", "target": "STC_09", "label": "사건의 전환점과 위험의 고조" }, "group": "edges" },
-  { "data": { "id": "STC_09_10", "source": "STC_09", "target": "STC_10", "label": "적대 세력의 본격적인 반격과 위기" }, "group": "edges" },
-  { "data": { "id": "STC_10_11", "source": "STC_10", "target": "STC_11", "label": "통제 불능 상태와 완전한 상실" }, "group": "edges" },
-  { "data": { "id": "STC_11_12", "source": "STC_11", "target": "STC_12", "label": "깊은 절망 속에서의 자아 성찰" }, "group": "edges" },
-  { "data": { "id": "STC_12_13", "source": "STC_12", "target": "STC_13", "label": "새로운 통찰을 통한 재기 결심" }, "group": "edges" },
-  { "data": { "id": "STC_13_14", "source": "STC_13", "target": "STC_14", "label": "모든 자원을 동원한 최종 승부" }, "group": "edges" },
-  { "data": { "id": "STC_14_15", "source": "STC_14", "target": "STC_15", "label": "변화된 세계의 확증과 마무리" }, "group": "edges" },
-  { "data": { "id": "TRB_01_02", "source": "TRB_01", "target": "TRB_02", "label": "내적 욕망을 가로막는 과거의 상처" }, "group": "edges" },
-  { "data": { "id": "TRB_02_03", "source": "TRB_02", "target": "TRB_03", "label": "트라우마에서 기인한 인격적 결함" }, "group": "edges" },
-  { "data": { "id": "TRB_03_04", "source": "TRB_03", "target": "TRB_04", "label": "결함이 노출되는 순간의 외부적 자극" }, "group": "edges" },
-  { "data": { "id": "TRB_04_05", "source": "TRB_04", "target": "TRB_05", "label": "막연한 결핍에서 구체적 목표로의 전이" }, "group": "edges" },
-  { "data": { "id": "TRB_05_06", "source": "TRB_05", "target": "TRB_06", "label": "목표 달성을 위한 조력자와의 만남" }, "group": "edges" },
-  { "data": { "id": "TRB_06_07", "source": "TRB_06", "target": "TRB_07", "label": "조력과 동시에 선명해지는 적대 관계" }, "group": "edges" },
-  { "data": { "id": "TRB_07_08", "source": "TRB_07", "target": "TRB_08", "label": "적과의 대립 중 발생하는 아군의 기만" }, "group": "edges" },
-  { "data": { "id": "TRB_08_09", "source": "TRB_08", "target": "TRB_09", "label": "배신 혹은 충격을 통한 상황의 재인식" }, "group": "edges" },
-  { "data": { "id": "TRB_09_10", "source": "TRB_09", "target": "TRB_10", "label": "새로운 각오로 정립한 실전 전략" }, "group": "edges" },
-  { "data": { "id": "TRB_10_11", "source": "TRB_10", "target": "TRB_11", "label": "전략에 맞대응하는 적의 치명적 수" }, "group": "edges" },
-  { "data": { "id": "TRB_11_12", "source": "TRB_11", "target": "TRB_12", "label": "압박에 못 이겨 무리하게 추진되는 계획" }, "group": "edges" },
-  { "data": { "id": "TRB_12_13", "source": "TRB_12", "target": "TRB_13", "label": "주인공의 집착으로 인한 동료와의 균열" }, "group": "edges" },
-  { "data": { "id": "TRB_13_14", "source": "TRB_13", "target": "TRB_14", "label": "내외부적 무너짐과 사회적 추락" }, "group": "edges" },
-  { "data": { "id": "TRB_14_15", "source": "TRB_14", "target": "TRB_15", "label": "바닥에서 발견한 진정한 자아 성찰" }, "group": "edges" },
-  { "data": { "id": "TRB_15_16", "source": "TRB_15", "target": "TRB_16", "label": "완전한 변화를 위한 극한의 생존 시험" }, "group": "edges" },
-  { "data": { "id": "TRB_16_17", "source": "TRB_16", "target": "TRB_17", "label": "자아의 죽음과 도덕적 재탄생" }, "group": "edges" },
-  { "data": { "id": "TRB_17_18", "source": "TRB_17", "target": "TRB_18", "label": "변화된 신념으로 마주하는 마지막 관문" }, "group": "edges" },
-  { "data": { "id": "TRB_18_19", "source": "TRB_18", "target": "TRB_19", "label": "성장한 내면의 힘을 증명하는 결전" }, "group": "edges" },
-  { "data": { "id": "TRB_19_20", "source": "TRB_19", "target": "TRB_20", "label": "투쟁을 통한 진정한 자신의 정체성 확립" }, "group": "edges" },
-  { "data": { "id": "TRB_20_21", "source": "TRB_20", "target": "TRB_21", "label": "성숙한 인격으로서의 가치 중심적 선택" }, "group": "edges" },
-  { "data": { "id": "TRB_21_22", "source": "TRB_21", "target": "TRB_22", "label": "안정된 내면과 조화로운 삶의 구축" }, "group": "edges" },
-  { "data": { "id": "PRP_01_08", "source": "PRP_01", "target": "PRP_08", "label": "보호의 부재가 가져온 실질적 피해" }, "group": "edges" },
-  { "data": { "id": "PRP_08_09", "source": "PRP_08", "target": "PRP_09", "label": "피해를 수습하기 위한 외부의 개입" }, "group": "edges" },
-  { "data": { "id": "PRP_09_10", "source": "PRP_09", "target": "PRP_10", "label": "소명을 받아들이는 구원자의 결단" }, "group": "edges" },
-  { "data": { "id": "PRP_10_11", "source": "PRP_10", "target": "PRP_11", "label": "결의를 다지고 낯선 세계로 이동" }, "group": "edges" },
-  { "data": { "id": "PRP_11_12", "source": "PRP_11", "target": "PRP_12", "label": "모험 중 만난 초월적 존재의 시험" }, "group": "edges" },
-  { "data": { "id": "PRP_12_14", "source": "PRP_12", "target": "PRP_14", "label": "시험 통과 후 얻게 된 강력한 마법 도구" }, "group": "edges" },
-  { "data": { "id": "PRP_14_15", "source": "PRP_14", "target": "PRP_15", "label": "도구의 힘으로 적진까지의 안전한 안내" }, "group": "edges" },
-  { "data": { "id": "PRP_15_16", "source": "PRP_15", "target": "PRP_16", "label": "적과의 정면 충돌과 물리적 대결" }, "group": "edges" },
-  { "data": { "id": "PRP_16_18", "source": "PRP_16", "target": "PRP_18", "label": "대결의 마침표인 결정적 승리" }, "group": "edges" },
-  { "data": { "id": "PRP_18_19", "source": "PRP_18", "target": "PRP_19", "label": "원흉 제거 후 회복된 본래의 가치" }, "group": "edges" },
-  { "data": { "id": "PRP_19_20", "source": "PRP_19", "target": "PRP_20", "label": "목적 달성 후 안전한 기지로의 복귀" }, "group": "edges" },
-  { "data": { "id": "PRP_20_21", "source": "PRP_20", "target": "PRP_21", "label": "복귀 길에 맞닥뜨린 잔존 세력의 위협" }, "group": "edges" },
-  { "data": { "id": "PRP_21_25", "source": "PRP_21", "target": "PRP_25", "label": "위협을 뚫고 마주한 최종 자격 검증" }, "group": "edges" },
-  { "data": { "id": "PRP_25_26", "source": "PRP_25", "target": "PRP_26", "label": "지혜와 운으로 해결한 불가능한 난제" }, "group": "edges" },
-  { "data": { "id": "PRP_26_27", "source": "PRP_26", "target": "PRP_27", "label": "난제 해결을 통한 영웅 신분 확증" }, "group": "edges" },
-  { "data": { "id": "PRP_27_30", "source": "PRP_27", "target": "PRP_30", "label": "공인된 권위로 집행하는 악인의 심판" }, "group": "edges" },
-  { "data": { "id": "PRP_30_31", "source": "PRP_30", "target": "PRP_31", "label": "공의 실현 후 주어지는 영광된 결말" }, "group": "edges" },
+        { "data": { "id": "PRP_01", "label": "PRP 01 부재", "color": "#667eea", "notes": "가족의 일원이 집을 떠나거나, 기존의 질서를 유지하던 존재가 사라지는 결핍의 시작입니다." }, "position": { "x": 580.12, "y": 946.78 }, "group": "nodes" },
+        { "data": { "id": "PRP_08", "label": "PRP 08 악행/결핍", "color": "#667eea", "notes": "악당에 의해 피해가 발생하거나 무언가 결정적으로 부족해져 여정이 불가피해집니다." }, "position": { "x": 647.46, "y": 807.56 }, "group": "nodes" },
+        { "data": { "id": "PRP_09", "label": "PRP 09 매개", "color": "#667eea", "notes": "사건의 전말이 알려지고 주인공에게 도움의 요청이 오거나 임무가 부여됩니다." }, "position": { "x": 1345.11, "y": 1065.11 }, "group": "nodes" },
+        { "data": { "id": "PRP_10", "label": "PRP 10 대응 시작", "color": "#667eea", "notes": "주인공이 임무를 받아들이고 문제를 해결하기 위해 행동을 개시하는 동의의 순간입니다." }, "position": { "x": 1183.53, "y": 907.84 }, "group": "nodes" },
+        { "data": { "id": "PRP_11", "label": "PRP 11 출발", "color": "#667eea", "notes": "안전한 고향을 떠나 미지의 영역 혹은 적의 본거지를 향해 이동합니다." }, "position": { "x": 768.39, "y": 1438.34 }, "group": "nodes" },
+        { "data": { "id": "PRP_12", "label": "PRP 12 증여자 시험", "color": "#667eea", "notes": "마법적 수단이나 도구를 얻기 전, 주인공의 자격을 묻는 첫 번째 관문입니다." }, "position": { "x": 1364.83, "y": 1385.66 }, "group": "nodes" },
+        { "data": { "id": "PRP_14", "label": "PRP 14 조력 획득", "color": "#667eea", "notes": "시험을 통과한 대가로 신비로운 힘이나 신뢰할 수 있는 도구를 손에 넣습니다." }, "position": { "x": 1288.29, "y": 2171.63 }, "group": "nodes" },
+        { "data": { "id": "PRP_15", "label": "PRP 15 안내", "color": "#667eea", "notes": "목적지까지 안내를 받거나 신비로운 조력자를 따라 적에게 접근합니다." }, "position": { "x": 1164.62, "y": 1961.59 }, "group": "nodes" },
+        { "data": { "id": "PRP_16", "label": "PRP 16 투쟁", "color": "#667eea", "notes": "적과 직접 맞붙는 격렬한 물리적 혹은 논리적 전투 구간입니다." }, "position": { "x": 934.55, "y": 1985.21 }, "group": "nodes" },
+        { "data": { "id": "PRP_18", "label": "PRP 18 승리", "color": "#667eea", "notes": "전투에서 적을 물리치거나 무력화시키는 일차적 성공입니다." }, "position": { "x": 1854.52, "y": 136.6 }, "group": "nodes" },
+        { "data": { "id": "PRP_19", "label": "PRP 19 결핍 해소", "color": "#667eea", "notes": "초반에 발생했던 악행의 흔적이 지워지거나 잃었던 것을 되찾는 수습 단계입니다." }, "position": { "x": 1613.89, "y": 244.32 }, "group": "nodes" },
+        { "data": { "id": "PRP_20", "label": "PRP 20 귀환", "color": "#667eea", "notes": "임무를 마친 주인공이 영광스럽게 혹은 비밀스럽게 자신의 장소로 돌아옵니다." }, "position": { "x": 1648.33, "y": 99.85 }, "group": "nodes" },
+        { "data": { "id": "PRP_21", "label": "PRP 21 추격", "color": "#667eea", "notes": "패배한 적의 잔당이 추격해오거나 예기치 못한 마지막 방해가 뒤따릅니다." }, "position": { "x": 691.79, "y": 2060.3 }, "group": "nodes" },
+        { "data": { "id": "PRP_25", "label": "PRP 25 어려운 과제", "color": "#667eea", "notes": "최종적인 정당성을 확보하기 위해 주인공에게 주어지는 불가능에 가까운 미션입니다." }, "position": { "x": 129.77, "y": 2445.19 }, "group": "nodes" },
+        { "data": { "id": "PRP_26", "label": "PRP 26 과제 해결", "color": "#667eea", "notes": "주인공의 용기나 지혜, 혹은 미리 얻은 조력 덕분에 과제를 완수합니다." }, "position": { "x": 175.63, "y": 2854.16 }, "group": "nodes" },
+        { "data": { "id": "PRP_27", "label": "PRP 27 인식", "color": "#667eea", "notes": "주인공이 진짜 영웅임을 세상이 알아보고 신분이나 자격을 공인받는 지점입니다." }, "position": { "x": 459.34, "y": 2730.76 }, "group": "nodes" },
+        { "data": { "id": "PRP_30", "label": "PRP 30 처벌", "color": "#667eea", "notes": "모든 정체가 드러난 악당이나 가짜 영웅이 응당한 벌을 받는 사법적/도덕적 단죄입니다." }, "position": { "x": 133.75, "y": 2578.46 }, "group": "nodes" },
+        { "data": { "id": "PRP_31", "label": "PRP 31 보상/엔딩", "color": "#667eea", "notes": "결혼, 왕위 승계, 혹은 평화의 안착 등 영웅적 여정에 대한 최종적 보상입니다." }, "position": { "x": -140.09, "y": 2835.95 }, "group": "nodes" },
 
-  { "data": { "id": "E_STC01_PRP01", "source": "STC_01", "target": "PRP_01", "label": "초기 정적인 세계 속의 근원적 부재 결합" }, "group": "edges" },
-  { "data": { "id": "E_STC03_PRP08", "source": "STC_03", "target": "PRP_08", "label": "일상의 세트업 단계에서 결핍의 구체화" }, "group": "edges" },
-  { "data": { "id": "E_STC03_TRB03", "source": "STC_03", "target": "TRB_03", "label": "외부 환경의 결함과 내면의 약점이 조응" }, "group": "edges" },
-  { "data": { "id": "E_STC04_TRB04", "source": "STC_04", "target": "TRB_04", "label": "외부적 충격이 주인공의 내면 욕망을 발화" }, "group": "edges" },
-  { "data": { "id": "E_STC04_PRP09", "source": "STC_04", "target": "PRP_09", "label": "충격적 사건이 구원자로서의 소명으로 연결" }, "group": "edges" },
-  { "data": { "id": "E_STC05_PRP10", "source": "STC_05", "target": "PRP_10", "label": "내적 저항을 극복한 의지적 대응의 시작" }, "group": "edges" },
-  { "data": { "id": "E_STC06_PRP11", "source": "STC_06", "target": "PRP_11", "label": "2막 진입의 선택이 물리적인 출발로 현현" }, "group": "edges" },
-  { "data": { "id": "E_STC07_TRB06", "source": "STC_07", "target": "TRB_06", "label": "인간 관계의 시작과 함께 찾아온 정신적 지주" }, "group": "edges" },
-  { "data": { "id": "E_STC07_PRP15", "source": "STC_07", "target": "PRP_15", "label": "정서적 교류가 여정의 올바른 방향을 제시" }, "group": "edges" },
-  { "data": { "id": "E_STC08_PRP16", "source": "STC_08", "target": "PRP_16", "label": "신나는 탐색 과정 중 마주치는 초기 장애물" }, "group": "edges" },
-  { "data": { "id": "E_STC09_TRB09", "source": "STC_09", "target": "TRB_09", "label": "사건의 정점에서 얻은 치명적인 진실 인식" }, "group": "edges" },
-  { "data": { "id": "E_STC10_TRB11", "source": "STC_10", "target": "TRB_11", "label": "악의 공세로 인한 계획의 파탄과 내적 혼란" }, "group": "edges" },
-  { "data": { "id": "E_STC11_TRB14", "source": "STC_11", "target": "TRB_14", "label": "가장 큰 상실이 가져온 자아의 처참한 붕괴" }, "group": "edges" },
-  { "data": { "id": "E_STC13_TRB18", "source": "STC_13", "target": "TRB_18", "label": "재기 결심이 최종 관문을 뚫는 투지로 승화" }, "group": "edges" },
-  { "data": { "id": "E_STC13_PRP25", "source": "STC_13", "target": "PRP_25", "label": "3막의 해결책이 영웅 자격의 마지막 시험과 직결" }, "group": "edges" },
-  { "data": { "id": "E_STC14_TRB19", "source": "STC_14", "target": "TRB_19", "label": "외적 대결의 승리가 내적 가치의 승리로 완성" }, "group": "edges" },
-  { "data": { "id": "E_STC14_PRP26", "source": "STC_14", "target": "PRP_26", "label": "피날레의 절정이 모든 불가능한 난제의 해결" }, "group": "edges" },
-  { "data": { "id": "E_STC14_PRP30", "source": "STC_14", "target": "PRP_30", "label": "정의 구현을 통한 악의 완전한 배제와 처벌" }, "group": "edges" },
-  { "data": { "id": "E_STC15_TRB22", "source": "STC_15", "target": "TRB_22", "label": "변화된 이미지가 새로운 삶의 평형 상태를 확정" }, "group": "edges" },
-  { "data": { "id": "E_STC15_PRP31", "source": "STC_15", "target": "PRP_31", "label": "정서적 마무리가 영웅적 서사의 보상과 합치" }, "group": "edges" },
-  { "data": { "id": "E_PRP12_TRB06", "source": "PRP_12", "target": "TRB_06", "label": "시험을 주는 증여자가 정신적 조력자의 역할 수행" }, "group": "edges" },
-  { "data": { "id": "E_PRP14_TRB06", "source": "PRP_14", "target": "TRB_06", "label": "마법적 조력의 획득과 인적 조력의 일체화" }, "group": "edges" },
-  { "data": { "id": "E_PRP18_TRB19", "source": "PRP_18", "target": "TRB_19", "label": "물리적 정복이 필연적으로 맞이하는 최종 대결" }, "group": "edges" },
-  { "data": { "id": "E_PRP19_TRB20", "source": "PRP_19", "target": "TRB_20", "label": "결핍의 해소가 가져온 주인공의 정체성 복구" }, "group": "edges" },
-  { "data": { "id": "E_PRP27_TRB20", "source": "PRP_27", "target": "TRB_20", "label": "주변의 인정과 스스로의 인식이 하나가 됨" }, "group": "edges" },
-  { "data": { "id": "E_TRB02_PRP01", "source": "TRB_02", "target": "PRP_01", "label": "과거의 상처와 부재의 상실감이 형성한 환경" }, "group": "edges" },
-  { "data": { "id": "E_TRB04_PRP09", "source": "TRB_04", "target": "PRP_09", "label": "사건의 시작이 주인공을 중재자의 위치로 유도" }, "group": "edges" },
-  { "data": { "id": "E_TRB08_PRP12", "source": "TRB_08", "target": "PRP_12", "label": "가짜 아군의 방해가 성장을 위한 역설적 시험" }, "group": "edges" },
-  { "data": { "id": "E_TRB16_PRP25", "source": "TRB_16", "target": "PRP_25", "label": "죽음의 위기가 곧 가장 어려운 과제의 도전" }, "group": "edges" },
-  { "data": { "id": "E_TRB17_PRP27", "source": "TRB_17", "target": "PRP_27", "label": "완벽한 깨달음이 영웅으로서의 자격 인식을 촉발" }, "group": "edges" },
-  { "data": { "id": "E_TRB21_PRP26", "source": "TRB_21", "target": "PRP_26", "label": "도덕적 선택이 곧 난제 해결의 열쇠가 됨" }, "group": "edges" },
-  { "data": { "id": "E_TRB22_PRP20", "source": "TRB_22", "target": "PRP_20", "label": "내적 평화와 외적 귀환의 동시적 달성" }, "group": "edges" }
-];
+        { "data": { "id": "STC_01_02", "source": "STC_01", "target": "STC_02", "label": "세계관 속에서 잠재적 테마 암시" }, "group": "edges" },
+        { "data": { "id": "STC_02_03", "source": "STC_02", "target": "STC_03", "label": "일상의 문제점과 인물 관계 구축" }, "group": "edges" },
+        { "data": { "id": "STC_03_04", "source": "STC_03", "target": "STC_04", "label": "현상 유지를 깨뜨리는 외부적 충격" }, "group": "edges" },
+        { "data": { "id": "STC_04_05", "source": "STC_04", "target": "STC_05", "label": "변화에 대한 두려움과 내적 갈등" }, "group": "edges" },
+        { "data": { "id": "STC_05_06", "source": "STC_05", "target": "STC_06", "label": "결단과 함께 새로운 세계로의 도약" }, "group": "edges" },
+        { "data": { "id": "STC_06_07", "source": "STC_06", "target": "STC_07", "label": "정서적 유대와 서브플롯의 시작" }, "group": "edges" },
+        { "data": { "id": "STC_07_08", "source": "STC_07", "target": "STC_08", "label": "본격적인 모험과 개념적 재미 탐색" }, "group": "edges" },
+        { "data": { "id": "STC_08_09", "source": "STC_08", "target": "STC_09", "label": "사건의 전환점과 위험의 고조" }, "group": "edges" },
+        { "data": { "id": "STC_09_10", "source": "STC_09", "target": "STC_10", "label": "적대 세력의 본격적인 반격과 위기" }, "group": "edges" },
+        { "data": { "id": "STC_10_11", "source": "STC_10", "target": "STC_11", "label": "통제 불능 상태와 완전한 상실" }, "group": "edges" },
+        { "data": { "id": "STC_11_12", "source": "STC_11", "target": "STC_12", "label": "깊은 절망 속에서의 자아 성찰" }, "group": "edges" },
+        { "data": { "id": "STC_12_13", "source": "STC_12", "target": "STC_13", "label": "새로운 통찰을 통한 재기 결심" }, "group": "edges" },
+        { "data": { "id": "STC_13_14", "source": "STC_13", "target": "STC_14", "label": "모든 자원을 동원한 최종 승부" }, "group": "edges" },
+        { "data": { "id": "STC_14_15", "source": "STC_14", "target": "STC_15", "label": "변화된 세계의 확증과 마무리" }, "group": "edges" },
+        { "data": { "id": "TRB_01_02", "source": "TRB_01", "target": "TRB_02", "label": "내적 욕망을 가로막는 과거의 상처" }, "group": "edges" },
+        { "data": { "id": "TRB_02_03", "source": "TRB_02", "target": "TRB_03", "label": "트라우마에서 기인한 인격적 결함" }, "group": "edges" },
+        { "data": { "id": "TRB_03_04", "source": "TRB_03", "target": "TRB_04", "label": "결함이 노출되는 순간의 외부적 자극" }, "group": "edges" },
+        { "data": { "id": "TRB_04_05", "source": "TRB_04", "target": "TRB_05", "label": "막연한 결핍에서 구체적 목표로의 전이" }, "group": "edges" },
+        { "data": { "id": "TRB_05_06", "source": "TRB_05", "target": "TRB_06", "label": "목표 달성을 위한 조력자와의 만남" }, "group": "edges" },
+        { "data": { "id": "TRB_06_07", "source": "TRB_06", "target": "TRB_07", "label": "조력과 동시에 선명해지는 적대 관계" }, "group": "edges" },
+        { "data": { "id": "TRB_07_08", "source": "TRB_07", "target": "TRB_08", "label": "적과의 대립 중 발생하는 아군의 기만" }, "group": "edges" },
+        { "data": { "id": "TRB_08_09", "source": "TRB_08", "target": "TRB_09", "label": "배신 혹은 충격을 통한 상황의 재인식" }, "group": "edges" },
+        { "data": { "id": "TRB_09_10", "source": "TRB_09", "target": "TRB_10", "label": "새로운 각오로 정립한 실전 전략" }, "group": "edges" },
+        { "data": { "id": "TRB_10_11", "source": "TRB_10", "target": "TRB_11", "label": "전략에 맞대응하는 적의 치명적 수" }, "group": "edges" },
+        { "data": { "id": "TRB_11_12", "source": "TRB_11", "target": "TRB_12", "label": "압박에 못 이겨 무리하게 추진되는 계획" }, "group": "edges" },
+        { "data": { "id": "TRB_12_13", "source": "TRB_12", "target": "TRB_13", "label": "주인공의 집착으로 인한 동료와의 균열" }, "group": "edges" },
+        { "data": { "id": "TRB_13_14", "source": "TRB_13", "target": "TRB_14", "label": "내외부적 무너짐과 사회적 추락" }, "group": "edges" },
+        { "data": { "id": "TRB_14_15", "source": "TRB_14", "target": "TRB_15", "label": "바닥에서 발견한 진정한 자아 성찰" }, "group": "edges" },
+        { "data": { "id": "TRB_15_16", "source": "TRB_15", "target": "TRB_16", "label": "완전한 변화를 위한 극한의 생존 시험" }, "group": "edges" },
+        { "data": { "id": "TRB_16_17", "source": "TRB_16", "target": "TRB_17", "label": "자아의 죽음과 도덕적 재탄생" }, "group": "edges" },
+        { "data": { "id": "TRB_17_18", "source": "TRB_17", "target": "TRB_18", "label": "변화된 신념으로 마주하는 마지막 관문" }, "group": "edges" },
+        { "data": { "id": "TRB_18_19", "source": "TRB_18", "target": "TRB_19", "label": "성장한 내면의 힘을 증명하는 결전" }, "group": "edges" },
+        { "data": { "id": "TRB_19_20", "source": "TRB_19", "target": "TRB_20", "label": "투쟁을 통한 진정한 자신의 정체성 확립" }, "group": "edges" },
+        { "data": { "id": "TRB_20_21", "source": "TRB_20", "target": "TRB_21", "label": "성숙한 인격으로서의 가치 중심적 선택" }, "group": "edges" },
+        { "data": { "id": "TRB_21_22", "source": "TRB_21", "target": "TRB_22", "label": "안정된 내면과 조화로운 삶의 구축" }, "group": "edges" },
+        { "data": { "id": "PRP_01_08", "source": "PRP_01", "target": "PRP_08", "label": "보호의 부재가 가져온 실질적 피해" }, "group": "edges" },
+        { "data": { "id": "PRP_08_09", "source": "PRP_08", "target": "PRP_09", "label": "피해를 수습하기 위한 외부의 개입" }, "group": "edges" },
+        { "data": { "id": "PRP_09_10", "source": "PRP_09", "target": "PRP_10", "label": "소명을 받아들이는 구원자의 결단" }, "group": "edges" },
+        { "data": { "id": "PRP_10_11", "source": "PRP_10", "target": "PRP_11", "label": "결의를 다지고 낯선 세계로 이동" }, "group": "edges" },
+        { "data": { "id": "PRP_11_12", "source": "PRP_11", "target": "PRP_12", "label": "모험 중 만난 초월적 존재의 시험" }, "group": "edges" },
+        { "data": { "id": "PRP_12_14", "source": "PRP_12", "target": "PRP_14", "label": "시험 통과 후 얻게 된 강력한 마법 도구" }, "group": "edges" },
+        { "data": { "id": "PRP_14_15", "source": "PRP_14", "target": "PRP_15", "label": "도구의 힘으로 적진까지의 안전한 안내" }, "group": "edges" },
+        { "data": { "id": "PRP_15_16", "source": "PRP_15", "target": "PRP_16", "label": "적과의 정면 충돌과 물리적 대결" }, "group": "edges" },
+        { "data": { "id": "PRP_16_18", "source": "PRP_16", "target": "PRP_18", "label": "대결의 마침표인 결정적 승리" }, "group": "edges" },
+        { "data": { "id": "PRP_18_19", "source": "PRP_18", "target": "PRP_19", "label": "원흉 제거 후 회복된 본래의 가치" }, "group": "edges" },
+        { "data": { "id": "PRP_19_20", "source": "PRP_19", "target": "PRP_20", "label": "목적 달성 후 안전한 기지로의 복귀" }, "group": "edges" },
+        { "data": { "id": "PRP_20_21", "source": "PRP_20", "target": "PRP_21", "label": "복귀 길에 맞닥뜨린 잔존 세력의 위협" }, "group": "edges" },
+        { "data": { "id": "PRP_21_25", "source": "PRP_21", "target": "PRP_25", "label": "위협을 뚫고 마주한 최종 자격 검증" }, "group": "edges" },
+        { "data": { "id": "PRP_25_26", "source": "PRP_25", "target": "PRP_26", "label": "지혜와 운으로 해결한 불가능한 난제" }, "group": "edges" },
+        { "data": { "id": "PRP_26_27", "source": "PRP_26", "target": "PRP_27", "label": "난제 해결을 통한 영웅 신분 확증" }, "group": "edges" },
+        { "data": { "id": "PRP_27_30", "source": "PRP_27", "target": "PRP_30", "label": "공인된 권위로 집행하는 악인의 심판" }, "group": "edges" },
+        { "data": { "id": "PRP_30_31", "source": "PRP_30", "target": "PRP_31", "label": "공의 실현 후 주어지는 영광된 결말" }, "group": "edges" },
 
-    let cy = cytoscape({
-      container: document.getElementById('cy'),
-      elements: JSON.parse(JSON.stringify(initialData)),
-      style: [
-        { selector: 'node', style: { 'label': 'data(label)', 'background-color': 'data(color)', 'shape': 'round-rectangle', 'width': 'label', 'height': 30, 'padding': '10px', 'border-width': 2, 'border-color': '#333', 'border-style': 'solid', 'text-valign': 'center', 'text-halign': 'center', 'color': '#fff', 'font-weight': 'bold', 'font-size': 14, 'text-outline-width': 2, 'text-outline-color': '#000' } },
-        { selector: 'edge', style: { 'label': 'data(label)', 'curve-style': 'bezier', 'line-color': '#999', 'width': 1, 'target-arrow-shape': 'triangle', 'target-arrow-color': '#999', 'font-size': 12 } },
-        { selector: 'edge.timeline', style: { 'line-color': '#ff0055', 'width': 3, 'target-arrow-color': '#ff0055' } },
-        { selector: 'node:selected', style: { 'border-width': 4, 'border-color': '#FFD700', 'border-style': 'double' } },
-        { selector: 'edge:selected', style: { 'width': 4, 'line-color': '#FFD700', 'target-arrow-color': '#FFD700' } }
-      ],
-      layout: { name: 'cose', animate: true },
-      boxSelectionEnabled: false
-    });
+        { "data": { "id": "E_STC01_PRP01", "source": "STC_01", "target": "PRP_01", "label": "초기 정적인 세계 속의 근원적 부재 결합" }, "group": "edges" },
+        { "data": { "id": "E_STC03_PRP08", "source": "STC_03", "target": "PRP_08", "label": "일상의 세트업 단계에서 결핍의 구체화" }, "group": "edges" },
+        { "data": { "id": "E_STC03_TRB03", "source": "STC_03", "target": "TRB_03", "label": "외부 환경의 결함과 내면의 약점이 조응" }, "group": "edges" },
+        { "data": { "id": "E_STC04_TRB04", "source": "STC_04", "target": "TRB_04", "label": "외부적 충격이 주인공의 내면 욕망을 발화" }, "group": "edges" },
+        { "data": { "id": "E_STC04_PRP09", "source": "STC_04", "target": "PRP_09", "label": "충격적 사건이 구원자로서의 소명으로 연결" }, "group": "edges" },
+        { "data": { "id": "E_STC05_PRP10", "source": "STC_05", "target": "PRP_10", "label": "내적 저항을 극복한 의지적 대응의 시작" }, "group": "edges" },
+        { "data": { "id": "E_STC06_PRP11", "source": "STC_06", "target": "PRP_11", "label": "2막 진입의 선택이 물리적인 출발로 현현" }, "group": "edges" },
+        { "data": { "id": "E_STC07_TRB06", "source": "STC_07", "target": "TRB_06", "label": "인간 관계의 시작과 함께 찾아온 정신적 지주" }, "group": "edges" },
+        { "data": { "id": "E_STC07_PRP15", "source": "STC_07", "target": "PRP_15", "label": "정서적 교류가 여정의 올바른 방향을 제시" }, "group": "edges" },
+        { "data": { "id": "E_STC08_PRP16", "source": "STC_08", "target": "PRP_16", "label": "신나는 탐색 과정 중 마주치는 초기 장애물" }, "group": "edges" },
+        { "data": { "id": "E_STC09_TRB09", "source": "STC_09", "target": "TRB_09", "label": "사건의 정점에서 얻은 치명적인 진실 인식" }, "group": "edges" },
+        { "data": { "id": "E_STC10_TRB11", "source": "STC_10", "target": "TRB_11", "label": "악의 공세로 인한 계획의 파탄과 내적 혼란" }, "group": "edges" },
+        { "data": { "id": "E_STC11_TRB14", "source": "STC_11", "target": "TRB_14", "label": "가장 큰 상실이 가져온 자아의 처참한 붕괴" }, "group": "edges" },
+        { "data": { "id": "E_STC13_TRB18", "source": "STC_13", "target": "TRB_18", "label": "재기 결심이 최종 관문을 뚫는 투지로 승화" }, "group": "edges" },
+        { "data": { "id": "E_STC13_PRP25", "source": "STC_13", "target": "PRP_25", "label": "3막의 해결책이 영웅 자격의 마지막 시험과 직결" }, "group": "edges" },
+        { "data": { "id": "E_STC14_TRB19", "source": "STC_14", "target": "TRB_19", "label": "외적 대결의 승리가 내적 가치의 승리로 완성" }, "group": "edges" },
+        { "data": { "id": "E_STC14_PRP26", "source": "STC_14", "target": "PRP_26", "label": "피날레의 절정이 모든 불가능한 난제의 해결" }, "group": "edges" },
+        { "data": { "id": "E_STC14_PRP30", "source": "STC_14", "target": "PRP_30", "label": "정의 구현을 통한 악의 완전한 배제와 처벌" }, "group": "edges" },
+        { "data": { "id": "E_STC15_TRB22", "source": "STC_15", "target": "TRB_22", "label": "변화된 이미지가 새로운 삶의 평형 상태를 확정" }, "group": "edges" },
+        { "data": { "id": "E_STC15_PRP31", "source": "STC_15", "target": "PRP_31", "label": "정서적 마무리가 영웅적 서사의 보상과 합치" }, "group": "edges" },
+        { "data": { "id": "E_PRP12_TRB06", "source": "PRP_12", "target": "TRB_06", "label": "시험을 주는 증여자가 정신적 조력자의 역할 수행" }, "group": "edges" },
+        { "data": { "id": "E_PRP14_TRB06", "source": "PRP_14", "target": "TRB_06", "label": "마법적 조력의 획득과 인적 조력의 일체화" }, "group": "edges" },
+        { "data": { "id": "E_PRP18_TRB19", "source": "PRP_18", "target": "TRB_19", "label": "물리적 정복이 필연적으로 맞이하는 최종 대결" }, "group": "edges" },
+        { "data": { "id": "E_PRP19_TRB20", "source": "PRP_19", "target": "TRB_20", "label": "결핍의 해소가 가져온 주인공의 정체성 복구" }, "group": "edges" },
+        { "data": { "id": "E_PRP27_TRB20", "source": "PRP_27", "target": "TRB_20", "label": "주변의 인정과 스스로의 인식이 하나가 됨" }, "group": "edges" },
+        { "data": { "id": "E_TRB02_PRP01", "source": "TRB_02", "target": "PRP_01", "label": "과거의 상처와 부재의 상실감이 형성한 환경" }, "group": "edges" },
+        { "data": { "id": "E_TRB04_PRP09", "source": "TRB_04", "target": "PRP_09", "label": "사건의 시작이 주인공을 중재자의 위치로 유도" }, "group": "edges" },
+        { "data": { "id": "E_TRB08_PRP12", "source": "TRB_08", "target": "PRP_12", "label": "가짜 아군의 방해가 성장을 위한 역설적 시험" }, "group": "edges" },
+        { "data": { "id": "E_TRB16_PRP25", "source": "TRB_16", "target": "PRP_25", "label": "죽음의 위기가 곧 가장 어려운 과제의 도전" }, "group": "edges" },
+        { "data": { "id": "E_TRB17_PRP27", "source": "TRB_17", "target": "PRP_27", "label": "완벽한 깨달음이 영웅으로서의 자격 인식을 촉발" }, "group": "edges" },
+        { "data": { "id": "E_TRB21_PRP26", "source": "TRB_21", "target": "PRP_26", "label": "도덕적 선택이 곧 난제 해결의 열쇠가 됨" }, "group": "edges" },
+        { "data": { "id": "E_TRB22_PRP20", "source": "TRB_22", "target": "PRP_20", "label": "내적 평화와 외적 귀환의 동시적 달성" }, "group": "edges" }
+      ];
 
-    let selected = null, speechSynthesis = window.speechSynthesis, currentUtterance = null;
-    let edgeCreationMode = false, edgeSourceNode = null, isDragMode = false, tremorInterval = null, currentLayout = null;
+      let cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: JSON.parse(JSON.stringify(initialData)),
+        style: [
+          { selector: 'node', style: { 'label': 'data(label)', 'background-color': 'data(color)', 'shape': 'round-rectangle', 'width': 'label', 'height': 30, 'padding': '10px', 'border-width': 2, 'border-color': '#333', 'border-style': 'solid', 'text-valign': 'center', 'text-halign': 'center', 'color': '#fff', 'font-weight': 'bold', 'font-size': 14, 'text-outline-width': 2, 'text-outline-color': '#000' } },
+          { selector: 'edge', style: { 'label': 'data(label)', 'curve-style': 'bezier', 'line-color': '#999', 'width': 1, 'target-arrow-shape': 'triangle', 'target-arrow-color': '#999', 'font-size': 12 } },
+          { selector: 'edge.timeline', style: { 'line-color': '#ff0055', 'width': 3, 'target-arrow-color': '#ff0055' } },
+          { selector: 'node:selected', style: { 'border-width': 4, 'border-color': '#FFD700', 'border-style': 'double' } },
+          { selector: 'edge:selected', style: { 'width': 4, 'line-color': '#FFD700', 'target-arrow-color': '#FFD700' } }
+        ],
+        layout: { name: 'cose', animate: true },
+        boxSelectionEnabled: false
+      });
 
-    const notesInfo = document.getElementById('notesInfo');
-    const labelInput = document.getElementById('labelInput');
-    const colorControl = document.getElementById('colorControl');
-    const colorInput = document.getElementById('colorInput');
-    const notesTextarea = document.getElementById('notesTextarea');
-    const edgeSrcInput = document.getElementById('edgeSrc');
-    const edgeTgtInput = document.getElementById('edgeTgt');
+      let selected = null, speechSynthesis = window.speechSynthesis, currentUtterance = null;
+      let edgeCreationMode = false, edgeSourceNode = null, isDragMode = false, tremorInterval = null, currentLayout = null;
 
-    window.addEventListener('load', function () {
-      const hash = window.location.hash.substring(1);
-      if (hash) { try { cy.elements().remove(); cy.add(JSON.parse(LZString.decompressFromEncodedURIComponent(hash))); runLayout('cose'); } catch (e) {} }
-      else runLayout('cose');
-      resetRightPanel();
-    });
+      const notesInfo = document.getElementById('notesInfo');
+      const labelInput = document.getElementById('labelInput');
+      const colorControl = document.getElementById('colorControl');
+      const colorInput = document.getElementById('colorInput');
+      const imageInput = document.getElementById('imageInput'); // Added
+      const notesTextarea = document.getElementById('notesTextarea');
+      const edgeSrcInput = document.getElementById('edgeSrc');
+      const edgeTgtInput = document.getElementById('edgeTgt');
 
-    // ------------------- ▼ 핵심: 삭제 기능 구현 ▼ -------------------
-    
-    // 1. 삭제 버튼 클릭 시 실행될 함수
-    function deleteSelected() {
-      if (!selected) { alert('삭제할 요소를 먼저 선택해주세요.'); return; }
-      
-      const element = cy.getElementById(selected.id);
-      if (element.length === 0) return;
+      window.addEventListener('load', function () {
+        const hash = window.location.hash.substring(1);
+        let loadedFromHash = false;
 
-      const confirmMsg = selected.type === 'node' 
-        ? `'${element.data('label')}' 노드를 삭제하시겠습니까?\n(연결된 모든 선도 함께 삭제됩니다)` 
-        : `'${element.data('label') || '관계'}' 선을 삭제하시겠습니까?`;
-
-      if (confirm(confirmMsg)) {
-        cy.remove(element);
-        resetRightPanel(); // 패널 초기화
-        // 연결 입력창에 삭제된 노드가 있다면 초기화
-        if (edgeSrcInput.value === selected.id || edgeTgtInput.value === selected.id) {
-            clearEdgeInputs();
+        if (hash) {
+          try {
+            const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(hash));
+            if (decoded) {
+              cy.elements().remove();
+              cy.add(decoded);
+              loadedFromHash = true;
+            }
+          } catch (e) {
+            console.error("Failed to load from URL hash:", e);
+            alert("URL 데이터 로드 실패. 기본 예제를 표시합니다.");
+          }
         }
-        selected = null;
-      }
-    }
 
-    // 2. 키보드 단축키 (Delete, Backspace) 리스너
-    document.addEventListener('keydown', function(event) {
+        runLayout('cose');
+        resetRightPanel();
+
+        // Overlay 초기화 및 이벤트 바인딩
+        layer = document.getElementById('overlays');
+        cy.on('render pan zoom position', updateNodeOverlays);
+        // setInterval 제거됨 (이벤트 기반으로 변경 완료)
+      });
+
+      // ------------------- ▼ 핵심: 삭제 기능 구현 ▼ -------------------
+
+      // 1. 삭제 버튼 클릭 시 실행될 함수
+      function deleteSelected() {
+        if (!selected) { alert('삭제할 요소를 먼저 선택해주세요.'); return; }
+
+        const element = cy.getElementById(selected.id);
+        if (element.length === 0) return;
+
+        const confirmMsg = selected.type === 'node'
+          ? `'${element.data('label')}' 노드를 삭제하시겠습니까?\n(연결된 모든 선도 함께 삭제됩니다)`
+          : `'${element.data('label') || '관계'}' 선을 삭제하시겠습니까?`;
+
+        if (confirm(confirmMsg)) {
+          cy.remove(element);
+          resetRightPanel(); // 패널 초기화
+          // 연결 입력창에 삭제된 노드가 있다면 초기화
+          if (edgeSrcInput.value === selected.id || edgeTgtInput.value === selected.id) {
+            clearEdgeInputs();
+          }
+          selected = null;
+        }
+      }
+
+      // 2. 키보드 단축키 (Delete, Backspace) 리스너
+      document.addEventListener('keydown', function (event) {
         // 입력창(input, textarea)에서 타이핑 중일 때는 삭제 키 동작 안 함 (글자 지워야 하니까)
         const tag = document.activeElement.tagName.toUpperCase();
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
         if (event.key === 'Delete' || event.key === 'Backspace') {
-            if (selected) {
-                deleteSelected();
-            }
+          if (selected) {
+            deleteSelected();
+          }
         }
-    });
+      });
 
-    // ------------------- ▲ 핵심: 삭제 기능 구현 ▲ -------------------
+      // ------------------- ▲ 핵심: 삭제 기능 구현 ▲ -------------------
 
 
-    function toggleDragMode() {
+      function toggleDragMode() {
         isDragMode = !isDragMode;
         const btn = document.getElementById('btnDragMode');
         if (isDragMode) {
-            btn.classList.add('drag-mode-active');
-            btn.innerText = "🖱️ 드래그 모드 ON (노드를 잡고 끄세요)";
-            cy.userZoomingEnabled(false); cy.userPanningEnabled(false);
+          btn.classList.add('drag-mode-active');
+          btn.innerText = "🖱️ 드래그 모드 ON (노드를 잡고 끄세요)";
+          cy.userZoomingEnabled(false); cy.userPanningEnabled(false);
         } else {
-            btn.classList.remove('drag-mode-active');
-            btn.innerText = "🖱️ 드래그 연결 모드 (켜기/끄기)";
-            cy.userZoomingEnabled(true); cy.userPanningEnabled(true);
+          btn.classList.remove('drag-mode-active');
+          btn.innerText = "🖱️ 드래그 연결 모드 (켜기/끄기)";
+          cy.userZoomingEnabled(true); cy.userPanningEnabled(true);
         }
-    }
+      }
 
-    function resetRightPanel() {
+      function resetRightPanel() {
         selected = null;
         notesInfo.innerText = "노드/엣지를 선택하세요";
-        labelInput.value = ''; notesTextarea.value = '';
+        labelInput.value = ''; notesTextarea.value = ''; imageInput.value = ''; // Reset
         labelInput.disabled = true; notesTextarea.disabled = true;
         colorControl.style.display = 'none';
-    }
+      }
 
-    cy.on('tap', 'node', function (evt) {
-      const node = evt.target; const nodeId = node.id();
-      if (!isDragMode) {
+      cy.on('tap', 'node', function (evt) {
+        const node = evt.target; const nodeId = node.id();
+        if (!isDragMode) {
           if (edgeSrcInput.value === '') { edgeSrcInput.value = nodeId; node.animate({ style: { 'border-color': '#4facfe', 'border-width': 4 } }, { duration: 200 }); }
           else if (edgeTgtInput.value === '' && edgeSrcInput.value !== nodeId) { edgeTgtInput.value = nodeId; node.animate({ style: { 'border-color': '#ff0055', 'border-width': 4 } }, { duration: 200 }); }
-      }
-      selected = { type: 'node', id: nodeId };
-      notesInfo.innerText = "노드: " + nodeId;
-      labelInput.value = node.data('label') || ''; notesTextarea.value = node.data('notes') || '';
-      labelInput.disabled = false; notesTextarea.disabled = false;
-      colorControl.style.display = 'block'; colorInput.value = node.data('color') || '#667eea';
-    });
-
-    cy.on('tap', 'edge', function (evt) {
-      const edge = evt.target;
-      selected = { type: 'edge', id: edge.id() };
-      notesInfo.innerText = "관계: " + edge.data('source') + " → " + edge.data('target');
-      labelInput.value = edge.data('label') || ''; notesTextarea.value = edge.data('notes') || '';
-      labelInput.disabled = false; notesTextarea.disabled = false;
-      colorControl.style.display = 'none';
-    });
-
-    cy.on('tap', function(evt){ if(evt.target === cy){ resetRightPanel(); } });
-
-    cy.on('dbltap', function (evt) {
-      if (evt.target === cy) {
-        const pos = evt.position, nodeName = prompt("새 노드 이름을 입력하세요:", "새 노드");
-        if (nodeName && nodeName.trim()) {
-          const id = nodeName.trim();
-          if (cy.getElementById(id).length > 0) { alert("이미 존재합니다!"); return; }
-          const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
-          cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" }, position: { x: pos.x, y: pos.y } });
-          stopObsidianTremor(); startObsidianTremor();
         }
-      }
-    });
+        selected = { type: 'node', id: nodeId };
+        notesInfo.innerText = "노드: " + nodeId;
+        labelInput.value = node.data('label') || ''; notesTextarea.value = node.data('notes') || '';
+        labelInput.disabled = false; notesTextarea.disabled = false;
+        colorControl.style.display = 'block'; colorInput.value = node.data('color') || '#667eea';
+        imageInput.value = node.data('image') || ''; // Load image URL
+      });
 
-    cy.on('mousedown', 'node', function (evt) {
-      if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey || isDragMode) {
-        edgeCreationMode = true; edgeSourceNode = evt.target;
-        evt.target.style({ 'border-width': '4px', 'border-color': '#43e97b', 'border-style': 'dashed' });
-      }
-    });
-    cy.on('mouseover', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style({ 'border-width': '4px', 'border-color': '#4facfe' }); });
-    cy.on('mouseout', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style('border-width', '2px'); });
-    cy.on('mouseup', 'node', function (evt) {
-      if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) {
-        const label = prompt("관계 라벨 입력:", "");
-        if (label !== null) {
-          let classes = (label && (label.toUpperCase() === "TIMELINE" || label.toUpperCase() === "타임라인")) ? "timeline" : "";
-          cy.add({ data: { id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), source: edgeSourceNode.id(), target: evt.target.id(), label: label || "", notes: "" }, classes: classes });
-          stopObsidianTremor(); startObsidianTremor();
+      cy.on('tap', 'edge', function (evt) {
+        const edge = evt.target;
+        selected = { type: 'edge', id: edge.id() };
+        notesInfo.innerText = "관계: " + edge.data('source') + " → " + edge.data('target');
+        labelInput.value = edge.data('label') || ''; notesTextarea.value = edge.data('notes') || '';
+        labelInput.disabled = false; notesTextarea.disabled = false;
+        colorControl.style.display = 'none';
+      });
+
+      cy.on('tap', function (evt) { if (evt.target === cy) { resetRightPanel(); } });
+
+      cy.on('dbltap', function (evt) {
+        if (evt.target === cy) {
+          const pos = evt.position, nodeName = prompt("새 노드 이름을 입력하세요:", "새 노드");
+          if (nodeName && nodeName.trim()) {
+            const id = nodeName.trim();
+            if (cy.getElementById(id).length > 0) { alert("이미 존재합니다!"); return; }
+            const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+            cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" }, position: { x: pos.x, y: pos.y } });
+            stopObsidianTremor(); startObsidianTremor();
+          }
         }
-        edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null;
+      });
+
+      cy.on('mousedown', 'node', function (evt) {
+        if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey || isDragMode) {
+          edgeCreationMode = true; edgeSourceNode = evt.target;
+          evt.target.style({ 'border-width': '4px', 'border-color': '#43e97b', 'border-style': 'dashed' });
+        }
+      });
+      cy.on('mouseover', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style({ 'border-width': '4px', 'border-color': '#4facfe' }); });
+      cy.on('mouseout', 'node', function (evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style('border-width', '2px'); });
+      cy.on('mouseup', 'node', function (evt) {
+        if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) {
+          const label = prompt("관계 라벨 입력:", "");
+          if (label !== null) {
+            let classes = (label && (label.toUpperCase() === "TIMELINE" || label.toUpperCase() === "타임라인")) ? "timeline" : "";
+            cy.add({ data: { id: edgeSourceNode.id() + "_" + evt.target.id() + "_" + Date.now(), source: edgeSourceNode.id(), target: evt.target.id(), label: label || "", notes: "" }, classes: classes });
+            stopObsidianTremor(); startObsidianTremor();
+          }
+          edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null;
+        }
+      });
+      cy.on('mouseup', function (evt) { if (edgeCreationMode && evt.target === cy) { if (edgeSourceNode) edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null; } });
+
+      function clearEdgeInputs() { edgeSrcInput.value = ''; edgeTgtInput.value = ''; document.getElementById('edgeLbl').value = ''; }
+      function swapEdgeInputs() { const temp = edgeSrcInput.value; edgeSrcInput.value = edgeTgtInput.value; edgeTgtInput.value = temp; }
+      function addEdge() {
+        const src = edgeSrcInput.value.trim(), tgt = edgeTgtInput.value.trim(), lbl = document.getElementById('edgeLbl').value.trim();
+        if (!src || !tgt) { alert('노드를 선택하세요!'); return; }
+        if (cy.getElementById(src).length === 0 || cy.getElementById(tgt).length === 0) { alert('노드가 없습니다!'); return; }
+        let classes = (lbl && (lbl.toUpperCase() === "TIMELINE" || lbl.toUpperCase() === "타임라인")) ? "timeline" : "";
+        cy.add({ data: { id: src + "_" + tgt + "_" + Date.now(), source: src, target: tgt, label: lbl || "", notes: "" }, classes: classes });
+        runLayout('cose'); document.getElementById('edgeLbl').value = '';
       }
-    });
-    cy.on('mouseup', function (evt) { if (edgeCreationMode && evt.target === cy) { if (edgeSourceNode) edgeSourceNode.style('border-width', '2px'); edgeCreationMode = false; edgeSourceNode = null; } });
 
-    function clearEdgeInputs() { edgeSrcInput.value = ''; edgeTgtInput.value = ''; document.getElementById('edgeLbl').value = ''; }
-    function swapEdgeInputs() { const temp = edgeSrcInput.value; edgeSrcInput.value = edgeTgtInput.value; edgeTgtInput.value = temp; }
-    function addEdge() {
-      const src = edgeSrcInput.value.trim(), tgt = edgeTgtInput.value.trim(), lbl = document.getElementById('edgeLbl').value.trim();
-      if (!src || !tgt) { alert('노드를 선택하세요!'); return; }
-      if (cy.getElementById(src).length === 0 || cy.getElementById(tgt).length === 0) { alert('노드가 없습니다!'); return; }
-      let classes = (lbl && (lbl.toUpperCase() === "TIMELINE" || lbl.toUpperCase() === "타임라인")) ? "timeline" : "";
-      cy.add({ data: { id: src + "_" + tgt + "_" + Date.now(), source: src, target: tgt, label: lbl || "", notes: "" }, classes: classes });
-      runLayout('cose'); document.getElementById('edgeLbl').value = '';
-    }
+      function addNode() {
+        const id = document.getElementById('newNode').value.trim();
+        if (!id) { alert('이름을 입력하세요!'); return; }
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+        cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" } });
+        runLayout('cose'); document.getElementById('newNode').value = '';
+      }
 
-    function addNode() {
-      const id = document.getElementById('newNode').value.trim();
-      if (!id) { alert('이름을 입력하세요!'); return; }
-      if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
-      const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
-      cy.add({ data: { id: id, label: id, color: colors[Math.floor(Math.random() * colors.length)], notes: "" } });
-      runLayout('cose'); document.getElementById('newNode').value = '';
-    }
-
-    function startObsidianTremor() {
-      if (tremorInterval) return;
-      tremorInterval = setInterval(() => {
-        cy.nodes().forEach(node => {
-            if(node.selected()) return;
+      function startObsidianTremor() {
+        if (tremorInterval) return;
+        tremorInterval = setInterval(() => {
+          cy.nodes().forEach(node => {
+            if (node.selected()) return;
             const degree = node.degree(); const tremorStrength = 5.0 / (1 + degree);
-            node.position({ x: node.position('x') + (Math.random()-0.5)*tremorStrength, y: node.position('y') + (Math.random()-0.5)*tremorStrength });
-        });
-      }, 50); 
-    }
-    function stopObsidianTremor() { if (tremorInterval) { clearInterval(tremorInterval); tremorInterval = null; } }
-    function runLayout(layoutName) {
-      stopObsidianTremor(); if (currentLayout) { currentLayout.stop(); currentLayout = null; }
-      let opts = layoutName === 'cose' ? { name: 'cose', animate: true, animationDuration: 500, fit: true, padding: 10, nodeRepulsion: 20000, idealEdgeLength: 150, gravity: 0.05 } : { name: 'dagre', rankDir: 'TB', padding: 10, animate: true };
-      if(layoutName==='dagre') cy.nodes().unlock();
-      const layout = cy.layout(opts); layout.run(); setTimeout(startObsidianTremor, 500); 
-    }
-
-    function saveNotes() {
-      if (!selected) { alert('선택된 요소가 없습니다.'); return; }
-      const element = cy.getElementById(selected.id);
-      if (element.length === 0) { alert('이미 삭제된 요소입니다.'); resetRightPanel(); return; }
-      
-      const newLabel = labelInput.value.trim();
-      if (!newLabel) { alert('이름은 필수입니다.'); return; }
-      element.data('label', newLabel); element.data('notes', notesTextarea.value);
-      if (selected.type === 'node') element.data('color', colorInput.value);
-      if (selected.type === 'edge') {
-        if (newLabel.toUpperCase() === "TIMELINE" || newLabel.toUpperCase() === "타임라인") element.addClass('timeline'); else element.removeClass('timeline');
+            node.position({ x: node.position('x') + (Math.random() - 0.5) * tremorStrength, y: node.position('y') + (Math.random() - 0.5) * tremorStrength });
+          });
+        }, 50);
       }
-      alert('저장되었습니다!');
-    }
+      function stopObsidianTremor() { if (tremorInterval) { clearInterval(tremorInterval); tremorInterval = null; } }
+      function runLayout(layoutName) {
+        stopObsidianTremor(); if (currentLayout) { currentLayout.stop(); currentLayout = null; }
+        let opts = layoutName === 'cose' ? { name: 'cose', animate: true, animationDuration: 500, fit: true, padding: 10, nodeRepulsion: 20000, idealEdgeLength: 150, gravity: 0.05 } : { name: 'dagre', rankDir: 'TB', padding: 10, animate: true };
+        if (layoutName === 'dagre') cy.nodes().unlock();
+        const layout = cy.layout(opts);
+        layout.on('layoutstop', updateNodeOverlays); // 레이아웃 종료 후 오버레이 갱신
+        layout.run();
+        setTimeout(startObsidianTremor, 500);
+      }
 
-    function saveToLocalStorage() { localStorage.setItem("graphData", JSON.stringify(cy.json().elements)); alert('저장 완료!'); }
-    function loadFromLocalStorage() {
-      const data = localStorage.getItem("graphData");
-      if (data) { cy.elements().remove(); cy.add(JSON.parse(data)); runLayout('cose'); alert('불러오기 완료!'); } else alert('데이터 없음');
-    }
-    function saveToURL() { window.location.hash = LZString.compressToEncodedURIComponent(JSON.stringify(cy.json().elements)); alert('URL 저장 완료!'); }
-    function downloadJSON() {
-      const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
-      a.download = "graph_" + new Date().toISOString().slice(0, 10) + ".json"; document.body.appendChild(a); a.click(); a.remove();
-    }
-    function extractElementsFromJSON(data) {
+      function saveNotes() {
+        if (!selected) { alert('선택된 요소가 없습니다.'); return; }
+        const element = cy.getElementById(selected.id);
+        if (element.length === 0) { alert('이미 삭제된 요소입니다.'); resetRightPanel(); return; }
+
+        const newLabel = labelInput.value.trim();
+        if (!newLabel) { alert('이름은 필수입니다.'); return; }
+        element.data('label', newLabel); element.data('notes', notesTextarea.value);
+        if (selected.type === 'node') {
+          element.data('color', colorInput.value);
+          element.data('image', imageInput.value.trim()); // Save image URL
+        }
+        if (selected.type === 'edge') {
+          if (newLabel.toUpperCase() === "TIMELINE" || newLabel.toUpperCase() === "타임라인") element.addClass('timeline'); else element.removeClass('timeline');
+        }
+        alert('저장되었습니다!');
+        updateNodeOverlays(); // 저장 후 오버레이 갱신
+      }
+
+      // --- Floating Content Overlays Logic (Universal) ---
+      let openImageNodes = new Set(); // 펼쳐진 노드 ID 목록
+      let layer = null;
+
+      function detectContentType(val) {
+        if (typeof val !== 'string') val = String(val);
+        val = val.trim();
+
+        // URL 파라미터/해시 제거 후 확장자 확인을 위한 클린 버전
+        const cleanVal = val.split('?')[0].split('#')[0];
+        const lowerClean = cleanVal.toLowerCase();
+        const lowerFull = val.toLowerCase();
+
+        // 1. YouTube (우선순위 높음)
+        if (lowerFull.includes('youtube.com') || lowerFull.includes('youtu.be')) {
+          return 'youtube';
+        }
+
+        // 2. Image (확장자 체크 - 파라미터 무시)
+        // 로컬 파일 경로(drive letter)나 file 프로토콜 지원
+        if (lowerClean.match(/\.(jpeg|jpg|gif|png|webp|svg|bmp|ico)$/) || lowerFull.startsWith('data:image')) {
+          return 'image';
+        }
+
+        // 3. Video
+        if (lowerClean.match(/\.(mp4|webm|ogg|mov|avi)$/)) {
+          return 'video';
+        }
+
+        // 4. URL
+        if (lowerFull.startsWith('http') || lowerFull.startsWith('file://')) {
+          return 'url';
+        }
+
+        // 5. Text
+        return 'text';
+      }
+
+      function getYouTubeEmbedUrl(url) {
+        try {
+          let videoId = null;
+          let urlObj = null;
+
+          // 1. URL 객체 생성 시도 (프로토콜이 없으면 https:// 붙여서 시도)
+          try {
+            urlObj = new URL(url);
+          } catch (e) {
+            if (!url.startsWith('http')) {
+              try { urlObj = new URL('https://' + url); } catch (e2) { }
+            }
+          }
+
+          if (urlObj) {
+            // A. query param 'v' (youtube.com/watch?v=...)
+            if (urlObj.searchParams.has('v')) {
+              videoId = urlObj.searchParams.get('v');
+            }
+            // B. pathname (youtu.be/ID or youtube.com/embed/ID etc)
+            else {
+              const path = urlObj.pathname; // /embed/ID or /ID
+              const segments = path.split('/').filter(s => s.length > 0);
+              // youtu.be/ID -> segment[0]
+              // youtube.com/embed/ID -> segment[1] usually
+              // youtube.com/shorts/ID
+              if (urlObj.hostname.includes('youtu.be')) {
+                videoId = segments[0];
+              } else if (urlObj.hostname.includes('youtube.com')) {
+                // /embed/ID, /shorts/ID, /v/ID, /live/ID
+                if (segments.length >= 2 && ['embed', 'shorts', 'live', 'v'].includes(segments[0])) {
+                  videoId = segments[1];
+                }
+              }
+            }
+          }
+
+          // 2. Regex Fallback (URL 객체 파싱 실패하거나 ID 못 찾은 경우)
+          if (!videoId) {
+            // ?v=ID 가 뒤에 숨어있는 경우 등 대비
+            const vParamMatch = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+            if (vParamMatch) videoId = vParamMatch[1];
+            else {
+              // youtu.be 등 기존 regex
+              const regex = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|shorts\/|live\/))([a-zA-Z0-9_-]{11})/;
+              const match = url.match(regex);
+              if (match) videoId = match[1];
+            }
+          }
+
+          if (videoId && videoId.length === 11) {
+            return `https://www.youtube.com/embed/${videoId}`;
+          }
+          return null;
+        } catch (e) {
+          return null; // Fail safe
+        }
+      }
+
+      function generateContentHTML(type, val, label) {
+        switch (type) {
+          case 'image':
+            return `<div style="text-align:center;">
+                    <img src="${val}" alt="Image" style="max-width:100%; max-height:100%; object-fit:contain;" 
+                         onerror="this.style.display='none'; this.parentElement.querySelector('.err-msg').style.display='block';">
+                    <div class="err-msg" style="display:none; color:red; font-size:0.8em; margin-top:5px;">
+                      ❌ 이미지 로드 실패<br><span style="color:#777; font-size:0.9em;">(보안 문제로 로컬 파일이 차단되었거나 주소가 잘못되었습니다)</span><br>
+                      <a href="${val}" target="_blank" style="text-decoration:underline; color:#0066cc;">[새창에서 열기]</a>
+                    </div>
+                  </div>`;
+
+          case 'video':
+            return `<video class="node-content-video" controls style="width:100%;"><source src="${val}">브라우저가 비디오를 지원하지 않습니다.</video>`;
+
+          case 'youtube':
+            const embed = getYouTubeEmbedUrl(val);
+            if (embed) {
+              return `<div style="display:flex; flex-direction:column; height:100%;">
+                      <iframe class="node-content-iframe" src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="flex:1; border:none;"></iframe>
+                      <div style="text-align:right; font-size:0.8em; padding:2px;">
+                        <a href="${val}" target="_blank" style="color:#cc0000; text-decoration:none;">📺 YouTube에서 보기</a>
+                      </div>
+                    </div>`;
+            } else {
+              return `<div class="node-content-text">
+                        ❌ 유튜브 ID를 추출할 수 없습니다.<br>
+                        <a href="${val}" target="_blank">${val}</a>
+                    </div>`;
+            }
+
+          case 'url':
+            return `
+                    <div style="display:flex; flex-direction:column; height:100%;">
+                        <div class="node-content-link-card">
+                            <a href="${val}" target="_blank">🌐 새창으로 사이트 열기</a>
+                            <div style="font-size:0.75em; color:#666; margin-top:2px;">(연결 거부 시 위 버튼을 사용하세요)</div>
+                        </div>
+                        <iframe class="node-content-iframe" src="${val}" style="flex:1; width:100%; border:1px solid #eee;" title="Preview" onerror="alert('이 사이트는 Iframe 연결을 거부합니다.');"></iframe>
+                    </div>
+                `;
+
+          case 'text':
+          default:
+            return `<div class="node-content-text" style="height:100%; overflow-y:auto;">${val.replace(/\n/g, '<br>')}</div>`;
+        }
+      }
+
+      function updateNodeOverlays() {
+        if (!layer) return;
+
+        const nodes = cy.nodes();
+        const activeNodeIds = new Set();
+
+        nodes.forEach(node => {
+          const rawContent = node.data('image'); // 필드명은 호환성을 위해 'image' 유지
+          if (!rawContent || rawContent.trim() === '') return;
+
+          const nodeId = node.id();
+          activeNodeIds.add(nodeId);
+
+          const pos = node.renderedPosition();
+          const width = node.renderedWidth();
+          const height = node.renderedHeight();
+
+          // --- 1. Toggle Button Management ---
+          const btnId = 'img-btn-' + nodeId;
+          let btn = document.getElementById(btnId);
+
+          // 컨텐츠 타입 감지
+          const contentType = detectContentType(rawContent);
+          let icon = '📎'; // 기본 아이콘
+          if (contentType === 'image') icon = '📷';
+          else if (contentType === 'video' || contentType === 'youtube') icon = '▶️';
+          else if (contentType === 'url') icon = '🌐';
+          else if (contentType === 'text') icon = '📝';
+
+
+          if (!btn) {
+            btn = document.createElement('div');
+            btn.id = btnId;
+            btn.className = 'node-image-toggle';
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              toggleNodeImage(nodeId);
+            };
+            layer.appendChild(btn);
+          }
+
+          const isOpen = openImageNodes.has(nodeId);
+          btn.innerHTML = isOpen ? '❌' : icon;
+          btn.style.left = (pos.x + width / 2 - 10) + 'px';
+          btn.style.top = (pos.y - height / 2 - 10) + 'px';
+          btn.style.display = 'block';
+
+
+          // --- 2. Popup Management ---
+          const popupId = 'img-popup-' + nodeId;
+          let popup = document.getElementById(popupId);
+
+          if (isOpen) {
+            if (!popup) {
+              popup = document.createElement('div');
+              popup.id = popupId;
+              popup.className = 'node-image-popup';
+
+              // 컨텐츠 생성
+              const innerHTML = generateContentHTML(contentType, rawContent, node.data('label'));
+
+              popup.innerHTML = `
+              <div id="content-${popupId}" style="width:100%; height:100%; display:flex; flex-direction:column;">
+                 <div style="flex:1; overflow:hidden;">${innerHTML}</div>
+                 <div class="close-btn" style="margin-top:5px; padding:5px; background:#eee; text-align:center; cursor:pointer;" onclick="toggleNodeImage('${nodeId}')">접기 (더블클릭: 크기초기화)</div>
+              </div>
+            `;
+
+              // 크기 초기화/리셋 기능
+              popup.querySelector('.close-btn').addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                delete popup.dataset.userResized; // 리셋
+              });
+
+              // 사용자 리사이즈 감지 (MouseUp 시점)
+              popup.addEventListener('mouseup', function () {
+                const currentW = popup.offsetWidth;
+                const currentH = popup.offsetHeight;
+                const autoW = parseFloat(popup.dataset.lastAutoW || 0);
+                const autoH = parseFloat(popup.dataset.lastAutoH || 0);
+
+                // 오차가 5px 이상이면 사용자가 조절한 것으로 간주
+                if (Math.abs(currentW - autoW) > 5 || Math.abs(currentH - autoH) > 5) {
+                  popup.dataset.userResized = "true";
+                }
+              });
+
+              layer.appendChild(popup);
+            }
+
+            // 위치 업데이트
+            const isUserResized = popup.dataset.userResized === "true";
+
+            if (!isUserResized) {
+              // 자동 크기 모드: 노드 크기에 맞춤 (최소 200px)
+              const autoW = Math.max(width, 200);
+              // 높이는 컨텐츠에 따라 자동이지만, 초기값 설정
+
+              popup.style.width = autoW + 'px';
+              // 높이는 auto로 두거나 비율에 맞춤. 여기선 width만 강제하고 height는 auto (CSS resize로 조절 가능)
+
+              popup.dataset.lastAutoW = autoW;
+              popup.dataset.lastAutoH = popup.offsetHeight; // 현재 렌더링된 높이 저장
+            }
+
+            popup.style.display = 'block';
+            // 위치: 노드 중앙 하단
+            popup.style.left = (pos.x - popup.offsetWidth / 2) + 'px';
+            popup.style.top = (pos.y + height / 2 + 5) + 'px';
+
+          } else {
+            if (popup) popup.remove();
+          }
+        });
+
+        // --- 3. Cleanup ---
+        const children = Array.from(layer.children);
+        children.forEach(child => {
+          if (child.id.startsWith('img-btn-')) {
+            const nid = child.id.replace('img-btn-', '');
+            if (!activeNodeIds.has(nid)) {
+              child.remove();
+              const p = document.getElementById('img-popup-' + nid);
+              if (p) p.remove();
+            }
+          }
+        });
+      }
+
+      function toggleNodeImage(nodeId) {
+        if (openImageNodes.has(nodeId)) {
+          openImageNodes.delete(nodeId);
+        } else {
+          openImageNodes.add(nodeId);
+        }
+        updateNodeOverlays();
+      }
+
+      function saveToLocalStorage() { localStorage.setItem("graphData", JSON.stringify(cy.json().elements)); alert('저장 완료!'); }
+      function loadFromLocalStorage() {
+        const data = localStorage.getItem("graphData");
+        if (data) {
+          cy.elements().remove();
+          cy.add(JSON.parse(data));
+          openImageNodes.clear(); // 불러올 때 열림 상태 초기화
+          runLayout('cose');
+          alert('불러오기 완료!');
+        } else alert('데이터 없음');
+      }
+      function saveToURL() { window.location.hash = LZString.compressToEncodedURIComponent(JSON.stringify(cy.json().elements)); alert('URL 저장 완료!'); }
+      function downloadJSON() {
+        const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+        a.download = "graph_" + new Date().toISOString().slice(0, 10) + ".json"; document.body.appendChild(a); a.click(); a.remove();
+      }
+      function extractElementsFromJSON(data) {
         let elements = [];
         if (data.graphData) {
-            const gd = data.graphData;
-            if (gd.nodes || gd.edges) elements = [...(gd.nodes||[]), ...(gd.edges||[])];
-            else if (gd.elements) elements = gd.elements;
+          const gd = data.graphData;
+          if (gd.nodes || gd.edges) elements = [...(gd.nodes || []), ...(gd.edges || [])];
+          else if (gd.elements) elements = gd.elements;
         }
         if (elements.length === 0) {
-            if (Array.isArray(data)) elements = data;
-            else if (data.nodes || data.edges) elements = [...(data.nodes||[]), ...(data.edges||[])];
-            else if (data.elements) elements = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+          if (Array.isArray(data)) elements = data;
+          else if (data.nodes || data.edges) elements = [...(data.nodes || []), ...(data.edges || [])];
+          else if (data.elements) elements = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes || []), ...(data.elements.edges || [])];
         }
         return elements;
-    }
-    function uploadJSON(event) {
-      const file = event.target.files[0]; if (!file) return;
-      const reader = new FileReader(); reader.onload = function (e) { try { const els = extractElementsFromJSON(JSON.parse(e.target.result)); if(els.length){ cy.elements().remove(); cy.add(els); runLayout('cose'); alert('성공!'); } else alert('데이터 없음'); } catch (err) { alert('오류: ' + err.message); } }; reader.readAsText(file);
-    }
-    function appendJSON(event) {
+      }
+      function uploadJSON(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader(); reader.onload = function (e) { try { const els = extractElementsFromJSON(JSON.parse(e.target.result)); if (els.length) { cy.elements().remove(); cy.add(els); runLayout('cose'); alert('성공!'); } else alert('데이터 없음'); } catch (err) { alert('오류: ' + err.message); } }; reader.readAsText(file);
+      }
+      function appendJSON(event) {
         const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader(); reader.onload = function (e) {
-            try {
-                const els = extractElementsFromJSON(JSON.parse(e.target.result)); if (!els.length) { alert('데이터 없음'); return; }
-                const suffix = "_COPY_" + Date.now(), idMap = {}, newEls = [], offset = 500;
-                els.forEach(el => { if (el.data && el.data.id && !el.data.source) { const old = el.data.id, nid = old + suffix; if (cy.getElementById(nid).length) return; const n = JSON.parse(JSON.stringify(el)); n.data.id = nid; n.position = n.position ? {x:n.position.x+offset,y:n.position.y+offset} : {x:cy.width()/2+offset,y:cy.height()/2+offset}; idMap[old] = nid; newEls.push(n); } });
-                els.forEach(el => { if (el.data && el.data.source) { if (idMap[el.data.source] && idMap[el.data.target]) { const n = JSON.parse(JSON.stringify(el)); n.data.id = (n.data.id||"EDGE")+suffix; n.data.source = idMap[el.data.source]; n.data.target = idMap[el.data.target]; newEls.push(n); } } });
-                if(newEls.length){ cy.add(newEls); runLayout('cose'); alert('추가 완료!'); }
-            } catch (err) { alert('오류: ' + err.message); }
+          try {
+            const els = extractElementsFromJSON(JSON.parse(e.target.result)); if (!els.length) { alert('데이터 없음'); return; }
+            const suffix = "_COPY_" + Date.now(), idMap = {}, newEls = [], offset = 500;
+            els.forEach(el => { if (el.data && el.data.id && !el.data.source) { const old = el.data.id, nid = old + suffix; if (cy.getElementById(nid).length) return; const n = JSON.parse(JSON.stringify(el)); n.data.id = nid; n.position = n.position ? { x: n.position.x + offset, y: n.position.y + offset } : { x: cy.width() / 2 + offset, y: cy.height() / 2 + offset }; idMap[old] = nid; newEls.push(n); } });
+            els.forEach(el => { if (el.data && el.data.source) { if (idMap[el.data.source] && idMap[el.data.target]) { const n = JSON.parse(JSON.stringify(el)); n.data.id = (n.data.id || "EDGE") + suffix; n.data.source = idMap[el.data.source]; n.data.target = idMap[el.data.target]; newEls.push(n); } } });
+            if (newEls.length) { cy.add(newEls); runLayout('cose'); alert('추가 완료!'); }
+          } catch (err) { alert('오류: ' + err.message); }
         }; reader.readAsText(file);
-    }
+      }
 
-    function loadVoices() {
-      const vs = speechSynthesis.getVoices(), sel = document.getElementById('voiceSelect'); sel.innerHTML = '';
-      const ko = vs.filter(v => v.lang.startsWith('ko'));
-      if (ko.length) ko.forEach(v => sel.add(new Option(v.name, v.name))); else sel.add(new Option("기본 한국어", "default"));
-    }
-    if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
-    function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
-    function readNotes() {
-      const text = notesTextarea.value.trim(); if (!text) return; stopReading();
-      currentUtterance = new SpeechSynthesisUtterance(text.replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' '));
-      const v = speechSynthesis.getVoices().find(v => v.name === document.getElementById('voiceSelect').value);
-      if (v) currentUtterance.voice = v; currentUtterance.rate = parseFloat(document.getElementById('speedControl').value);
-      speechSynthesis.speak(currentUtterance);
-    }
-    function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); }
+      function loadVoices() {
+        const vs = speechSynthesis.getVoices(), sel = document.getElementById('voiceSelect'); sel.innerHTML = '';
+        const ko = vs.filter(v => v.lang.startsWith('ko'));
+        if (ko.length) ko.forEach(v => sel.add(new Option(v.name, v.name))); else sel.add(new Option("기본 한국어", "default"));
+      }
+      if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
+      function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
+      function readNotes() {
+        const text = notesTextarea.value.trim(); if (!text) return; stopReading();
+        currentUtterance = new SpeechSynthesisUtterance(text.replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' '));
+        const v = speechSynthesis.getVoices().find(v => v.name === document.getElementById('voiceSelect').value);
+        if (v) currentUtterance.voice = v; currentUtterance.rate = parseFloat(document.getElementById('speedControl').value);
+        speechSynthesis.speak(currentUtterance);
+      }
+      function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); }
 
-    // ====================================================================
-    // ✨ Gemini 프롬프트 복사 및 채팅 열기 함수 (NEW)
-    // ====================================================================
-    function copyPromptAndOpenGemini() {
+      // ====================================================================
+      // ✨ Gemini 프롬프트 복사 및 채팅 열기 함수 (NEW)
+      // ====================================================================
+      function copyPromptAndOpenGemini() {
         const promptTextarea = document.getElementById('geminiPromptTemplate');
         const promptText = promptTextarea.value.trim();
 
@@ -646,99 +1321,218 @@
         tempTextarea.value = promptText;
         document.body.appendChild(tempTextarea);
         tempTextarea.select();
-        
+
         try {
-            const successful = document.execCommand('copy');
-            if (successful) {
-                alert("✅ Gemini 요청 프롬프트가 클립보드에 복사되었습니다!\n\n이제 새 창에서 '분석할 텍스트' 부분만 수정 후 Gemini에게 요청하세요.");
-            } else {
-                alert("❌ 클립보드 복사에 실패했습니다. 프롬프트 내용을 수동으로 복사해주세요.");
-            }
+          const successful = document.execCommand('copy');
+          if (successful) {
+            alert("✅ Gemini 요청 프롬프트가 클립보드에 복사되었습니다!\n\n이제 새 창에서 '분석할 텍스트' 부분만 수정 후 Gemini에게 요청하세요.");
+          } else {
+            alert("❌ 클립보드 복사에 실패했습니다. 프롬프트 내용을 수동으로 복사해주세요.");
+          }
         } catch (err) {
-            alert("❌ 클립보드 복사 중 오류 발생: " + err);
+          alert("❌ 클립보드 복사 중 오류 발생: " + err);
         } finally {
-            document.body.removeChild(tempTextarea);
+          document.body.removeChild(tempTextarea);
         }
-        
+
         // 2. Gemini 채팅 창을 새 탭으로 열기
         const geminiUrl = "https://gemini.google.com/app";
-        window.open(geminiUrl, "_blank"); 
-    }
+        window.open(geminiUrl, "_blank");
+      }
 
-    // ====================================================================
-    // 🤖 JSON 텍스트 변환 및 추가 관련 함수 (NEW)
-    // ====================================================================
+      // ====================================================================
+      // ✨ 레이아웃 (Layout)
+      // ====================================================================
+      function runLayout(mode) {
+        if (currentLayout) currentLayout.stop();
 
-    // 텍스트 영역에서 JSON 데이터를 읽어 그래프에 추가하거나 덮어쓰는 함수
-    function loadJSONFromTextarea(isAppend) {
+        let layoutOptions = {};
+
+        if (mode === 'cose') {
+          layoutOptions = {
+            name: 'cose',
+            animate: true,
+            randomize: false,
+            componentSpacing: 100,
+            nodeOverlap: 20,
+            idealEdgeLength: function (edge) { return 100; },
+            nodeRepulsion: function (node) { return 400000; },
+            edgeElasticity: function (edge) { return 100; },
+            nestingFactor: 5,
+            gravity: 80,
+            numIter: 1000,
+            initialTemp: 200,
+            coolingFactor: 0.95,
+            minTemp: 1.0
+          };
+        } else if (mode === 'dagre') { // 세로 트리 (기본)
+          layoutOptions = {
+            name: 'dagre',
+            rankDir: 'TB',
+            rankSep: 100,
+            nodeSep: 80,
+            animate: true,
+            animationDuration: 500
+          };
+        } else if (mode === 'mindmap') { // 가로 마인드맵 (LR)
+          layoutOptions = {
+            name: 'dagre',
+            rankDir: 'LR',
+            rankSep: 200, // 가로 간격
+            nodeSep: 50,  // 세로 간격
+            animate: true,
+            animationDuration: 500
+          };
+        }
+
+        currentLayout = cy.layout(layoutOptions);
+        currentLayout.run();
+      }
+
+      // ====================================================================
+      // 🤖 JSON 텍스트 변환 및 추가 관련 함수 (NEW)
+      // ====================================================================
+
+      // 텍스트 영역에서 JSON 데이터를 읽어 그래프에 추가하거나 덮어쓰는 함수
+      function loadJSONFromTextarea(isAppend) {
         const jsonText = document.getElementById('jsonInputTextarea').value.trim();
         if (!jsonText) {
-            alert('JSON 텍스트를 입력해주세요.');
-            return;
+          alert('JSON 텍스트를 입력해주세요.');
+          return;
         }
 
         try {
-            const data = JSON.parse(jsonText);
-            // 기존에 정의된 extractElementsFromJSON 함수를 재사용합니다.
-            const els = extractElementsFromJSON(data);
+          const data = JSON.parse(jsonText);
+          // 기존에 정의된 extractElementsFromJSON 함수를 재사용합니다.
+          const els = extractElementsFromJSON(data);
 
-            if (!els.length) {
-                alert('유효한 노드/엣지 데이터가 JSON에서 발견되지 않았습니다.');
-                return;
-            }
+          if (!els.length) {
+            alert('유효한 노드/엣지 데이터가 JSON에서 발견되지 않았습니다.');
+            return;
+          }
 
-            if (isAppend) {
-                // 추가 로직 (기존 appendJSON 로직과 유사하게 ID 중복 방지 및 위치 조정)
-                const suffix = "_COPY_" + Date.now(), idMap = {}, newEls = [], offset = 500;
-                
-                // 노드의 ID 변경 및 위치 조정
-                els.forEach(el => {
-                    if (el.data && el.data.id && !el.data.source) { // Node
-                        const old = el.data.id, nid = old + suffix;
-                        if (cy.getElementById(nid).length) return; // Skip if ID collision still occurs (unlikely)
-                        const n = JSON.parse(JSON.stringify(el));
-                        n.data.id = nid;
-                        // 위치 조정
-                        n.position = n.position ? { x: n.position.x + offset, y: n.position.y + offset } : { x: cy.width() / 2 + offset, y: cy.height() / 2 + offset };
-                        idMap[old] = nid;
-                        newEls.push(n);
-                    }
-                });
-                
-                // 엣지의 ID 변경 및 연결 노드 ID 업데이트
-                els.forEach(el => {
-                    if (el.data && el.data.source) { // Edge
-                        // 맵핑된 새 ID가 존재하는 엣지만 추가
-                        if (idMap[el.data.source] && idMap[el.data.target]) {
-                            const n = JSON.parse(JSON.stringify(el));
-                            n.data.id = (n.data.id || "EDGE_TEXT") + suffix; // 엣지 ID도 고유하게 변경
-                            n.data.source = idMap[el.data.source];
-                            n.data.target = idMap[el.data.target];
-                            newEls.push(n);
-                        }
-                    }
-                });
+          if (isAppend) {
+            // 추가 로직 (기존 appendJSON 로직과 유사하게 ID 중복 방지 및 위치 조정)
+            const suffix = "_COPY_" + Date.now(), idMap = {}, newEls = [], offset = 500;
 
-                if (newEls.length) {
-                    cy.add(newEls);
-                    runLayout('cose');
-                    alert(`JSON 텍스트에서 ${newEls.length}개의 요소를 추가했습니다.`);
-                } else {
-                    alert('추가할 새로운 노드/엣지가 발견되지 않았습니다.');
+            // 노드의 ID 변경 및 위치 조정
+            els.forEach(el => {
+              if (el.data && el.data.id && !el.data.source) { // Node
+                const old = el.data.id, nid = old + suffix;
+                if (cy.getElementById(nid).length) return; // Skip if ID collision still occurs (unlikely)
+                const n = JSON.parse(JSON.stringify(el));
+                n.data.id = nid;
+                // 위치 조정
+                n.position = n.position ? { x: n.position.x + offset, y: n.position.y + offset } : { x: cy.width() / 2 + offset, y: cy.height() / 2 + offset };
+                idMap[old] = nid;
+                newEls.push(n);
+              }
+            });
+
+            // 엣지의 ID 변경 및 연결 노드 ID 업데이트
+            els.forEach(el => {
+              if (el.data && el.data.source) { // Edge
+                // 맵핑된 새 ID가 존재하는 엣지만 추가
+                if (idMap[el.data.source] && idMap[el.data.target]) {
+                  const n = JSON.parse(JSON.stringify(el));
+                  n.data.id = (n.data.id || "EDGE_TEXT") + suffix; // 엣지 ID도 고유하게 변경
+                  n.data.source = idMap[el.data.source];
+                  n.data.target = idMap[el.data.target];
+                  newEls.push(n);
                 }
+              }
+            });
 
+            if (newEls.length) {
+              cy.add(newEls);
+              runLayout('cose');
+              alert(`JSON 텍스트에서 ${newEls.length}개의 요소를 추가했습니다.`);
             } else {
-                // 덮어쓰기 로직
-                cy.elements().remove();
-                cy.add(els);
-                runLayout('cose');
-                alert('JSON 텍스트로 그래프를 성공적으로 덮어썼습니다!');
+              alert('추가할 새로운 노드/엣지가 발견되지 않았습니다.');
             }
+
+          } else {
+            // 덮어쓰기 로직
+            cy.elements().remove();
+            cy.add(els);
+            runLayout('cose');
+            alert('JSON 텍스트로 그래프를 성공적으로 덮어썼습니다!');
+          }
 
         } catch (err) {
-            alert('JSON 파싱 오류! 유효한 JSON 형식인지 확인해주세요.\n오류: ' + err.message);
+          alert('JSON 파싱 오류! 유효한 JSON 형식인지 확인해주세요.\n오류: ' + err.message);
         }
-    }
-  </script>
+      }
+      // ====================================================================
+      // 📂 파일 업로드 핸들러 + ⚡ 이미지 최적화 (Resize)
+      // ====================================================================
+
+      function resizeImage(file, maxWidth, maxHeight, quality, callback) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = new Image();
+          img.onload = function () {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > maxWidth) {
+                height *= maxWidth / width;
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width *= maxHeight / height;
+                height = maxHeight;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // JPEG, quality 0.7로 압축
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            callback(dataUrl);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function handleFileUpload(input) {
+        if (input.files && input.files[0]) {
+          const file = input.files[0];
+
+          // 1. 이미지 파일 -> 압축 및 리사이즈 후 Base64 변환
+          if (file.type.startsWith('image/')) {
+            // 고해상도 이미지가 그대로 들어가면 브라우저가 느려지므로 최적화 수행
+            // Max Width/Height: 800px, Quality: 0.7
+            resizeImage(file, 800, 800, 0.7, function (resizedDataUrl) {
+              document.getElementById('imageInput').value = resizedDataUrl;
+              alert("이미지 최적화(압축) 완료!\n이제 '저장' 버튼을 눌러주세요.");
+            });
+          }
+          // 2. 텍스트 파일 (.txt, .md, .json 등) -> 내용 읽어서 입력
+          else if (file.type.startsWith('text/') || file.name.endsWith('.md') || file.name.endsWith('.json') || file.name.endsWith('.txt')) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              document.getElementById('imageInput').value = e.target.result;
+              alert("텍스트 파일 내용이 입력되었습니다.");
+            };
+            reader.readAsText(file);
+          }
+          // 3. 비디오 및 기타 -> 경로 안내
+          else {
+            alert("⚠️ [주의] 브라우저 보안 정책상 비디오/문서 파일의 '로컬 경로(C:\\...)'는 자동으로 가져올 수 없습니다.\n\n" +
+              "비디오 연결을 원하시면 탐색기에서 [Shift + 우클릭] -> [경로로 복사] 후 직접 붙여넣어 주세요.");
+            input.value = ''; // 초기화
+          }
+        }
+      }
+    </script>
 </body>
+
 </html>
