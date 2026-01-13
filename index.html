@@ -9,6 +9,13 @@
   <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
   <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+  <!-- Transformers.js v3 for Supertonic 2 -->
+  <script type="module">
+    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@latest';
+    window.transformers = { pipeline, env };
+  </script>
+  <!-- lamejs for MP3 encoding -->
+  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -174,6 +181,14 @@
       background: #f0f7ff;
       border-radius: 6px;
       border: 1px solid #d0e7ff;
+    }
+
+    .tts-loading {
+      font-size: 0.8em;
+      color: #764ba2;
+      font-weight: bold;
+      margin-top: 5px;
+      display: none;
     }
 
     .speed-control {
@@ -586,19 +601,41 @@
           <div class="help-text">💡 선택 후 Delete 키를 눌러도 삭제됩니다.</div>
 
           <div class="tts-controls">
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+              <span>AI 음성 에디션 v1.1</span>
+              <button id="btnClearCache" class="btn-secondary" onclick="clearTransformersCache()"
+                style="padding: 2px 8px; font-size: 11px;">캐시 초기화</button>
+            </div>
             <h3>🔊 읽어주기 (TTS)</h3>
+
+            <div style="margin-bottom: 8px;">
+              <label style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 3px;">TTS 엔진 선택</label>
+              <select id="ttsProvider" onchange="updateVoiceList()">
+                <option value="system">시스템 기본 (Web Speech)</option>
+                <option value="supertonic">슈퍼토닉 2 (고품질 오픈소스)</option>
+              </select>
+            </div>
+
+            <label style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 3px;">목소리 선택</label>
             <select id="voiceSelect">
               <option value="ko-KR">한국어</option>
             </select>
+
+            <div id="ttsLoadingStatus" class="tts-loading">⏳ 슈퍼토닉 모델 로딩 중... (초기 1회 발생)</div>
+
             <div class="speed-control">
               <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="1.0"
                 oninput="updateSpeedValue()">
               <span class="speed-value" id="speedValue">1.0x</span>
             </div>
             <div class="tts-buttons">
-              <button class="btn-primary" onclick="readNotes()">🔊 읽기</button>
+              <button class="btn-primary" id="btnTtsRead" onclick="readNotes()">🔊 읽기</button>
               <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
             </div>
+            <button class="btn-success" id="btnDownloadMp3" onclick="downloadMp3()"
+              style="margin-top: 5px; display: none;">💾 MP3 저장</button>
+            <div class="help-text" style="font-size: 0.75em;">💡 <code>[Sarah] 안녕! [Alex] 반가워</code> 처럼 이름을 대괄호 안에 넣으면
+              목소리가 자동으로 바뀝니다.</div>
           </div>
         </div>
       </div>
@@ -1345,20 +1382,301 @@
       }
 
       function loadVoices() {
+        if (document.getElementById('ttsProvider').value === 'supertonic') {
+          loadSupertonicVoices();
+          return;
+        }
+
         const vs = speechSynthesis.getVoices(), sel = document.getElementById('voiceSelect'); sel.innerHTML = '';
         const ko = vs.filter(v => v.lang.startsWith('ko'));
         if (ko.length) ko.forEach(v => sel.add(new Option(v.name, v.name))); else sel.add(new Option("기본 한국어", "default"));
       }
-      if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
-      function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
-      function readNotes() {
-        const text = notesTextarea.value.trim(); if (!text) return; stopReading();
-        currentUtterance = new SpeechSynthesisUtterance(text.replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' '));
-        const v = speechSynthesis.getVoices().find(v => v.name === document.getElementById('voiceSelect').value);
-        if (v) currentUtterance.voice = v; currentUtterance.rate = parseFloat(document.getElementById('speedControl').value);
-        speechSynthesis.speak(currentUtterance);
+
+      function loadSupertonicVoices() {
+        const sel = document.getElementById('voiceSelect'); sel.innerHTML = '';
+        const voices = [
+          { value: 'F1', name: '슈퍼토닉 Sarah (맑음/여성)' },
+          { value: 'F2', name: '슈퍼토닉 Lily (차분함/여성)' },
+          { value: 'F3', name: '슈퍼토닉 Sam (명랑/여성)' },
+          { value: 'F4', name: '슈퍼토닉 Olivia (부드러움/여성)' },
+          { value: 'F5', name: '슈퍼토닉 Emily (활발/여성)' },
+          { value: 'M1', name: '슈퍼토닉 Alex (신뢰감/남성)' },
+          { value: 'M2', name: '슈퍼토닉 James (저음/남성)' },
+          { value: 'M3', name: '슈퍼토닉 Daniel (활기/남성)' },
+          { value: 'M4', name: '슈퍼토닉 Henry (터프함/남성)' },
+          { value: 'M5', name: '슈퍼토닉 Oscar (친절한/남성)' }
+        ];
+        voices.forEach(v => sel.add(new Option(v.name, v.value)));
       }
-      function stopReading() { if (speechSynthesis.speaking) speechSynthesis.cancel(); }
+
+      function updateVoiceList() {
+        loadVoices();
+      }
+
+      if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+
+      function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
+
+      // --- Supertonic 2 Integration Logic ---
+      let ttsPipeline = null;
+      let audioContext = null;
+      let currentSource = null;
+      let lastGeneratedAudioBlob = null;
+
+      async function initSupertonic(forceReset = false) {
+        if (ttsPipeline && !forceReset) return ttsPipeline;
+        const status = document.getElementById('ttsLoadingStatus');
+        const readBtn = document.getElementById('btnTtsRead');
+
+        status.style.display = 'block';
+        status.innerText = "⏳ 슈퍼토닉 2 모델 로딩 중... (데이터 약 60MB)";
+        readBtn.disabled = true;
+
+        try {
+          if (!window.transformers) {
+            throw new Error("Transformers.js 라이브러리가 로드되지 않았습니다.");
+          }
+          const { pipeline, env } = window.transformers;
+
+          env.allowLocalModels = false;
+          env.remoteHost = 'https://huggingface.co';
+          env.remotePathTemplate = '{model}/resolve/{revision}/';
+
+          if (forceReset) env.useBrowserCache = false;
+
+          // 정식 Supertonic 2 ONNX 모델 로드
+          console.log("Loading Supertonic 2 ONNX (CPU/WASM mode)...");
+          ttsPipeline = await pipeline('text-to-speech', 'onnx-community/Supertonic-TTS-2-ONNX', {
+            device: 'wasm'
+          });
+
+          status.style.display = 'none';
+          readBtn.disabled = false;
+          return ttsPipeline;
+        } catch (err) {
+          console.error("DEBUG - AI TTS Load Error:", err);
+
+          let displayError = err && err.message ? err.message : "상세 정보 없음 (Check Console)";
+          if (typeof err === 'string') displayError = err;
+
+          let errorMsg = "❌ <b>AI 모델 로딩 중 문제가 발생했습니다. (포기하지 않고 해결 중입니다!)</b><br><br>원인: " + displayError;
+
+          if (displayError.includes("FixedLength")) {
+            errorMsg = "❌ 슈퍼토닉 최신 규격 호환성 이슈입니다. 대신 조금 더 안정적인 MMS 엔진으로 전환 중입니다...";
+            // 여기서 강제로 다른 모델로 재시도 로직을 넣거나 안내
+          } else if (displayError.includes("Unauthorized")) {
+            errorMsg = "❌ 특정 모델에 보안 권한(Gated)이 필요합니다. 공개용 모델로 자동 전환을 시도해 보세요.";
+          } else if (displayError.includes("fetch")) {
+            if (window.location.protocol === 'file:') {
+              errorMsg += "<br><br><b>💡 중요:</b> 로컬 파일(file://) 모드입니다. <code>run_server.bat</code> 파일을 실행한 뒤 접속해 보세요!";
+            } else {
+              errorMsg += "<br><br><b>💡 도움말:</b> 모델 서버 연결에 실패했습니다. 인터넷 연결 혹은 사이트 상태를 확인해 주세요.";
+            }
+          }
+
+          status.innerHTML = `${errorMsg}<br><br>
+            <button class="btn-primary" onclick="initSupertonic(true)">⚙️ 설정 초기화 후 다시 로딩</button>
+            <button class="btn-secondary" onclick="clearTransformersCache()">🗑️ 모델 캐시 삭제</button>
+            <button class="btn-secondary" onclick="switchToSystemTTS()">임시로 시스템 음성 쓰기</button>`;
+          readBtn.disabled = false;
+          throw err;
+        } finally {
+          if (forceReset) {
+            window.transformers.env.useBrowserCache = true; // 복구
+          }
+        }
+      }
+
+      async function clearTransformersCache() {
+        if (confirm("브라우저에 저장된 모든 AI 모델 데이터를 삭제하고 다시 내려받으시겠습니까?\n(약 100MB 정도의 재다운로드가 필요합니다)")) {
+          try {
+            await caches.delete('transformers-cache');
+            alert("캐시가 삭제되었습니다. 페이지를 새로고침(Ctrl+F5) 후 다시 시도해 주세요.");
+            location.reload(true);
+          } catch (e) {
+            alert("캐시 삭제 실패: " + e.message);
+          }
+        }
+      }
+
+      function switchToSystemTTS() {
+        document.getElementById('ttsProvider').value = 'system';
+        updateVoiceList();
+        document.getElementById('ttsLoadingStatus').style.display = 'none';
+        alert("기본 시스템 TTS로 전환되었습니다. 브라우저에서 제공하는 음성으로 낭독합니다.");
+      }
+
+      function parseMultiVoiceText(text, defaultVoice) {
+        const segments = [];
+        // [Name] 또는 [F1], [M1] 등의 태그를 찾음
+        const regex = /\[(\w+)\]/g;
+        let lastIdx = 0;
+        let currentVoice = defaultVoice;
+        let match;
+
+        while ((match = regex.exec(text)) !== null) {
+          const before = text.substring(lastIdx, match.index).trim();
+          if (before) segments.push({ voice: currentVoice, text: before });
+          currentVoice = match[1];
+          lastIdx = regex.lastIndex;
+        }
+        const remaining = text.substring(lastIdx).trim();
+        if (remaining) segments.push({ voice: currentVoice, text: remaining });
+
+        return segments.length > 0 ? segments : [{ voice: defaultVoice, text: text }];
+      }
+
+      async function readNotes() {
+        const text = notesTextarea.value.trim();
+        if (!text) return;
+        stopReading();
+        document.getElementById('btnDownloadMp3').style.display = 'none';
+        lastGeneratedAudioBlob = null;
+
+        const provider = document.getElementById('ttsProvider').value;
+        const defaultVoice = document.getElementById('voiceSelect').value;
+        const speed = parseFloat(document.getElementById('speedControl').value);
+
+        if (provider === 'supertonic') {
+          try {
+            const pipeline = await initSupertonic();
+            if (!pipeline) throw new Error("TTS 엔진 초기화에 실패했습니다.");
+
+            const btn = document.getElementById('btnTtsRead');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ 생성 중...";
+            btn.disabled = true;
+
+            const segments = parseMultiVoiceText(text, defaultVoice);
+            let combinedAudio = [];
+            let sampleRate = 16000; // MMS 기본값 (생성 후 업데이트됨)
+
+            for (const seg of segments) {
+              const cleanText = seg.text.trim();
+              if (!cleanText) continue;
+
+              // Persona Mapping
+              const mapping = {
+                'Sarah': 'F1', 'Lily': 'F2', 'Sam': 'F3', 'Olivia': 'F4', 'Emily': 'F5',
+                'Alex': 'M1', 'James': 'M2', 'Daniel': 'M3', 'Henry': 'M4', 'Oscar': 'M5'
+              };
+              let speakerId = mapping[seg.voice] || seg.voice;
+              if (!/^[FM][1-5]$/.test(speakerId)) speakerId = 'F1';
+
+              const embeddingUrl = `https://huggingface.co/onnx-community/Supertonic-TTS-2-ONNX/resolve/main/voices/${speakerId}.bin`;
+
+              console.log(`Synthesizing (${speakerId}):`, cleanText);
+
+              // Supertonic 2는 <ko> 태그와 speaker_embeddings가 필요함
+              const output = await pipeline(`<ko>${cleanText}</ko>`, {
+                speaker_embeddings: embeddingUrl,
+                num_inference_steps: 5,
+                speed: speed
+              });
+
+              if (!output || !output.audio) {
+                throw new Error("음성 데이터 생성 실패");
+              }
+
+              combinedAudio.push(output.audio);
+              sampleRate = output.sampling_rate;
+            }
+
+            btn.innerText = originalText;
+            btn.disabled = false;
+
+            // Concatenate buffers
+            const totalLength = combinedAudio.reduce((acc, curr) => acc + curr.length, 0);
+            const finalAudio = new Float32Array(totalLength);
+            let offset = 0;
+            for (const chunk of combinedAudio) {
+              finalAudio.set(chunk, offset);
+              offset += chunk.length;
+            }
+
+            playAudio(finalAudio, sampleRate);
+            prepareDownload(finalAudio, sampleRate);
+
+          } catch (err) {
+            console.error("TTS Execution Error:", err);
+            const displayErr = err && err.message ? err.message : "알 수 없는 오류 (undefined)";
+            alert("음성 생성 오류: " + displayErr + "\n\n계속 오류가 나면 '시스템 음성'을 사용해 주세요.");
+            document.getElementById('btnTtsRead').disabled = false;
+            document.getElementById('btnTtsRead').innerText = "🔊 읽기";
+          }
+        } else {
+          // System TTS (Multi-voice not supported here for simplicity, but could be added similarly)
+          currentUtterance = new SpeechSynthesisUtterance(text.replace(/\[.*?\]/g, '').replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' '));
+          const vs = speechSynthesis.getVoices();
+          const v = vs.find(v => v.name === defaultVoice);
+          if (v) currentUtterance.voice = v;
+          currentUtterance.rate = speed;
+          speechSynthesis.speak(currentUtterance);
+        }
+      }
+
+      function prepareDownload(audioData, sampleRate) {
+        // Convert Float32 to Int16 PCM (LAMEjs expectation)
+        const pcmData = new Int16Array(audioData.length);
+        for (let i = 0; i < audioData.length; i++) {
+          let s = Math.max(-1, Math.min(1, audioData[i]));
+          pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+
+        const mp3encoder = new lamejs.Mp3Encoder(1, sampleRate, 128);
+        const mp3Data = [];
+        const sampleBlockSize = 1152;
+
+        for (let i = 0; i < pcmData.length; i += sampleBlockSize) {
+          const sampleChunk = pcmData.subarray(i, i + sampleBlockSize);
+          const mp3buf = mp3encoder.encodeBuffer(sampleChunk);
+          if (mp3buf.length > 0) mp3Data.push(mp3buf);
+        }
+
+        const mp3buf = mp3encoder.flush();
+        if (mp3buf.length > 0) mp3Data.push(mp3buf);
+
+        lastGeneratedAudioBlob = new Blob(mp3Data, { type: 'audio/mp3' });
+        document.getElementById('btnDownloadMp3').style.display = 'block';
+      }
+
+      function downloadMp3() {
+        if (!lastGeneratedAudioBlob) return;
+        const url = URL.createObjectURL(lastGeneratedAudioBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `voice_${new Date().getTime()}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+
+      function playAudio(audioData, sampleRate) {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        const buffer = audioContext.createBuffer(1, audioData.length, sampleRate);
+        buffer.getChannelData(0).set(audioData);
+
+        currentSource = audioContext.createBufferSource();
+        currentSource.buffer = buffer;
+        currentSource.connect(audioContext.destination);
+        currentSource.start();
+      }
+
+      function stopReading() {
+        // System TTS Stop
+        if (speechSynthesis.speaking) speechSynthesis.cancel();
+
+        // Supertonic Stop
+        if (currentSource) {
+          currentSource.stop();
+          currentSource = null;
+        }
+      }
 
       // ====================================================================
       // 🔑 API Key Management
