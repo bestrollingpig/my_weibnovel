@@ -619,11 +619,44 @@
 
             <div id="ttsLoadingStatus" class="tts-loading">⏳ 슈퍼토닉 모델 로딩 중... (초기 1회 발생)</div>
 
-            <div class="speed-control">
-              <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="1.0"
-                oninput="updateSpeedValue()">
-              <span class="speed-value" id="speedValue">1.0x</span>
+            <div
+              style="margin: 10px 0; display: flex; align-items: center; gap: 8px; background: #eef2ff; padding: 10px; border-radius: 6px; border: 1px solid #d1d5db;">
+              <input type="checkbox" id="audiobookMode" style="width: 18px; height: 18px; cursor: pointer;" checked>
+              <label for="audiobookMode"
+                style="font-size: 0.9em; font-weight: bold; cursor: pointer; color: #374151;">🎧 낭독 모드 (문장 간 자연스러운 공백
+                추가)</label>
             </div>
+
+            <div class="speed-control">
+              <label style="font-size: 0.85em;">속도</label>
+              <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="0.9"
+                oninput="updateSpeedValue()">
+              <span class="speed-value" id="speedValue">0.9x</span>
+            </div>
+            <div class="speed-control" style="margin-top: 5px;">
+              <label style="font-size: 0.85em;">품질(Steps)</label>
+              <input type="range" id="qualityControl" min="1" max="20" step="1" value="5"
+                oninput="updateQualityValue()">
+              <span class="speed-value" id="qualityValue">5</span>
+            </div>
+
+            <!-- Voice Mapping Section -->
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc;">
+              <h4 style="font-size: 0.9em; margin-bottom: 5px;">👥 캐릭터별 목소리 매핑</h4>
+              <div id="voiceMappingContainer"
+                style="max-height: 120px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 5px; font-size: 0.8em;">
+                <!-- Mapping items will be added here -->
+              </div>
+              <div style="display: flex; gap: 3px; margin-top: 5px;">
+                <input type="text" id="mapCharName" placeholder="캐릭터명" style="flex: 1; font-size: 0.8em; padding: 4px;">
+                <select id="mapVoiceSelect" style="flex: 1.5; font-size: 0.8em; padding: 4px;">
+                  <!-- Options will be loaded by loadVoices -->
+                </select>
+                <button class="btn-primary" onclick="addVoiceMapping()"
+                  style="width: auto; padding: 4px 8px; font-size: 0.8em;">추가</button>
+              </div>
+            </div>
+
             <div class="tts-buttons">
               <button class="btn-primary" id="btnTtsRead" onclick="readNotes()">🔊 읽기</button>
               <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
@@ -636,7 +669,8 @@
             </div>
             <div class="help-text" style="font-size: 0.75em; line-height: 1.4;">
               💡 <b>역할별 태그</b>를 사용하여 목소리를 바꿀 수 있습니다.<br>
-              - <code>[나래이터] 안녕! [아이 여] 반가워</code> 처럼 목록에 있는 이름을 입력하세요.
+              - <code>[나래이터] 안녕! [아이 여] 반가워</code> 처럼 목록에 있는 이름을 입력하세요.<br>
+              - 캐릭터 매핑을 등록하면 <code>철수: 안녕</code> 처럼 쓸 때 자동으로 지정된 목소리가 나옵니다.
             </div>
           </div>
         </div>
@@ -1385,33 +1419,105 @@
 
       function loadVoices() {
         const sel = document.getElementById('voiceSelect');
+        const mapSel = document.getElementById('mapVoiceSelect');
         const previousValue = sel.value;
+        const previousMapValue = mapSel ? mapSel.value : null;
+
         sel.innerHTML = '';
+        if (mapSel) mapSel.innerHTML = '';
 
         const aiVoices = [
+          { value: '아이 여', name: '아이 여 (소녀/F1)' },
           { value: '나래이터', name: '나래이터 (차분/F2)' },
-          { value: '노인 남', name: '노인 남 (중후/M2)' },
-          { value: '성인 남', name: '성인 남 (신뢰/M1)' },
-          { value: '아이 남', name: '아이 남 (활기/M3)' },
-          { value: '노인 여', name: '노인 여 (강단/F5)' },
           { value: '성인 여', name: '성인 여 (다정/F4)' },
-          { value: '아이 여', name: '아이 여 (소녀/F1)' }
+          { value: '노인 여', name: '노인 여 (강단/F5)' },
+          { value: '성인 남', name: '성인 남 (신뢰/M1)' },
+          { value: '노인 남', name: '노인 남 (중후/M2)' },
+          { value: '아이 남', name: '아이 남 (활기/M3)' },
+          { value: '여성 실무', name: '여성 실무 (F3)' },
+          { value: '성인 남2', name: '성인 남2 (M4)' },
+          { value: '남성 거친', name: '남성 거친 (M5)' }
         ];
 
-        aiVoices.forEach(v => sel.add(new Option(v.name, v.value)));
+        aiVoices.forEach(v => {
+          sel.add(new Option(v.name, v.value));
+          if (mapSel) mapSel.add(new Option(v.name, v.value));
+        });
 
         if (previousValue && Array.from(sel.options).some(o => o.value === previousValue)) {
           sel.value = previousValue;
         }
+        if (mapSel && previousMapValue && Array.from(mapSel.options).some(o => o.value === previousMapValue)) {
+          mapSel.value = previousMapValue;
+        }
       }
 
       function updateVoiceList() { loadVoices(); }
-      window.addEventListener('load', loadVoices);
+      window.addEventListener('load', () => {
+        loadVoices();
+        loadVoiceMappings();
+      });
 
-      function updateVoiceList() { loadVoices(); }
-      window.addEventListener('load', loadVoices);
       if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
         speechSynthesis.onvoiceschanged = loadVoices;
+      }
+
+      // Voice Mapping Persistence
+      let characterVoiceMap = {};
+
+      function addVoiceMapping() {
+        const name = document.getElementById('mapCharName').value.trim();
+        const voice = document.getElementById('mapVoiceSelect').value;
+        if (!name) return;
+        characterVoiceMap[name] = voice;
+        saveVoiceMappings();
+        renderVoiceMappings();
+        document.getElementById('mapCharName').value = '';
+      }
+
+      function removeVoiceMapping(name) {
+        delete characterVoiceMap[name];
+        saveVoiceMappings();
+        renderVoiceMappings();
+      }
+
+      function saveVoiceMappings() {
+        localStorage.setItem('characterVoiceMap', JSON.stringify(characterVoiceMap));
+      }
+
+      function loadVoiceMappings() {
+        const saved = localStorage.getItem('characterVoiceMap');
+        if (saved) {
+          try {
+            characterVoiceMap = JSON.parse(saved);
+            renderVoiceMappings();
+          } catch (e) {
+            console.error("Failed to load voice mappings", e);
+          }
+        }
+      }
+
+      function renderVoiceMappings() {
+        const container = document.getElementById('voiceMappingContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        for (const [name, voice] of Object.entries(characterVoiceMap)) {
+          const div = document.createElement('div');
+          div.style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; border-bottom: 1px solid #eee; padding-bottom: 2px;";
+          div.innerHTML = `
+            <span><b>${name}</b> → ${voice}</span>
+            <span style="color: red; cursor: pointer; font-weight: bold;" onclick="removeVoiceMapping('${name}')">×</span>
+          `;
+          container.appendChild(div);
+        }
+      }
+
+      function updateSpeedValue() {
+        document.getElementById('speedValue').innerText = document.getElementById('speedControl').value + 'x';
+      }
+
+      function updateQualityValue() {
+        document.getElementById('qualityValue').innerText = document.getElementById('qualityControl').value;
       }
 
       // --- Supertonic 2 Integration Logic ---
@@ -1523,22 +1629,45 @@
 
       function parseMultiVoiceText(text, defaultVoice) {
         const segments = [];
-        // [Name] 또는 [F1], [M1] 등의 태그를 찾음 (한국어 포함 모든 문자 허용)
+        // [Name] 또는 [F1], [M1] 등의 태그를 찾음
         const regex = /\[([^\]]+)\]/g;
         let lastIdx = 0;
         let currentVoice = defaultVoice;
         let match;
 
-        while ((match = regex.exec(text)) !== null) {
-          const before = text.substring(lastIdx, match.index).trim();
+        // Split text by paragraphs first to handle character names like "철수: 안녕"
+        const lines = text.split('\n');
+        let processedText = "";
+
+        for (let line of lines) {
+          line = line.trim();
+          if (!line) continue;
+
+          // Check for character name mapping at the start of line (e.g., "철수: 안녕")
+          let foundMapping = false;
+          for (const [name, voice] of Object.entries(characterVoiceMap)) {
+            if (line.startsWith(name + ":") || line.startsWith(name + " :")) {
+              const content = line.substring(line.indexOf(":") + 1).trim();
+              processedText += `[${voice}] ${content}\n`;
+              foundMapping = true;
+              break;
+            }
+          }
+          if (!foundMapping) {
+            processedText += line + "\n";
+          }
+        }
+
+        while ((match = regex.exec(processedText)) !== null) {
+          const before = processedText.substring(lastIdx, match.index).trim();
           if (before) segments.push({ voice: currentVoice, text: before });
           currentVoice = match[1];
           lastIdx = regex.lastIndex;
         }
-        const remaining = text.substring(lastIdx).trim();
+        const remaining = processedText.substring(lastIdx).trim();
         if (remaining) segments.push({ voice: currentVoice, text: remaining });
 
-        return segments.length > 0 ? segments : [{ voice: defaultVoice, text: text }];
+        return segments.length > 0 ? segments : [{ voice: defaultVoice, text: processedText }];
       }
 
       async function readNotes() {
@@ -1553,6 +1682,7 @@
 
         const defaultVoiceVal = document.getElementById('voiceSelect').value;
         const speed = parseFloat(document.getElementById('speedControl').value);
+        const steps = parseInt(document.getElementById('qualityControl').value) || 5;
         const btn = document.getElementById('btnTtsRead');
         const originalText = btn.innerText;
 
@@ -1569,29 +1699,65 @@
           let sampleRate = 16000;
 
           const mapping = {
-            '아이 여': 'F1', '나래이터': 'F2', '성인 여': 'F4', '노인 여': 'F5',
-            '성인 남': 'M1', '노인 남': 'M2', '아이 남': 'M3'
+            '아이 여': 'F1', '소녀': 'F1', 'F1': 'F1',
+            '나래이터': 'F2', 'F2': 'F2',
+            '여성 실무': 'F3', 'F3': 'F3',
+            '성인 여': 'F4', '다정': 'F4', 'F4': 'F4',
+            '노인 여': 'F5', '강단': 'F5', 'F5': 'F5',
+            '성인 남': 'M1', '신뢰': 'M1', 'M1': 'M1',
+            '노인 남': 'M2', '중후': 'M2', 'M2': 'M2',
+            '아이 남': 'M3', '활기': 'M3', 'M3': 'M3',
+            '성인 남2': 'M4', '강직': 'M4', 'M4': 'M4',
+            '남성 거친': 'M5', '거친': 'M5', 'M5': 'M5'
           };
+
+          const isAudiobook = document.getElementById('audiobookMode').checked;
 
           for (const seg of segments) {
             const cleanText = seg.text.trim();
             if (!cleanText) continue;
 
-            let speakerId = mapping[seg.voice] || 'F1';
+            let speakerId = mapping[seg.voice] || mapping[defaultVoiceVal] || 'F1';
             const embeddingUrl = `https://huggingface.co/onnx-community/Supertonic-TTS-2-ONNX/resolve/main/voices/${speakerId}.bin`;
 
-            const output = await pipeline(`<ko>${cleanText}</ko>`, {
-              speaker_embeddings: embeddingUrl,
-              num_inference_steps: 5,
-              speed: speed
-            });
+            // Split by sentences if audiobook mode is on
+            const textParts = isAudiobook ? cleanText.split(/([.!?\n]+)/) : [cleanText];
 
-            if (output && output.audio) {
-              sampleRate = output.sampling_rate;
-              const duration = output.audio.length / sampleRate;
-              subtitleData.push({ start: currentOffsetTime, end: currentOffsetTime + duration, text: cleanText });
-              combinedAudio.push(output.audio);
-              currentOffsetTime += duration;
+            for (let i = 0; i < textParts.length; i++) {
+              const part = textParts[i].trim();
+              if (!part) continue;
+
+              // If it's punctuation, add pause based on it
+              if (/^[.!?\n]+$/.test(part)) {
+                let pauseSec = 0.5; // Default sentence pause (increased from 0.4)
+                if (part.includes('\n')) pauseSec = 1.0; // Paragraph pause (increased from 0.8)
+
+                const pauseSamples = Math.floor(pauseSec * sampleRate);
+                combinedAudio.push(new Float32Array(pauseSamples));
+                currentOffsetTime += pauseSec;
+                continue;
+              }
+
+              const output = await pipeline(`<ko>${part}</ko>`, {
+                speaker_embeddings: embeddingUrl,
+                num_inference_steps: steps,
+                speed: speed
+              });
+
+              if (output && output.audio) {
+                sampleRate = output.sampling_rate;
+                const duration = output.audio.length / sampleRate;
+                subtitleData.push({ start: currentOffsetTime, end: currentOffsetTime + duration, text: part });
+                combinedAudio.push(output.audio);
+                currentOffsetTime += duration;
+              }
+            }
+
+            // Extra pause after a segment/speaker change
+            if (isAudiobook) {
+              const segPause = 0.5;
+              combinedAudio.push(new Float32Array(Math.floor(segPause * sampleRate)));
+              currentOffsetTime += segPause;
             }
           }
 
