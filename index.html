@@ -608,15 +608,11 @@
             </div>
             <h3>🔊 읽어주기 (TTS)</h3>
 
-            <div style="margin-bottom: 8px;">
-              <label style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 3px;">TTS 엔진 선택</label>
-              <select id="ttsProvider" onchange="updateVoiceList()">
-                <option value="system">시스템 기본 (Web Speech)</option>
-                <option value="supertonic">슈퍼토닉 2 (고품질 오픈소스)</option>
-              </select>
-            </div>
+            <!-- TTS 엔진은 슈퍼토닉 2(AI)로 단일화 -->
+            <input type="hidden" id="ttsProvider" value="supertonic">
 
-            <label style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 3px;">목소리 선택</label>
+            <label style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 3px;">기본 목소리 (태그 없을
+              때)</label>
             <select id="voiceSelect">
               <option value="ko-KR">한국어</option>
             </select>
@@ -632,10 +628,16 @@
               <button class="btn-primary" id="btnTtsRead" onclick="readNotes()">🔊 읽기</button>
               <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
             </div>
-            <button class="btn-success" id="btnDownloadMp3" onclick="downloadMp3()"
-              style="margin-top: 5px; display: none;">💾 MP3 저장</button>
-            <div class="help-text" style="font-size: 0.75em;">💡 <code>[Sarah] 안녕! [Alex] 반가워</code> 처럼 이름을 대괄호 안에 넣으면
-              목소리가 자동으로 바뀝니다.</div>
+            <div style="display: flex; gap: 5px; margin-top: 5px;">
+              <button class="btn-success" id="btnDownloadMp3" onclick="downloadMp3()"
+                style="display: none; flex: 1; background: linear-gradient(135deg, #28a745 0%, #218838 100%);">💾 MP3 +
+                자막(SRT) 통합 저장</button>
+              <button id="btnDownloadSrt" style="display: none;"></button> <!-- 숨김 처리 -->
+            </div>
+            <div class="help-text" style="font-size: 0.75em; line-height: 1.4;">
+              💡 <b>역할별 태그</b>를 사용하여 목소리를 바꿀 수 있습니다.<br>
+              - <code>[나래이터] 안녕! [아이 여] 반가워</code> 처럼 목록에 있는 이름을 입력하세요.
+            </div>
           </div>
         </div>
       </div>
@@ -1382,47 +1384,59 @@
       }
 
       function loadVoices() {
-        if (document.getElementById('ttsProvider').value === 'supertonic') {
-          loadSupertonicVoices();
-          return;
-        }
+        const sel = document.getElementById('voiceSelect');
+        const previousValue = sel.value;
+        sel.innerHTML = '';
 
-        const vs = speechSynthesis.getVoices(), sel = document.getElementById('voiceSelect'); sel.innerHTML = '';
-        const ko = vs.filter(v => v.lang.startsWith('ko'));
-        if (ko.length) ko.forEach(v => sel.add(new Option(v.name, v.name))); else sel.add(new Option("기본 한국어", "default"));
-      }
-
-      function loadSupertonicVoices() {
-        const sel = document.getElementById('voiceSelect'); sel.innerHTML = '';
-        const voices = [
-          { value: 'F1', name: '슈퍼토닉 Sarah (맑음/여성)' },
-          { value: 'F2', name: '슈퍼토닉 Lily (차분함/여성)' },
-          { value: 'F3', name: '슈퍼토닉 Sam (명랑/여성)' },
-          { value: 'F4', name: '슈퍼토닉 Olivia (부드러움/여성)' },
-          { value: 'F5', name: '슈퍼토닉 Emily (활발/여성)' },
-          { value: 'M1', name: '슈퍼토닉 Alex (신뢰감/남성)' },
-          { value: 'M2', name: '슈퍼토닉 James (저음/남성)' },
-          { value: 'M3', name: '슈퍼토닉 Daniel (활기/남성)' },
-          { value: 'M4', name: '슈퍼토닉 Henry (터프함/남성)' },
-          { value: 'M5', name: '슈퍼토닉 Oscar (친절한/남성)' }
+        const aiVoices = [
+          { value: '나래이터', name: '나래이터 (차분/F2)' },
+          { value: '노인 남', name: '노인 남 (중후/M2)' },
+          { value: '성인 남', name: '성인 남 (신뢰/M1)' },
+          { value: '아이 남', name: '아이 남 (활기/M3)' },
+          { value: '노인 여', name: '노인 여 (강단/F5)' },
+          { value: '성인 여', name: '성인 여 (다정/F4)' },
+          { value: '아이 여', name: '아이 여 (소녀/F1)' }
         ];
-        voices.forEach(v => sel.add(new Option(v.name, v.value)));
+
+        aiVoices.forEach(v => sel.add(new Option(v.name, v.value)));
+
+        if (previousValue && Array.from(sel.options).some(o => o.value === previousValue)) {
+          sel.value = previousValue;
+        }
       }
 
-      function updateVoiceList() {
-        loadVoices();
+      function updateVoiceList() { loadVoices(); }
+      window.addEventListener('load', loadVoices);
+
+      function updateVoiceList() { loadVoices(); }
+      window.addEventListener('load', loadVoices);
+      if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
       }
-
-      if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
-      loadVoices();
-
-      function updateSpeedValue() { document.getElementById('speedValue').textContent = document.getElementById('speedControl').value + 'x'; }
 
       // --- Supertonic 2 Integration Logic ---
       let ttsPipeline = null;
       let audioContext = null;
       let currentSource = null;
       let lastGeneratedAudioBlob = null;
+      let lastGeneratedSrtBlob = null;
+
+      function stopReading() {
+        if (currentSource) { try { currentSource.stop(); } catch (e) { } currentSource = null; }
+        if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+      }
+
+      function playAudio(audioData, sampleRate) {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') audioContext.resume();
+        stopReading();
+        const buffer = audioContext.createBuffer(1, audioData.length, sampleRate);
+        buffer.getChannelData(0).set(audioData);
+        currentSource = audioContext.createBufferSource();
+        currentSource.buffer = buffer;
+        currentSource.connect(audioContext.destination);
+        currentSource.start();
+      }
 
       async function initSupertonic(forceReset = false) {
         if (ttsPipeline && !forceReset) return ttsPipeline;
@@ -1509,8 +1523,8 @@
 
       function parseMultiVoiceText(text, defaultVoice) {
         const segments = [];
-        // [Name] 또는 [F1], [M1] 등의 태그를 찾음
-        const regex = /\[(\w+)\]/g;
+        // [Name] 또는 [F1], [M1] 등의 태그를 찾음 (한국어 포함 모든 문자 허용)
+        const regex = /\[([^\]]+)\]/g;
         let lastIdx = 0;
         let currentVoice = defaultVoice;
         let match;
@@ -1530,94 +1544,75 @@
       async function readNotes() {
         const text = notesTextarea.value.trim();
         if (!text) return;
+
         stopReading();
         document.getElementById('btnDownloadMp3').style.display = 'none';
+        document.getElementById('btnDownloadSrt').style.display = 'none';
         lastGeneratedAudioBlob = null;
+        lastGeneratedSrtBlob = null;
 
-        const provider = document.getElementById('ttsProvider').value;
-        const defaultVoice = document.getElementById('voiceSelect').value;
+        const defaultVoiceVal = document.getElementById('voiceSelect').value;
         const speed = parseFloat(document.getElementById('speedControl').value);
+        const btn = document.getElementById('btnTtsRead');
+        const originalText = btn.innerText;
 
-        if (provider === 'supertonic') {
-          try {
-            const pipeline = await initSupertonic();
-            if (!pipeline) throw new Error("TTS 엔진 초기화에 실패했습니다.");
+        btn.innerText = "⏳ 생성 중...";
+        btn.disabled = true;
+        try {
+          const pipeline = await initSupertonic();
+          if (!pipeline) throw new Error("TTS 엔진 초기화 실패");
 
-            const btn = document.getElementById('btnTtsRead');
-            const originalText = btn.innerText;
-            btn.innerText = "⏳ 생성 중...";
-            btn.disabled = true;
+          const segments = parseMultiVoiceText(text, defaultVoiceVal);
+          let combinedAudio = [];
+          let subtitleData = [];
+          let currentOffsetTime = 0;
+          let sampleRate = 16000;
 
-            const segments = parseMultiVoiceText(text, defaultVoice);
-            let combinedAudio = [];
-            let sampleRate = 16000; // MMS 기본값 (생성 후 업데이트됨)
+          const mapping = {
+            '아이 여': 'F1', '나래이터': 'F2', '성인 여': 'F4', '노인 여': 'F5',
+            '성인 남': 'M1', '노인 남': 'M2', '아이 남': 'M3'
+          };
 
-            for (const seg of segments) {
-              const cleanText = seg.text.trim();
-              if (!cleanText) continue;
+          for (const seg of segments) {
+            const cleanText = seg.text.trim();
+            if (!cleanText) continue;
 
-              // Persona Mapping
-              const mapping = {
-                'Sarah': 'F1', 'Lily': 'F2', 'Sam': 'F3', 'Olivia': 'F4', 'Emily': 'F5',
-                'Alex': 'M1', 'James': 'M2', 'Daniel': 'M3', 'Henry': 'M4', 'Oscar': 'M5'
-              };
-              let speakerId = mapping[seg.voice] || seg.voice;
-              if (!/^[FM][1-5]$/.test(speakerId)) speakerId = 'F1';
+            let speakerId = mapping[seg.voice] || 'F1';
+            const embeddingUrl = `https://huggingface.co/onnx-community/Supertonic-TTS-2-ONNX/resolve/main/voices/${speakerId}.bin`;
 
-              const embeddingUrl = `https://huggingface.co/onnx-community/Supertonic-TTS-2-ONNX/resolve/main/voices/${speakerId}.bin`;
+            const output = await pipeline(`<ko>${cleanText}</ko>`, {
+              speaker_embeddings: embeddingUrl,
+              num_inference_steps: 5,
+              speed: speed
+            });
 
-              console.log(`Synthesizing (${speakerId}):`, cleanText);
-
-              // Supertonic 2는 <ko> 태그와 speaker_embeddings가 필요함
-              const output = await pipeline(`<ko>${cleanText}</ko>`, {
-                speaker_embeddings: embeddingUrl,
-                num_inference_steps: 5,
-                speed: speed
-              });
-
-              if (!output || !output.audio) {
-                throw new Error("음성 데이터 생성 실패");
-              }
-
-              combinedAudio.push(output.audio);
+            if (output && output.audio) {
               sampleRate = output.sampling_rate;
+              const duration = output.audio.length / sampleRate;
+              subtitleData.push({ start: currentOffsetTime, end: currentOffsetTime + duration, text: cleanText });
+              combinedAudio.push(output.audio);
+              currentOffsetTime += duration;
             }
-
-            btn.innerText = originalText;
-            btn.disabled = false;
-
-            // Concatenate buffers
-            const totalLength = combinedAudio.reduce((acc, curr) => acc + curr.length, 0);
-            const finalAudio = new Float32Array(totalLength);
-            let offset = 0;
-            for (const chunk of combinedAudio) {
-              finalAudio.set(chunk, offset);
-              offset += chunk.length;
-            }
-
-            playAudio(finalAudio, sampleRate);
-            prepareDownload(finalAudio, sampleRate);
-
-          } catch (err) {
-            console.error("TTS Execution Error:", err);
-            const displayErr = err && err.message ? err.message : "알 수 없는 오류 (undefined)";
-            alert("음성 생성 오류: " + displayErr + "\n\n계속 오류가 나면 '시스템 음성'을 사용해 주세요.");
-            document.getElementById('btnTtsRead').disabled = false;
-            document.getElementById('btnTtsRead').innerText = "🔊 읽기";
           }
-        } else {
-          // System TTS (Multi-voice not supported here for simplicity, but could be added similarly)
-          currentUtterance = new SpeechSynthesisUtterance(text.replace(/\[.*?\]/g, '').replace(/[#*_~`\[\]{}()\-+=|\\<>]/g, ' '));
-          const vs = speechSynthesis.getVoices();
-          const v = vs.find(v => v.name === defaultVoice);
-          if (v) currentUtterance.voice = v;
-          currentUtterance.rate = speed;
-          speechSynthesis.speak(currentUtterance);
+
+          const totalLength = combinedAudio.reduce((acc, curr) => acc + curr.length, 0);
+          const finalAudio = new Float32Array(totalLength);
+          let offset = 0;
+          for (const chunk of combinedAudio) { finalAudio.set(chunk, offset); offset += chunk.length; }
+
+          playAudio(finalAudio, sampleRate);
+          prepareDownload(finalAudio, sampleRate, subtitleData);
+
+        } catch (err) {
+          alert("음성 생성 오류: " + err.message);
+        } finally {
+          btn.innerText = originalText;
+          btn.disabled = false;
         }
       }
 
-      function prepareDownload(audioData, sampleRate) {
-        // Convert Float32 to Int16 PCM (LAMEjs expectation)
+      function prepareDownload(audioData, sampleRate, subtitleData) {
+        // MP3 Encoding
         const pcmData = new Int16Array(audioData.length);
         for (let i = 0; i < audioData.length; i++) {
           let s = Math.max(-1, Math.min(1, audioData[i]));
@@ -1638,7 +1633,39 @@
         if (mp3buf.length > 0) mp3Data.push(mp3buf);
 
         lastGeneratedAudioBlob = new Blob(mp3Data, { type: 'audio/mp3' });
+
+        // SRT Subtitle Generation
+        if (subtitleData && subtitleData.length > 0) {
+          let srtContent = "";
+          subtitleData.forEach((sub, index) => {
+            srtContent += `${index + 1}\n`;
+            srtContent += `${formatSrtTime(sub.start)} --> ${formatSrtTime(sub.end)}\n`;
+            srtContent += `${sub.text}\n\n`;
+          });
+          lastGeneratedSrtBlob = new Blob([srtContent], { type: 'text/plain' });
+        }
+
         document.getElementById('btnDownloadMp3').style.display = 'block';
+      }
+
+      function formatSrtTime(seconds) {
+        const date = new Date(0);
+        date.setSeconds(seconds);
+        const ms = Math.floor((seconds % 1) * 1000);
+        const timePart = date.toISOString().substr(11, 8);
+        return `${timePart},${ms.toString().padStart(3, '0')}`;
+      }
+
+      function downloadSrt() {
+        if (!lastGeneratedSrtBlob) return;
+        const url = URL.createObjectURL(lastGeneratedSrtBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `subtitle_${new Date().getTime()}.srt`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
       }
 
       function downloadMp3() {
@@ -1646,11 +1673,26 @@
         const url = URL.createObjectURL(lastGeneratedAudioBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `voice_${new Date().getTime()}.mp3`;
+        const timestamp = new Date().getTime();
+        a.download = `voice_${timestamp}.mp3`;
         document.body.appendChild(a);
         a.click();
         URL.revokeObjectURL(url);
         document.body.removeChild(a);
+
+        // 자막 자동 다운로드 트리거
+        if (lastGeneratedSrtBlob) {
+          setTimeout(() => {
+            const srtUrl = URL.createObjectURL(lastGeneratedSrtBlob);
+            const asrt = document.createElement('a');
+            asrt.href = srtUrl;
+            asrt.download = `subtitle_${timestamp}.srt`;
+            document.body.appendChild(asrt);
+            asrt.click();
+            URL.revokeObjectURL(srtUrl);
+            document.body.removeChild(asrt);
+          }, 500); // 약간의 시차를 두어 브라우저 팝업 차단 방지
+        }
       }
 
       function playAudio(audioData, sampleRate) {
