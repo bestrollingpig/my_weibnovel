@@ -559,7 +559,7 @@
           <button class="btn-danger" onclick="deleteSelected()">🗑️ 삭제 (Del)</button>
         </div>
         <div style="display: grid; grid-template-columns: 1fr; gap: 5px;">
-          <button class="btn-success" onclick="saveToUrl()">🔗 URL 공유</button>
+          <button class="btn-success" onclick="saveToURL()">🔗 URL 공유</button>
         </div>
       </div>
     </div>
@@ -608,8 +608,18 @@
             </div>
             <h3>🔊 읽어주기 (TTS)</h3>
 
-            <!-- TTS 엔진은 슈퍼토닉 2(AI)로 단일화 -->
-            <input type="hidden" id="ttsProvider" value="supertonic">
+            <!-- TTS Provider Selection -->
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 3px;">TTS 엔진 선택</label>
+              <select id="ttsProvider" onchange="onTtsProviderChange()" style="width: 100%; padding: 8px; font-size: 0.9em;">
+                <option value="web-speech">🌐 크롬 기본 음성 (Web Speech API) - 즉시 실행, 네트워크 불필요</option>
+                <option value="supertonic">🤖 슈퍼토닉 2 (AI 고품질) - 모델 로딩 필요, 고품질</option>
+              </select>
+              <div class="help-text" style="font-size: 0.75em; margin-top: 3px;">
+                💡 <b>크롬 기본 음성</b>: 별도 다운로드 없이 크롬 내장 음성 즉시 사용 (오프라인 가능)<br>
+                💡 <b>슈퍼토닉 2</b>: AI 모델로 자연스러운 한국어 음성 생성 (초기 로딩 시 모델 다운로드 필요)
+              </div>
+            </div>
 
             <label style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 3px;">기본 목소리 (태그 없을
               때)</label>
@@ -618,6 +628,16 @@
             </select>
 
             <div id="ttsLoadingStatus" class="tts-loading">⏳ 슈퍼토닉 모델 로딩 중... (초기 1회 발생)</div>
+
+            <div id="webSpeechVoiceSelectContainer" style="margin-top: 10px; display: none;">
+              <label style="font-size: 0.85em; font-weight: bold; display: block; margin-bottom: 3px;">크롬 음성 선택</label>
+              <select id="webSpeechVoiceSelect" style="width: 100%; padding: 8px; font-size: 0.9em;">
+                <option value="">음성 로딩 중...</option>
+              </select>
+              <div class="help-text" style="font-size: 0.75em; margin-top: 3px;">
+                💡 크롬에서 사용 가능한 시스템 음성 목록입니다. 한국어 음성이 없다면 OS 설정에서 언어 팩을 설치하세요.
+              </div>
+            </div>
 
             <div
               style="margin: 10px 0; display: flex; align-items: center; gap: 8px; background: #eef2ff; padding: 10px; border-radius: 6px; border: 1px solid #d1d5db;">
@@ -862,7 +882,18 @@
 
         if (hash) {
           try {
-            const decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(hash));
+            // Try LZString first, fall back to plain JSON if not available
+            let decoded;
+            if (typeof LZString !== 'undefined' && LZString.decompressFromEncodedURIComponent) {
+              decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(hash));
+            } else {
+              // Fallback: try to decode as plain JSON (for uncompressed URLs)
+              try {
+                decoded = JSON.parse(decodeURIComponent(hash));
+              } catch {
+                throw new Error("LZString not available and hash is not valid JSON");
+              }
+            }
             if (decoded) {
               cy.elements().remove();
               cy.add(decoded);
@@ -876,6 +907,9 @@
 
         runLayout('cose');
         resetRightPanel();
+
+        // Initialize TTS Provider
+        onTtsProviderChange();
 
         // Overlay 초기화 및 이벤트 바인딩
         layer = document.getElementById('overlays');
@@ -1381,7 +1415,19 @@
           alert('불러오기 완료!');
         } else alert('데이터 없음');
       }
-      function saveToURL() { window.location.hash = LZString.compressToEncodedURIComponent(JSON.stringify(cy.json().elements)); alert('URL 저장 완료!'); }
+      function saveToURL() {
+        try {
+          const data = JSON.stringify(cy.json().elements);
+          const compressed = typeof LZString !== 'undefined' && LZString.compressToEncodedURIComponent
+            ? LZString.compressToEncodedURIComponent(data)
+            : encodeURIComponent(data);
+          window.location.hash = compressed;
+          alert('URL 저장 완료!\n(주소창의 URL을 복사해 공유하세요)');
+        } catch (e) {
+          console.error("URL 저장 실패:", e);
+          alert("URL 저장 실패: " + e.message);
+        }
+      }
       function downloadJSON() {
         const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
         a.download = "graph_" + new Date().toISOString().slice(0, 10) + ".json"; document.body.appendChild(a); a.click(); a.remove();
@@ -1423,43 +1469,54 @@
         const previousValue = sel.value;
         const previousMapValue = mapSel ? mapSel.value : null;
 
-        sel.innerHTML = '';
-        if (mapSel) mapSel.innerHTML = '';
+        // Check current TTS provider
+        const provider = document.getElementById('ttsProvider')?.value || 'supertonic';
 
-        const aiVoices = [
-          { value: '아이 여', name: '아이 여 (소녀/F1)' },
-          { value: '나래이터', name: '나래이터 (차분/F2)' },
-          { value: '성인 여', name: '성인 여 (다정/F4)' },
-          { value: '노인 여', name: '노인 여 (강단/F5)' },
-          { value: '성인 남', name: '성인 남 (신뢰/M1)' },
-          { value: '노인 남', name: '노인 남 (중후/M2)' },
-          { value: '아이 남', name: '아이 남 (활기/M3)' },
-          { value: '여성 실무', name: '여성 실무 (F3)' },
-          { value: '성인 남2', name: '성인 남2 (M4)' },
-          { value: '남성 거친', name: '남성 거친 (M5)' }
-        ];
+        if (provider === 'web-speech') {
+          // Load web speech voices
+          loadWebSpeechVoices();
+          updateVoiceSelectsForWebSpeech();
+        } else {
+          // Load Supertonic voices
+          sel.innerHTML = '';
+          if (mapSel) mapSel.innerHTML = '';
 
-        aiVoices.forEach(v => {
-          sel.add(new Option(v.name, v.value));
-          if (mapSel) mapSel.add(new Option(v.name, v.value));
-        });
+          const aiVoices = [
+            { value: '아이 여', name: '아이 여 (소녀/F1)' },
+            { value: '나래이터', name: '나래이터 (차분/F2)' },
+            { value: '성인 여', name: '성인 여 (다정/F4)' },
+            { value: '노인 여', name: '노인 여 (강단/F5)' },
+            { value: '성인 남', name: '성인 남 (신뢰/M1)' },
+            { value: '노인 남', name: '노인 남 (중후/M2)' },
+            { value: '아이 남', name: '아이 남 (활기/M3)' },
+            { value: '여성 실무', name: '여성 실무 (F3)' },
+            { value: '성인 남2', name: '성인 남2 (M4)' },
+            { value: '남성 거친', name: '남성 거친 (M5)' }
+          ];
 
-        if (previousValue && Array.from(sel.options).some(o => o.value === previousValue)) {
-          sel.value = previousValue;
-        }
-        if (mapSel && previousMapValue && Array.from(mapSel.options).some(o => o.value === previousMapValue)) {
-          mapSel.value = previousMapValue;
+          aiVoices.forEach(v => {
+            sel.add(new Option(v.name, v.value));
+            if (mapSel) mapSel.add(new Option(v.name, v.value));
+          });
+
+          if (previousValue && Array.from(sel.options).some(o => o.value === previousValue)) {
+            sel.value = previousValue;
+          }
+          if (mapSel && previousMapValue && Array.from(mapSel.options).some(o => o.value === previousMapValue)) {
+            mapSel.value = previousMapValue;
+          }
         }
       }
 
-      function updateVoiceList() { loadVoices(); }
-      window.addEventListener('load', () => {
-        loadVoices();
-        loadVoiceMappings();
-      });
-
+      // Also hook speechSynthesis.onvoiceschanged to reload web speech voices when they change
       if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = loadVoices;
+        speechSynthesis.onvoiceschanged = function() {
+          if (document.getElementById('ttsProvider')?.value === 'web-speech') {
+            loadWebSpeechVoices();
+            updateVoiceSelectsForWebSpeech();
+          }
+          loadVoices(); // Also trigger supertonic voice list refresh if needed
+        };
       }
 
       // Voice Mapping Persistence
@@ -1526,6 +1583,76 @@
       let currentSource = null;
       let lastGeneratedAudioBlob = null;
       let lastGeneratedSrtBlob = null;
+
+      // Web Speech API voices cache
+      let webSpeechVoices = [];
+
+      function onTtsProviderChange() {
+        const provider = document.getElementById('ttsProvider').value;
+        const supertonicLoading = document.getElementById('ttsLoadingStatus');
+        const webSpeechContainer = document.getElementById('webSpeechVoiceSelectContainer');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const mapVoiceSelect = document.getElementById('mapVoiceSelect');
+
+        if (provider === 'web-speech') {
+          supertonicLoading.style.display = 'none';
+          webSpeechContainer.style.display = 'block';
+          // Populate web speech voices
+          loadWebSpeechVoices();
+          // Update voice selects with web speech voices
+          updateVoiceSelectsForWebSpeech();
+        } else {
+          supertonicLoading.style.display = 'block';
+          webSpeechContainer.style.display = 'none';
+          // Restore supertonic voices
+          loadVoices();
+        }
+      }
+
+      function loadWebSpeechVoices() {
+        if (typeof speechSynthesis === 'undefined') return;
+        
+        webSpeechVoices = speechSynthesis.getVoices();
+        
+        // If voices aren't loaded yet, wait for onvoiceschanged
+        if (webSpeechVoices.length === 0) {
+          speechSynthesis.onvoiceschanged = loadWebSpeechVoices;
+          return;
+        }
+
+        const select = document.getElementById('webSpeechVoiceSelect');
+        if (select) {
+          select.innerHTML = '';
+          // Filter for Korean voices first, then others
+          const koVoices = webSpeechVoices.filter(v => v.lang.startsWith('ko'));
+          const otherVoices = webSpeechVoices.filter(v => !v.lang.startsWith('ko'));
+          
+          [...koVoices, ...otherVoices].forEach(v => {
+            const opt = new Option(`${v.name} (${v.lang})${v.default ? ' ⭐' : ''}`, v.name);
+            select.add(opt);
+          });
+        }
+      }
+
+      function updateVoiceSelectsForWebSpeech() {
+        const voiceSelect = document.getElementById('voiceSelect');
+        const mapVoiceSelect = document.getElementById('mapVoiceSelect');
+        
+        // For supertonic, voices are speaker IDs (F1, F2, etc.)
+        // For web speech, voices are system voice names
+        if (voiceSelect) {
+          voiceSelect.innerHTML = '';
+          webSpeechVoices.forEach(v => {
+            voiceSelect.add(new Option(`${v.name} (${v.lang})`, v.name));
+          });
+        }
+        if (mapVoiceSelect) {
+          mapVoiceSelect.innerHTML = '';
+          webSpeechVoices.forEach(v => {
+            mapVoiceSelect.add(new Option(`${v.name} (${v.lang})`, v.name));
+          });
+        }
+      }
 
       function stopReading() {
         if (currentSource) { try { currentSource.stop(); } catch (e) { } currentSource = null; }
@@ -1621,10 +1748,10 @@
       }
 
       function switchToSystemTTS() {
-        document.getElementById('ttsProvider').value = 'system';
-        updateVoiceList();
+        document.getElementById('ttsProvider').value = 'web-speech';
+        onTtsProviderChange();
         document.getElementById('ttsLoadingStatus').style.display = 'none';
-        alert("기본 시스템 TTS로 전환되었습니다. 브라우저에서 제공하는 음성으로 낭독합니다.");
+        alert("크롬 기본 음성(Web Speech API)으로 전환되었습니다. 브라우저에서 제공하는 음성으로 낭독합니다.");
       }
 
       function parseMultiVoiceText(text, defaultVoice) {
@@ -1680,101 +1807,206 @@
         lastGeneratedAudioBlob = null;
         lastGeneratedSrtBlob = null;
 
-        const defaultVoiceVal = document.getElementById('voiceSelect').value;
-        const speed = parseFloat(document.getElementById('speedControl').value);
-        const steps = parseInt(document.getElementById('qualityControl').value) || 5;
+        const provider = document.getElementById('ttsProvider').value;
         const btn = document.getElementById('btnTtsRead');
         const originalText = btn.innerText;
 
         btn.innerText = "⏳ 생성 중...";
         btn.disabled = true;
+
         try {
-          const pipeline = await initSupertonic();
-          if (!pipeline) throw new Error("TTS 엔진 초기화 실패");
-
-          const segments = parseMultiVoiceText(text, defaultVoiceVal);
-          let combinedAudio = [];
-          let subtitleData = [];
-          let currentOffsetTime = 0;
-          let sampleRate = 16000;
-
-          const mapping = {
-            '아이 여': 'F1', '소녀': 'F1', 'F1': 'F1',
-            '나래이터': 'F2', 'F2': 'F2',
-            '여성 실무': 'F3', 'F3': 'F3',
-            '성인 여': 'F4', '다정': 'F4', 'F4': 'F4',
-            '노인 여': 'F5', '강단': 'F5', 'F5': 'F5',
-            '성인 남': 'M1', '신뢰': 'M1', 'M1': 'M1',
-            '노인 남': 'M2', '중후': 'M2', 'M2': 'M2',
-            '아이 남': 'M3', '활기': 'M3', 'M3': 'M3',
-            '성인 남2': 'M4', '강직': 'M4', 'M4': 'M4',
-            '남성 거친': 'M5', '거친': 'M5', 'M5': 'M5'
-          };
-
-          const isAudiobook = document.getElementById('audiobookMode').checked;
-
-          for (const seg of segments) {
-            const cleanText = seg.text.trim();
-            if (!cleanText) continue;
-
-            let speakerId = mapping[seg.voice] || mapping[defaultVoiceVal] || 'F1';
-            const embeddingUrl = `https://huggingface.co/onnx-community/Supertonic-TTS-2-ONNX/resolve/main/voices/${speakerId}.bin`;
-
-            // Split by sentences if audiobook mode is on
-            const textParts = isAudiobook ? cleanText.split(/([.!?\n]+)/) : [cleanText];
-
-            for (let i = 0; i < textParts.length; i++) {
-              const part = textParts[i].trim();
-              if (!part) continue;
-
-              // If it's punctuation, add pause based on it
-              if (/^[.!?\n]+$/.test(part)) {
-                let pauseSec = 0.5; // Default sentence pause (increased from 0.4)
-                if (part.includes('\n')) pauseSec = 1.0; // Paragraph pause (increased from 0.8)
-
-                const pauseSamples = Math.floor(pauseSec * sampleRate);
-                combinedAudio.push(new Float32Array(pauseSamples));
-                currentOffsetTime += pauseSec;
-                continue;
-              }
-
-              const output = await pipeline(`<ko>${part}</ko>`, {
-                speaker_embeddings: embeddingUrl,
-                num_inference_steps: steps,
-                speed: speed
-              });
-
-              if (output && output.audio) {
-                sampleRate = output.sampling_rate;
-                const duration = output.audio.length / sampleRate;
-                subtitleData.push({ start: currentOffsetTime, end: currentOffsetTime + duration, text: part });
-                combinedAudio.push(output.audio);
-                currentOffsetTime += duration;
-              }
-            }
-
-            // Extra pause after a segment/speaker change
-            if (isAudiobook) {
-              const segPause = 0.5;
-              combinedAudio.push(new Float32Array(Math.floor(segPause * sampleRate)));
-              currentOffsetTime += segPause;
-            }
+          if (provider === 'web-speech') {
+            await readWithWebSpeech(text);
+          } else {
+            await readWithSupertonic(text);
           }
-
-          const totalLength = combinedAudio.reduce((acc, curr) => acc + curr.length, 0);
-          const finalAudio = new Float32Array(totalLength);
-          let offset = 0;
-          for (const chunk of combinedAudio) { finalAudio.set(chunk, offset); offset += chunk.length; }
-
-          playAudio(finalAudio, sampleRate);
-          prepareDownload(finalAudio, sampleRate, subtitleData);
-
         } catch (err) {
           alert("음성 생성 오류: " + err.message);
         } finally {
           btn.innerText = originalText;
           btn.disabled = false;
         }
+      }
+
+      async function readWithWebSpeech(text) {
+        if (typeof speechSynthesis === 'undefined') {
+          alert("이 브라우저는 Web Speech API를 지원하지 않습니다.");
+          return;
+        }
+
+        const voiceName = document.getElementById('webSpeechVoiceSelect').value;
+        const speed = parseFloat(document.getElementById('speedControl').value);
+        const isAudiobook = document.getElementById('audiobookMode').checked;
+        
+        // Parse segments for voice changes
+        const segments = parseMultiVoiceText(text, voiceName);
+        
+        let currentIndex = 0;
+        
+        function speakNext() {
+          if (currentIndex >= segments.length) return;
+          
+          const seg = segments[currentIndex];
+          const cleanText = seg.text.trim();
+          if (!cleanText) {
+            currentIndex++;
+            speakNext();
+            return;
+          }
+
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          
+          // Find the voice
+          if (seg.voice) {
+            const voice = webSpeechVoices.find(v => v.name === seg.voice);
+            if (voice) utterance.voice = voice;
+          } else if (voiceName) {
+            const voice = webSpeechVoices.find(v => v.name === voiceName);
+            if (voice) utterance.voice = voice;
+          }
+          
+          utterance.rate = speed;
+          utterance.lang = utterance.voice?.lang || 'ko-KR';
+
+          utterance.onend = () => {
+            currentIndex++;
+            // Add pause between segments if audiobook mode
+            if (isAudiobook && currentIndex < segments.length) {
+              const pauseUtterance = new SpeechSynthesisUtterance('');
+              pauseUtterance.rate = 1;
+              // Very short pause - using a short utterance as delay
+              setTimeout(() => speakNext(), 500);
+            } else {
+              speakNext();
+            }
+          };
+          
+          utterance.onerror = (e) => {
+            console.error('Speech error:', e);
+            currentIndex++;
+            speakNext();
+          };
+
+          speechSynthesis.speak(utterance);
+        }
+
+        // Show download option note (Web Speech API can't easily generate MP3)
+        document.getElementById('btnDownloadMp3').style.display = 'none';
+        document.getElementById('btnDownloadSrt').style.display = 'none';
+        
+        // Create a simple WAV blob placeholder for download button (user can use browser recording)
+        lastGeneratedAudioBlob = null;
+        lastGeneratedSrtBlob = null;
+        
+        // For subtitle generation with Web Speech
+        const subtitleData = segments.map((seg, i) => ({
+          start: i * 2, // approximate
+          end: (i + 1) * 2,
+          text: seg.text.trim()
+        }));
+
+        // Prepare SRT for download if needed
+        if (subtitleData.length > 0) {
+          let srtContent = "";
+          subtitleData.forEach((sub, index) => {
+            srtContent += `${index + 1}\n`;
+            srtContent += `${formatSrtTime(sub.start)} --> ${formatSrtTime(sub.end)}\n`;
+            srtContent += `${sub.text}\n\n`;
+          });
+          lastGeneratedSrtBlob = new Blob([srtContent], { type: 'text/plain' });
+        }
+
+        speakNext();
+      }
+
+      async function readWithSupertonic(text) {
+        const defaultVoiceVal = document.getElementById('voiceSelect').value;
+        const speed = parseFloat(document.getElementById('speedControl').value);
+        const steps = parseInt(document.getElementById('qualityControl').value) || 5;
+        const isAudiobook = document.getElementById('audiobookMode').checked;
+
+        const pipeline = await initSupertonic();
+        if (!pipeline) throw new Error("TTS 엔진 초기화 실패");
+
+        const segments = parseMultiVoiceText(text, defaultVoiceVal);
+        let combinedAudio = [];
+        let subtitleData = [];
+        let currentOffsetTime = 0;
+        let sampleRate = 16000;
+
+        const mapping = {
+          '아이 여': 'F1', '소녀': 'F1', 'F1': 'F1',
+          '나래이터': 'F2', 'F2': 'F2',
+          '여성 실무': 'F3', 'F3': 'F3',
+          '성인 여': 'F4', '다정': 'F4', 'F4': 'F4',
+          '노인 여': 'F5', '강단': 'F5', 'F5': 'F5',
+          '성인 남': 'M1', '신뢰': 'M1', 'M1': 'M1',
+          '노인 남': 'M2', '중후': 'M2', 'M2': 'M2',
+          '아이 남': 'M3', '활기': 'M3', 'M3': 'M3',
+          '성인 남2': 'M4', '강직': 'M4', 'M4': 'M4',
+          '남성 거친': 'M5', '거친': 'M5', 'M5': 'M5'
+        };
+
+        for (const seg of segments) {
+          const cleanText = seg.text.trim();
+          if (!cleanText) continue;
+
+          let speakerId = mapping[seg.voice] || mapping[defaultVoiceVal] || 'F1';
+          const embeddingUrl = `https://huggingface.co/onnx-community/Supertonic-TTS-2-ONNX/resolve/main/voices/${speakerId}.bin`;
+
+          // Split by sentences if audiobook mode is on
+          const textParts = isAudiobook ? cleanText.split(/([.!?\n]+)/) : [cleanText];
+
+          for (let i = 0; i < textParts.length; i++) {
+            const part = textParts[i].trim();
+            if (!part) continue;
+
+            // If it's punctuation, add pause based on it
+            if (/^[.!?\n]+$/.test(part)) {
+              let pauseSec = 0.5; // Default sentence pause (increased from 0.4)
+              if (part.includes('\n')) pauseSec = 1.0; // Paragraph pause (increased from 0.8)
+
+              const pauseSamples = Math.floor(pauseSec * sampleRate);
+              combinedAudio.push(new Float32Array(pauseSamples));
+              currentOffsetTime += pauseSec;
+              continue;
+            }
+
+            const output = await pipeline(`<ko>${part}</ko>`, {
+              speaker_embeddings: embeddingUrl,
+              num_inference_steps: steps,
+              speed: speed
+            });
+
+            if (output && output.audio) {
+              sampleRate = output.sampling_rate;
+              const duration = output.audio.length / sampleRate;
+              subtitleData.push({ start: currentOffsetTime, end: currentOffsetTime + duration, text: part });
+              combinedAudio.push(output.audio);
+              currentOffsetTime += duration;
+            }
+          }
+
+          // Extra pause after a segment/speaker change
+          if (isAudiobook) {
+            const segPause = 0.5;
+            combinedAudio.push(new Float32Array(Math.floor(segPause * sampleRate)));
+            currentOffsetTime += segPause;
+          }
+        }
+
+        const totalLength = combinedAudio.reduce((acc, curr) => acc + curr.length, 0);
+        const finalAudio = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of combinedAudio) { finalAudio.set(chunk, offset); offset += chunk.length; }
+
+        playAudio(finalAudio, sampleRate);
+        prepareDownload(finalAudio, sampleRate, subtitleData);
+      }
+
+      // Override parseMultiVoiceText to use web speech voice names
+      function parseMultiVoiceTextVoice(text, defaultVoice) {
+        return parseMultiVoiceText(text, defaultVoice);
       }
 
       function prepareDownload(audioData, sampleRate, subtitleData) {
