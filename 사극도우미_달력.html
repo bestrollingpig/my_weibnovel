@@ -1368,22 +1368,84 @@ function getLunarDay(date) {
 ============================================= */
 const STEM = ["갑","을","병","정","무","기","경","신","임","계"];
 const BRANCH = ["자","축","인","묘","진","사","오","미","신","유","술","해"];
-const GANJI_60 = [];
-for(let i=0;i<60;i++) GANJI_60.push(STEM[i%10]+BRANCH[i%12]);
 
-function getYearGanji(y){ return GANJI_60[(y-4+3600)%60]; }
-function getMonthGanji(y,m){ 
-  // 월간지는 연간지에 따라 변동 (간단히 계산)
-  const yearGanji = getYearGanji(y);
-  const yearStemIndex = STEM.indexOf(yearGanji[0]);
-  const monthStemIndex = (yearStemIndex * 2 + m) % 10;
-  const monthBranchIndex = (m + 1) % 12;
-  return STEM[monthStemIndex] + BRANCH[monthBranchIndex];
+const GANJI_60 = [
+  "갑자","을축","병인","정묘","무진","기사","경오","신미","임신","계유",
+  "갑술","을해","병자","정축","무인","기묘","경진","신사","임오","계미",
+  "갑신","을유","병술","정해","무자","기축","경인","신묘","임진","계사",
+  "갑오","을미","병신","정유","무술","기해","경자","신축","임인","계묘",
+  "갑진","을사","병오","정미","무신","기유","경술","신해","임자","계축",
+  "갑인","을묘","병진","정사","무오","기미","경신","신유","임술","계해"
+];
+
+function getYearGanji(y){
+  if(y==null || typeof y!=='number') return "??";
+  const index = ((y-4+3600)%60+60)%60;
+  if(!GANJI_60 || !GANJI_60[index]) return "??";
+  return GANJI_60[index];
+}
+function getMonthGanji(y,m){
+  try {
+    const yearGanji = getYearGanji(y);
+    if(yearGanji==="??") return "??";
+    const yearStemIndex = STEM.indexOf(yearGanji[0]);
+    if(yearStemIndex===-1) return "??";
+    const monthStemIndex = (yearStemIndex*2+m)%10;
+    const monthBranchIndex = (m+1)%12;
+    return STEM[monthStemIndex]+BRANCH[monthBranchIndex];
+  } catch(e){ return "??"; }
 }
 function getDayGanji(date){
+  if(!date) { console.warn("getDayGanji: date가 null/undefined"); return "??"; }
+  const t = date.getTime();
+  if(isNaN(t)) { console.warn("getDayGanji: Invalid Date"); return "??"; }
   const epoch = new Date(1900,0,1);
-  const diff = Math.floor((date-epoch)/86400000);
-  return GANJI_60[(diff+40)%60];
+  const diff = Math.floor((t-epoch.getTime())/86400000);
+  const index = ((diff+40)%60+60)%60;
+  if(!GANJI_60 || !GANJI_60[index]){
+    console.warn("getDayGanji: GANJI_60 오류", {index, len: GANJI_60?.length});
+    return "??";
+  }
+  return GANJI_60[index];
+}
+
+function getYearGanjiWithAnimal(y){
+  const ganji = getYearGanji(y);
+  if(ganji==="??") return { ganji:"??", animal:"?" };
+  const animals = ["쥐","소","호랑이","토끼","용","뱀","말","양","원숭이","닭","개","돼지"];
+  return { ganji, animal: animals[(y-4+6000)%12] };
+}
+
+const CHINESE_ERA_NAMES = {
+  "洪武":"1368-1398","建文":"1399-1402","永樂":"1403-1424",
+  "洪熙":"1425","宣德":"1426-1435","正統":"1436-1449",
+  "景泰":"1450-1456","天順":"1457-1464","成化":"1465-1487",
+  "弘治":"1488-1505","正德":"1506-1521","嘉靖":"1522-1566",
+  "隆慶":"1567-1572","萬曆":"1573-1620","泰昌":"1620",
+  "天啟":"1621-1627","崇禎":"1628-1644",
+  "順治":"1644-1661","康熙":"1662-1722","雍正":"1723-1735",
+  "乾隆":"1736-1795","嘉慶":"1796-1820","道光":"1821-1850",
+  "咸豐":"1851-1861","同治":"1862-1874","光緒":"1875-1908","宣統":"1909-1911",
+};
+
+function getChineseEra(year){
+  for(const [era, range] of Object.entries(CHINESE_ERA_NAMES)){
+    const [start, end] = range.split('-').map(Number);
+    if(year >= start && year <= (end||start)) return era;
+  }
+  return null;
+}
+
+function getFullYearInfo(year){
+  const ganji = getYearGanji(year);
+  const king = getKing(year);
+  const era = king ? king.name : "조선 이전";
+  const chineseEra = getChineseEra(year);
+  const { animal } = getYearGanjiWithAnimal(year);
+  return {
+    ganji, animal, king, era, chineseEra,
+    display: `${year}년 (${ganji})${chineseEra?` · ${chineseEra}`:''}${king?` · ${king.name}`:''}`,
+  };
 }
 
 /* =============================================
@@ -1448,96 +1510,170 @@ function getHolidays(date) {
 ============================================= */
 const DB = {
   officials:[
-    {name:"영의정",rank:1,desc:"삼정승의 수위, 백관의 으뜸"},
-    {name:"좌의정",rank:2,desc:"영의정 다음의 재상"},
-    {name:"우의정",rank:3,desc:"삼정승의 셋째"},
-    {name:"판서",rank:4,desc:"6조의 장관"},
-    {name:"참판",rank:5,desc:"판서 아래 부장관"},
-    {name:"참의",rank:6,desc:"참판 아래"},
-    {name:"도승지",rank:7,desc:"왕명 출납 담당"},
-    {name:"대사헌",rank:12,desc:"사헌부 수장, 관리 감찰"},
-    {name:"대사간",rank:13,desc:"사간원 수장, 간쟁 담당"},
-    {name:"이조판서",rank:14,desc:"문관 인사 담당"},
-    {name:"병조판서",rank:17,desc:"군사·무관 담당"},
-    {name:"형조판서",rank:18,desc:"법률·형벌 담당"},
-    {name:"관찰사",rank:20,desc:"각 도의 장관"},
-    {name:"목사",rank:22,desc:"목(牧)의 수령"},
-    {name:"군수",rank:24,desc:"군(郡)의 수령"},
-    {name:"현감",rank:25,desc:"현(縣)의 수령"},
-    {name:"참봉",rank:30,desc:"종6품 관직"},
-    {name:"훈도",rank:31,desc:"향교의 교관"},
+    {name:"영의정",rank:"정1품",desc:"삼정승의 수위, 백관의 으뜸",duty:"의정부"},
+    {name:"좌의정",rank:"정1품",desc:"영의정 다음의 재상",duty:"의정부"},
+    {name:"우의정",rank:"정1품",desc:"삼정승의 셋째",duty:"의정부"},
+    {name:"판돈녕부사",rank:"종1품",desc:"왕실 족보 및 의례 담당",duty:"돈녕부"},
+    {name:"판중추부사",rank:"종1품",desc:"국가 중대사 자문",duty:"중추부"},
+    {name:"이조판서",rank:"정2품",desc:"문관 인사 담당",duty:"이조"},
+    {name:"호조판서",rank:"정2품",desc:"재정·호적·곡물 담당",duty:"호조"},
+    {name:"예조판서",rank:"정2품",desc:"의례·교육·외교 담당",duty:"예조"},
+    {name:"병조판서",rank:"정2품",desc:"군사·무관·국방 담당",duty:"병조"},
+    {name:"형조판서",rank:"정2품",desc:"법률·형벌·노비 담당",duty:"형조"},
+    {name:"공조판서",rank:"정2품",desc:"토목·산업·공예 담당",duty:"공조"},
+    {name:"대사헌",rank:"정2품",desc:"사헌부 수장, 관리 감찰",duty:"사헌부"},
+    {name:"참판",rank:"종2품",desc:"각 조의 차관",duty:"6조"},
+    {name:"도승지",rank:"종2품",desc:"왕명 출납, 승정원 수장",duty:"승정원"},
+    {name:"한성부판윤",rank:"종2품",desc:"한양 도시 행정 책임자",duty:"한성부"},
+    {name:"참의",rank:"정3품",desc:"각 조의 참모",duty:"6조"},
+    {name:"집의",rank:"정3품",desc:"사헌부 중진 관원",duty:"사헌부"},
+    {name:"사간",rank:"정3품",desc:"간쟁 담당",duty:"사간원"},
+    {name:"대사성",rank:"정3품",desc:"성균관 수장",duty:"성균관"},
+    {name:"사인",rank:"종3품",desc:"왕의 교서 작성",duty:"승정원"},
+    {name:"교리",rank:"종3품",desc:"경연관, 왕에게 학문 강론",duty:"홍문관"},
+    {name:"응교",rank:"정4품",desc:"홍문관 차관",duty:"홍문관"},
+    {name:"사예",rank:"정4품",desc:"성균관 차관",duty:"성균관"},
+    {name:"장령",rank:"정4품",desc:"사헌부 관원",duty:"사헌부"},
+    {name:"부응교",rank:"종4품",desc:"홍문관 하위 관원",duty:"홍문관"},
+    {name:"사성",rank:"종4품",desc:"성균관 관원",duty:"성균관"},
+    {name:"정언",rank:"정5품",desc:"사간원 하위 관원",duty:"사간원"},
+    {name:"지평",rank:"정5품",desc:"사헌부 하위 관원",duty:"사헌부"},
+    {name:"수찬",rank:"정5품",desc:"홍문관 하위 관원",duty:"홍문관"},
+    {name:"박사",rank:"종5품",desc:"성균관 강의 담당",duty:"성균관"},
+    {name:"전적",rank:"종5품",desc:"성균관 문서 담당",duty:"성균관"},
+    {name:"주서",rank:"정6품",desc:"사간원 문서 담당",duty:"사간원"},
+    {name:"감찰",rank:"정6품",desc:"사헌부 감찰 담당",duty:"사헌부"},
+    {name:"현감",rank:"정6품",desc:"현(縣)의 수령",duty:"지방"},
+    {name:"참봉",rank:"종6품",desc:"종묘·서적 관리",duty:"제각"},
+    {name:"훈도",rank:"종6품",desc:"향교 교관",duty:"지방"},
+    {name:"도사",rank:"정7품",desc:"관찰사 휘하 실무관",duty:"지방"},
+    {name:"주부",rank:"정7품",desc:"각 관청 실무관",duty:"중앙"},
+    {name:"서리",rank:"종7품",desc:"각 관청 서기",duty:"중앙"},
+    {name:"군수",rank:"정8품",desc:"군(郡)의 수령",duty:"지방"},
+    {name:"령",rank:"정8품",desc:"현령(縣令)의 약칭",duty:"지방"},
+    {name:"직장",rank:"종8품",desc:"각 관청 하위 관원",duty:"중앙"},
+    {name:"참군",rank:"정9품",desc:"최하위 관직",duty:"지방"},
+    {name:"검률",rank:"정9품",desc:"법률 담당 하위 관원",duty:"형조"},
+    {name:"도총관",rank:"종2품",desc:"오위도총부 수장",duty:"오위"},
+    {name:"부총관",rank:"정3품",desc:"도총관의 부관",duty:"오위"},
+    {name:"절제사",rank:"정3품",desc:"지방 군사 지휘관",duty:"지방"},
+    {name:"첨절제사",rank:"종3품",desc:"절제사의 부관",duty:"지방"},
+    {name:"만호",rank:"정4품",desc:"진(鎭)의 지휘관",duty:"지방"},
+    {name:"부장",rank:"정5품",desc:"중앙군 중대장",duty:"오위"},
   ],
   status:[
-    {name:"왕",desc:"최고 통치자"},
-    {name:"세자",desc:"왕위 계승자"},
-    {name:"왕비",desc:"왕의 정실"},
-    {name:"대군",desc:"왕의 적자"},
-    {name:"공주",desc:"왕의 적녀"},
-    {name:"군",desc:"왕의 서자"},
-    {name:"옹주",desc:"왕의 서녀"},
-    {name:"양반",desc:"지배 계층"},
-    {name:"유생",desc:"성균관·향교의 유학생"},
-    {name:"선비",desc:"학문을 닦는 선비"},
-    {name:"중인",desc:"의원·역관·화원 등"},
-    {name:"상민",desc:"농·공·상"},
-    {name:"기생",desc:"관기"},
-    {name:"승려",desc:"사찰의 중"},
-    {name:"노비",desc:"사적 소유의 천민"},
-    {name:"의원",desc:"의술을 펼치는 자"},
-    {name:"역관",desc:"통역·번역 담당"},
-    {name:"화원",desc:"그림을 그리는 궁중 화가"},
-    {name:"무사",desc:"무예를 닦는 자"},
+    {name:"왕",desc:"조선의 최고 통치자",type:"왕실"},
+    {name:"왕비",desc:"왕의 정실",type:"왕실"},
+    {name:"대비",desc:"선왕의 왕비",type:"왕실"},
+    {name:"세자",desc:"왕위 계승자",type:"왕실"},
+    {name:"세자빈",desc:"세자의 정실",type:"왕실"},
+    {name:"대군",desc:"왕의 적자",type:"왕실"},
+    {name:"공주",desc:"왕의 적녀",type:"왕실"},
+    {name:"군",desc:"왕의 서자",type:"왕실"},
+    {name:"옹주",desc:"왕의 서녀",type:"왕실"},
+    {name:"부마",desc:"공주·옹주의 남편",type:"왕실"},
+    {name:"양반",desc:"문반과 무반을 통틀어 이르는 지배층",type:"양반"},
+    {name:"문반",desc:"문관 관료",type:"양반"},
+    {name:"무반",desc:"무관 관료",type:"양반"},
+    {name:"사대부",desc:"관료이자 학자",type:"양반"},
+    {name:"유생",desc:"성균관·향교의 유학생",type:"양반"},
+    {name:"선비",desc:"학문을 닦는 지식인",type:"양반"},
+    {name:"퇴계",desc:"관직에서 물러난 선비",type:"양반"},
+    {name:"중인",desc:"양반과 상민 사이의 신분",type:"중인"},
+    {name:"의원",desc:"의술을 펼치는 자",type:"중인"},
+    {name:"역관",desc:"통역·번역 담당",type:"중인"},
+    {name:"화원",desc:"그림을 그리는 화가",type:"중인"},
+    {name:"율관",desc:"법률·사무 담당",type:"중인"},
+    {name:"서리",desc:"관청 서기·실무자",type:"중인"},
+    {name:"기생",desc:"관기, 예술인",type:"중인"},
+    {name:"상민",desc:"일반 백성",type:"상민"},
+    {name:"농민",desc:"농사를 짓는 백성",type:"상민"},
+    {name:"어민",desc:"고기잡이를 하는 백성",type:"상민"},
+    {name:"상인",desc:"장사하는 백성",type:"상민"},
+    {name:"수공업자",desc:"도자기·금속·목공 등",type:"상민"},
+    {name:"승려",desc:"사찰의 중",type:"불교"},
+    {name:"비구니",desc:"여자 승려",type:"불교"},
+    {name:"노비",desc:"사적 소유의 천민",type:"천민"},
+    {name:"공노비",desc:"국가 소유 노비",type:"천민"},
+    {name:"사노비",desc:"개인 소유 노비",type:"천민"},
+    {name:"백정",desc:"도살업자, 천민",type:"천민"},
   ],
   currency:[
-    {name:"냥",desc:"조선 후기 대표 화폐 단위 (약 10전)"},
-    {name:"전",desc:"엽전 한 닢"},
-    {name:"푼",desc:"소액 단위 (1전=10푼)"},
-    {name:"관",desc:"엽전 1,000문의 단위"},
-    {name:"문",desc:"가장 작은 화폐 단위"},
-    {name:"석",desc:"곡물 1섬 (약 144L)"},
-    {name:"두",desc:"곡물 1말 (약 18L)"},
+    {name:"냥",desc:"조선 후기 대표 화폐 단위 (약 10전)",value:"1냥 = 10전 = 100푼"},
+    {name:"전",desc:"엽전 한 닢 (문)",value:"1전 = 1문"},
+    {name:"푼",desc:"소액 단위",value:"1전 = 10푼"},
+    {name:"관",desc:"엽전 1,000문의 단위",value:"1관 = 1000문"},
+    {name:"문",desc:"가장 작은 화폐 단위",value:"1문 = 엽전 1닢"},
+    {name:"은",desc:"은화·은괴, 고액 거래",value:"1냥 = 은 1돈"},
+    {name:"섬",desc:"곡물 단위",value:"1섬 = 10말 (약 144L)"},
+    {name:"말",desc:"곡물 단위",value:"1말 = 10되 (약 18L)"},
+    {name:"되",desc:"곡물 단위",value:"1되 = 10홉 (약 1.8L)"},
+    {name:"홉",desc:"곡물 단위",value:"1홉 (약 0.18L)"},
   ],
   measure:[
-    {name:"말",desc:"곡물 용량 (약 18L)"},
-    {name:"되",desc:"1말의 1/10"},
-    {name:"홉",desc:"1되의 1/10"},
-    {name:"근",desc:"무게 단위 (약 600g)"},
-    {name:"리",desc:"거리 단위 (약 400m)"},
-    {name:"척",desc:"길이 단위 (약 30cm)"},
-    {name:"자",desc:"길이 단위 (약 30cm, 척과 동일)"},
-    {name:"간",desc:"길이 단위 (약 181.8cm)"},
+    {name:"척",desc:"길이 단위 (약 30.3cm)",value:"1척 = 10촌"},
+    {name:"촌",desc:"길이 단위 (약 3.03cm)",value:"1촌 = 10분"},
+    {name:"분",desc:"길이 단위 (약 0.303cm)",value:"1분"},
+    {name:"자",desc:"길이 단위 (척과 동일)",value:"1자 = 1척"},
+    {name:"보",desc:"길이 단위 (약 181.8cm)",value:"1보 = 6척"},
+    {name:"간",desc:"길이 단위 (약 181.8cm)",value:"1간 = 1보"},
+    {name:"리",desc:"거리 단위 (약 400m)",value:"1리 = 10정"},
+    {name:"정",desc:"거리 단위 (약 40m)",value:"1정 = 10장"},
+    {name:"장",desc:"거리 단위 (약 4m)",value:"1장 = 10척"},
+    {name:"근",desc:"무게 단위 (약 600g)",value:"1근 = 16냥"},
+    {name:"냥(중량)",desc:"무게 단위 (약 37.5g)",value:"1냥 = 10돈"},
+    {name:"돈",desc:"무게 단위 (약 3.75g)",value:"1돈 = 10푼"},
+    {name:"평",desc:"면적 단위 (약 3.3㎡)",value:"1평 = 6자×6자"},
   ],
   foods:[
-    {name:"떡국",desc:"설날에 먹는 흰 떡국"},
-    {name:"수라",desc:"왕의 식사"},
-    {name:"약과",desc:"꿀과 참기름으로 만든 과자"},
-    {name:"송편",desc:"추석에 빚는 떡"},
-    {name:"식혜",desc:"엿기름으로 발효한 음료"},
-    {name:"수정과",desc:"생강·계피·곶감 음료"},
-    {name:"비빔밥",desc:"나물과 고추장을 섞은 밥"},
-    {name:"육포",desc:"말린 고기"},
-    {name:"편육",desc:"삶은 고기를 썰어낸 것"},
-    {name:"두부",desc:"콩으로 만든 음식"},
-    {name:"죽",desc:"묽게 끓인 밥"},
-    {name:"곶감",desc:"말린 감"},
-    {name:"인절미",desc:"찹쌀떡에 콩고물을 묻힌 떡"},
-    {name:"화전",desc:"진달래 꽃잎을 얹은 전"},
-    {name:"막걸리",desc:"전통 술"},
-    {name:"감주",desc:"식혜와 비슷한 단술"},
+    {name:"떡국",desc:"설날에 먹는 흰 떡국",season:"겨울"},
+    {name:"수라",desc:"왕의 정식 식사",type:"궁중"},
+    {name:"약과",desc:"꿀과 참기름으로 만든 과자",type:"한과"},
+    {name:"송편",desc:"추석에 빚는 떡",season:"가을"},
+    {name:"식혜",desc:"엿기름으로 발효한 음료",type:"음료"},
+    {name:"수정과",desc:"생강·계피·곶감 음료",type:"음료"},
+    {name:"비빔밥",desc:"나물과 고추장을 섞은 밥",type:"밥"},
+    {name:"육포",desc:"말린 고기",type:"보관식"},
+    {name:"편육",desc:"삶은 고기를 썰어낸 것",type:"반찬"},
+    {name:"두부",desc:"콩으로 만든 음식",type:"반찬"},
+    {name:"죽",desc:"묽게 끓인 밥",type:"죽"},
+    {name:"곶감",desc:"말린 감",type:"과일"},
+    {name:"인절미",desc:"찹쌀떡에 콩고물을 묻힌 떡",type:"떡"},
+    {name:"화전",desc:"진달래 꽃잎을 얹은 전",season:"봄"},
+    {name:"막걸리",desc:"전통 술",type:"술"},
+    {name:"감주",desc:"식혜와 비슷한 단술",type:"술"},
+    {name:"전",desc:"부침개",type:"반찬"},
+    {name:"잡채",desc:"채소와 고기를 섞은 요리",type:"반찬"},
+    {name:"갈비찜",desc:"갈비를 간장에 조린 요리",type:"찜"},
+    {name:"신선로",desc:"궁중 전골 요리",type:"궁중"},
+    {name:"김치",desc:"배추·무 등을 절인 저장식품",type:"반찬"},
+    {name:"된장",desc:"메주로 만든 장",type:"장"},
+    {name:"간장",desc:"메주로 만든 장",type:"장"},
+    {name:"고추장",desc:"고추로 만든 장",type:"장"},
+    {name:"메주",desc:"콩으로 만든 장의 기본 재료",type:"재료"},
   ],
   nature:[
-    {name:"매화",desc:"이른 봄 피는 꽃"},
-    {name:"대나무",desc:"사군자의 하나, 절개의 상징"},
-    {name:"소나무",desc:"절개와 長壽의 상징"},
-    {name:"안개",desc:"새벽 강가에 피어오르는 안개"},
-    {name:"달빛",desc:"밤을 밝히는 은빛 달"},
-    {name:"억새",desc:"가을 들판의 은빛 풀"},
-    {name:"노을",desc:"해 질 무렵 붉게 물든 하늘"},
-    {name:"설원",desc:"눈 덮인 들판"},
-    {name:"운해",desc:"산 아래 펼쳐지는 구름바다"},
-    {name:"난초",desc:"은은한 향기를 가진 꽃"},
-    {name:"국화",desc:"가을을 대표하는 꽃"},
-    {name:"벚꽃",desc:"봄을 알리는 꽃"},
+    {name:"매화",desc:"이른 봄 피는 꽃",season:"봄",symbol:"고결"},
+    {name:"대나무",desc:"사군자의 하나, 절개의 상징",season:"사계절",symbol:"절개"},
+    {name:"소나무",desc:"절개와 장수의 상징",season:"사계절",symbol:"장수"},
+    {name:"안개",desc:"새벽 강가에 피어오르는 안개",season:"봄·가을"},
+    {name:"달빛",desc:"밤을 밝히는 은빛 달",season:"사계절"},
+    {name:"억새",desc:"가을 들판의 은빛 풀",season:"가을"},
+    {name:"노을",desc:"해 질 무렵 붉게 물든 하늘",season:"사계절"},
+    {name:"설원",desc:"눈 덮인 들판",season:"겨울"},
+    {name:"운해",desc:"산 아래 펼쳐지는 구름바다",season:"여름·가을"},
+    {name:"난초",desc:"은은한 향기를 가진 꽃",season:"봄",symbol:"군자"},
+    {name:"국화",desc:"가을을 대표하는 꽃",season:"가을",symbol:"절개"},
+    {name:"벚꽃",desc:"봄을 알리는 꽃",season:"봄"},
+    {name:"모란",desc:"부귀와 영화의 상징",season:"봄",symbol:"부귀"},
+    {name:"연꽃",desc:"청정과 불교의 상징",season:"여름",symbol:"청정"},
+    {name:"단풍",desc:"가을의 붉은 단풍",season:"가을"},
+    {name:"매화나무",desc:"겨울을 이겨내는 나무",season:"겨울",symbol:"인내"},
+    {name:"봄비",desc:"만물을 깨우는 봄비",season:"봄"},
+    {name:"장마",desc:"여름철 집중 호우",season:"여름"},
+    {name:"서리",desc:"가을·겨울의 차가운 이슬",season:"가을·겨울"},
+    {name:"폭포",desc:"절벽에서 떨어지는 물줄기",season:"사계절"},
+    {name:"계곡",desc:"산골짜기의 물줄기",season:"사계절"},
   ],
   expressions:[
     {title:"경례",text:"소신, 명을 받들겠사옵니다."},
@@ -1559,41 +1695,183 @@ const DB = {
     {title:"작별",text:"돌아서는 그 순간, 바람이 그리움을 실어 날랐다."},
   ],
   culture:[
-    {name:"설날",desc:"음력 1월 1일. 차례를 지내고 세배를 올림."},
-    {name:"정월대보름",desc:"음력 1월 15일. 부럼 깨기, 귀밝이술."},
-    {name:"단오",desc:"음력 5월 5일. 창포물에 머리를 감고 그네를 탐."},
-    {name:"추석",desc:"음력 8월 15일. 조상을 기리고 송편을 빚음."},
-    {name:"동지",desc:"팥죽을 쑤어 악귀를 쫓는 작은설."},
-    {name:"한식",desc:"동지 후 105일. 불을 쓰지 않고 찬 음식."},
-    {name:"삼짇날",desc:"음력 3월 3일. 진달래 화전을 부쳐 먹음."},
-    {name:"칠석",desc:"음력 7월 7일. 견우와 직녀 설화."},
-    {name:"시월상달",desc:"음력 10월. 가신(家神)고사를 지내는 달."},
-    {name:"섣달그믐",desc:"음력 12월 마지막 날. 수세(守歲)로 밤샘."},
-    {name:"장날",desc:"오일장이 열리는 날. 5일마다 한 번."},
-    {name:"혼례",desc:"전통 혼례 절차. 사주·납폐·초례."},
-    {name:"기우제",desc:"가뭄에 비를 기원하는 국가 제사."},
-    {name:"제사",desc:"조상의 영혼에 음식을 차려 올리는 의식."},
-    {name:"성균관",desc:"조선 최고의 교육 기관."},
-    {name:"과거",desc:"관리 선발 시험. 문과·무과·잡과."},
+    {name:"설날",desc:"음력 1월 1일. 차례를 지내고 세배를 올림.",lunar:"1월 1일"},
+    {name:"정월대보름",desc:"음력 1월 15일. 부럼 깨기, 귀밝이술.",lunar:"1월 15일"},
+    {name:"삼짇날",desc:"음력 3월 3일. 진달래 화전을 부쳐 먹음.",lunar:"3월 3일"},
+    {name:"한식",desc:"동지 후 105일. 불을 쓰지 않고 찬 음식.",lunar:"동지 후 105일"},
+    {name:"단오",desc:"음력 5월 5일. 창포물에 머리를 감고 그네를 탐.",lunar:"5월 5일"},
+    {name:"칠석",desc:"음력 7월 7일. 견우와 직녀 설화.",lunar:"7월 7일"},
+    {name:"백중",desc:"음력 7월 15일. 중원절, 조상 제사.",lunar:"7월 15일"},
+    {name:"추석",desc:"음력 8월 15일. 조상을 기리고 송편을 빚음.",lunar:"8월 15일"},
+    {name:"중양절",desc:"음력 9월 9일. 국화주를 마심.",lunar:"9월 9일"},
+    {name:"시월상달",desc:"음력 10월. 가신(家神)고사를 지내는 달.",lunar:"10월"},
+    {name:"동지",desc:"팥죽을 쑤어 악귀를 쫓는 작은설.",lunar:"11월"},
+    {name:"섣달그믐",desc:"음력 12월 마지막 날. 수세(守歲)로 밤샘.",lunar:"12월 30일"},
+    {name:"장날",desc:"오일장이 열리는 날. 5일마다 한 번.",type:"상업"},
+    {name:"혼례",desc:"전통 혼례 절차. 사주·납폐·초례.",type:"의례"},
+    {name:"기우제",desc:"가뭄에 비를 기원하는 국가 제사.",type:"제사"},
+    {name:"제사",desc:"조상의 영혼에 음식을 차려 올리는 의식.",type:"제사"},
+    {name:"성균관",desc:"조선 최고의 교육 기관.",type:"교육"},
+    {name:"과거",desc:"관리 선발 시험. 문과·무과·잡과.",type:"교육"},
+    {name:"향교",desc:"지방 교육 기관.",type:"교육"},
+    {name:"서원",desc:"사설 교육 기관.",type:"교육"},
+    {name:"종묘",desc:"왕실 조상 제사를 지내는 곳.",type:"제사"},
+    {name:"사직",desc:"국가 제사를 지내는 곳.",type:"제사"},
+    {name:"원님이",desc:"음력 8월 보름 전후 행해지는 놀이.",type:"놀이"},
+    {name:"줄다리기",desc:"정월 대보름에 행해지는 민속 놀이.",type:"놀이"},
+    {name:"그네타기",desc:"단오에 행해지는 여성 놀이.",type:"놀이"},
+    {name:"씨름",desc:"전통 레슬링.",type:"놀이"},
   ],
   clothes:[
-    {name:"한복",desc:"조선 시대 대표 의복"},
-    {name:"도포",desc:"선비가 입는 겉옷"},
-    {name:"저고리",desc:"상의"},
-    {name:"치마",desc:"여성 하의"},
-    {name:"바지",desc:"남성 하의"},
-    {name:"갓",desc:"양반이 쓰는 모자"},
-    {name:"족두리",desc:"여성이 쓰는 머리장식"},
-    {name:"용포",desc:"왕이 입는 관복"},
-    {name:"흑립",desc:"유생이 쓰는 모자"},
+    {name:"면복",desc:"왕이 제사 때 입는 예복",type:"관복",wearer:"왕"},
+    {name:"조복",desc:"왕이 조회 때 입는 관복",type:"관복",wearer:"왕"},
+    {name:"곤룡포",desc:"왕의 일상복, 용문양",type:"관복",wearer:"왕"},
+    {name:"익선관",desc:"왕이 쓰는 관",type:"관복",wearer:"왕"},
+    {name:"사모",desc:"관료가 쓰는 관",type:"관복",wearer:"관료"},
+    {name:"흑립",desc:"유생이 쓰는 모자",type:"관복",wearer:"유생"},
+    {name:"관복",desc:"관료의 공복",type:"관복",wearer:"관료"},
+    {name:"흉배",desc:"관복 앞에 다는 장식",type:"관복",wearer:"관료"},
+    {name:"한복",desc:"조선 시대 대표 의복",type:"일상복"},
+    {name:"도포",desc:"선비가 입는 겉옷",type:"일상복",wearer:"선비"},
+    {name:"창의",desc:"도포와 비슷한 겉옷",type:"일상복"},
+    {name:"심의",desc:"유생들이 입는 옷",type:"일상복",wearer:"유생"},
+    {name:"저고리",desc:"상의",type:"일상복"},
+    {name:"치마",desc:"여성 하의",type:"일상복",wearer:"여성"},
+    {name:"바지",desc:"남성 하의",type:"일상복",wearer:"남성"},
+    {name:"마고자",desc:"겨울용 겉옷",type:"일상복"},
+    {name:"두루마기",desc:"외출용 겉옷",type:"일상복"},
+    {name:"갓",desc:"양반이 쓰는 모자",type:"모자",wearer:"양반"},
+    {name:"방건",desc:"갓 안에 쓰는 모자",type:"모자"},
+    {name:"족두리",desc:"여성이 쓰는 머리장식",type:"모자",wearer:"여성"},
+    {name:"화관",desc:"혼례 때 신부가 쓰는 관",type:"모자",wearer:"여성"},
+    {name:"전모",desc:"여성의 얼굴 가리는 모자",type:"모자",wearer:"여성"},
+    {name:"혜",desc:"가죽신",type:"신발"},
+    {name:"화",desc:"군복용 신발",type:"신발"},
+    {name:"미투리",desc:"짚신",type:"신발"},
+    {name:"당혜",desc:"비단신",type:"신발"},
   ],
   weapons:[
-    {name:"활",desc:"조선의 주력 무기"},
-    {name:"화살",desc:"활에 사용"},
-    {name:"칼",desc:"근접 무기"},
-    {name:"창",desc:"장병기"},
-    {name:"총통",desc:"화약 무기"},
-    {name:"승자총통",desc:"조선의 개인화기"},
+    {name:"각궁",desc:"조선의 주력 활",type:"원거리"},
+    {name:"편전",desc:"짧은 화살",type:"원거리"},
+    {name:"장전",desc:"긴 화살",type:"원거리"},
+    {name:"승자총통",desc:"조선의 개인 화기",type:"화기"},
+    {name:"천자총통",desc:"대형 화포",type:"화기"},
+    {name:"지자총통",desc:"중형 화포",type:"화기"},
+    {name:"화살",desc:"활에 사용하는 화살",type:"원거리"},
+    {name:"환도",desc:"조선군 주력 칼",type:"근접"},
+    {name:"장검",desc:"긴 칼",type:"근접"},
+    {name:"단검",desc:"짧은 칼",type:"근접"},
+    {name:"창",desc:"장병기",type:"근접"},
+    {name:"당파",desc:"삼지창 형태의 무기",type:"근접"},
+    {name:"완월",desc:"낫 모양의 무기",type:"근접"},
+    {name:"곤봉",desc:"둔기",type:"근접"},
+    {name:"두정갑",desc:"쇠못이 박힌 갑옷",type:"방어"},
+    {name:"면제갑",desc:"면으로 만든 갑옷",type:"방어"},
+    {name:"투구",desc:"머리 보호구",type:"방어"},
+    {name:"방패",desc:"방패",type:"방어"},
+    {name:"기마",desc:"말",type:"기타"},
+    {name:"전쟁수레",desc:"전쟁용 수레",type:"기타"},
+  ],
+};
+
+/* =============================================
+   역사적 사건 데이터
+============================================= */
+const HISTORICAL_EVENTS = {
+  "57": "신라 건국 (박혁거세)",
+  "37": "고구려 건국 (동명성왕)",
+  "18": "백제 건국 (온조왕)",
+  "660": "백제 멸망 (나당연합군)",
+  "668": "고구려 멸망 (나당연합군)",
+  "676": "신라 삼국 통일",
+  "918": "고려 건국 (왕건)",
+  "936": "후삼국 통일",
+  "1231": "몽골 침입 (1차)",
+  "1259": "고려-몽골 강화",
+  "1270": "삼별초 항쟁",
+  "1388": "위화도 회군 (이성계)",
+  "1392": "조선 건국 (이성계)",
+  "1394": "한양 천도",
+  "1402": "호패법 실시",
+  "1418": "세종 즉위",
+  "1420": "집현전 설치",
+  "1443": "훈민정음 창제",
+  "1446": "훈민정음 반포",
+  "1455": "세조 즉위 (계유정난)",
+  "1498": "무오사화",
+  "1504": "갑자사화",
+  "1519": "기묘사화 (조광조)",
+  "1545": "을사사화",
+  "1592": "임진왜란 발발",
+  "1593": "제1차 진주성 전투",
+  "1597": "정유재란",
+  "1598": "노량해전 (이순신 전사)",
+  "1623": "인조반정",
+  "1636": "병자호란",
+  "1637": "삼전도의 굴욕",
+  "1724": "영조 즉위",
+  "1752": "균역법 시행",
+  "1776": "정조 즉위",
+  "1792": "신해통공 (상업 개혁)",
+  "1800": "정조 승하",
+  "1811": "홍경래의 난",
+  "1862": "임술민란",
+  "1863": "고종 즉위",
+  "1866": "병인양요",
+  "1871": "신미양요",
+  "1876": "강화도 조약 체결",
+  "1882": "임오군란",
+  "1884": "갑신정변",
+  "1894": "동학농민운동",
+  "1894": "갑오개혁",
+  "1895": "명성황후 시해 (을미사변)",
+  "1897": "대한제국 선포",
+  "1905": "을사늑약",
+  "1907": "고종 퇴위 (헤이그 특사)",
+  "1910": "한일병합",
+};
+
+/* =============================================
+   조선 8도 데이터
+============================================= */
+const PROVINCES = [
+  {name:"경기도",center:"한양",desc:"조선의 중심, 수도 한양이 위치"},
+  {name:"충청도",center:"공주",desc:"중부 지방, 논농사가 발달"},
+  {name:"전라도",center:"전주",desc:"남서부, 곡창 지대"},
+  {name:"경상도",center:"경주",desc:"동남부, 교통 요충지"},
+  {name:"강원도",center:"원주",desc:"동북부, 산악 지대"},
+  {name:"황해도",center:"해주",desc:"서북부, 개성 인근"},
+  {name:"평안도",center:"평양",desc:"북서부, 국경 지대"},
+  {name:"함경도",center:"함흥",desc:"북동부, 두만강 접경"},
+];
+
+/* =============================================
+   날씨/기후 패턴 데이터
+============================================= */
+const WEATHER_PATTERNS = {
+  봄: [
+    {desc:"화창한 봄날",emoji:"☀️",detail:"바람이 산뜻하고 꽃이 피기 시작한다."},
+    {desc:"봄비 내리는 날",emoji:"🌧️",detail:"잔비가 내려 대지를 적신다."},
+    {desc:"꽃바람 부는 날",emoji:"🌸",detail:"벚꽃이 흩날리는 봄날."},
+    {desc:"안개 낀 새벽",emoji:"🌫️",detail:"아침 안개가 산허리를 감싼다."},
+  ],
+  여름: [
+    {desc:"무더운 한여름",emoji:"☀️",detail:"뜨거운 태양이 내리쬔다."},
+    {desc:"장마철",emoji:"🌧️",detail:"하루 종일 비가 내린다."},
+    {desc:"초여름 날씨",emoji:"⛅",detail:"더위가 시작되기 전의 선선한 날."},
+    {desc:"번개와 천둥",emoji:"⚡",detail:"여름 소나기가 몰아친다."},
+  ],
+  가을: [
+    {desc:"쾌청한 가을",emoji:"☀️",detail:"하늘이 높고 푸르다."},
+    {desc:"단풍 든 날",emoji:"🍁",detail:"산이 붉게 물들었다."},
+    {desc:"쌀쌀한 가을 아침",emoji:"🌬️",detail:"아침저녁으로 쌀쌀한 기운이 감돈다."},
+    {desc:"이슬 내린 날",emoji:"💧",detail:"풀잎에 이슬이 맺혔다."},
+  ],
+  겨울: [
+    {desc:"눈 내리는 날",emoji:"❄️",detail:"하얀 눈이 세상을 덮는다."},
+    {desc:"추위가 매서운 날",emoji:"🥶",detail:"입김이 하얗게 피어오른다."},
+    {desc:"얼음이 언 날",emoji:"🧊",detail:"냇물이 꽁꽁 얼어붙었다."},
+    {desc:"햇살이 드문 겨울",emoji:"☁️",detail:"구름 낀 흐린 겨울날."},
   ],
 };
 
@@ -1722,6 +2000,17 @@ function buildCalendar(){
   const badge = $("seasonBadge");
   badge.className = "season-badge season-"+season;
   badge.textContent = season;
+
+  // 간지 + 띠 표시
+  let yearInfoEl = document.querySelector('.year-info');
+  if(!yearInfoEl){
+    yearInfoEl = document.createElement('span');
+    yearInfoEl.className = 'year-info';
+    yearInfoEl.style.cssText = 'font-size:11px;color:var(--accent-dim);margin-left:8px;';
+    badge.parentNode.insertBefore(yearInfoEl, badge);
+  }
+  const info = getYearGanjiWithAnimal(STATE.year);
+  yearInfoEl.textContent = `· ${info.ganji} (${info.animal}띠)`;
 }
 
 /* =============================================
@@ -1760,8 +2049,22 @@ function showDateDetail(date){
       <div class="info-block-title">👑 왕조 정보</div>
       ${(function(){
         const king = getKing(y);
-        if(king) return `<div class="info-row"><span class="info-label">재위</span><span class="info-val accent">${king.name} (${king.reign})</span></div>`;
-        return `<div class="info-row"><span class="info-label">재위</span><span class="info-val">조선 건국 이전</span></div>`;
+        const info = getYearGanjiWithAnimal(y);
+        const chineseEra = getChineseEra(y);
+        let r = `<div class="info-row"><span class="info-label">간지</span><span class="info-val accent">${info.ganji} (${info.animal}띠)</span></div>`;
+        if(chineseEra) r += `<div class="info-row"><span class="info-label">중국 연호</span><span class="info-val">${chineseEra}</span></div>`;
+        if(king) r += `<div class="info-row"><span class="info-label">재위</span><span class="info-val">${king.name} (${king.reign})</span></div>`;
+        else r += `<div class="info-row"><span class="info-label">재위</span><span class="info-val">조선 건국 이전</span></div>`;
+        return r;
+      })()}
+    </div>
+
+    <div class="info-block">
+      <div class="info-block-title">📜 역사적 사건</div>
+      ${(function(){
+        const ev = HISTORICAL_EVENTS[String(y)];
+        if(ev) return `<div class="info-row"><span class="info-label">${y}년</span><span class="info-val red">${ev}</span></div>`;
+        return `<div class="info-row"><span class="info-label">${y}년</span><span class="info-val">특별한 사건이 기록되지 않았습니다.</span></div>`;
       })()}
     </div>
   `;
@@ -1859,6 +2162,8 @@ const DICT_CATEGORIES = [
   {label:"🎎 풍속",key:"culture"},
   {label:"👘 복식",key:"clothes"},
   {label:"⚔️ 무기",key:"weapons"},
+  {label:"🏯 지명",key:"provinces"},
+  {label:"🌤️ 날씨",key:"weather"},
 ];
 
 function buildDictTags(){
@@ -1895,13 +2200,30 @@ function doSearch(keyword, categoryKey){
 
   const all = [];
   const searchFields = ["name", "title", "desc", "text", "label"];
+  const dataLookup = {
+    provinces: PROVINCES,
+    weather: WEATHER_PATTERNS,
+  };
 
   // 모든 카테고리에서 검색
   for(const cat of DICT_CATEGORIES){
     // 특정 카테고리만 필터링
     if(categoryKey && cat.key !== categoryKey) continue;
     
-    for(const item of DB[cat.key]){
+    let source = dataLookup[cat.key] || DB[cat.key];
+    
+    // WEATHER_PATTERNS는 중첩 객체이므로 평탄화
+    let items = source;
+    if(cat.key === "weather" && !Array.isArray(source)){
+      items = [];
+      for(const season of Object.keys(source)){
+        for(const w of source[season]){
+          items.push({name: w.desc, desc: w.detail, emoji: w.emoji, season: season});
+        }
+      }
+    }
+    
+    for(const item of items){
       // 카테고리 직접 선택 시 키워드 없이 전체 출력
       const match = categoryKey ? true : searchFields.some(field => {
         const val = item[field];
@@ -2016,14 +2338,19 @@ function updateClock(){
 ============================================= */
 const SAVE_KEY = "sageukcalendar_v3";
 function save(){
-  localStorage.setItem(SAVE_KEY, JSON.stringify({
-    state: STATE,
+  const saveData = {
+    state: {
+      year: STATE.year,
+      month: STATE.month,
+      selected: STATE.selected ? STATE.selected.toISOString() : null
+    },
     title: $("novelTitle").value,
     era: $("eraName").value,
     country: $("countryName").value,
     memo: $("memo").value,
     theme: localStorage.getItem('theme') || 'classic'
-  }));
+  };
+  localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
 }
 function loadSave(){
   const raw = localStorage.getItem(SAVE_KEY);
