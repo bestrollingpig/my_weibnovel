@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>완벽한 따옴표 교정기 (문맥 및 HTML 보호)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 2em;
+      line-height: 1.6;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 2.5em;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    h1 {
+      font-size: 1.8rem;
+      color: #111;
+      margin-top: 0;
+      margin-bottom: 0.5em;
+      border-bottom: 2px solid #edf2f7;
+      padding-bottom: 0.5em;
+    }
+    h2 {
+      font-size: 1.3rem;
+      color: #2d3748;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    p, li {
+      color: #4a5568;
+      font-size: 0.95rem;
+    }
+    code {
+      background: #edf2f7;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85em;
+      color: #e53e3e;
+    }
+    .info-box {
+      background-color: #ebf8ff;
+      border-left: 4px solid #3182ce;
+      padding: 1em;
+      border-radius: 4px;
+      margin-bottom: 1.5em;
+    }
+    textarea {
+      width: 100%;
+      height: 180px;
+      margin-bottom: 1em;
+      box-sizing: border-box;
+      padding: 12px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+    }
+    .btn-group {
+      margin-bottom: 1.5em;
+    }
+    button {
+      padding: 0.6em 1.3em;
+      margin-right: 0.5em;
+      cursor: pointer;
+      border-radius: 6px;
+      border: none;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+    }
+    .btn-primary {
+      background-color: #3182ce;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #2b6cb0;
+    }
+    .btn-secondary {
+      background-color: #e2e8f0;
+      color: #4a5568;
+    }
+    .btn-secondary:hover {
+      background-color: #cbd5e0;
+    }
+    #output, #log {
+      white-space: pre-wrap;
+      border: 1px solid #e2e8f0;
+      padding: 1.2em;
+      margin-top: 0.5em;
+      background: #f7fafc;
+      border-radius: 6px;
+      word-break: break-all;
+      font-size: 0.95rem;
+      min-height: 50px;
+    }
+    #log {
+      font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      color: #4a5568;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      margin-bottom: 4px;
+      border-bottom: 1px dashed #edf2f7;
+      padding-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>따옴표 교정기 (Smart Quotes Fixer)</h1>
+  <div class="info-box">
+    <strong>💡 뒤집힘 및 소스코드 오염 완벽 해결 버전</strong><br>
+    1. <strong>문맥 분석 엔진:</strong> 앞뒤 공백과 조사(은, 는, 이, 가 등)를 분석하여 여는 모양(<code>“</code> <code>‘</code>)과 닫는 모양(<code>”</code> <code>’</code>)이 뒤집히는 현상을 방지합니다.<br>
+    2. <strong>HTML 태그 보호:</strong> 텍스트 내부의 HTML 태그 속성값(<code>href=""</code>, <code>class=""</code>)은 그대로 유지하고 실제 텍스트만 정밀하게 교정합니다.<br>
+    3. <strong>줄바꿈(개행) 지원:</strong> 여러 줄에 걸쳐 작성된 긴 따옴표 대사도 끊김 없이 정확하게 변환합니다.
+  </div>
+
+  <h2>사용 방법</h2>
+  <ol>
+    <li>아래 입력창에 텍스트 또는 HTML 소스코드를 붙여넣습니다.</li>
+    <li><strong>교정하기</strong> 버튼을 누릅니다.</li>
+    <li>교정된 결과와 문맥 분석 로그를 확인하고 <strong>결과 복사</strong>를 누릅니다.</li>
+  </ol>
+
+  <textarea id="input" placeholder="여기에 교정할 텍스트를 입력하거나 HTML 소스를 붙여넣으세요...&#10;예시: '안녕'이라고 말했다. &lt;a href=&quot;#&quot;&gt;'링크'&lt;/a&gt; 테스트."></textarea>
+  
+  <div class="btn-group">
+    <button class="btn-primary" onclick="fixQuotes()">✨ 교정하기</button>
+    <button class="btn-secondary" onclick="copyResult()">📋 결과 복사</button>
+  </div>
+  
+  <h2>교정된 결과</h2>
+  <div id="output"></div>
+
+  <h2>문맥 분석 및 교정 내역</h2>
+  <div id="log">교정 내역이 여기에 표시됩니다.</div>
+</div>
+
+<script>
+  function fixQuotes() {
+    const inputValue = document.getElementById("input").value;
+    if (!inputValue.trim()) {
+      alert("텍스트를 입력해주세요.");
+      return;
+    }
+
+    let log = [];
+
+    // 문맥 기반 따옴표 교정 핵심 함수
+    function smartReplace(text) {
+      let current = text;
+
+      // --- 1단계: 주변 문맥(공백, 조사 등)을 통한 정밀 치환 ---
+      
+      // 큰따옴표 여는 조건: 문장 시작이거나 앞이 공백/괄호이고, 뒤에 공백이 아닐 때
+      current = current.replace(/(?:^|[\s\(\[\{])"(?=\S)/g, function(match) {
+        let replaced = match.replace('"', '“');
+        log.push(`[큰따옴표/열기] 문맥 일치 발견: ${match.trim() || '[시작]'} -> ${replaced.trim()}`);
+        return replaced;
+      });
+
+      // 큰따옴표 닫는 조건: 앞이 공백이 아니고, 뒤가 공백이거나 문장 끝이거나 조사/문장부호일 때
+      current = current.replace(/(\S)"(?=[\s\)\}\]\.,\?!]|$|[은는이가을를에과와고로도]/g, function(match, p1) {
+        log.push(`[큰따옴표/닫기] 문맥 일치 발견: ${p1}" -> ${p1}”`);
+        return p1 + '”';
+      });
+
+      // 작은따옴표 여는 조건
+      current = current.replace(/(?:^|[\s\(\[\{])'(?=\S)/g, function(match) {
+        let replaced = match.replace("'", "‘");
+        log.push(`[작은따옴표/열기] 문맥 일치 발견: ${match.trim() || '[시작]'} -> ${replaced.trim()}`);
+        return replaced;
+      });
+
+      // 작은따옴표 닫는 조건
+      current = current.replace(/(\S)'(?=[\s\)\}\]\.,\?!]|$|[은는이가을를에과와고로도]/g, function(match, p1) {
+        log.push(`[작은따옴표/닫기] 문맥 일치 발견: ${p1}' -> ${p1}’`);
+        return p1 + '’';
+      });
+
+
+      // --- 2단계: 줄바꿈을 포함한 완벽하게 매칭되는 잔여 쌍(Pair) 최종 수거 ---
+      
+      // 아직 치환되지 않고 남은 짝이 맞는 큰따옴표 처리 ([\s\S]*? 로 개행 문자 대응)
+      current = current.replace(/"([\s\S]*?)"/g, function(match, p1) {
+        log.push(`[큰따옴표/쌍치환] 미교정 잔여 쌍 발견: "${p1.trim()}" -> “${p1.trim()}”`);
+        return "“" + p1 + "”";
+      });
+
+      // 아직 치환되지 않고 남은 짝이 맞는 작은따옴표 처리
+      current = current.replace(/'([\s\S]*?)'/g, function(match, p1) {
+        log.push(`[작은따옴표/쌍치환] 미교정 잔여 쌍 발견: '${p1.trim()}' -> ‘${p1.trim()}’`);
+        return "‘" + p1 + "’";
+      });
+
+      return current;
+    }
+
+    // HTML 태그 보호를 위한 DOM 파싱 트리거 조건 체크
+    if (inputValue.includes('<') && inputValue.includes('>')) {
+      let container = document.createElement('div');
+      container.innerHTML = inputValue;
+
+      function walkTextNodes(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          node.nodeValue = smartReplace(node.nodeValue);
+        } else {
+          for (let i = 0; i < node.childNodes.length; i++) {
+            walkTextNodes(node.childNodes[i]);
+          }
+        }
+      }
+
+      walkTextNodes(container);
+      document.getElementById("output").textContent = container.innerHTML;
+    } else {
+      // 일반 텍스트 모드
+      let processedText = smartReplace(inputValue);
+      document.getElementById("output").textContent = processedText;
+    }
+
+    // 로그 렌더링
+    if (log.length > 0) {
+      document.getElementById("log").innerHTML = log.map(item => `<div class="log-entry">${item}</div>`).join('');
+    } else {
+      document.getElementById("log").textContent = "교정할 대상이 없거나 이미 올바른 둥근 따옴표 상태입니다.";
+    }
+  }
+
+  function copyResult() {
+    const result = document.getElementById("output").textContent;
+    if (!result.trim()) {
+      alert("먼저 교정할 텍스트를 입력하고 교정하기 버튼을 눌러주세요!");
+      return;
+    }
+    navigator.clipboard.writeText(result).then(() => {
+      alert("교정된 결과가 클립보드에 성공적으로 복사되었습니다!");
+    }).catch(err => {
+      alert("복사 기능이 지원되지 않는 브라우저입니다. 결과 영역을 수동으로 선택하여 복사해 주세요.");
+    });
+  }
+</script>
+
+</body>
+</html>
