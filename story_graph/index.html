@@ -996,12 +996,12 @@
 
 <script type="module">
 // ============================================================
-// 소설 관계도 분석기 - Transformers.js (토큰 없음)
+// 소설 관계도 분석기 - onnx-community/klue-bert-base (토큰 없음)
 // ============================================================
 
 import { pipeline, env } from '@xenova/transformers';
 
-// ✅ 환경 설정 - 토큰 없이도 동작하도록
+// 환경 설정
 env.allowRemoteModels = true;
 env.allowLocalModels = false;
 
@@ -1227,7 +1227,7 @@ function closeHelp() {
 window.closeHelp = closeHelp;
 
 function showAbout() {
-  alert('⚓ 소설 관계도 분석기 v3.0\n\nTransformers.js 기반\n한국어 NER (klue-bert-base)\n\n• 인물, 장소, 아이템, 사건 추출\n• 관계 그래프 시각화\n• Cytoscape.js 형식 내보내기');
+  alert('⚓ 소설 관계도 분석기 v3.0\n\nTransformers.js 기반\n한국어 NER (onnx-community/klue-bert-base)\n\n• 인물, 장소, 아이템, 사건 추출\n• 관계 그래프 시각화\n• Cytoscape.js 형식 내보내기');
 }
 window.showAbout = showAbout;
 
@@ -1448,7 +1448,7 @@ window.saveAsFile = async function() {
 };
 
 // ============================================================
-// MODEL LOADING (Transformers.js - 토큰 없음)
+// MODEL LOADING - onnx-community/klue-bert-base (토큰 없음)
 // ============================================================
 
 function updateModelStatus(status, progress = 0, text = '') {
@@ -1472,10 +1472,10 @@ async function loadModel() {
   updateModelStatus('loading', 0);
   
   try {
-    updateModelStatus('loading', 10, '한국어 NER 모델 다운로드 중... (400MB)');
+    // ✅ onnx-community/klue-bert-base - 토큰 없이 가능 (ONNX 포맷)
+    updateModelStatus('loading', 10, '한국어 NER 모델 다운로드 중... (ONNX)');
     
-    // ✅ 토큰 없이 바로 로드 (Xenova 계정의 모델은 공개)
-    nerPipeline = await pipeline('token-classification', 'Xenova/klue-bert-base', {
+    nerPipeline = await pipeline('token-classification', 'onnx-community/klue-bert-base', {
       progress_callback: (info) => {
         if (info.progress) {
           const percent = Math.round(info.progress * 100);
@@ -1490,7 +1490,7 @@ async function loadModel() {
     isModelLoading = false;
     updateModelStatus('ready');
     logToConsole('✅ Transformers.js 모델 준비 완료!');
-    logToConsole('   - klue-bert-base (한국어 NER)');
+    logToConsole('   - onnx-community/klue-bert-base (한국어 NER)');
     logToConsole('   - 인물, 장소, 아이템, 사건 추출 가능');
     
   } catch (e) {
@@ -1498,6 +1498,10 @@ async function loadModel() {
     updateModelStatus('error', 0, e.message);
     isModelLoading = false;
     logToConsole('❌ 모델 로딩 실패: ' + e.message);
+    logToConsole('⚠️ 규칙 기반 분석으로 전환합니다.');
+    
+    // 규칙 기반 분석으로 fallback
+    window.runTransformersAnalysis = runRuleBasedAnalysis;
   }
 }
 
@@ -1559,7 +1563,8 @@ async function runTransformersAnalysis() {
     logToConsole('📦 한국어 NER 모델을 다운로드합니다 (약 400MB, 최초 1회)');
     await loadModel();
     if (!modelReady) {
-      logToConsole('❌ 모델 로드 실패');
+      logToConsole('❌ 모델 로드 실패 - 규칙 기반으로 전환');
+      runRuleBasedAnalysis();
       return;
     }
   }
@@ -1682,6 +1687,80 @@ async function runTransformersAnalysis() {
   }
 }
 window.runTransformersAnalysis = runTransformersAnalysis;
+
+// ============================================================
+// 규칙 기반 분석 (Fallback)
+// ============================================================
+
+function runRuleBasedAnalysis() {
+  if (!dirHandle || !currentFileName) {
+    alert('먼저 폴더를 연결하고 파일을 열어주세요.');
+    return;
+  }
+  
+  const text = editorEl.innerText;
+  if (!text || text.trim().length < 10) {
+    alert('분석할 텍스트가 너무 짧습니다.');
+    return;
+  }
+  
+  document.getElementById('aiConsole').style.display = 'flex';
+  document.getElementById('aiConsoleBody').textContent = '';
+  
+  logToConsole('📊 규칙 기반 분석 시작...');
+  
+  // 1. 인물 추출 (조사 패턴)
+  const nameRegex = /([가-힣]{2,4})(?:이|가|은|는|을|를|와|과|의|에|에서|부터|까지|한테|께|도|만|처럼|같이)/g;
+  const names = new Map();
+  let m;
+  while ((m = nameRegex.exec(text)) !== null) {
+    const name = m[1];
+    const commonWords = ['사람','우리','가슴','하늘','소리','얼굴','생각','하나','모두','무엇','그것','자리','너희','마음','때','곳','집','말','일','중','것','수','길','눈','손','등','데','분','줄','적'];
+    if (!commonWords.includes(name) && name.length >= 2) {
+      names.set(name, (names.get(name) || 0) + 1);
+    }
+  }
+  
+  // 2. 노드 추가
+  for (const [name, count] of names) {
+    if (count >= 2 && !nodes.has(name)) {
+      nodes.set(name, {
+        name: name,
+        type: '인물',
+        mentions: count,
+        x: canvas.width/2 + (Math.random()-0.5)*200,
+        y: canvas.height/2 + (Math.random()-0.5)*200,
+        vx: 0, vy: 0, isDragging: false
+      });
+    }
+  }
+  
+  // 3. 관계 추출 (동시출현)
+  const sentences = text.split(/[.!?…]\s*/);
+  for (const sent of sentences) {
+    const found = [];
+    for (const [name] of nodes) {
+      if (sent.includes(name)) found.push(name);
+    }
+    for (let i = 0; i < found.length; i++) {
+      for (let j = i + 1; j < found.length; j++) {
+        const exists = edges.some(e => 
+          (e.from === found[i] && e.to === found[j]) || 
+          (e.from === found[j] && e.to === found[i])
+        );
+        if (!exists) {
+          edges.push({ from: found[i], to: found[j], label: '관계' });
+        }
+      }
+    }
+  }
+  
+  updateGraphCounts();
+  logToConsole(`✅ 규칙 기반 분석 완료! 노드 ${nodes.size}개, 엣지 ${edges.size}개`);
+  
+  const graphData = exportGraphToCytoscape();
+  console.log('📊 Cytoscape 형식:', JSON.stringify(graphData, null, 2));
+}
 
 // ============================================================
 // EXPORT - Cytoscape.js 형식
