@@ -1,0 +1,2174 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>소설 관계도 분석기 (Transformers.js)</title>
+<script type="importmap">
+{
+  "imports": {
+    "@xenova/transformers": "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0"
+  }
+}
+</script>
+<style>
+  :root {
+    --bg: #12141a;
+    --panel: #181b23;
+    --panel2: #1e222c;
+    --border: #2a2f3b;
+    --text: #e6e8ee;
+    --muted: #8a90a2;
+    --accent: #5b9dff;
+    --accent-hover: #4a86e8;
+    --c-char: #5b9dff;
+    --c-event: #ff6b6b;
+    --c-loc: #4ade80;
+    --c-item: #facc15;
+    --paper-bg: #ffffff;
+    --paper-text: #2c2c2c;
+    --paper-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    --paper-border: #e2e8f0;
+  }
+
+  body.dark-theme {
+    --bg: #0b0c10;
+    --panel: #14161d;
+    --panel2: #1b1e26;
+    --border: #242936;
+    --text: #e1e4ed;
+    --muted: #798296;
+    --paper-bg: #181b23;
+    --paper-text: #e6e8ee;
+    --paper-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
+    --paper-border: #2a2f3b;
+  }
+
+  body.light-theme {
+    --bg: #f4f6fa;
+    --panel: #ffffff;
+    --panel2: #f8fafc;
+    --border: #cbd5e1;
+    --text: #0f172a;
+    --muted: #64748b;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --paper-bg: #ffffff;
+    --paper-text: #1e293b;
+    --paper-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    --paper-border: #e2e8f0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .top-nav {
+    height: 48px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    justify-content: space-between;
+    z-index: 100;
+  }
+  .top-nav .brand {
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent);
+  }
+  .top-nav .brand span {
+    color: var(--text);
+    font-weight: 400;
+    font-size: 12px;
+  }
+  .top-nav .nav-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .layout {
+    display: flex;
+    height: calc(100vh - 48px);
+    flex: 1;
+  }
+  .panel {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  #leftPanel { width: 280px; flex: none; }
+  #centerPanel { flex: 1; min-width: 320px; background: calc(var(--bg) + #030303); }
+  #rightPanel { width: 340px; flex: none; border-right: none; border-left: 1px solid var(--border); }
+
+  .resizer {
+    width: 6px;
+    flex: none;
+    cursor: col-resize;
+    background: var(--border);
+    position: relative;
+    z-index: 10;
+    transition: background 0.2s;
+  }
+  .resizer:hover, .resizer.active { background: var(--accent); }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--panel2);
+  }
+  .tab-content {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 12px;
+  }
+  .tab-content.active { display: flex; }
+
+  .panel-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  button {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+  }
+  button:hover {
+    border-color: var(--accent);
+    background: var(--panel);
+    color: var(--accent);
+  }
+  button.primary {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+  }
+  button.primary:hover {
+    background: var(--accent-hover);
+    color: #ffffff;
+  }
+
+  .filelist {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+  .filelist-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .filelist-item:hover {
+    background: var(--panel2);
+    color: var(--text);
+  }
+  .filelist-item.active {
+    background: rgba(91, 157, 255, 0.1);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .filelist-item .delete-btn {
+    opacity: 0;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    padding: 2px 4px;
+    cursor: pointer;
+  }
+  .filelist-item:hover .delete-btn { opacity: 1; }
+  .filelist-item .delete-btn:hover { color: #ff6b6b; }
+
+  .folder-cta-box {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 20px 14px;
+    text-align: center;
+    background: var(--panel2);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .folder-cta-box p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: #fff;
+    font-weight: 600;
+  }
+  .badge.char { background: var(--c-char); }
+  .badge.event { background: var(--c-event); }
+  .badge.loc { background: var(--c-loc); }
+  .badge.item { background: var(--c-item); }
+
+  .editor-wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .menubar {
+    display: flex;
+    align-items: center;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    height: 30px;
+    padding: 0 2px;
+    gap: 0;
+    position: relative;
+    z-index: 100;
+  }
+  .menubar .menu-item {
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    user-select: none;
+    position: relative;
+    white-space: nowrap;
+  }
+  .menubar .menu-item:hover { background: var(--panel2); }
+  .menubar .menu-item.active { background: var(--panel2); }
+  .menubar .status {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 4px 8px;
+  }
+
+  .dropdown {
+    display: none;
+    position: absolute;
+    min-width: 220px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+    z-index: 200;
+    padding: 4px;
+  }
+  .dropdown.open { display: block; }
+  .dropdown-item {
+    padding: 5px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+  }
+  .dropdown-item:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+  .dropdown-item .shortcut {
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .dropdown-item:hover .shortcut { color: rgba(255,255,255,0.7); }
+  .dropdown-sep {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 8px;
+  }
+
+  .fmt-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: var(--panel2);
+    border-bottom: 1px solid var(--border);
+    gap: 6px;
+    flex-wrap: wrap;
+    min-height: 32px;
+  }
+  .fmt-toolbar .btn-icon {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .fmt-toolbar .btn-icon:hover { background: var(--panel); }
+  .fmt-toolbar select {
+    font-size: 11px;
+    padding: 2px 4px;
+    height: 24px;
+    border-radius: 4px;
+  }
+  .fmt-sep {
+    width: 1px;
+    height: 16px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .zoom-badge {
+    font-size: 10px;
+    color: var(--muted);
+    min-width: 32px;
+    text-align: center;
+  }
+
+  .paper-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px 10px;
+    display: flex;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.05);
+  }
+  body.light-theme .paper-container { background: #e2e8f0; }
+  body.dark-theme .paper-container { background: #0f1115; }
+
+  .paper {
+    width: 100%;
+    max-width: 760px;
+    min-height: 960px;
+    background: var(--paper-bg);
+    color: var(--paper-text);
+    box-shadow: var(--paper-shadow);
+    border: 1px solid var(--paper-border);
+    padding: 60px 70px;
+    font-size: 15px;
+    line-height: 1.8;
+    outline: none;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    white-space: pre-wrap;
+    word-break: break-all;
+    box-sizing: border-box;
+    transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    height: max-content;
+  }
+  .paper.empty-state {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: var(--muted);
+    cursor: default;
+  }
+  .paper.empty-state h3 {
+    margin: 0 0 10px 0;
+    color: var(--text);
+  }
+
+  .status-bar {
+    height: 24px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 11px;
+    color: var(--muted);
+    justify-content: space-between;
+  }
+
+  .graph-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .graph-header {
+    padding: 10px 12px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .graph-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .graph-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 11px;
+  }
+  .graph-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .graph-actions .btn-icon {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .filter-checkbox.active { border-color: var(--accent); }
+
+  canvas {
+    flex: 1;
+    background: var(--panel2);
+    cursor: grab;
+  }
+  canvas:active { cursor: grabbing; }
+
+  .canvas-controls {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 5;
+  }
+  .canvas-controls button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  .wiki-panel {
+    height: 240px;
+    border-top: 1px solid var(--border);
+    padding: 12px;
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .wiki-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .wiki-card .title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .wiki-card .node-name {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .wiki-card select {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+  .wiki-card textarea {
+    flex: 1;
+    resize: none;
+    font-size: 12px;
+    padding: 8px;
+    line-height: 1.4;
+  }
+
+  .tooltip {
+    position: absolute;
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    max-width: 250px;
+    pointer-events: none;
+    display: none;
+    z-index: 200;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    color: #e6e8ee;
+    line-height: 1.5;
+  }
+  .tooltip b { color: var(--accent); font-size: 13px; }
+  .tooltip hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+
+  .ai-console {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    height: 200px;
+    background: rgba(13, 15, 20, 0.95);
+    border: 1px solid var(--accent);
+    box-shadow: 0 4px 30px rgba(91, 157, 255, 0.25);
+    border-radius: 10px;
+    z-index: 500;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: monospace;
+  }
+  .ai-console-header {
+    background: #141822;
+    padding: 6px 12px;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .ai-console-body {
+    flex: 1;
+    padding: 10px;
+    font-size: 12px;
+    overflow-y: auto;
+    color: #4ade80;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+
+  .model-status-bar {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+  }
+  .model-status-bar .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .model-status-bar .status-dot.loading { background: #facc15; animation: pulse 1s infinite; }
+  .model-status-bar .status-dot.ready { background: #4ade80; }
+  .model-status-bar .status-dot.error { background: #ff6b6b; }
+  .model-status-bar .status-dot.idle { background: var(--muted); }
+  .model-progress-bar {
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .model-progress-bar .fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  #findReplaceDialog {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    z-index: 300;
+    padding: 14px 16px;
+    width: 340px;
+  }
+  #findReplaceDialog input { width: 100%; }
+  #insertTableDialog {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    z-index: 300;
+    padding: 14px 16px;
+    width: 280px;
+  }
+  #insertTableDialog input[type="number"] { width: 60px; }
+
+  #helpDialog {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+  #helpDialog.open { display: flex; }
+  .help-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    max-width: 640px;
+    max-height: 80vh;
+    width: 90%;
+    overflow-y: auto;
+    padding: 24px 28px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+  .help-panel h2 { font-size: 18px; margin: 0 0 4px 0; color: var(--accent); }
+  .help-panel .sub { font-size: 11px; color: var(--muted); margin-bottom: 20px; }
+  .help-panel h3 { font-size: 14px; margin: 20px 0 8px 0; color: var(--text); }
+  .help-panel h3:first-of-type { margin-top: 0; }
+  .help-panel p, .help-panel li { font-size: 12px; line-height: 1.7; color: var(--text); margin: 4px 0; }
+  .help-panel ul { padding-left: 20px; margin: 4px 0; }
+  .help-panel code {
+    background: var(--panel2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+    border: 1px solid var(--border);
+  }
+  .help-panel .step {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 8px 0;
+    padding: 8px 10px;
+    background: var(--panel2);
+    border-radius: 6px;
+    border-left: 3px solid var(--accent);
+  }
+  .help-panel .step-num {
+    background: var(--accent);
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .help-panel .step-body { flex: 1; }
+  .help-panel .step-body strong { display: block; font-size: 13px; }
+  .help-panel .warning {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 11px;
+    margin: 12px 0;
+    color: #ff6b6b;
+  }
+  .help-close {
+    display: block;
+    margin: 20px auto 0;
+    padding: 8px 24px;
+  }
+
+  @media (max-width: 800px) {
+    .menubar { overflow-x: auto; gap: 2px; padding: 2px 6px; }
+    .menubar .menu-item { font-size: 11px; padding: 3px 8px; }
+    .layout { flex-direction: column; }
+    #leftPanel, #rightPanel { width: 100% !important; max-height: 40vh; }
+    #centerPanel { width: 100% !important; }
+    .resizer { display: none; }
+    .tab-btn { font-size: 11px; padding: 4px 10px; }
+    .filelist-item { padding: 8px 10px; }
+    .filelist-item span { max-width: 160px !important; }
+    .fmt-toolbar { flex-wrap: wrap; gap: 2px; }
+    .help-panel { max-width: 95%; padding: 16px; }
+    .btn, button { min-height: 36px; }
+    .btn-icon { width: 32px; height: 28px; font-size: 13px; }
+    .dropdown-item { padding: 10px 14px; font-size: 13px; }
+    canvas { touch-action: none; }
+  }
+
+  @media (max-width: 480px) {
+    #leftPanel, #rightPanel { max-height: 35vh; }
+    .menubar .menu-item { font-size: 10px; padding: 2px 6px; }
+    .topbar-left span { display: none; }
+    .help-panel { padding: 12px; font-size: 11px; }
+    .help-panel h2 { font-size: 16px; }
+  }
+</style>
+</head>
+<body class="dark-theme">
+
+  <div class="top-nav">
+    <div class="brand">⚓ 소설 관계도 분석기 <span>| Transformers.js 기반</span></div>
+    <div class="nav-controls">
+      <button onclick="toggleTheme()" id="themeBtn">🌞 라이트 모드</button>
+      <button class="primary" id="openDirBtn" onclick="openLocalFolder()">📂 폴더 선택</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    
+    <div class="panel" id="leftPanel">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('manuscriptTab', this)">📝 원고</button>
+      </div>
+      <div class="tab-content active" id="manuscriptTab">
+        <div id="folderConnectionPanel"></div>
+
+        <div class="model-status-bar" id="modelStatusBar">
+          <span>
+            <span class="status-dot idle" id="modelDot"></span>
+            <span id="modelStatusText">모델 대기 중</span>
+            <span style="font-size:10px;color:var(--muted);margin-left:8px;" id="modelSizeText"></span>
+          </span>
+          <span style="font-size:10px;color:var(--muted);">
+            <span id="modelProgressText">0%</span>
+          </span>
+        </div>
+        <div class="model-progress-bar" id="modelProgressBar">
+          <div class="fill" id="modelProgressFill"></div>
+        </div>
+
+        <div class="panel-header">
+          문서 목록 <span id="docCount"></span>
+          <button id="newDocBtn" onclick="createNewDocument()" style="display:none;">+ 새 문서</button>
+        </div>
+        <div class="filelist" id="fileList"></div>
+      </div>
+    </div>
+
+    <div class="resizer" id="resizerLeft"></div>
+
+    <div class="panel editor-wrap" id="centerPanel">
+      <div class="menubar">
+        <div class="menu-item" onclick="toggleMenu(this, 'fileMenu')">파일(F)</div>
+        <div class="menu-item" onclick="toggleMenu(this, 'editMenu')">편집(E)</div>
+        <div class="menu-item" onclick="toggleMenu(this, 'formatMenu')">서식(O)</div>
+        <div class="menu-item" onclick="toggleMenu(this, 'viewMenu')">보기(V)</div>
+        <div class="menu-item" onclick="toggleMenu(this, 'aiMenu')" style="color:var(--c-char);">AI(R)</div>
+        <div class="menu-item" onclick="toggleMenu(this, 'helpMenu')">도움말(H)</div>
+        <span class="status" id="statusText">폴더 연결 필요</span>
+        
+        <div class="dropdown" id="fileMenu">
+          <div class="dropdown-item" onclick="createNewDocument();closeAllMenus();">새 문서</div>
+          <div class="dropdown-item" onclick="openLocalFolder();closeAllMenus();">파일 열기</div>
+          <div class="dropdown-item" onclick="saveCurrentFile();closeAllMenus();">저장</div>
+          <div class="dropdown-item" onclick="saveAsFile();closeAllMenus();">다른 이름으로 저장</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="disconnectFolder();closeAllMenus();">폴더 연결 해제</div>
+        </div>
+        <div class="dropdown" id="editMenu">
+          <div class="dropdown-item" onclick="execCmd('undo');closeAllMenus();">실행 취소</div>
+          <div class="dropdown-item" onclick="execCmd('redo');closeAllMenus();">다시 실행</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="execCmd('cut');closeAllMenus();">잘라내기</div>
+          <div class="dropdown-item" onclick="execCmd('copy');closeAllMenus();">복사</div>
+          <div class="dropdown-item" onclick="execCmd('paste');closeAllMenus();">붙여넣기</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="openFindReplace();closeAllMenus();">찾기</div>
+          <div class="dropdown-item" onclick="execFind();closeAllMenus();">다음 찾기</div>
+        </div>
+        <div class="dropdown" id="formatMenu">
+          <div class="dropdown-item" onclick="execCmd('bold');closeAllMenus();">굵게</div>
+          <div class="dropdown-item" onclick="execCmd('italic');closeAllMenus();">기울임</div>
+          <div class="dropdown-item" onclick="execCmd('underline');closeAllMenus();">밑줄</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="execCmd('justifyLeft');closeAllMenus();">왼쪽 정렬</div>
+          <div class="dropdown-item" onclick="execCmd('justifyCenter');closeAllMenus();">가운데 정렬</div>
+          <div class="dropdown-item" onclick="execCmd('justifyRight');closeAllMenus();">오른쪽 정렬</div>
+        </div>
+        <div class="dropdown" id="viewMenu">
+          <div class="dropdown-item" onclick="zoomEditor(-10);closeAllMenus();">축소</div>
+          <div class="dropdown-item" onclick="zoomEditor(10);closeAllMenus();">확대</div>
+          <div class="dropdown-item" onclick="zoomReset();closeAllMenus();">기본값</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="toggleTheme();closeAllMenus();">테마 전환</div>
+        </div>
+        <div class="dropdown" id="aiMenu">
+          <div class="dropdown-item" onclick="runTransformersAnalysis();closeAllMenus();">🧠 Transformers 분석</div>
+          <div class="dropdown-item" onclick="toggleAutoAnalysis();closeAllMenus();">🔄 자동 분석</div>
+        </div>
+        <div class="dropdown" id="helpMenu">
+          <div class="dropdown-item" onclick="showHelp();closeAllMenus();">📖 도움말</div>
+          <div class="dropdown-item" onclick="showAbout();closeAllMenus();">정보</div>
+        </div>
+      </div>
+
+      <div class="fmt-toolbar">
+        <button class="btn-icon" onclick="execCmd('undo')">↩</button>
+        <button class="btn-icon" onclick="execCmd('redo')">↪</button>
+        <span class="fmt-sep"></span>
+        <select id="fontFamilySelect" onchange="execCmd('fontName', this.value)">
+          <option value="Pretendard">Pretendard</option>
+          <option value="바탕">바탕</option>
+          <option value="돋움">돋움</option>
+        </select>
+        <select id="fontSizeSelect" onchange="execCmd('fontSize', this.value)">
+          <option value="3">작게</option>
+          <option value="4" selected>보통</option>
+          <option value="5">크게</option>
+        </select>
+        <span class="fmt-sep"></span>
+        <button class="btn-icon" onclick="execCmd('bold')"><b>B</b></button>
+        <button class="btn-icon" onclick="execCmd('italic')"><i>I</i></button>
+        <button class="btn-icon" onclick="execCmd('underline')"><u>U</u></button>
+        <span class="fmt-sep"></span>
+        <span id="zoomLevel" class="zoom-badge">100%</span>
+        <button class="btn-icon" onclick="zoomEditor(-10)">−</button>
+        <button class="btn-icon" onclick="zoomEditor(10)">+</button>
+        <span class="fmt-sep"></span>
+        <button class="btn-icon" onclick="saveCurrentFile()" style="color:var(--accent);">💾</button>
+        <button class="btn-icon" onclick="runTransformersAnalysis()" style="color:var(--c-char);">🧠</button>
+        <button class="btn-icon" onclick="exportGraphToClipboard()" style="color:var(--c-item);">📋</button>
+      </div>
+
+      <div id="findReplaceDialog">
+        <div style="font-size:12px;font-weight:600;margin-bottom:10px;">🔍 찾기</div>
+        <input type="text" id="findInput" placeholder="찾을 내용" style="width:100%;margin-bottom:6px;" />
+        <div style="display:flex;gap:4px;justify-content:flex-end;">
+          <button onclick="execFind()" class="primary">찾기</button>
+          <button onclick="document.getElementById('findReplaceDialog').style.display='none'">닫기</button>
+        </div>
+        <div id="findResult" style="font-size:11px;color:var(--muted);margin-top:6px;"></div>
+      </div>
+
+      <div class="paper-container">
+        <div class="paper empty-state" id="editor" contenteditable="false">
+          <h3>📂 로컬 폴더를 연결하세요</h3>
+          <p style="max-width:450px;font-size:13px;line-height:1.6;">소설 파일이 있는 폴더를 선택하면 AI가 인물, 장소, 아이템, 사건을 추출하고 관계를 그래프로 보여줍니다.</p>
+          <button class="primary" onclick="openLocalFolder()" style="padding:10px 20px;font-size:14px;">📂 폴더 열기</button>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <span id="filePathDisplay">연결 없음</span>
+        <span id="lineColIndicator">줄 1, 열 1</span>
+        <span id="charCount">📝 글자: 0</span>
+        <span id="modelStatusMini" style="font-size:10px;color:var(--muted);">AI: 대기</span>
+      </div>
+    </div>
+
+    <div class="resizer" id="resizerRight"></div>
+
+    <div class="panel graph-wrap" id="rightPanel">
+      <div class="graph-header">
+        <div class="graph-title">지식 그래프 <span id="graphCount" style="font-weight:normal">노드 0</span></div>
+        <div class="graph-filters">
+          <span class="filter-checkbox active" onclick="toggleFilter('인물', this)"><span style="color:var(--c-char)">●</span> 인물</span>
+          <span class="filter-checkbox active" onclick="toggleFilter('사건', this)"><span style="color:var(--c-event)">●</span> 사건</span>
+          <span class="filter-checkbox active" onclick="toggleFilter('장소', this)"><span style="color:var(--c-loc)">●</span> 장소</span>
+          <span class="filter-checkbox active" onclick="toggleFilter('아이템', this)"><span style="color:var(--c-item)">●</span> 아이템</span>
+        </div>
+        <div class="graph-actions">
+          <button class="btn-icon" onclick="toggleAutoAnalysis()" id="autoAnalysisBtn">🔄 자동</button>
+          <button class="btn-icon" onclick="runTransformersAnalysis()" style="background:var(--c-char);color:#fff;font-weight:bold;">🧠 분석</button>
+        </div>
+      </div>
+      <canvas id="graph"></canvas>
+      <div class="canvas-controls">
+        <button onclick="zoomGraph(1.1)">+</button>
+        <button onclick="zoomGraph(0.9)">-</button>
+        <button onclick="resetGraphView()">⟲</button>
+      </div>
+      <div class="wiki-panel">
+        <div class="panel-header">노드 위키</div>
+        <div class="wiki-card" id="wikiCard">
+          <div style="color:var(--muted);font-size:12px;text-align:center;margin:auto;">노드를 클릭하면 정보가 표시됩니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+  <div class="ai-console" id="aiConsole">
+    <div class="ai-console-header">
+      <span>🧠 Transformers.js 분석 로그</span>
+      <span style="color:#ef4444;cursor:pointer;" onclick="closeConsole()">[X]</span>
+    </div>
+    <div class="ai-console-body" id="aiConsoleBody"></div>
+  </div>
+
+  <div id="helpDialog">
+    <div class="help-panel">
+      <h2>📖 소설 관계도 분석기</h2>
+      <div class="sub">Transformers.js 기반 · 버전 3.0</div>
+      <h3>시작하기</h3>
+      <div class="step"><div class="step-num">1</div><div class="step-body"><strong>폴더 열기</strong>소설 파일(.txt)이 있는 폴더를 선택하세요.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><strong>파일 선택</strong>분석할 소설 파일을 클릭하면 편집기에 내용이 표시됩니다.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>🧠 분석 실행</strong>버튼을 누르면 AI가 인물, 장소, 아이템, 사건을 추출합니다.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><strong>📋 내보내기</strong>그래프 데이터를 Cytoscape.js 형식으로 복사할 수 있습니다.</div></div>
+      <div class="warning">⚠️ 최초 실행 시 모델 다운로드(약 400MB)가 필요합니다.</div>
+      <button class="primary help-close" onclick="closeHelp()">닫기</button>
+    </div>
+  </div>
+
+<script type="module">
+// ============================================================
+// 소설 관계도 분석기 - Transformers.js
+// ============================================================
+
+import { pipeline, env } from '@xenova/transformers';
+
+// 환경 설정
+env.allowRemoteModels = true;
+env.localModelPath = '/models/';
+
+// ============================================================
+// STATE
+// ============================================================
+let dirHandle = null;
+let currentFileHandle = null;
+let currentFileName = null;
+let saveTimer = null;
+let analysisTimer = null;
+let autoAnalysisEnabled = false;
+let analysisInProgress = false;
+let modelReady = false;
+let isModelLoading = false;
+let nerPipeline = null;
+
+let nodes = new Map();
+let edges = [];
+let activeFilterTypes = new Set(['인물', '사건', '장소', '아이템']);
+let selectedNode = null;
+let hoverNode = null;
+let transform = { x: 0, y: 0, k: 1 };
+let particles = [];
+
+// ============================================================
+// STORAGE
+// ============================================================
+const DB_NAME = "novel_analyzer_fsa_db";
+const STORE_NAME = "handles";
+const KEY_NAME = "last_directory";
+
+function getDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function saveStoredHandle(handle) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.put(handle, KEY_NAME);
+    request.onsuccess = () => resolve();
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function getStoredHandle() {
+  try {
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(KEY_NAME);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = (e) => reject(e.target.error);
+    });
+  } catch (e) { return null; }
+}
+
+async function clearStoredHandle() {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.delete(KEY_NAME);
+    request.onsuccess = () => resolve();
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function verifyPermission(handle, readWrite) {
+  const options = {};
+  if (readWrite) options.mode = 'readwrite';
+  if ((await handle.queryPermission(options)) === 'granted') return true;
+  if ((await handle.requestPermission(options)) === 'granted') return true;
+  return false;
+}
+
+// ============================================================
+// DOM REFS
+// ============================================================
+const editorEl = document.getElementById('editor');
+const canvas = document.getElementById('graph');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+
+// ============================================================
+// THEME
+// ============================================================
+window.toggleTheme = function() {
+  document.body.classList.toggle('dark-theme');
+  document.body.classList.toggle('light-theme');
+  document.getElementById('themeBtn').textContent = 
+    document.body.classList.contains('dark-theme') ? '🌞 라이트 모드' : '🌙 다크 모드';
+};
+
+// ============================================================
+// EXEC COMMAND
+// ============================================================
+window.execCmd = function(cmd, val) {
+  if (cmd === 'save') { saveCurrentFile(); return; }
+  document.execCommand(cmd, false, val);
+};
+
+// ============================================================
+// FIND
+// ============================================================
+window.openFindReplace = function() {
+  const dlg = document.getElementById('findReplaceDialog');
+  dlg.style.display = dlg.style.display === 'none' ? 'block' : 'none';
+  if (dlg.style.display === 'block') {
+    setTimeout(() => document.getElementById('findInput').focus(), 100);
+  }
+};
+
+window.execFind = function() {
+  const query = document.getElementById('findInput').value;
+  const result = document.getElementById('findResult');
+  if (!query) { result.textContent = '검색어를 입력하세요.'; return; }
+  if (window.find) {
+    const found = window.find(query, false, false, true, false, true, false);
+    result.textContent = found ? '찾음' : '없음';
+  }
+};
+
+// ============================================================
+// ZOOM
+// ============================================================
+let zoomPercent = 100;
+window.zoomEditor = function(delta) {
+  zoomPercent = Math.max(50, Math.min(200, zoomPercent + delta));
+  editorEl.style.fontSize = (15 * zoomPercent / 100) + 'px';
+  document.getElementById('zoomLevel').textContent = zoomPercent + '%';
+};
+window.zoomReset = function() {
+  zoomPercent = 100;
+  editorEl.style.fontSize = '15px';
+  document.getElementById('zoomLevel').textContent = '100%';
+};
+
+// ============================================================
+// LINE/COL
+// ============================================================
+function updateLineCol() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !editorEl.contains(sel.anchorNode)) {
+    document.getElementById('lineColIndicator').textContent = '줄 1, 열 1';
+    return;
+  }
+  const text = editorEl.innerText;
+  const range = sel.getRangeAt(0);
+  const preRange = range.cloneRange();
+  preRange.selectNodeContents(editorEl);
+  preRange.setEnd(range.startContainer, range.startOffset);
+  const caretPos = preRange.toString().length;
+  const before = text.substring(0, caretPos);
+  const line = (before.match(/\n/g) || []).length + 1;
+  const lastNewline = before.lastIndexOf('\n');
+  const col = caretPos - lastNewline;
+  document.getElementById('lineColIndicator').textContent = `줄 ${line}, 열 ${col}`;
+}
+document.addEventListener('selectionchange', updateLineCol);
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveCurrentFile(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); openFindReplace(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomEditor(10); }
+  if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); zoomEditor(-10); }
+  if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); zoomReset(); }
+  if (e.key === 'F3') { e.preventDefault(); execFind(); }
+});
+
+// ============================================================
+// MENU
+// ============================================================
+window.toggleMenu = function(item, id) {
+  const menu = document.getElementById(id);
+  const isOpen = menu.classList.contains('open');
+  closeAllMenus();
+  if (!isOpen) {
+    const rect = item.getBoundingClientRect();
+    menu.classList.add('open');
+    item.classList.add('active');
+    menu.style.position = 'fixed';
+    let left = rect.left;
+    let top = rect.bottom;
+    if (left + 240 > window.innerWidth) left = window.innerWidth - 248;
+    if (top + 300 > window.innerHeight) top = rect.top - 304;
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+  }
+};
+
+function closeAllMenus() {
+  document.querySelectorAll('.dropdown').forEach(m => m.classList.remove('open'));
+  document.querySelectorAll('.menubar .menu-item').forEach(m => m.classList.remove('active'));
+}
+document.addEventListener('mousedown', (e) => {
+  if (!e.target.closest('.menubar') && !e.target.closest('.dropdown')) closeAllMenus();
+});
+
+function showHelp() {
+  document.getElementById('helpDialog').classList.add('open');
+}
+window.showHelp = showHelp;
+function closeHelp() {
+  document.getElementById('helpDialog').classList.remove('open');
+}
+window.closeHelp = closeHelp;
+
+function showAbout() {
+  alert('⚓ 소설 관계도 분석기 v3.0\n\nTransformers.js 기반\n한국어 NER (klue-bert-base)\n\n• 인물, 장소, 아이템, 사건 추출\n• 관계 그래프 시각화\n• Cytoscape.js 형식 내보내기');
+}
+window.showAbout = showAbout;
+
+// ============================================================
+// TAB
+// ============================================================
+window.switchTab = function(id, btn) {
+  document.querySelectorAll('#leftPanel .tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#leftPanel .tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+};
+
+// ============================================================
+// FOLDER MANAGEMENT
+// ============================================================
+window.checkAndRestoreFolder = async function() {
+  const storedHandle = await getStoredHandle();
+  const panel = document.getElementById('folderConnectionPanel');
+  if (storedHandle) {
+    panel.innerHTML = `
+      <div class="folder-cta-box" style="padding:12px;margin-bottom:10px;">
+        <p style="font-weight:600;color:var(--text)">이전 폴더: ${storedHandle.name}</p>
+        <button class="primary" onclick="restoreFolderPermission()">연결 복원</button>
+      </div>
+    `;
+  } else {
+    panel.innerHTML = `
+      <div class="folder-cta-box" style="padding:12px;margin-bottom:10px;">
+        <p>연결된 폴더가 없습니다.</p>
+        <button class="primary" onclick="openLocalFolder()">📂 폴더 열기</button>
+      </div>
+    `;
+  }
+};
+
+window.restoreFolderPermission = async function() {
+  const storedHandle = await getStoredHandle();
+  if (!storedHandle) return;
+  try {
+    if (await verifyPermission(storedHandle, true)) {
+      dirHandle = storedHandle;
+      await onFolderConnected();
+    } else {
+      alert('권한이 거부되었습니다.');
+    }
+  } catch (e) {
+    alert('오류: ' + e.message);
+    await clearStoredHandle();
+    await checkAndRestoreFolder();
+  }
+};
+
+window.openLocalFolder = async function() {
+  try {
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    if (!await verifyPermission(handle, true)) {
+      alert('쓰기 권한이 필요합니다.');
+      return;
+    }
+    dirHandle = handle;
+    await saveStoredHandle(dirHandle);
+    await onFolderConnected();
+  } catch (e) { console.warn('취소됨', e); }
+};
+
+async function onFolderConnected() {
+  document.getElementById('statusText').textContent = `📁 ${dirHandle.name}`;
+  document.getElementById('filePathDisplay').textContent = dirHandle.name;
+  document.getElementById('openDirBtn').textContent = `📁 ${dirHandle.name}`;
+  document.getElementById('openDirBtn').classList.add('primary');
+  document.getElementById('newDocBtn').style.display = 'inline-flex';
+  
+  document.getElementById('folderConnectionPanel').innerHTML = `
+    <div style="background:var(--panel2);padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-weight:600;">📂 ${dirHandle.name}</span>
+      <button onclick="disconnectFolder()" style="border-color:#ff6b6b;color:#ff6b6b;">해제</button>
+    </div>
+  `;
+  await refreshFileList();
+}
+
+window.disconnectFolder = async function() {
+  if (!confirm('폴더 연결을 해제하시겠습니까?')) return;
+  dirHandle = null;
+  currentFileHandle = null;
+  currentFileName = null;
+  await clearStoredHandle();
+  document.getElementById('newDocBtn').style.display = 'none';
+  document.getElementById('openDirBtn').textContent = '📂 폴더 선택';
+  document.getElementById('openDirBtn').classList.remove('primary');
+  document.getElementById('filePathDisplay').textContent = '연결 없음';
+  document.getElementById('statusText').textContent = '연결 해제됨';
+  editorEl.contentEditable = 'false';
+  editorEl.classList.add('empty-state');
+  editorEl.innerHTML = `
+    <h3>📂 로컬 폴더를 연결하세요</h3>
+    <button class="primary" onclick="openLocalFolder()" style="padding:10px 20px;font-size:14px;">📂 폴더 열기</button>
+  `;
+  document.getElementById('fileList').innerHTML = '';
+  document.getElementById('docCount').textContent = '';
+  nodes.clear();
+  edges = [];
+  updateGraphCounts();
+  await checkAndRestoreFolder();
+};
+
+async function refreshFileList() {
+  const listEl = document.getElementById('fileList');
+  listEl.innerHTML = '';
+  let count = 0;
+  const files = [];
+  for await (const [name, handle] of dirHandle.entries()) {
+    if (handle.kind === 'file' && /\.(txt|md)$/i.test(name)) {
+      count++;
+      files.push({ name, handle });
+    }
+  }
+  document.getElementById('docCount').textContent = `(${count})`;
+  if (count === 0) {
+    listEl.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">📂 파일이 없습니다</div>`;
+    return;
+  }
+  files.sort((a,b) => a.name.localeCompare(b.name));
+  files.forEach(({ name, handle }) => {
+    const item = document.createElement('div');
+    item.className = 'filelist-item';
+    if (name === currentFileName) item.classList.add('active');
+    item.onclick = () => openFile(name, handle);
+    item.innerHTML = `
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${name}</span>
+      <button class="delete-btn" onclick="deleteFile('${name}', event)">✕</button>
+    `;
+    listEl.appendChild(item);
+  });
+  if (!currentFileName && files.length > 0) {
+    openFile(files[0].name, files[0].handle);
+  }
+}
+
+async function openFile(name, handle) {
+  try {
+    currentFileHandle = handle;
+    currentFileName = name;
+    const file = await handle.getFile();
+    const text = await file.text();
+    editorEl.contentEditable = 'true';
+    editorEl.classList.remove('empty-state');
+    editorEl.innerText = text;
+    document.getElementById('filePathDisplay').textContent = `${dirHandle.name}/${name}`;
+    document.getElementById('statusText').textContent = `📄 ${name}`;
+    document.getElementById('charCount').textContent = `📝 글자: ${text.length}`;
+    await refreshFileList();
+    if (autoAnalysisEnabled && modelReady) {
+      clearTimeout(analysisTimer);
+      analysisTimer = setTimeout(runTransformersAnalysis, 3000);
+    }
+  } catch (e) { alert('파일 읽기 오류: ' + e.message); }
+}
+
+window.createNewDocument = async function() {
+  if (!dirHandle) return;
+  const name = prompt('파일 이름:', '새파일.txt');
+  if (!name) return;
+  const clean = name.endsWith('.txt') || name.endsWith('.md') ? name : name + '.txt';
+  try {
+    const fh = await dirHandle.getFileHandle(clean, { create: true });
+    const w = await fh.createWritable();
+    await w.write('');
+    await w.close();
+    await openFile(clean, fh);
+  } catch (e) { alert('생성 실패: ' + e.message); }
+};
+
+window.deleteFile = async function(name, event) {
+  event.stopPropagation();
+  if (!confirm(`'${name}'을(를) 삭제하시겠습니까?`)) return;
+  try {
+    await dirHandle.removeEntry(name);
+    if (currentFileName === name) {
+      currentFileName = null;
+      currentFileHandle = null;
+      editorEl.contentEditable = 'false';
+      editorEl.classList.add('empty-state');
+      editorEl.innerHTML = `<h3>📂 파일을 선택하세요</h3>`;
+      nodes.clear();
+      edges = [];
+      updateGraphCounts();
+    }
+    await refreshFileList();
+  } catch (e) { alert('삭제 실패: ' + e.message); }
+};
+
+window.saveCurrentFile = async function() {
+  if (!dirHandle || !currentFileHandle) return;
+  try {
+    const w = await currentFileHandle.createWritable();
+    await w.write(editorEl.innerText);
+    await w.close();
+    document.getElementById('statusText').textContent = `💾 ${currentFileName}`;
+  } catch (e) { /* 조용히 실패 */ }
+};
+
+window.saveAsFile = async function() {
+  if (!dirHandle) { alert('폴더를 먼저 연결하세요.'); return; }
+  const name = prompt('파일 이름:', currentFileName || '문서.txt');
+  if (!name) return;
+  const clean = name.endsWith('.txt') || name.endsWith('.md') ? name : name + '.txt';
+  try {
+    const fh = await dirHandle.getFileHandle(clean, { create: true });
+    const w = await fh.createWritable();
+    await w.write(editorEl.innerText);
+    await w.close();
+    currentFileHandle = fh;
+    currentFileName = clean;
+    await refreshFileList();
+  } catch (e) { alert('저장 실패: ' + e.message); }
+};
+
+// ============================================================
+// MODEL LOADING (Transformers.js)
+// ============================================================
+
+function updateModelStatus(status, progress = 0, text = '') {
+  const dot = document.getElementById('modelDot');
+  const statusText = document.getElementById('modelStatusText');
+  const progressText = document.getElementById('modelProgressText');
+  const fill = document.getElementById('modelProgressFill');
+  const mini = document.getElementById('modelStatusMini');
+  
+  dot.className = 'status-dot ' + status;
+  const map = { idle: '대기', loading: '모델 로딩 중...', ready: '✅ 준비 완료', error: '❌ 오류' };
+  statusText.textContent = map[status] || text;
+  progressText.textContent = progress > 0 ? Math.round(progress) + '%' : '';
+  fill.style.width = progress + '%';
+  mini.textContent = status === 'ready' ? 'AI: 온' : 'AI: 대기';
+}
+
+async function loadModel() {
+  if (modelReady || isModelLoading) return;
+  isModelLoading = true;
+  updateModelStatus('loading', 0);
+  
+  try {
+    updateModelStatus('loading', 10, '한국어 NER 모델 로딩 중...');
+    nerPipeline = await pipeline('token-classification', 'Xenova/klue-bert-base');
+    updateModelStatus('loading', 100, '완료!');
+    
+    modelReady = true;
+    isModelLoading = false;
+    updateModelStatus('ready');
+    logToConsole('✅ Transformers.js 모델 준비 완료!');
+    logToConsole('   - klue-bert-base (한국어 NER)');
+    logToConsole('   - 인물, 장소, 아이템, 사건 추출 가능');
+    
+  } catch (e) {
+    console.error('모델 로딩 실패:', e);
+    updateModelStatus('error', 0, e.message);
+    isModelLoading = false;
+    logToConsole('❌ 모델 로딩 실패: ' + e.message);
+    logToConsole('→ 다시 시도하려면 "🧠 분석" 버튼을 누르세요.');
+  }
+}
+
+// ============================================================
+// TEXT CHUNKING (메모리 관리)
+// ============================================================
+
+function splitIntoChunks(text, maxChunkSize = 2000) {
+  // 문장 단위로 분할
+  const sentences = text.split(/(?<=[.!?…])\s+|\n+/).filter(s => s.trim().length > 0);
+  
+  if (sentences.length === 0) return [];
+  
+  const chunks = [];
+  let currentChunk = '';
+  let currentSize = 0;
+  
+  for (const sent of sentences) {
+    const sentSize = sent.length;
+    
+    if (currentSize + sentSize > maxChunkSize) {
+      if (currentChunk) chunks.push(currentChunk);
+      currentChunk = sent;
+      currentSize = sentSize;
+    } else {
+      currentChunk += (currentChunk ? ' ' : '') + sent;
+      currentSize += sentSize;
+    }
+  }
+  
+  if (currentChunk) chunks.push(currentChunk);
+  
+  return chunks;
+}
+
+// ============================================================
+// ANALYSIS - Transformers.js NER
+// ============================================================
+
+const entityTypeMap = {
+  'PER': '인물',
+  'LOC': '장소',
+  'ORG': '조직',
+  'MISC': '기타'
+};
+
+function mapEntityType(label) {
+  if (label === 'PER') return '인물';
+  if (label === 'LOC') return '장소';
+  if (label === 'ORG') return '사건';
+  return '아이템';
+}
+
+async function runTransformersAnalysis() {
+  if (!dirHandle || !currentFileName) {
+    alert('먼저 폴더를 연결하고 파일을 열어주세요.');
+    return;
+  }
+  
+  if (analysisInProgress) {
+    logToConsole('⏳ 이미 분석 중입니다...');
+    return;
+  }
+  
+  // 모델 로드
+  if (!modelReady) {
+    logToConsole('📦 한국어 NER 모델을 로드합니다 (최초 1회, 약 400MB)');
+    await loadModel();
+    if (!modelReady) {
+      logToConsole('❌ 모델 로드 실패');
+      return;
+    }
+  }
+  
+  document.getElementById('aiConsole').style.display = 'flex';
+  document.getElementById('aiConsoleBody').textContent = '';
+  
+  analysisInProgress = true;
+  logToConsole('🧠 Transformers.js 분석 시작...');
+  
+  try {
+    const fullText = editorEl.innerText;
+    if (!fullText || fullText.trim().length < 10) {
+      logToConsole('⚠️ 분석할 텍스트가 너무 짧습니다.');
+      analysisInProgress = false;
+      return;
+    }
+    
+    await saveCurrentFile();
+    
+    // 청크 분할 (메모리 관리)
+    const chunks = splitIntoChunks(fullText, 2000);
+    logToConsole(`📄 ${chunks.length}개 청크로 분할됨 (전체 ${fullText.length}자)`);
+    
+    // 모든 엔티티 수집
+    const allEntities = new Map(); // name -> { name, type, count }
+    const entityPairs = []; // 같은 청크에 등장한 엔티티 쌍
+    
+    let processedChunks = 0;
+    
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const progress = Math.round((i + 1) / chunks.length * 100);
+      updateModelStatus('loading', progress, `청크 ${i+1}/${chunks.length} 분석 중`);
+      
+      logToConsole(`📝 청크 ${i+1}/${chunks.length} 분석 중... (${chunk.length}자)`);
+      
+      try {
+        const nerResults = await nerPipeline(chunk);
+        
+        // 청크 내 엔티티 추출
+        const chunkEntities = [];
+        for (const item of nerResults) {
+          if (item.score < 0.5) continue;
+          const name = item.word;
+          const type = mapEntityType(item.entity_group);
+          
+          if (!allEntities.has(name)) {
+            allEntities.set(name, { name, type, count: 1 });
+          } else {
+            allEntities.get(name).count++;
+          }
+          
+          chunkEntities.push(name);
+        }
+        
+        // 청크 내 엔티티 쌍 (동시출현 관계)
+        for (let j = 0; j < chunkEntities.length; j++) {
+          for (let k = j + 1; k < chunkEntities.length; k++) {
+            entityPairs.push([chunkEntities[j], chunkEntities[k]]);
+          }
+        }
+        
+        processedChunks++;
+        logToConsole(`   → ${chunkEntities.length}개 엔티티 발견`);
+        
+      } catch (e) {
+        logToConsole(`   ❌ 청크 분석 실패: ${e.message}`);
+      }
+    }
+    
+    // 엔티티 -> 노드 추가
+    const entities = [...allEntities.values()];
+    entities.forEach(e => {
+      if (!nodes.has(e.name)) {
+        nodes.set(e.name, {
+          name: e.name,
+          type: e.type || '인물',
+          mentions: e.count || 1,
+          x: canvas.width/2 + (Math.random()-0.5)*200,
+          y: canvas.height/2 + (Math.random()-0.5)*200,
+          vx: 0, vy: 0, isDragging: false
+        });
+      } else {
+        nodes.get(e.name).mentions += e.count || 1;
+      }
+    });
+    
+    // 관계 추가 (동시출현 기반, 중복 제거)
+    const relationCount = {};
+    for (const [a, b] of entityPairs) {
+      if (a === b) continue;
+      const key = [a, b].sort().join('|');
+      relationCount[key] = (relationCount[key] || 0) + 1;
+    }
+    
+    for (const [key, count] of Object.entries(relationCount)) {
+      if (count < 2) continue; // 최소 2회 이상 동시출현
+      const [a, b] = key.split('|');
+      if (nodes.has(a) && nodes.has(b)) {
+        const exists = edges.some(e => 
+          (e.from === a && e.to === b) || (e.from === b && e.to === a)
+        );
+        if (!exists) {
+          edges.push({ from: a, to: b, label: '관계', weight: count });
+        }
+      }
+    }
+    
+    updateGraphCounts();
+    logToConsole(`\n✅ 분석 완료!`);
+    logToConsole(`   - ${processedChunks}개 청크 처리`);
+    logToConsole(`   - ${nodes.size}개 노드, ${edges.size}개 엣지`);
+    logToConsole(`   - ${entities.length}개 개체 발견`);
+    
+    // Cytoscape 형식 자동 출력
+    const graphData = exportGraphToCytoscape();
+    console.log('📊 Cytoscape 형식:', JSON.stringify(graphData, null, 2));
+    logToConsole(`📋 그래프 데이터가 콘솔에 출력되었습니다 (F12)`);
+    
+    updateModelStatus('ready');
+    
+  } catch (e) {
+    logToConsole('❌ 분석 오류: ' + e.message);
+    console.error(e);
+    updateModelStatus('error', 0, e.message);
+  } finally {
+    analysisInProgress = false;
+  }
+}
+window.runTransformersAnalysis = runTransformersAnalysis;
+
+// ============================================================
+// EXPORT - Cytoscape.js 형식
+// ============================================================
+
+function exportGraphToCytoscape() {
+  const elements = [];
+  
+  const colorHex = { '인물': '#5b9dff', '사건': '#ff6b6b', '장소': '#4ade80', '아이템': '#facc15' };
+  
+  for (const [name, node] of nodes) {
+    elements.push({
+      data: {
+        id: name,
+        label: name,
+        color: colorHex[node.type] || '#999',
+        type: node.type,
+        mentions: node.mentions
+      }
+    });
+  }
+  
+  for (const edge of edges) {
+    elements.push({
+      data: {
+        source: edge.from,
+        target: edge.to,
+        label: edge.label || '관계',
+        weight: edge.weight || 1
+      }
+    });
+  }
+  
+  return { elements };
+}
+
+function exportGraphToClipboard() {
+  const graphData = exportGraphToCytoscape();
+  const jsonStr = JSON.stringify(graphData, null, 2);
+  
+  navigator.clipboard.writeText(jsonStr).then(() => {
+    alert('✅ 그래프 데이터가 클립보드에 복사되었습니다.');
+    logToConsole('📋 Cytoscape 데이터 복사됨');
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = jsonStr;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    alert('✅ 그래프 데이터가 클립보드에 복사되었습니다.');
+  });
+}
+window.exportGraphToClipboard = exportGraphToClipboard;
+
+// ============================================================
+// AUTO ANALYSIS
+// ============================================================
+
+function toggleAutoAnalysis() {
+  autoAnalysisEnabled = !autoAnalysisEnabled;
+  const btn = document.getElementById('autoAnalysisBtn');
+  if (autoAnalysisEnabled) {
+    btn.textContent = '⏹ 중지';
+    btn.style.background = '#ff6b6b';
+    btn.style.color = '#fff';
+    logToConsole('🔄 자동 분석 켜짐');
+    if (modelReady) setTimeout(runTransformersAnalysis, 3000);
+  } else {
+    btn.textContent = '🔄 자동';
+    btn.style.background = '';
+    btn.style.color = '';
+    clearTimeout(analysisTimer);
+    logToConsole('⏸ 자동 분석 꺼짐');
+  }
+}
+window.toggleAutoAnalysis = toggleAutoAnalysis;
+
+// ============================================================
+// EDITOR EVENTS
+// ============================================================
+
+editorEl.addEventListener('input', () => {
+  if (!dirHandle) return;
+  clearTimeout(saveTimer);
+  clearTimeout(analysisTimer);
+  saveTimer = setTimeout(saveCurrentFile, 800);
+  if (autoAnalysisEnabled && modelReady) {
+    analysisTimer = setTimeout(runTransformersAnalysis, 3000);
+  }
+  const text = editorEl.innerText;
+  document.getElementById('charCount').textContent = `📝 글자: ${text.length}`;
+  updateLineCol();
+});
+
+// ============================================================
+// CANVAS GRAPH
+// ============================================================
+
+const colorHex = { '인물': '#5b9dff', '사건': '#ff6b6b', '장소': '#4ade80', '아이템': '#facc15' };
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height - 305;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function getVisibleNodes() {
+  return [...nodes.values()].filter(n => activeFilterTypes.has(n.type));
+}
+
+function getVisibleEdges() {
+  return edges.filter(e => {
+    const a = nodes.get(e.from), b = nodes.get(e.to);
+    return a && b && activeFilterTypes.has(a.type) && activeFilterTypes.has(b.type);
+  });
+}
+
+window.toggleFilter = function(type, el) {
+  if (activeFilterTypes.has(type)) {
+    activeFilterTypes.delete(type);
+    el.classList.remove('active');
+  } else {
+    activeFilterTypes.add(type);
+    el.classList.add('active');
+  }
+};
+
+function updateGraphCounts() {
+  document.getElementById('graphCount').textContent = `노드 ${nodes.size} · 엣지 ${edges.length}`;
+}
+
+window.selectNode = function(node) {
+  selectedNode = node;
+  const card = document.getElementById('wikiCard');
+  const neighbors = edges.filter(e => e.from === node.name || e.to === node.name);
+  let html = `
+    <div class="title-row">
+      <span class="node-name">📌 ${node.name}</span>
+      <select onchange="updateNodeType('${node.name}', this.value)">
+        <option value="인물" ${node.type==='인물'?'selected':''}>인물</option>
+        <option value="사건" ${node.type==='사건'?'selected':''}>사건</option>
+        <option value="장소" ${node.type==='장소'?'selected':''}>장소</option>
+        <option value="아이템" ${node.type==='아이템'?'selected':''}>아이템</option>
+      </select>
+    </div>
+    <div style="font-size:11px;color:var(--muted);">언급: ${node.mentions}회</div>
+    <textarea id="wikiDesc" placeholder="설명...">${node.desc || ''}</textarea>
+    <div style="display:flex;gap:6px;">
+      <button onclick="saveWikiDesc('${node.name}')" class="primary">저장</button>
+      <button onclick="removeNode('${node.name}')" style="border-color:#ff6b6b;color:#ff6b6b;">삭제</button>
+    </div>
+  `;
+  if (neighbors.length) {
+    html += `<div style="font-size:11px;margin-top:4px;">🔗 ${neighbors.map(e => {
+      const other = e.from === node.name ? e.to : e.from;
+      return `${node.name} → ${e.label} → ${other}`;
+    }).join('; ')}</div>`;
+  }
+  card.innerHTML = html;
+};
+
+window.updateNodeType = function(name, type) {
+  const n = nodes.get(name);
+  if (n) n.type = type;
+};
+
+window.saveWikiDesc = function(name) {
+  const n = nodes.get(name);
+  if (n) {
+    n.desc = document.getElementById('wikiDesc').value;
+    alert('저장됨');
+  }
+};
+
+window.removeNode = function(name) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  nodes.delete(name);
+  edges = edges.filter(e => e.from !== name && e.to !== name);
+  document.getElementById('wikiCard').innerHTML = `<div style="color:var(--muted);text-align:center;">노드 삭제됨</div>`;
+  updateGraphCounts();
+};
+
+// ============================================================
+// CANVAS DRAWING
+// ============================================================
+
+function drawNode(ctx, n) {
+  const r = 10 + Math.min(20, n.mentions * 1.2);
+  const base = colorHex[n.type] || '#999';
+  const grad = ctx.createRadialGradient(n.x, n.y, 1, n.x, n.y, r);
+  grad.addColorStop(0, '#fff');
+  grad.addColorStop(0.3, base);
+  grad.addColorStop(1, base + 'cc');
+  ctx.beginPath();
+  ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  if (n === hoverNode || n === selectedNode) { ctx.shadowColor = base; ctx.shadowBlur = 12; }
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = n === hoverNode ? 'rgba(230,232,238,0.95)' : 'rgba(138,144,162,0.25)';
+  ctx.font = (n === hoverNode) ? 'bold 12px sans-serif' : '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(n.name, n.x + r + 5, n.y + 2);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(transform.x, transform.y);
+  ctx.scale(transform.k, transform.k);
+  
+  const visibleNodes = getVisibleNodes();
+  const visibleEdges = getVisibleEdges();
+  
+  visibleEdges.forEach(e => {
+    const a = nodes.get(e.from), b = nodes.get(e.to);
+    if (!a || !b) return;
+    const focused = hoverNode && (e.from === hoverNode.name || e.to === hoverNode.name);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = focused ? 'rgba(91,157,255,0.45)' : 'rgba(58,64,81,0.15)';
+    ctx.lineWidth = focused ? 1.5 : 0.8;
+    ctx.stroke();
+    ctx.fillStyle = focused ? 'rgba(230,232,238,0.7)' : 'rgba(107,114,128,0.18)';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(e.label || '관계', (a.x + b.x) / 2, (a.y + b.y) / 2 - 2);
+  });
+  
+  particles.forEach(p => {
+    const f = nodes.get(p.from), t = nodes.get(p.to);
+    if (!f || !t) return;
+    const px = f.x + (t.x - f.x) * p.progress;
+    const py = f.y + (t.y - f.y) * p.progress;
+    ctx.beginPath();
+    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#6d8dfc';
+    ctx.shadowColor = '#6d8dfc';
+    ctx.shadowBlur = 6;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+  
+  visibleNodes.forEach(n => drawNode(ctx, n));
+  ctx.restore();
+}
+
+// ============================================================
+// CANVAS INTERACTIONS
+// ============================================================
+
+canvas.addEventListener('mousedown', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const cx = (mx - transform.x) / transform.k;
+  const cy = (my - transform.y) / transform.k;
+  
+  let clicked = null;
+  for (const n of getVisibleNodes()) {
+    const r = 10 + Math.min(20, n.mentions * 1.2);
+    if (Math.hypot(n.x - cx, n.y - cy) < r + 4) { clicked = n; break; }
+  }
+  
+  if (clicked) {
+    selectedNode = clicked;
+    selectedNode.isDragging = true;
+    selectNode(clicked);
+  } else {
+    transform.isDragging = true;
+    transform.dragStart = { x: mx - transform.x, y: my - transform.y };
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const cx = (mx - transform.x) / transform.k;
+  const cy = (my - transform.y) / transform.k;
+  
+  if (selectedNode && selectedNode.isDragging) {
+    selectedNode.x = cx;
+    selectedNode.y = cy;
+    return;
+  }
+  
+  if (transform.isDragging) {
+    transform.x = mx - transform.dragStart.x;
+    transform.y = my - transform.dragStart.y;
+    return;
+  }
+  
+  hoverNode = null;
+  for (const n of getVisibleNodes()) {
+    const r = 10 + Math.min(20, n.mentions * 1.2);
+    if (Math.hypot(n.x - cx, n.y - cy) < r + 4) { hoverNode = n; break; }
+  }
+  
+  if (hoverNode) {
+    tooltip.style.display = 'block';
+    tooltip.style.left = `${e.clientX + 14}px`;
+    tooltip.style.top = `${e.clientY + 14}px`;
+    const conn = edges.filter(ed => ed.from === hoverNode.name || ed.to === hoverNode.name);
+    tooltip.innerHTML = `
+      <b>${hoverNode.name}</b> <span class="badge ${hoverNode.type==='인물'?'char':hoverNode.type==='사건'?'event':hoverNode.type==='장소'?'loc':'item'}">${hoverNode.type}</span><br>
+      언급: ${hoverNode.mentions}회
+      ${conn.length ? `<hr>🔗 ${conn.map(e => {
+        const other = e.from === hoverNode.name ? e.to : e.from;
+        return `${other} (${e.label || '관계'})`;
+      }).join(', ')}` : ''}
+    `;
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  if (selectedNode) selectedNode.isDragging = false;
+  transform.isDragging = false;
+});
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const cx = (mx - transform.x) / transform.k;
+  const cy = (my - transform.y) / transform.k;
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  transform.k = Math.max(0.2, Math.min(5, transform.k * factor));
+  transform.x = mx - cx * transform.k;
+  transform.y = my - cy * transform.k;
+});
+
+window.zoomGraph = function(f) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const tx = (cx - transform.x) / transform.k;
+  const ty = (cy - transform.y) / transform.k;
+  transform.k = Math.max(0.2, Math.min(5, transform.k * f));
+  transform.x = cx - tx * transform.k;
+  transform.y = cy - ty * transform.k;
+};
+
+window.resetGraphView = function() {
+  transform = { x: 0, y: 0, k: 1 };
+};
+
+// ============================================================
+// PHYSICS
+// ============================================================
+
+function tick() {
+  const visibleNodes = getVisibleNodes();
+  const visibleEdges = getVisibleEdges();
+  
+  for (let i = 0; i < visibleNodes.length; i++) {
+    for (let j = i + 1; j < visibleNodes.length; j++) {
+      const a = visibleNodes[i], b = visibleNodes[j];
+      let dx = a.x - b.x, dy = a.y - b.y;
+      let dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      const force = 2000 / (dist * dist + 1);
+      dx /= dist; dy /= dist;
+      a.vx += dx * force * 0.01; a.vy += dy * force * 0.01;
+      b.vx -= dx * force * 0.01; b.vy -= dy * force * 0.01;
+    }
+  }
+  
+  visibleEdges.forEach(e => {
+    const a = nodes.get(e.from), b = nodes.get(e.to);
+    if (!a || !b) return;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    const force = (dist - 130) * 0.05;
+    a.vx += (dx / dist) * force; a.vy += (dy / dist) * force;
+    b.vx -= (dx / dist) * force; b.vy -= (dy / dist) * force;
+  });
+  
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  visibleNodes.forEach(n => {
+    if (n.isDragging) return;
+    n.vx += (cx - n.x) * 0.01;
+    n.vy += (cy - n.y) * 0.01;
+    n.vx *= 0.85; n.vy *= 0.85;
+    n.x += n.vx; n.y += n.vy;
+    n.x = Math.max(30, Math.min(canvas.width - 30, n.x));
+    n.y = Math.max(30, Math.min(canvas.height - 30, n.y));
+  });
+  
+  if (visibleEdges.length && Math.random() < 0.05) {
+    const e = visibleEdges[Math.floor(Math.random() * visibleEdges.length)];
+    if (nodes.get(e.from) && nodes.get(e.to)) {
+      particles.push({ from: e.from, to: e.to, progress: 0, speed: 0.006 + Math.random() * 0.01 });
+    }
+  }
+  particles.forEach(p => p.progress += p.speed);
+  particles = particles.filter(p => p.progress < 1);
+  
+  draw();
+  requestAnimationFrame(tick);
+}
+
+// ============================================================
+// CONSOLE
+// ============================================================
+
+function logToConsole(text) {
+  const body = document.getElementById('aiConsoleBody');
+  body.textContent += text + '\n';
+  body.scrollTop = body.scrollHeight;
+}
+window.logToConsole = logToConsole;
+window.closeConsole = function() {
+  document.getElementById('aiConsole').style.display = 'none';
+};
+
+// ============================================================
+// RESIZERS
+// ============================================================
+
+function makeResizer(el, target, side) {
+  let startX, startWidth;
+  el.addEventListener('mousedown', (e) => {
+    startX = e.clientX;
+    startWidth = target.getBoundingClientRect().width;
+    el.classList.add('active');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    const onMove = (ev) => {
+      const delta = side === 'left' ? (ev.clientX - startX) : (startX - ev.clientX);
+      const w = Math.max(180, Math.min(600, startWidth + delta));
+      target.style.width = w + 'px';
+      resizeCanvas();
+    };
+    const onUp = () => {
+      el.classList.remove('active');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  });
+}
+makeResizer(document.getElementById('resizerLeft'), document.getElementById('leftPanel'), 'left');
+makeResizer(document.getElementById('resizerRight'), document.getElementById('rightPanel'), 'right');
+
+// ============================================================
+// INIT
+// ============================================================
+
+async function init() {
+  await checkAndRestoreFolder();
+  nodes.forEach(n => {
+    n.x = canvas.width / 2 + (Math.random() - 0.5) * 200;
+    n.y = canvas.height / 2 + (Math.random() - 0.5) * 200;
+  });
+  requestAnimationFrame(tick);
+  updateModelStatus('idle');
+  
+  // 백그라운드 모델 로드
+  setTimeout(async () => {
+    if (!modelReady) {
+      logToConsole('📦 한국어 NER 모델을 백그라운드에서 로드합니다...');
+      await loadModel();
+    }
+  }, 2000);
+}
+
+init();
+</script>
+</body>
+</html>
+```
