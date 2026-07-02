@@ -791,7 +791,7 @@
 <body class="dark-theme">
 
   <div class="top-nav">
-    <div class="brand">⚓ 소설 관계도 분석기 <span>| Transformers.js (토큰 불필요)</span></div>
+    <div class="brand">⚓ 소설 관계도 분석기 <span>| Transformers.js (ONNX)</span></div>
     <div class="nav-controls">
       <button onclick="toggleTheme()" id="themeBtn">🌞 라이트 모드</button>
       <button class="primary" id="openDirBtn" onclick="openLocalFolder()">📂 폴더 선택</button>
@@ -811,7 +811,6 @@
           <span>
             <span class="status-dot idle" id="modelDot"></span>
             <span id="modelStatusText">모델 대기 중</span>
-            <span style="font-size:10px;color:var(--muted);margin-left:8px;" id="modelSizeText"></span>
           </span>
           <span style="font-size:10px;color:var(--muted);">
             <span id="modelProgressText">0%</span>
@@ -987,21 +986,18 @@
       <h3>시작하기</h3>
       <div class="step"><div class="step-num">1</div><div class="step-body"><strong>폴더 열기</strong>소설 파일(.txt)이 있는 폴더를 선택하세요.</div></div>
       <div class="step"><div class="step-num">2</div><div class="step-body"><strong>파일 선택</strong>분석할 소설 파일을 클릭하면 편집기에 내용이 표시됩니다.</div></div>
-      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>🧠 분석 실행</strong>버튼을 누르면 AI가 인물, 장소, 아이템, 사건을 추출합니다. (최초 1회 모델 다운로드)</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>🧠 분석 실행</strong>버튼을 누르면 AI가 인물, 장소, 아이템, 사건을 추출합니다.</div></div>
       <div class="step"><div class="step-num">4</div><div class="step-body"><strong>📋 내보내기</strong>그래프 데이터를 Cytoscape.js 형식으로 복사할 수 있습니다.</div></div>
-      <div class="warning">⚠️ 최초 실행 시 모델 다운로드(약 400MB)가 필요합니다. 이후에는 캐시에서 바로 로드됩니다.</div>
       <button class="primary help-close" onclick="closeHelp()">닫기</button>
     </div>
   </div>
 
 <script type="module">
-// ============================================================
-// 소설 관계도 분석기 - onnx-community/klue-bert-base (토큰 없음)
-// ============================================================
-
 import { pipeline, env } from '@xenova/transformers';
 
+// ============================================================
 // 환경 설정
+// ============================================================
 env.allowRemoteModels = true;
 env.allowLocalModels = false;
 
@@ -1227,7 +1223,7 @@ function closeHelp() {
 window.closeHelp = closeHelp;
 
 function showAbout() {
-  alert('⚓ 소설 관계도 분석기 v3.0\n\nTransformers.js 기반\n한국어 NER (onnx-community/klue-bert-base)\n\n• 인물, 장소, 아이템, 사건 추출\n• 관계 그래프 시각화\n• Cytoscape.js 형식 내보내기');
+  alert('⚓ 소설 관계도 분석기 v3.0\n\nTransformers.js 기반\n한국어 NER (onnx-community/klue-bert-base)');
 }
 window.showAbout = showAbout;
 
@@ -1448,7 +1444,7 @@ window.saveAsFile = async function() {
 };
 
 // ============================================================
-// MODEL LOADING - onnx-community/klue-bert-base (토큰 없음)
+// MODEL LOADING - onnx-community/klue-bert-base
 // ============================================================
 
 function updateModelStatus(status, progress = 0, text = '') {
@@ -1472,10 +1468,10 @@ async function loadModel() {
   updateModelStatus('loading', 0);
   
   try {
-    // ✅ onnx-community/klue-bert-base - 토큰 없이 가능 (ONNX 포맷)
-    updateModelStatus('loading', 10, '한국어 NER 모델 다운로드 중... (ONNX)');
+    updateModelStatus('loading', 10, '한국어 NER 모델 다운로드 중...');
     
     nerPipeline = await pipeline('token-classification', 'onnx-community/klue-bert-base', {
+      revision: 'main',
       progress_callback: (info) => {
         if (info.progress) {
           const percent = Math.round(info.progress * 100);
@@ -1484,34 +1480,26 @@ async function loadModel() {
       }
     });
     
-    updateModelStatus('loading', 100, '완료!');
-    
     modelReady = true;
     isModelLoading = false;
     updateModelStatus('ready');
     logToConsole('✅ Transformers.js 모델 준비 완료!');
     logToConsole('   - onnx-community/klue-bert-base (한국어 NER)');
-    logToConsole('   - 인물, 장소, 아이템, 사건 추출 가능');
     
   } catch (e) {
     console.error('모델 로딩 실패:', e);
     updateModelStatus('error', 0, e.message);
     isModelLoading = false;
     logToConsole('❌ 모델 로딩 실패: ' + e.message);
-    logToConsole('⚠️ 규칙 기반 분석으로 전환합니다.');
-    
-    // 규칙 기반 분석으로 fallback
-    window.runTransformersAnalysis = runRuleBasedAnalysis;
   }
 }
 
 // ============================================================
-// TEXT CHUNKING (메모리 관리)
+// TEXT CHUNKING
 // ============================================================
 
 function splitIntoChunks(text, maxChunkSize = 2000) {
   const sentences = text.split(/(?<=[.!?…])\s+|\n+/).filter(s => s.trim().length > 0);
-  
   if (sentences.length === 0) return [];
   
   const chunks = [];
@@ -1520,7 +1508,6 @@ function splitIntoChunks(text, maxChunkSize = 2000) {
   
   for (const sent of sentences) {
     const sentSize = sent.length;
-    
     if (currentSize + sentSize > maxChunkSize) {
       if (currentChunk) chunks.push(currentChunk);
       currentChunk = sent;
@@ -1530,14 +1517,12 @@ function splitIntoChunks(text, maxChunkSize = 2000) {
       currentSize += sentSize;
     }
   }
-  
   if (currentChunk) chunks.push(currentChunk);
-  
   return chunks;
 }
 
 // ============================================================
-// ANALYSIS - Transformers.js NER
+// ANALYSIS
 // ============================================================
 
 function mapEntityType(label) {
@@ -1558,13 +1543,11 @@ async function runTransformersAnalysis() {
     return;
   }
   
-  // 모델 로드
   if (!modelReady) {
-    logToConsole('📦 한국어 NER 모델을 다운로드합니다 (약 400MB, 최초 1회)');
+    logToConsole('📦 한국어 NER 모델을 다운로드합니다...');
     await loadModel();
     if (!modelReady) {
-      logToConsole('❌ 모델 로드 실패 - 규칙 기반으로 전환');
-      runRuleBasedAnalysis();
+      logToConsole('❌ 모델 로드 실패');
       return;
     }
   }
@@ -1628,7 +1611,6 @@ async function runTransformersAnalysis() {
       }
     }
     
-    // 엔티티 -> 노드 추가
     const entities = [...allEntities.values()];
     entities.forEach(e => {
       if (!nodes.has(e.name)) {
@@ -1645,7 +1627,6 @@ async function runTransformersAnalysis() {
       }
     });
     
-    // 관계 추가 (동시출현 기반, 중복 제거)
     const relationCount = {};
     for (const [a, b] of entityPairs) {
       if (a === b) continue;
@@ -1668,13 +1649,10 @@ async function runTransformersAnalysis() {
     
     updateGraphCounts();
     logToConsole(`\n✅ 분석 완료!`);
-    logToConsole(`   - ${chunks.length}개 청크 처리`);
     logToConsole(`   - ${nodes.size}개 노드, ${edges.size}개 엣지`);
-    logToConsole(`   - ${entities.length}개 개체 발견`);
     
     const graphData = exportGraphToCytoscape();
     console.log('📊 Cytoscape 형식:', JSON.stringify(graphData, null, 2));
-    logToConsole(`📋 그래프 데이터가 콘솔에 출력되었습니다 (F12)`);
     
     updateModelStatus('ready');
     
@@ -1689,88 +1667,13 @@ async function runTransformersAnalysis() {
 window.runTransformersAnalysis = runTransformersAnalysis;
 
 // ============================================================
-// 규칙 기반 분석 (Fallback)
-// ============================================================
-
-function runRuleBasedAnalysis() {
-  if (!dirHandle || !currentFileName) {
-    alert('먼저 폴더를 연결하고 파일을 열어주세요.');
-    return;
-  }
-  
-  const text = editorEl.innerText;
-  if (!text || text.trim().length < 10) {
-    alert('분석할 텍스트가 너무 짧습니다.');
-    return;
-  }
-  
-  document.getElementById('aiConsole').style.display = 'flex';
-  document.getElementById('aiConsoleBody').textContent = '';
-  
-  logToConsole('📊 규칙 기반 분석 시작...');
-  
-  // 1. 인물 추출 (조사 패턴)
-  const nameRegex = /([가-힣]{2,4})(?:이|가|은|는|을|를|와|과|의|에|에서|부터|까지|한테|께|도|만|처럼|같이)/g;
-  const names = new Map();
-  let m;
-  while ((m = nameRegex.exec(text)) !== null) {
-    const name = m[1];
-    const commonWords = ['사람','우리','가슴','하늘','소리','얼굴','생각','하나','모두','무엇','그것','자리','너희','마음','때','곳','집','말','일','중','것','수','길','눈','손','등','데','분','줄','적'];
-    if (!commonWords.includes(name) && name.length >= 2) {
-      names.set(name, (names.get(name) || 0) + 1);
-    }
-  }
-  
-  // 2. 노드 추가
-  for (const [name, count] of names) {
-    if (count >= 2 && !nodes.has(name)) {
-      nodes.set(name, {
-        name: name,
-        type: '인물',
-        mentions: count,
-        x: canvas.width/2 + (Math.random()-0.5)*200,
-        y: canvas.height/2 + (Math.random()-0.5)*200,
-        vx: 0, vy: 0, isDragging: false
-      });
-    }
-  }
-  
-  // 3. 관계 추출 (동시출현)
-  const sentences = text.split(/[.!?…]\s*/);
-  for (const sent of sentences) {
-    const found = [];
-    for (const [name] of nodes) {
-      if (sent.includes(name)) found.push(name);
-    }
-    for (let i = 0; i < found.length; i++) {
-      for (let j = i + 1; j < found.length; j++) {
-        const exists = edges.some(e => 
-          (e.from === found[i] && e.to === found[j]) || 
-          (e.from === found[j] && e.to === found[i])
-        );
-        if (!exists) {
-          edges.push({ from: found[i], to: found[j], label: '관계' });
-        }
-      }
-    }
-  }
-  
-  updateGraphCounts();
-  logToConsole(`✅ 규칙 기반 분석 완료! 노드 ${nodes.size}개, 엣지 ${edges.size}개`);
-  
-  const graphData = exportGraphToCytoscape();
-  console.log('📊 Cytoscape 형식:', JSON.stringify(graphData, null, 2));
-}
-
-// ============================================================
-// EXPORT - Cytoscape.js 형식
+// EXPORT
 // ============================================================
 
 const colorHex = { '인물': '#5b9dff', '사건': '#ff6b6b', '장소': '#4ade80', '아이템': '#facc15' };
 
 function exportGraphToCytoscape() {
   const elements = [];
-  
   for (const [name, node] of nodes) {
     elements.push({
       data: {
@@ -1782,7 +1685,6 @@ function exportGraphToCytoscape() {
       }
     });
   }
-  
   for (const edge of edges) {
     elements.push({
       data: {
@@ -1793,17 +1695,14 @@ function exportGraphToCytoscape() {
       }
     });
   }
-  
   return { elements };
 }
 
 function exportGraphToClipboard() {
   const graphData = exportGraphToCytoscape();
   const jsonStr = JSON.stringify(graphData, null, 2);
-  
   navigator.clipboard.writeText(jsonStr).then(() => {
     alert('✅ 그래프 데이터가 클립보드에 복사되었습니다.');
-    logToConsole('📋 Cytoscape 데이터 복사됨');
   }).catch(() => {
     const textarea = document.createElement('textarea');
     textarea.value = jsonStr;
@@ -2226,10 +2125,9 @@ async function init() {
   requestAnimationFrame(tick);
   updateModelStatus('idle');
   
-  // 백그라운드 모델 로드
   setTimeout(async () => {
     if (!modelReady) {
-      logToConsole('📦 한국어 NER 모델을 백그라운드에서 다운로드합니다 (약 400MB)');
+      logToConsole('📦 한국어 NER 모델을 백그라운드에서 다운로드합니다...');
       await loadModel();
     }
   }, 2000);
