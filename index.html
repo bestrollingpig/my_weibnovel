@@ -3,80 +3,424 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>세계관 그래프 편집기 (PNG 캡쳐 + TTS)</title>
+  <title>세계관 그래프 편집기 (다크모드 + 도움말)</title>
   <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
   <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
   <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
   <style>
+    /* ===== CSS 변수 ===== */
+    :root {
+      --bg-primary: #f0f0f0;
+      --bg-secondary: #ffffff;
+      --bg-card: #f9f9f9;
+      --bg-input: #ffffff;
+      --text-primary: #333333;
+      --text-secondary: #666666;
+      --border-color: #ddd;
+      --shadow-color: rgba(0,0,0,0.1);
+      --help-bg: #f9f9f9;
+      --help-border: #e0e0e0;
+      --header-start: #667eea;
+      --header-end: #764ba2;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --bg-card: #16213e;
+      --bg-input: #2d2d4e;
+      --text-primary: #e0e0e0;
+      --text-secondary: #aaaaaa;
+      --border-color: #444466;
+      --shadow-color: rgba(0,0,0,0.4);
+      --help-bg: #1a1a3e;
+      --help-border: #333366;
+    }
+
+    /* ===== 기본 스타일 ===== */
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Malgun Gothic',sans-serif; background:#f0f0f0; height:100vh; display:flex; flex-direction:column; }
-    header { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; padding:10px 20px; box-shadow:0 2px 8px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:var(--bg-primary);
+      color:var(--text-primary);
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ===== 헤더 ===== */
+    header {
+      background:linear-gradient(135deg,var(--header-start) 0%,var(--header-end) 100%);
+      color:#fff;
+      padding:10px 20px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.2);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
     header h1 { font-size:1.3em; text-shadow:1px 1px 0 #000; }
+    .header-right { display:flex; gap:10px; align-items:center; }
+    .header-btn {
+      background:rgba(255,255,255,0.2);
+      border:1px solid rgba(255,255,255,0.3);
+      color:#fff;
+      padding:6px 14px;
+      border-radius:20px;
+      cursor:pointer;
+      font-size:0.9em;
+      font-weight:bold;
+      transition:0.2s;
+      text-shadow:1px 1px 0 #000;
+    }
+    .header-btn:hover { background:rgba(255,255,255,0.35); }
+    .header-btn.dark-active { background:rgba(255,255,255,0.4); }
+
+    /* ===== 메인 레이아웃 ===== */
     .main-container { display:flex; flex:1; overflow:hidden; }
-    .left-panel { width:22%; background:#fff; padding:12px; overflow-y:auto; border-right:2px solid #ddd; }
-    .graph-area { width:56%; padding:10px; display:flex; flex-direction:column; }
-    .right-panel { width:22%; background:#fff; padding:12px; overflow-y:auto; border-left:2px solid #ddd; display:flex; flex-direction:column; }
-    #cy { flex:1; }
-    .panel-section { margin-bottom:15px; padding:12px; background:#f9f9f9; border-radius:8px; border:1px solid #e0e0e0; }
-    .panel-section h3 { font-size:0.95em; margin-bottom:8px; color:#667eea; border-bottom:2px solid #667eea; padding-bottom:4px; }
-    input[type="text"], input[type="number"], select { width:100%; padding:6px; margin:4px 0; border:1px solid #ddd; border-radius:4px; font-size:0.9em; }
-    input[readonly] { background-color:#e9ecef; color:#495057; cursor:not-allowed; }
-    button { width:100%; padding:8px; margin:4px 0; border:none; border-radius:4px; font-size:0.85em; cursor:pointer; font-weight:bold; color:#fff; text-shadow:1px 1px 0 #000; }
+    .left-panel {
+      width:22%;
+      background:var(--bg-secondary);
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid var(--border-color);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .graph-area {
+      width:56%;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .right-panel {
+      width:22%;
+      background:var(--bg-secondary);
+      padding:12px;
+      overflow-y:auto;
+      border-left:2px solid var(--border-color);
+      display:flex;
+      flex-direction:column;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    /* ===== 그래프 영역 ===== */
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid var(--border-color);
+      border-radius:8px;
+      background:var(--bg-primary);
+      transition: border-color 0.3s, background 0.3s;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+    #overlays {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      z-index:10;
+      overflow:hidden;
+    }
+
+    /* ===== 패널 섹션 ===== */
+    .panel-section {
+      margin-bottom:15px;
+      padding:12px;
+      background:var(--bg-card);
+      border-radius:8px;
+      border:1px solid var(--border-color);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .panel-section h3 {
+      font-size:0.95em;
+      margin-bottom:8px;
+      color:#667eea;
+      border-bottom:2px solid #667eea;
+      padding-bottom:4px;
+    }
+    input[type="text"], input[type="number"], select {
+      width:100%;
+      padding:6px;
+      margin:4px 0;
+      border:1px solid var(--border-color);
+      border-radius:4px;
+      font-size:0.9em;
+      background:var(--bg-input);
+      color:var(--text-primary);
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
+    }
+    input[readonly] {
+      background-color:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    [data-theme="dark"] input[readonly] {
+      background-color:#2d2d4e;
+      color:#aaaaaa;
+    }
+    textarea {
+      width:100%;
+      padding:8px;
+      border:1px solid var(--border-color);
+      border-radius:4px;
+      font-family:'Malgun Gothic',monospace;
+      font-size:0.9em;
+      resize:vertical;
+      min-height:120px;
+      background:var(--bg-input);
+      color:var(--text-primary);
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    /* ===== 버튼 ===== */
+    button {
+      width:100%;
+      padding:8px;
+      margin:4px 0;
+      border:none;
+      border-radius:4px;
+      font-size:0.85em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+      transition:0.2s;
+    }
+    button:active { transform:scale(0.98); }
     .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
     .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
     .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
     .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
     .btn-warning { background:linear-gradient(135deg,#f6d365 0%,#fda085 100%); }
     .btn-secondary { background:#6c757d; color:#fff; text-shadow:1px 1px 0 #000; }
-    button:active { transform:scale(0.98); }
-    textarea { width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-family:'Malgun Gothic',monospace; font-size:0.9em; resize:vertical; min-height:120px; }
-    .notes-area { flex:1; display:flex; flex-direction:column; gap:8px; }
-    .notes-textarea { flex:1; min-height:150px; line-height:1.6; }
-    .tts-controls { padding:10px; background:#f0f7ff; border-radius:6px; border:1px solid #d0e7ff; }
-    .tts-loading { font-size:0.8em; color:#764ba2; font-weight:bold; margin-top:5px; display:none; }
-    .speed-control { display:flex; align-items:center; gap:10px; }
-    .speed-control input[type="range"] { flex:1; }
-    .tts-buttons { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
-    .info-badge { display:inline-block; padding:4px 10px; background:#667eea; color:#fff; border-radius:4px; font-size:0.8em; margin-bottom:8px; text-shadow:1px 1px 0 #000; }
-    .help-text { font-size:0.75em; color:#888; margin-top:4px; padding:6px; background:#f9f9f9; border-radius:4px; }
+    .btn-help {
+      background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+      font-size:0.9em;
+      padding:10px;
+    }
+    .btn-help.active { background:linear-gradient(135deg,#f5576c 0%,#f093fb 100%); }
+
+    /* ===== 도움말 ===== */
+    .help-container {
+      margin-bottom:15px;
+      border-radius:8px;
+      border:1px solid var(--help-border);
+      background:var(--help-bg);
+      overflow:hidden;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .help-header {
+      padding:10px 14px;
+      cursor:pointer;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      user-select:none;
+      font-weight:bold;
+      color:var(--text-primary);
+    }
+    .help-header:hover { background:rgba(102,126,234,0.1); }
+    .help-header .arrow { transition:transform 0.3s; font-size:0.8em; }
+    .help-header .arrow.open { transform:rotate(180deg); }
+    .help-body {
+      max-height:0;
+      overflow:hidden;
+      transition:max-height 0.4s ease, padding 0.3s ease;
+      padding:0 14px;
+    }
+    .help-body.open {
+      max-height:2000px;
+      padding:0 14px 14px 14px;
+    }
+    .help-body h4 {
+      color:#667eea;
+      margin:12px 0 4px 0;
+      font-size:0.9em;
+      border-bottom:1px solid var(--border-color);
+      padding-bottom:3px;
+    }
+    .help-body h4:first-child { margin-top:4px; }
+    .help-body p, .help-body li {
+      font-size:0.82em;
+      line-height:1.6;
+      color:var(--text-secondary);
+      margin:2px 0;
+    }
+    .help-body ul { padding-left:18px; margin:4px 0; }
+    .help-body .method {
+      background:var(--bg-card);
+      padding:6px 10px;
+      border-radius:4px;
+      margin:6px 0;
+      border-left:3px solid #667eea;
+      font-size:0.82em;
+      transition: background 0.3s;
+    }
+    .help-body .method strong { color:#667eea; }
+    .help-body .tag {
+      display:inline-block;
+      background:#667eea;
+      color:#fff;
+      padding:1px 8px;
+      border-radius:10px;
+      font-size:0.7em;
+      font-weight:bold;
+    }
+    .help-body .shortcut {
+      display:inline-block;
+      background:var(--bg-input);
+      border:1px solid var(--border-color);
+      padding:1px 8px;
+      border-radius:4px;
+      font-size:0.75em;
+      font-family:monospace;
+      color:var(--text-primary);
+    }
+
+    /* ===== 다크모드 토글 ===== */
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+      font-size:0.9em;
+      transition:0.2s;
+      text-shadow:1px 1px 0 #000;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    /* ===== 기타 ===== */
+    .help-text { font-size:0.75em; color:var(--text-secondary); margin-top:4px; padding:6px; background:var(--bg-card); border-radius:4px; transition: background 0.3s, color 0.3s; }
     .connection-tools { display:flex; gap:5px; margin-bottom:4px; }
     .connection-tools button { padding:4px; font-size:0.75em; margin:0; }
     .drag-mode-active { background:#ff0055 !important; animation:pulse 2s infinite; }
     @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(255,0,85,0.7); } 70% { box-shadow:0 0 0 10px rgba(255,0,85,0); } 100% { box-shadow:0 0 0 0 rgba(255,0,85,0); } }
-    .cy-wrapper { position:relative; flex:1; width:100%; height:100%; border:2px solid #ddd; border-radius:8px; background:#fafafa; }
-    #cy { position:absolute; top:0; left:0; width:100%; height:100%; background:transparent; }
-    #overlays { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10; overflow:hidden; }
     .node-image-toggle { position:absolute; z-index:999; width:24px; height:24px; background:#fff; border:2px solid #333; border-radius:50%; text-align:center; line-height:20px; font-size:14px; cursor:pointer; box-shadow:2px 2px 5px rgba(0,0,0,0.2); pointer-events:auto; }
-    .node-image-popup { position:absolute; z-index:9999; background:#fff; border:1px solid #ccc; padding:5px; box-shadow:0 10px 25px rgba(0,0,0,0.5); display:none; pointer-events:auto; resize:both; overflow:auto; min-width:200px; min-height:150px; }
-    .node-content-text { font-size:0.9em; line-height:1.4; color:#333; white-space:pre-wrap; background:#f9f9f9; padding:5px; border-radius:4px; border:1px solid #eee; width:100%; height:100%; }
+    .node-image-popup { position:absolute; z-index:9999; background:var(--bg-secondary); border:1px solid var(--border-color); padding:5px; box-shadow:0 10px 25px rgba(0,0,0,0.5); display:none; pointer-events:auto; resize:both; overflow:auto; min-width:200px; min-height:150px; color:var(--text-primary); }
+    .node-content-text { font-size:0.9em; line-height:1.4; white-space:pre-wrap; background:var(--bg-card); padding:5px; border-radius:4px; border:1px solid var(--border-color); width:100%; height:100%; }
     .node-content-iframe { width:100%; height:200px; border:none; border-radius:4px; }
     .node-content-video { width:100%; border-radius:4px; }
-    .node-content-link-card { padding:10px; background:#f0f7ff; border:1px solid #d0e7ff; border-radius:4px; text-align:center; margin-bottom:5px; }
+    .node-content-link-card { padding:10px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:4px; text-align:center; margin-bottom:5px; }
     .node-content-link-card a { color:#0066cc; font-weight:bold; text-decoration:none; }
     .node-image-popup img { max-width:100%; height:auto; display:block; border-radius:4px; }
     .node-image-popup .close-btn { display:block; text-align:center; background:#ff5f6d; color:#fff; font-size:0.8em; padding:2px; cursor:pointer; margin-top:5px; border-radius:4px; font-weight:bold; }
-    .voice-mapping { max-height:100px; overflow-y:auto; background:#fff; border:1px solid #ddd; border-radius:4px; padding:4px; font-size:0.8em; }
-    .voice-mapping-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; border-bottom:1px solid #eee; padding:2px 0; }
-    .voice-mapping-item .del { color:red; cursor:pointer; font-weight:bold; }
-    .capture-controls { display:flex; gap:6px; margin-top:6px; }
-    .capture-controls button { flex:1; padding:6px; font-size:0.8em; }
+
+    /* 캡쳐 */
+    .capture-controls { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+    .capture-controls button { flex:1; padding:6px; font-size:0.8em; min-width:80px; }
     .resolution-control { display:flex; align-items:center; gap:8px; margin:4px 0; }
-    .resolution-control label { font-size:0.85em; font-weight:bold; }
+    .resolution-control label { font-size:0.85em; font-weight:bold; color:var(--text-primary); }
     .resolution-control input { flex:1; }
+
+    .info-badge { display:inline-block; padding:4px 10px; background:#667eea; color:#fff; border-radius:4px; font-size:0.8em; margin-bottom:8px; text-shadow:1px 1px 0 #000; }
+    .tts-controls { padding:10px; background:var(--bg-card); border-radius:6px; border:1px solid var(--border-color); }
+    .tts-loading { font-size:0.8em; color:#764ba2; font-weight:bold; margin-top:5px; display:none; }
+    .speed-control { display:flex; align-items:center; gap:10px; }
+    .speed-control input[type="range"] { flex:1; }
+    .tts-buttons { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+    .voice-mapping { max-height:100px; overflow-y:auto; background:var(--bg-input); border:1px solid var(--border-color); border-radius:4px; padding:4px; font-size:0.8em; }
+    .voice-mapping-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; border-bottom:1px solid var(--border-color); padding:2px 0; }
+    .voice-mapping-item .del { color:red; cursor:pointer; font-weight:bold; }
+
+    /* 다크모드용 그래프 스타일 오버라이드 */
+    [data-theme="dark"] .cytoscape-container { background:#0f0f1a; }
   </style>
 </head>
 <body>
 <header>
-  <h1>🌐 세계관 그래프 편집기 (PNG 캡쳐 + TTS)</h1>
-  <div style="display:flex; gap:10px; align-items:center;">
-    <span style="font-size:0.8em; text-shadow:1px 1px 0 #000;">🖱️ 드래그 + 클릭 연결</span>
+  <h1>🌐 세계관 그래프 편집기</h1>
+  <div class="header-right">
+    <button class="dark-toggle" onclick="toggleDarkMode()" id="darkModeBtn">🌙 다크모드</button>
   </div>
 </header>
 
 <div class="main-container">
   <div class="left-panel">
+    <!-- ===== 도움말 ===== -->
+    <div class="help-container">
+      <div class="help-header" onclick="toggleHelp()">
+        <span>📖 도움말</span>
+        <span class="arrow" id="helpArrow">▼</span>
+      </div>
+      <div class="help-body" id="helpBody">
+        <h4>🚀 시작하기</h4>
+        <ul>
+          <li><strong>노드 추가</strong>: 왼쪽 패널에서 이름 입력 후 '노드 추가' 또는 그래프 빈 공간 <span class="shortcut">더블클릭</span></li>
+          <li><strong>노드 선택</strong>: 노드 클릭하면 오른쪽 패널에 속성 표시</li>
+          <li><strong>노드 이동</strong>: '드래그 모드' 켜고 노드 드래그</li>
+        </ul>
+
+        <h4>🔗 관계 연결 (3가지 방법)</h4>
+
+        <div class="method">
+          <strong>① 클릭으로 연결 (가장 정확함)</strong><br>
+          1. 출발 노드 클릭 → 자동 입력<br>
+          2. 도착 노드 클릭 → 자동 입력<br>
+          3. 관계 라벨 입력 (예: "친구", "적")<br>
+          4. '연결 추가' 버튼 클릭
+        </div>
+
+        <div class="method">
+          <strong>② Ctrl+드래그 (가장 빠름)</strong><br>
+          1. <span class="shortcut">Ctrl</span>(맥 <span class="shortcut">Cmd</span>) 키 누른 상태<br>
+          2. 출발→도착 노드로 드래그<br>
+          3. 라벨 입력 후 확인
+        </div>
+
+        <div class="method">
+          <strong>③ 드래그 모드 (연속 작업)</strong><br>
+          1. '🖱️ 드래그 모드' 버튼 클릭 (빨간색 깜빡임)<br>
+          2. 노드간 드래그로 계속 연결<br>
+          3. 다시 버튼 클릭하여 모드 해제
+        </div>
+
+        <h4>📸 PNG 캡쳐</h4>
+        <ul>
+          <li><strong>해상도 조절</strong>: 1x ~ 4x (슬라이더로 조정)</li>
+          <li><strong>전체 저장</strong>: 전체 그래프 PNG 저장</li>
+          <li><strong>클립보드 복사</strong>: 이미지 복사 (<span class="shortcut">Ctrl+V</span>로 붙여넣기)</li>
+        </ul>
+
+        <h4>🔊 TTS 음성 낭독</h4>
+        <ul>
+          <li>메모 작성 후 '읽기' 버튼 클릭</li>
+          <li>캐릭터 매핑: <code>철수: 안녕하세요</code> 형식</li>
+          <li>태그 사용: <code>[나래이터] 안녕 [아이 여] 반가워</code></li>
+        </ul>
+
+        <h4>💾 데이터 관리</h4>
+        <ul>
+          <li>JSON 업로드/다운로드로 백업</li>
+          <li>URL 공유로 현재 상태 저장</li>
+        </ul>
+
+        <h4>⌨️ 단축키</h4>
+        <ul>
+          <li><span class="shortcut">Delete</span> / <span class="shortcut">Backspace</span>: 선택한 요소 삭제</li>
+          <li><span class="shortcut">Ctrl</span>+드래그: 빠른 연결</li>
+          <li>더블클릭(빈공간): 노드 추가</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ===== 나머지 패널 내용 ===== -->
     <div class="panel-section">
       <h3>➕ 노드 추가</h3>
       <input type="text" id="newNode" placeholder="노드 이름">
@@ -92,7 +436,7 @@
       </div>
       <input type="text" id="edgeSrc" placeholder="1. 출발 노드 클릭" readonly style="background:#e3f2fd; cursor:pointer;">
       <input type="text" id="edgeTgt" placeholder="2. 도착 노드 클릭" readonly style="background:#ffebee; cursor:pointer;">
-      <input type="text" id="edgeLbl" placeholder="관계 라벨">
+      <input type="text" id="edgeLbl" placeholder="관계 라벨 (예: 친구, 적)">
       <button class="btn-primary" onclick="addEdge()">연결 추가</button>
       <div class="help-text">💡 그래프에서 노드를 <b>클릭</b>하면 자동 입력</div>
     </div>
@@ -143,20 +487,20 @@
     <div class="panel-section notes-area">
       <h3>✏️ 속성 편집 / 삭제</h3>
       <div class="info-badge" id="notesInfo">노드/엣지를 선택하세요</div>
-      <label style="font-weight:bold; color:#333;">이름/라벨</label>
+      <label style="font-weight:bold; color:var(--text-primary);">이름/라벨</label>
       <input type="text" id="labelInput" placeholder="선택한 요소의 이름" disabled>
 
       <div id="colorControl" style="display:none;">
-        <label style="font-weight:bold; color:#333; margin-top:8px;">노드 색상</label>
+        <label style="font-weight:bold; color:var(--text-primary); margin-top:8px;">노드 색상</label>
         <input type="color" id="colorInput" value="#667eea" style="height:35px; padding:0;">
 
-        <label style="font-weight:bold; color:#333; margin-top:8px;">📎 첨부 (이미지/영상/링크/텍스트)</label>
+        <label style="font-weight:bold; color:var(--text-primary); margin-top:8px;">📎 첨부 (이미지/영상/링크/텍스트)</label>
         <div style="display:flex; gap:4px;">
           <input type="text" id="imageInput" placeholder="URL, 유튜브, 텍스트" style="flex:1;">
           <input type="file" id="hiddenFileInput" style="display:none;" onchange="handleFileUpload(this)">
           <button class="btn-info" onclick="document.getElementById('hiddenFileInput').click()" style="width:auto; padding:0 8px;">📂</button>
         </div>
-        <label style="font-weight:bold; color:#333; margin-top:8px;">📝 메모</label>
+        <label style="font-weight:bold; color:var(--text-primary); margin-top:8px;">📝 메모</label>
         <textarea class="notes-textarea" id="notesTextarea" placeholder="내용을 입력하세요..."></textarea>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
@@ -164,54 +508,6 @@
           <button class="btn-danger" onclick="deleteSelected()">🗑️ 삭제</button>
         </div>
         <div class="help-text">💡 선택 후 Delete 키로 삭제</div>
-
-        <div class="tts-controls">
-          <h3>🔊 읽어주기 (TTS)</h3>
-          <select id="ttsProvider" onchange="onTtsProviderChange()" style="width:100%; padding:6px; font-size:0.9em;">
-            <option value="web-speech">🌐 크롬 기본 음성 (Web Speech)</option>
-            <option value="supertonic">🤖 슈퍼토닉 2 (AI 고품질)</option>
-          </select>
-          <div id="ttsLoadingStatus" class="tts-loading">⏳ 슈퍼토닉 모델 로딩 중...</div>
-
-          <div id="webSpeechVoiceSelectContainer" style="margin-top:8px; display:none;">
-            <label style="font-size:0.85em; font-weight:bold;">크롬 음성 선택</label>
-            <select id="webSpeechVoiceSelect" style="width:100%; padding:6px; font-size:0.9em;"></select>
-          </div>
-
-          <label style="font-size:0.85em; font-weight:bold; display:block; margin-top:6px;">기본 목소리</label>
-          <select id="voiceSelect" style="width:100%; padding:6px; font-size:0.9em;"></select>
-
-          <div style="margin:6px 0; display:flex; align-items:center; gap:6px; background:#eef2ff; padding:6px; border-radius:4px;">
-            <input type="checkbox" id="audiobookMode" checked>
-            <label for="audiobookMode" style="font-size:0.85em; font-weight:bold;">🎧 낭독 모드</label>
-          </div>
-
-          <div class="speed-control">
-            <label style="font-size:0.8em;">속도</label>
-            <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="0.9" oninput="updateSpeedValue()">
-            <span id="speedValue">0.9x</span>
-          </div>
-
-          <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #ccc;">
-            <h4 style="font-size:0.85em; margin-bottom:4px;">👥 캐릭터별 목소리 매핑</h4>
-            <div id="voiceMappingContainer" class="voice-mapping"></div>
-            <div style="display:flex; gap:4px; margin-top:4px;">
-              <input type="text" id="mapCharName" placeholder="캐릭터명" style="flex:1; font-size:0.8em; padding:4px;">
-              <select id="mapVoiceSelect" style="flex:1.5; font-size:0.8em; padding:4px;"></select>
-              <button class="btn-primary" onclick="addVoiceMapping()" style="width:auto; padding:4px 8px; font-size:0.8em;">추가</button>
-            </div>
-          </div>
-
-          <div class="tts-buttons">
-            <button class="btn-primary" id="btnTtsRead" onclick="readNotes()">🔊 읽기</button>
-            <button class="btn-danger" onclick="stopReading()">⏹️ 정지</button>
-          </div>
-          <button class="btn-success" id="btnDownloadMp3" onclick="downloadMp3()" style="display:none; margin-top:4px;">💾 MP3 + 자막 저장</button>
-          <div class="help-text" style="font-size:0.7em; line-height:1.3;">
-            💡 <b>역할별 태그</b> 사용: <code>[나래이터] 안녕 [아이 여] 반가워</code><br>
-            또는 <code>철수: 안녕</code> 형식으로 매핑된 목소리 사용
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -219,38 +515,14 @@
 
 <script>
   // ============================================================
-  // 1. 전역 변수 및 Cytoscape 초기화
+  // 1. Cytoscape 초기화
   // ============================================================
   let initialData = [
-    {"data":{"id":"STC_01","label":"STC 01 오프닝","color":"#ffaa00","image":"","notes":"이야기의 시작"},"position":{"x":1056,"y":300}},
-    {"data":{"id":"STC_02","label":"STC 02 테마","color":"#ffaa00","image":"","notes":"핵심 테마 제시"},"position":{"x":1055,"y":668}},
-    {"data":{"id":"STC_03","label":"STC 03 세트업","color":"#ffaa00","image":"","notes":"일상과 결핍"},"position":{"x":934,"y":1050}},
-    {"data":{"id":"STC_04","label":"STC 04 촉매","color":"#ffaa00","image":"","notes":"변화의 촉매"},"position":{"x":990,"y":1282}},
-    {"data":{"id":"STC_05","label":"STC 05 고민","color":"#ffaa00","image":"","notes":"내적 갈등"},"position":{"x":918,"y":1429}},
-    {"data":{"id":"STC_06","label":"STC 06 2막 진입","color":"#ffaa00","image":"","notes":"되돌릴 수 없는 선택"},"position":{"x":1023,"y":1621}},
-    {"data":{"id":"STC_07","label":"STC 07 B스토리","color":"#ffaa00","image":"","notes":"정서적 성장"},"position":{"x":990,"y":1805}},
-    {"data":{"id":"STC_08","label":"STC 08 즐거움","color":"#ffaa00","image":"","notes":"장르적 쾌감"},"position":{"x":1065,"y":2106}},
-    {"data":{"id":"STC_09","label":"STC 09 미드포인트","color":"#ffaa00","image":"","notes":"전환점"},"position":{"x":880,"y":2339}},
-    {"data":{"id":"STC_10","label":"STC 10 압박","color":"#ffaa00","image":"","notes":"악당의 반격"},"position":{"x":796,"y":2283}},
-    {"data":{"id":"STC_11","label":"STC 11 상실","color":"#ffaa00","image":"","notes":"모든 것을 잃다"},"position":{"x":581,"y":2193}},
-    {"data":{"id":"STC_12","label":"STC 12 암흑기","color":"#ffaa00","image":"","notes":"내적 성찰"},"position":{"x":384,"y":2190}},
-    {"data":{"id":"STC_13","label":"STC 13 3막 진입","color":"#ffaa00","image":"","notes":"해결책 모색"},"position":{"x":341,"y":2477}},
-    {"data":{"id":"STC_14","label":"STC 14 피날레","color":"#ffaa00","image":"","notes":"최종 결전"},"position":{"x":233,"y":2720}},
-    {"data":{"id":"STC_15","label":"STC 15 엔딩","color":"#ffaa00","image":"","notes":"변화된 세계"},"position":{"x":-92,"y":2587}},
-    {"data":{"source":"STC_01","target":"STC_02","label":"테마 암시"}},
-    {"data":{"source":"STC_02","target":"STC_03","label":"일상 구축"}},
-    {"data":{"source":"STC_03","target":"STC_04","label":"외부 충격"}},
-    {"data":{"source":"STC_04","target":"STC_05","label":"두려움"}},
-    {"data":{"source":"STC_05","target":"STC_06","label":"결단"}},
-    {"data":{"source":"STC_06","target":"STC_07","label":"서브플롯"}},
-    {"data":{"source":"STC_07","target":"STC_08","label":"탐색"}},
-    {"data":{"source":"STC_08","target":"STC_09","label":"위험 고조"}},
-    {"data":{"source":"STC_09","target":"STC_10","label":"반격"}},
-    {"data":{"source":"STC_10","target":"STC_11","label":"완전 상실"}},
-    {"data":{"source":"STC_11","target":"STC_12","label":"성찰"}},
-    {"data":{"source":"STC_12","target":"STC_13","label":"재기"}},
-    {"data":{"source":"STC_13","target":"STC_14","label":"최종 승부"}},
-    {"data":{"source":"STC_14","target":"STC_15","label":"마무리"}}
+    {"data":{"id":"철수","label":"철수","color":"#667eea","image":"","notes":"주인공"},"position":{"x":400,"y":300}},
+    {"data":{"id":"영희","label":"영희","color":"#f093fb","image":"","notes":"친구"},"position":{"x":600,"y":400}},
+    {"data":{"id":"민수","label":"민수","color":"#4facfe","image":"","notes":"라이벌"},"position":{"x":300,"y":500}},
+    {"data":{"source":"철수","target":"영희","label":"친구"}},
+    {"data":{"source":"철수","target":"민수","label":"라이벌"}}
   ];
 
   let cy = cytoscape({
@@ -268,14 +540,10 @@
   });
 
   let selected = null;
-  let speechSynthesis = window.speechSynthesis;
-  let currentUtterance = null;
   let edgeCreationMode = false, edgeSourceNode = null;
   let isDragMode = false, tremorInterval = null, currentLayout = null;
-  let ttsPipeline = null, audioContext = null, currentSource = null;
-  let lastGeneratedAudioBlob = null, lastGeneratedSrtBlob = null;
-  let webSpeechVoices = [];
-  let characterVoiceMap = {};
+  let openImageNodes = new Set();
+  let layer = document.getElementById('overlays');
 
   const notesInfo = document.getElementById('notesInfo');
   const labelInput = document.getElementById('labelInput');
@@ -287,135 +555,44 @@
   const edgeTgtInput = document.getElementById('edgeTgt');
 
   // ============================================================
-  // 2. 오버레이 및 팝업 관리
+  // 2. 도움말 토글
   // ============================================================
-  let openImageNodes = new Set();
-  let layer = document.getElementById('overlays');
-
-  function detectContentType(val) {
-    if (typeof val !== 'string') val = String(val);
-    val = val.trim();
-    const clean = val.split('?')[0].split('#')[0].toLowerCase();
-    const full = val.toLowerCase();
-    if (full.includes('youtube.com') || full.includes('youtu.be')) return 'youtube';
-    if (clean.match(/\.(jpeg|jpg|gif|png|webp|svg|bmp|ico)$/) || full.startsWith('data:image')) return 'image';
-    if (clean.match(/\.(mp4|webm|ogg|mov|avi)$/)) return 'video';
-    if (full.startsWith('http') || full.startsWith('file://')) return 'url';
-    return 'text';
+  let helpOpen = false;
+  function toggleHelp() {
+    helpOpen = !helpOpen;
+    document.getElementById('helpBody').classList.toggle('open');
+    document.getElementById('helpArrow').classList.toggle('open');
   }
 
-  function getYouTubeEmbedUrl(url) {
-    try {
-      let videoId = null;
-      let urlObj = null;
-      try { urlObj = new URL(url); } catch(e) { if (!url.startsWith('http')) { try { urlObj = new URL('https://'+url); } catch(e2) {} } }
-      if (urlObj) {
-        if (urlObj.searchParams.has('v')) videoId = urlObj.searchParams.get('v');
-        else {
-          const path = urlObj.pathname;
-          const segments = path.split('/').filter(s=>s.length>0);
-          if (urlObj.hostname.includes('youtu.be')) videoId = segments[0];
-          else if (urlObj.hostname.includes('youtube.com')) {
-            if (segments.length >=2 && ['embed','shorts','live','v'].includes(segments[0])) videoId = segments[1];
-          }
-        }
-      }
-      if (!videoId) {
-        const vParam = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
-        if (vParam) videoId = vParam[1];
-        else {
-          const regex = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|shorts\/|live\/))([a-zA-Z0-9_-]{11})/;
-          const match = url.match(regex);
-          if (match) videoId = match[1];
-        }
-      }
-      if (videoId && videoId.length === 11) return `https://www.youtube.com/embed/${videoId}`;
-      return null;
-    } catch(e) { return null; }
+  // ============================================================
+  // 3. 다크모드
+  // ============================================================
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+      document.getElementById('darkModeBtn').textContent = '🌙 다크모드';
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+      document.getElementById('darkModeBtn').textContent = '☀️ 라이트모드';
+    }
+    // 그래프 스타일 다시 적용 (배경색 변경)
+    cy.style().update();
   }
 
-  function generateContentHTML(type, val) {
-    switch(type) {
-      case 'image': return `<div style="text-align:center;"><img src="${val}" style="max-width:100%; max-height:100%; object-fit:contain;" onerror="this.style.display='none';this.parentElement.querySelector('.err-msg').style.display='block';"><div class="err-msg" style="display:none;color:red;font-size:0.8em;">❌ 이미지 로드 실패<br><a href="${val}" target="_blank">[새창 열기]</a></div></div>`;
-      case 'video': return `<video controls style="width:100%;"><source src="${val}"></video>`;
-      case 'youtube': const embed = getYouTubeEmbedUrl(val); if (embed) return `<iframe src="${embed}" style="width:100%; height:200px; border:none;" allowfullscreen></iframe><div style="text-align:right;font-size:0.8em;"><a href="${val}" target="_blank">📺 YouTube</a></div>`; else return `<div class="node-content-text">❌ 유튜브 ID 추출 실패<br><a href="${val}" target="_blank">${val}</a></div>`;
-      case 'url': return `<div><div class="node-content-link-card"><a href="${val}" target="_blank">🌐 새창 열기</a></div><iframe src="${val}" style="width:100%; height:200px; border:1px solid #eee;"></iframe></div>`;
-      default: return `<div class="node-content-text">${val.replace(/\n/g,'<br>')}</div>`;
+  // 다크모드 상태 복원
+  function loadTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('darkModeBtn').textContent = '☀️ 라이트모드';
     }
   }
 
-  function updateNodeOverlays() {
-    if (!layer) return;
-    const nodes = cy.nodes();
-    const activeNodeIds = new Set();
-    nodes.forEach(node => {
-      const raw = node.data('image');
-      if (!raw || raw.trim() === '') return;
-      const nodeId = node.id();
-      activeNodeIds.add(nodeId);
-      const pos = node.renderedPosition();
-      const w = node.renderedWidth();
-      const h = node.renderedHeight();
-      const btnId = 'img-btn-'+nodeId;
-      let btn = document.getElementById(btnId);
-      const type = detectContentType(raw);
-      const icon = type==='image'?'📷':type==='video'||type==='youtube'?'▶️':type==='url'?'🌐':'📎';
-      if (!btn) {
-        btn = document.createElement('div');
-        btn.id = btnId;
-        btn.className = 'node-image-toggle';
-        btn.onclick = (e) => { e.stopPropagation(); toggleNodeImage(nodeId); };
-        layer.appendChild(btn);
-      }
-      const isOpen = openImageNodes.has(nodeId);
-      btn.innerHTML = isOpen ? '❌' : icon;
-      btn.style.left = (pos.x + w/2 - 12) + 'px';
-      btn.style.top = (pos.y - h/2 - 12) + 'px';
-      btn.style.display = 'block';
-      const popupId = 'img-popup-'+nodeId;
-      let popup = document.getElementById(popupId);
-      if (isOpen) {
-        if (!popup) {
-          popup = document.createElement('div');
-          popup.id = popupId;
-          popup.className = 'node-image-popup';
-          popup.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;"><div style="flex:1;overflow:hidden;">${generateContentHTML(type,raw)}</div><div class="close-btn" onclick="toggleNodeImage('${nodeId}')">접기</div></div>`;
-          layer.appendChild(popup);
-        }
-        popup.style.display = 'block';
-        popup.style.left = (pos.x - popup.offsetWidth/2) + 'px';
-        popup.style.top = (pos.y + h/2 + 5) + 'px';
-      } else {
-        if (popup) popup.remove();
-      }
-    });
-    const children = Array.from(layer.children);
-    children.forEach(child => {
-      if (child.id.startsWith('img-btn-')) {
-        const nid = child.id.replace('img-btn-','');
-        if (!activeNodeIds.has(nid)) { child.remove(); const p=document.getElementById('img-popup-'+nid); if(p) p.remove(); }
-      }
-    });
-  }
-
-  function toggleNodeImage(nodeId) {
-    if (openImageNodes.has(nodeId)) openImageNodes.delete(nodeId);
-    else openImageNodes.add(nodeId);
-    updateNodeOverlays();
-  }
-
-  cy.on('render pan zoom position', updateNodeOverlays);
-  cy.on('remove', 'node', function(evt) {
-    const nodeId = evt.target.id();
-    openImageNodes.delete(nodeId);
-    const btn = document.getElementById('img-btn-'+nodeId);
-    if (btn) btn.remove();
-    const popup = document.getElementById('img-popup-'+nodeId);
-    if (popup) popup.remove();
-  });
-
   // ============================================================
-  // 3. 그래프 조작 함수
+  // 4. 그래프 조작 함수
   // ============================================================
   function resetRightPanel() {
     selected = null;
@@ -570,7 +747,60 @@
   });
 
   // ============================================================
-  // 4. 데이터 관리
+  // 5. PNG 캡쳐
+  // ============================================================
+  function capturePNG(toClipboard = false) {
+    const scale = parseFloat(document.getElementById('resolutionScale').value) || 2;
+    const container = document.getElementById('cy');
+    const rect = container.getBoundingClientRect();
+    const width = Math.floor(rect.width * scale);
+    const height = Math.floor(rect.height * scale);
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#fafafa';
+    ctx.fillRect(0, 0, width, height);
+    
+    cy.render({
+      ctx: ctx,
+      width: width,
+      height: height,
+      scale: scale,
+      fit: true,
+      bg: '#fafafa'
+    });
+    
+    if (toClipboard) {
+      canvas.toBlob(function(blob) {
+        if (!blob) { alert('❌ 이미지 생성 실패'); return; }
+        navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]).then(() => {
+          alert('✅ 이미지가 클립보드에 복사되었습니다!');
+        }).catch(() => {
+          alert('❌ 클립보드 복사 실패');
+        });
+      });
+    } else {
+      const link = document.createElement('a');
+      link.download = `graph_capture_${scale}x.png`;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      alert(`✅ 이미지가 다운로드 폴더에 저장되었습니다! (${scale}x)`);
+    }
+  }
+
+  document.getElementById('resolutionScale').addEventListener('input', function() {
+    document.getElementById('resolutionLabel').textContent = this.value + 'x';
+  });
+
+  // ============================================================
+  // 6. 데이터 관리
   // ============================================================
   function saveToURL() {
     try {
@@ -638,460 +868,87 @@
   }
 
   // ============================================================
-  // 5. PNG 캡쳐 (수정 완료)
+  // 7. 오버레이 (노드 이미지/첨부)
   // ============================================================
-  function capturePNG(toClipboard = false) {
-    const scale = parseFloat(document.getElementById('resolutionScale').value) || 2;
-    
-    // Cytoscape의 기본 render 함수 사용
-    const canvas = cy.renderer().canvas;
-    const originalWidth = canvas.width;
-    const originalHeight = canvas.height;
-    
-    // 새로운 캔버스 생성 (고해상도)
-    const newCanvas = document.createElement('canvas');
-    const rect = document.getElementById('cy').getBoundingClientRect();
-    const width = Math.floor(rect.width * scale);
-    const height = Math.floor(rect.height * scale);
-    newCanvas.width = width;
-    newCanvas.height = height;
-    const ctx = newCanvas.getContext('2d');
-    
-    // 배경 채우기
-    ctx.fillStyle = '#fafafa';
-    ctx.fillRect(0, 0, width, height);
-    
-    // 그래프 렌더링 (scale 적용)
-    cy.render({
-      ctx: ctx,
-      width: width,
-      height: height,
-      scale: scale,
-      fit: true,
-      bg: '#fafafa'
+  function updateNodeOverlays() {
+    if (!layer) return;
+    const nodes = cy.nodes();
+    const activeNodeIds = new Set();
+    nodes.forEach(node => {
+      const raw = node.data('image');
+      if (!raw || raw.trim() === '') return;
+      const nodeId = node.id();
+      activeNodeIds.add(nodeId);
+      const pos = node.renderedPosition();
+      const w = node.renderedWidth();
+      const h = node.renderedHeight();
+      const btnId = 'img-btn-'+nodeId;
+      let btn = document.getElementById(btnId);
+      if (!btn) {
+        btn = document.createElement('div');
+        btn.id = btnId;
+        btn.className = 'node-image-toggle';
+        btn.onclick = (e) => { e.stopPropagation(); toggleNodeImage(nodeId); };
+        layer.appendChild(btn);
+      }
+      const isOpen = openImageNodes.has(nodeId);
+      btn.innerHTML = isOpen ? '❌' : '📎';
+      btn.style.left = (pos.x + w/2 - 12) + 'px';
+      btn.style.top = (pos.y - h/2 - 12) + 'px';
+      btn.style.display = 'block';
+      const popupId = 'img-popup-'+nodeId;
+      let popup = document.getElementById(popupId);
+      if (isOpen) {
+        if (!popup) {
+          popup = document.createElement('div');
+          popup.id = popupId;
+          popup.className = 'node-image-popup';
+          popup.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;"><div style="flex:1;overflow:hidden;"><div class="node-content-text">${raw}</div></div><div class="close-btn" onclick="toggleNodeImage('${nodeId}')">접기</div></div>`;
+          layer.appendChild(popup);
+        }
+        popup.style.display = 'block';
+        popup.style.left = (pos.x - popup.offsetWidth/2) + 'px';
+        popup.style.top = (pos.y + h/2 + 5) + 'px';
+      } else {
+        if (popup) popup.remove();
+      }
     });
-    
-    if (toClipboard) {
-      newCanvas.toBlob(function(blob) {
-        if (!blob) {
-          alert('❌ 이미지 생성 실패');
-          return;
-        }
-        navigator.clipboard.write([
-          new ClipboardItem({
-            'image/png': blob
-          })
-        ]).then(() => {
-          alert('✅ 이미지가 클립보드에 복사되었습니다!');
-        }).catch(() => {
-          alert('❌ 클립보드 복사 실패. 다른 브라우저를 사용해보세요.');
-        });
-      });
-    } else {
-      const link = document.createElement('a');
-      link.download = 'graph_capture_'+scale+'x.png';
-      link.href = newCanvas.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  }
-
-  document.getElementById('resolutionScale').addEventListener('input', function() {
-    document.getElementById('resolutionLabel').textContent = this.value + 'x';
-  });
-
-  // ============================================================
-  // 6. TTS 관련 함수
-  // ============================================================
-  function loadVoices() {
-    const provider = document.getElementById('ttsProvider')?.value || 'web-speech';
-    if (provider === 'web-speech') {
-      loadWebSpeechVoices();
-      updateVoiceSelectsForWebSpeech();
-    } else {
-      const sel = document.getElementById('voiceSelect');
-      const mapSel = document.getElementById('mapVoiceSelect');
-      sel.innerHTML = ''; if (mapSel) mapSel.innerHTML = '';
-      const aiVoices = [
-        { value:'아이 여', name:'아이 여 (소녀)' },
-        { value:'나래이터', name:'나래이터 (차분)' },
-        { value:'성인 여', name:'성인 여 (다정)' },
-        { value:'노인 여', name:'노인 여 (강단)' },
-        { value:'성인 남', name:'성인 남 (신뢰)' },
-        { value:'노인 남', name:'노인 남 (중후)' },
-        { value:'아이 남', name:'아이 남 (활기)' },
-        { value:'여성 실무', name:'여성 실무' },
-        { value:'성인 남2', name:'성인 남2' },
-        { value:'남성 거친', name:'남성 거친' }
-      ];
-      aiVoices.forEach(v => { sel.add(new Option(v.name, v.value)); if (mapSel) mapSel.add(new Option(v.name, v.value)); });
-    }
-  }
-
-  function loadWebSpeechVoices() {
-    if (typeof speechSynthesis === 'undefined') return;
-    webSpeechVoices = speechSynthesis.getVoices();
-    if (webSpeechVoices.length === 0) {
-      speechSynthesis.onvoiceschanged = loadWebSpeechVoices;
-      return;
-    }
-    const select = document.getElementById('webSpeechVoiceSelect');
-    if (select) {
-      select.innerHTML = '';
-      webSpeechVoices.forEach(v => {
-        select.add(new Option(`${v.name} (${v.lang})${v.default?' ⭐':''}`, v.name));
-      });
-    }
-  }
-
-  function updateVoiceSelectsForWebSpeech() {
-    const voiceSelect = document.getElementById('voiceSelect');
-    const mapVoiceSelect = document.getElementById('mapVoiceSelect');
-    if (voiceSelect) {
-      voiceSelect.innerHTML = '';
-      webSpeechVoices.forEach(v => {
-        voiceSelect.add(new Option(`${v.name} (${v.lang})`, v.name));
-      });
-    }
-    if (mapVoiceSelect) {
-      mapVoiceSelect.innerHTML = '';
-      webSpeechVoices.forEach(v => {
-        mapVoiceSelect.add(new Option(`${v.name} (${v.lang})`, v.name));
-      });
-    }
-  }
-
-  function onTtsProviderChange() {
-    const provider = document.getElementById('ttsProvider').value;
-    const status = document.getElementById('ttsLoadingStatus');
-    const webContainer = document.getElementById('webSpeechVoiceSelectContainer');
-    if (provider === 'web-speech') {
-      status.style.display = 'none';
-      webContainer.style.display = 'block';
-      loadWebSpeechVoices();
-      updateVoiceSelectsForWebSpeech();
-    } else {
-      status.style.display = 'block';
-      webContainer.style.display = 'none';
-      loadVoices();
-    }
-  }
-
-  function updateSpeedValue() {
-    document.getElementById('speedValue').innerText = document.getElementById('speedControl').value + 'x';
-  }
-
-  function stopReading() {
-    if (currentSource) { try { currentSource.stop(); } catch(e) {} currentSource = null; }
-    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
-  }
-
-  function parseMultiVoiceText(text, defaultVoice) {
-    const segments = [];
-    const regex = /\[([^\]]+)\]/g;
-    let lastIdx = 0, currentVoice = defaultVoice, match;
-    const lines = text.split('\n');
-    let processedText = "";
-    for (let line of lines) {
-      line = line.trim();
-      if (!line) continue;
-      let found = false;
-      for (const [name, voice] of Object.entries(characterVoiceMap)) {
-        if (line.startsWith(name+":") || line.startsWith(name+" :")) {
-          const content = line.substring(line.indexOf(":")+1).trim();
-          processedText += `[${voice}] ${content}\n`;
-          found = true; break;
-        }
+    const children = Array.from(layer.children);
+    children.forEach(child => {
+      if (child.id.startsWith('img-btn-')) {
+        const nid = child.id.replace('img-btn-','');
+        if (!activeNodeIds.has(nid)) { child.remove(); const p=document.getElementById('img-popup-'+nid); if(p) p.remove(); }
       }
-      if (!found) processedText += line + "\n";
-    }
-    while ((match = regex.exec(processedText)) !== null) {
-      const before = processedText.substring(lastIdx, match.index).trim();
-      if (before) segments.push({ voice: currentVoice, text: before });
-      currentVoice = match[1];
-      lastIdx = regex.lastIndex;
-    }
-    const remaining = processedText.substring(lastIdx).trim();
-    if (remaining) segments.push({ voice: currentVoice, text: remaining });
-    return segments.length > 0 ? segments : [{ voice: defaultVoice, text: processedText }];
+    });
   }
 
-  function parseMultiVoiceTextWeb(text, defaultVoice) {
-    const segments = [];
-    const lines = text.split('\n');
-    let processedText = "";
-    for (let line of lines) {
-      line = line.trim();
-      if (!line) continue;
-      let found = false;
-      for (const [name, voice] of Object.entries(characterVoiceMap)) {
-        if (line.startsWith(name+":") || line.startsWith(name+" :")) {
-          const content = line.substring(line.indexOf(":")+1).trim();
-          processedText += `[${voice}] ${content}\n`;
-          found = true; break;
-        }
-      }
-      if (!found) processedText += line + "\n";
-    }
-    const regex = /\[([^\]]+)\]/g;
-    let lastIdx = 0, currentVoice = defaultVoice, match;
-    while ((match = regex.exec(processedText)) !== null) {
-      const before = processedText.substring(lastIdx, match.index).trim();
-      if (before) segments.push({ voice: currentVoice, text: before });
-      currentVoice = match[1];
-      lastIdx = regex.lastIndex;
-    }
-    const remaining = processedText.substring(lastIdx).trim();
-    if (remaining) segments.push({ voice: currentVoice, text: remaining });
-    return segments.length > 0 ? segments : [{ voice: defaultVoice, text: processedText }];
+  function toggleNodeImage(nodeId) {
+    if (openImageNodes.has(nodeId)) openImageNodes.delete(nodeId);
+    else openImageNodes.add(nodeId);
+    updateNodeOverlays();
   }
 
-  async function readNotes() {
-    const text = notesTextarea.value.trim();
-    if (!text) return;
-    stopReading();
-    document.getElementById('btnDownloadMp3').style.display = 'none';
-    lastGeneratedAudioBlob = null; lastGeneratedSrtBlob = null;
-    const provider = document.getElementById('ttsProvider').value;
-    const btn = document.getElementById('btnTtsRead');
-    const orig = btn.innerText;
-    btn.innerText = "⏳ 생성 중..."; btn.disabled = true;
-    try {
-      if (provider === 'web-speech') await readWithWebSpeech(text);
-      else await readWithSupertonic(text);
-    } catch(err) { alert("음성 생성 오류: "+err.message); }
-    finally { btn.innerText = orig; btn.disabled = false; }
-  }
-
-  async function readWithWebSpeech(text) {
-    if (typeof speechSynthesis === 'undefined') { alert("Web Speech API 미지원"); return; }
-    const voiceName = document.getElementById('webSpeechVoiceSelect').value;
-    const speed = parseFloat(document.getElementById('speedControl').value);
-    const isAudiobook = document.getElementById('audiobookMode').checked;
-    const segments = parseMultiVoiceTextWeb(text, voiceName);
-    let index = 0;
-    function speakNext() {
-      if (index >= segments.length) return;
-      const seg = segments[index];
-      const clean = seg.text.trim();
-      if (!clean) { index++; speakNext(); return; }
-      const utter = new SpeechSynthesisUtterance(clean);
-      if (seg.voice) {
-        const voice = webSpeechVoices.find(v => v.name === seg.voice);
-        if (voice) utter.voice = voice;
-      } else if (voiceName) {
-        const voice = webSpeechVoices.find(v => v.name === voiceName);
-        if (voice) utter.voice = voice;
-      }
-      utter.rate = speed;
-      utter.lang = utter.voice?.lang || 'ko-KR';
-      utter.onend = () => { index++; if (isAudiobook && index < segments.length) setTimeout(speakNext, 400); else speakNext(); };
-      utter.onerror = () => { index++; speakNext(); };
-      speechSynthesis.speak(utter);
-    }
-    speakNext();
-  }
-
-  async function readWithSupertonic(text) {
-    const defaultVoice = document.getElementById('voiceSelect').value;
-    const speed = parseFloat(document.getElementById('speedControl').value);
-    const steps = parseInt(document.getElementById('qualityControl')?.value) || 5;
-    const isAudiobook = document.getElementById('audiobookMode').checked;
-
-    const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@latest');
-    env.allowLocalModels = false;
-    env.remoteHost = 'https://huggingface.co';
-
-    const status = document.getElementById('ttsLoadingStatus');
-    status.style.display = 'block';
-    status.innerText = "⏳ 슈퍼토닉 2 모델 로딩 중...";
-
-    const pipe = await pipeline('text-to-speech', 'onnx-community/Supertonic-TTS-2-ONNX', { device: 'wasm' });
-    status.style.display = 'none';
-
-    const segments = parseMultiVoiceText(text, defaultVoice);
-    let combinedAudio = [];
-    let subtitleData = [];
-    let currentOffset = 0;
-    let sampleRate = 16000;
-    const mapping = { '아이 여':'F1','소녀':'F1','F1':'F1','나래이터':'F2','F2':'F2','여성 실무':'F3','F3':'F3','성인 여':'F4','다정':'F4','F4':'F4','노인 여':'F5','강단':'F5','F5':'F5','성인 남':'M1','신뢰':'M1','M1':'M1','노인 남':'M2','중후':'M2','M2':'M2','아이 남':'M3','활기':'M3','M3':'M3','성인 남2':'M4','강직':'M4','M4':'M4','남성 거친':'M5','거친':'M5','M5':'M5' };
-
-    for (const seg of segments) {
-      const clean = seg.text.trim();
-      if (!clean) continue;
-      const speaker = mapping[seg.voice] || mapping[defaultVoice] || 'F1';
-      const embedUrl = `https://huggingface.co/onnx-community/Supertonic-TTS-2-ONNX/resolve/main/voices/${speaker}.bin`;
-      const parts = isAudiobook ? clean.split(/([.!?\n]+)/) : [clean];
-      for (let part of parts) {
-        part = part.trim();
-        if (!part) continue;
-        if (/^[.!?\n]+$/.test(part)) {
-          const pause = part.includes('\n') ? 0.8 : 0.4;
-          combinedAudio.push(new Float32Array(Math.floor(pause * sampleRate)));
-          currentOffset += pause;
-          continue;
-        }
-        const output = await pipe(`<ko>${part}</ko>`, { speaker_embeddings: embedUrl, num_inference_steps: steps, speed: speed });
-        if (output && output.audio) {
-          sampleRate = output.sampling_rate;
-          const dur = output.audio.length / sampleRate;
-          subtitleData.push({ start: currentOffset, end: currentOffset + dur, text: part });
-          combinedAudio.push(output.audio);
-          currentOffset += dur;
-        }
-      }
-      if (isAudiobook) {
-        combinedAudio.push(new Float32Array(Math.floor(0.5 * sampleRate)));
-        currentOffset += 0.5;
-      }
-    }
-
-    const total = combinedAudio.reduce((a,c) => a + c.length, 0);
-    const finalAudio = new Float32Array(total);
-    let off = 0;
-    for (const chunk of combinedAudio) { finalAudio.set(chunk, off); off += chunk.length; }
-
-    if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioContext.state === 'suspended') audioContext.resume();
-    stopReading();
-    const buffer = audioContext.createBuffer(1, finalAudio.length, sampleRate);
-    buffer.getChannelData(0).set(finalAudio);
-    currentSource = audioContext.createBufferSource();
-    currentSource.buffer = buffer;
-    currentSource.connect(audioContext.destination);
-    currentSource.start();
-
-    prepareDownload(finalAudio, sampleRate, subtitleData);
-  }
-
-  function prepareDownload(audioData, sampleRate, subtitleData) {
-    const pcm = new Int16Array(audioData.length);
-    for (let i=0; i<audioData.length; i++) {
-      let s = Math.max(-1, Math.min(1, audioData[i]));
-      pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-    }
-    const encoder = new lamejs.Mp3Encoder(1, sampleRate, 128);
-    const mp3Data = [];
-    const block = 1152;
-    for (let i=0; i<pcm.length; i+=block) {
-      const chunk = pcm.subarray(i, i+block);
-      const buf = encoder.encodeBuffer(chunk);
-      if (buf.length > 0) mp3Data.push(buf);
-    }
-    const flush = encoder.flush();
-    if (flush.length > 0) mp3Data.push(flush);
-    lastGeneratedAudioBlob = new Blob(mp3Data, { type:'audio/mp3' });
-
-    if (subtitleData && subtitleData.length > 0) {
-      let srt = "";
-      subtitleData.forEach((sub, idx) => {
-        srt += `${idx+1}\n`;
-        srt += `${formatSrtTime(sub.start)} --> ${formatSrtTime(sub.end)}\n`;
-        srt += `${sub.text}\n\n`;
-      });
-      lastGeneratedSrtBlob = new Blob([srt], { type:'text/plain' });
-    }
-    document.getElementById('btnDownloadMp3').style.display = 'block';
-  }
-
-  function formatSrtTime(sec) {
-    const d = new Date(0); d.setSeconds(sec);
-    const ms = Math.floor((sec % 1) * 1000);
-    return d.toISOString().substr(11,8) + ',' + ms.toString().padStart(3,'0');
-  }
-
-  function downloadMp3() {
-    if (!lastGeneratedAudioBlob) return;
-    const url = URL.createObjectURL(lastGeneratedAudioBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'voice_'+Date.now()+'.mp3';
-    document.body.appendChild(a); a.click(); a.remove();
-    if (lastGeneratedSrtBlob) {
-      setTimeout(() => {
-        const surl = URL.createObjectURL(lastGeneratedSrtBlob);
-        const asrt = document.createElement('a');
-        asrt.href = surl;
-        asrt.download = 'subtitle_'+Date.now()+'.srt';
-        document.body.appendChild(asrt); asrt.click(); asrt.remove();
-      }, 300);
-    }
-  }
+  cy.on('render pan zoom position', updateNodeOverlays);
 
   // ============================================================
-  // 7. Voice Mapping
+  // 8. 파일 업로드
   // ============================================================
-  function addVoiceMapping() {
-    const name = document.getElementById('mapCharName').value.trim();
-    const voice = document.getElementById('mapVoiceSelect').value;
-    if (!name) return;
-    characterVoiceMap[name] = voice;
-    saveVoiceMappings();
-    renderVoiceMappings();
-    document.getElementById('mapCharName').value = '';
-  }
-
-  function removeVoiceMapping(name) {
-    delete characterVoiceMap[name];
-    saveVoiceMappings();
-    renderVoiceMappings();
-  }
-
-  function saveVoiceMappings() { localStorage.setItem('characterVoiceMap', JSON.stringify(characterVoiceMap)); }
-  function loadVoiceMappings() {
-    const saved = localStorage.getItem('characterVoiceMap');
-    if (saved) { try { characterVoiceMap = JSON.parse(saved); renderVoiceMappings(); } catch(e) {} }
-  }
-
-  function renderVoiceMappings() {
-    const container = document.getElementById('voiceMappingContainer');
-    if (!container) return;
-    container.innerHTML = '';
-    for (const [name, voice] of Object.entries(characterVoiceMap)) {
-      const div = document.createElement('div');
-      div.className = 'voice-mapping-item';
-      div.innerHTML = `<span><b>${name}</b> → ${voice}</span><span class="del" onclick="removeVoiceMapping('${name}')">×</span>`;
-      container.appendChild(div);
-    }
-  }
-
-  // ============================================================
-  // 8. 파일 업로드 (이미지 최적화)
-  // ============================================================
-  function resizeImage(file, maxW, maxH, quality, cb) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const img = new Image();
-      img.onload = function() {
-        let w = img.width, h = img.height;
-        if (w > maxW) { h *= maxW / w; w = maxW; }
-        if (h > maxH) { w *= maxH / h; h = maxH; }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        cb(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
   function handleFileUpload(input) {
     if (input.files && input.files[0]) {
       const file = input.files[0];
       if (file.type.startsWith('image/')) {
-        resizeImage(file, 800, 800, 0.7, function(dataUrl) {
-          document.getElementById('imageInput').value = dataUrl;
-          alert("이미지 최적화 완료! '저장' 버튼을 눌러주세요.");
-        });
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('imageInput').value = e.target.result;
+          alert("이미지가 입력되었습니다. '저장' 버튼을 눌러주세요.");
+        };
+        reader.readAsDataURL(file);
       } else if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.json')) {
         const reader = new FileReader();
         reader.onload = function(e) { document.getElementById('imageInput').value = e.target.result; alert("텍스트 파일 내용이 입력되었습니다."); };
         reader.readAsText(file);
       } else {
-        alert("⚠️ 비디오/문서 파일은 경로를 직접 붙여넣어 주세요.");
+        alert("⚠️ 지원하지 않는 파일 형식입니다.");
         input.value = '';
       }
     }
@@ -1101,6 +958,7 @@
   // 9. 초기화
   // ============================================================
   window.addEventListener('load', function() {
+    loadTheme();
     const hash = window.location.hash.substring(1);
     if (hash) {
       try {
@@ -1115,28 +973,8 @@
     }
     runLayout('cose');
     resetRightPanel();
-    loadVoiceMappings();
-    onTtsProviderChange();
-    // quality control 추가
-    const qCtrl = document.createElement('div');
-    qCtrl.className = 'speed-control';
-    qCtrl.style.marginTop = '5px';
-    qCtrl.innerHTML = `<label style="font-size:0.8em;">품질(Steps)</label>
-                      <input type="range" id="qualityControl" min="1" max="20" step="1" value="5" oninput="document.getElementById('qualityValue').innerText=this.value">
-                      <span id="qualityValue">5</span>`;
-    document.querySelector('.tts-controls').insertBefore(qCtrl, document.querySelector('.tts-buttons'));
     document.getElementById('resolutionLabel').textContent = '2x';
   });
-
-  if (typeof speechSynthesis !== 'undefined') {
-    speechSynthesis.onvoiceschanged = function() {
-      if (document.getElementById('ttsProvider')?.value === 'web-speech') {
-        loadWebSpeechVoices();
-        updateVoiceSelectsForWebSpeech();
-      }
-      loadVoices();
-    };
-  }
 
   // ============================================================
   // 10. Global functions
@@ -1155,13 +993,8 @@
   window.saveNotes = saveNotes;
   window.capturePNG = capturePNG;
   window.toggleNodeImage = toggleNodeImage;
-  window.readNotes = readNotes;
-  window.stopReading = stopReading;
-  window.downloadMp3 = downloadMp3;
-  window.onTtsProviderChange = onTtsProviderChange;
-  window.updateSpeedValue = updateSpeedValue;
-  window.addVoiceMapping = addVoiceMapping;
-  window.removeVoiceMapping = removeVoiceMapping;
+  window.toggleHelp = toggleHelp;
+  window.toggleDarkMode = toggleDarkMode;
   window.handleFileUpload = handleFileUpload;
 </script>
 </body>
