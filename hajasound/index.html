@@ -5,173 +5,311 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>종합 한문 발음 편집기</title>
 <style>
-body{
-    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color:#f4f6f9;
-    margin:0;
-    padding:20px;
-    color:#333;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #e8ecf1 0%, #d5dce6 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12px;
+    color: #2c3e50;
 }
-.container{
-    max-width:1100px;
-    margin:0 auto;
-    background:#fff;
-    padding:25px;
-    border-radius:10px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.05);
+.container {
+    max-width: 1200px;
+    width: 100%;
+    background: #fff;
+    padding: 16px 20px 14px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
 }
-h2{
-    text-align:center;
-    color:#2c3e50;
-    margin-bottom:20px;
+h2 {
+    text-align: center;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a2634;
+    letter-spacing: -0.3px;
+    margin-bottom: 10px;
 }
-.control-panel{
-    background:#eef2f7;
-    padding:15px;
-    border-radius:8px;
-    margin-bottom:25px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    align-items:center;
+.control-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: #f0f3f8;
+    padding: 8px 14px;
+    border-radius: 8px;
+    margin-bottom: 10px;
 }
-.option-container{
-    display:flex;
-    justify-content:center;
-    flex-wrap:wrap;
-    gap:15px;
-    font-weight:bold;
+.option-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
-.option-label{
-    display:flex;
-    align-items:center;
-    cursor:pointer;
-    color:#34495e;
+.option-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3d5167;
 }
-.option-label input{
-    margin-right:8px;
-    width:16px;
-    height:16px;
+.option-label input { width: 15px; height: 15px; accent-color: #3498db; cursor: pointer; }
+.btn-stop-all {
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
 }
-.btn-stop-all{
-    background-color:#e74c3c;
-    color:white;
-    border:none;
-    padding:8px 18px;
-    font-size:14px;
-    border-radius:5px;
-    cursor:pointer;
-    font-weight:bold;
+.btn-stop-all:hover { background: #c0392b; }
+.info-text {
+    font-size: 11px;
+    color: #7a8b9f;
+    text-align: center;
 }
-.editor-section{
-    display:flex;
-    flex-direction:column;
-    gap:20px;
-    margin-bottom:30px;
+
+.grid-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
 }
-.box{
-    display:flex;
-    flex-direction:column;
-    background:#fafafa;
-    padding:15px;
-    border-radius:8px;
-    border:1px solid #e0e0e0;
+.grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
 }
-.hidden{
-    display:none !important;
+.grid-5 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
 }
-.header-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:8px;
-    gap:10px;
-    flex-wrap:wrap;
+.grid-6 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
 }
-label{
-    font-weight:bold;
-    color:#34495e;
+@media (max-width: 1100px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-3 > :last-child { grid-column: 1 / -1; }
+    .grid-5 { grid-template-columns: 1fr 1fr 1fr; }
+    .grid-6 { grid-template-columns: 1fr 1fr 1fr; }
 }
-.btn-tts{
-    background-color:#2ecc71;
-    color:white;
-    border:none;
-    padding:6px 14px;
-    font-size:13px;
-    border-radius:4px;
-    cursor:pointer;
-    font-weight:bold;
+@media (max-width: 700px) {
+    .grid-4, .grid-3, .grid-5, .grid-6 { grid-template-columns: 1fr; }
 }
-.btn-tts.canton{
-    background-color:#9b59b6;
+
+.box {
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e5e9f0;
+    padding: 8px 10px 10px;
+    transition: box-shadow 0.15s;
 }
-.btn-tts.bj{
-    background-color:#3498db;
+.box:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.hidden { display: none !important; }
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
 }
-textarea{
-    width:100%;
-    height:100px;
-    padding:12px;
-    box-sizing:border-box;
-    border:1px solid #ccc;
-    border-radius:6px;
-    font-size:16px;
-    line-height:1.6;
-    resize:vertical;
+label {
+    font-weight: 600;
+    font-size: 12px;
+    color: #3d5167;
 }
-.dict-display{
-    background:#fff;
-    border:1px solid #ddd;
-    border-radius:6px;
-    padding:12px;
-    min-height:100px;
-    max-height:400px;
-    overflow-y:auto;
-    font-size:14px;
-    line-height:1.7;
+.btn-tts {
+    border: none;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    color: #fff;
+    background: #2ecc71;
 }
-.dict-item{
-    margin-bottom:12px;
-    border-bottom:1px dashed #ddd;
-    padding-bottom:8px;
+.btn-tts:hover { opacity: 0.85; }
+.btn-tts.canton { background: #9b59b6; }
+.btn-tts.bj { background: #3498db; }
+.btn-tts.japan { background: #e67e22; }
+.btn-tts.vietnam { background: #1abc9c; }
+.btn-tts.manchu { background: #8e44ad; }
+
+.input-box textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #dce1e8;
+    border-radius: 5px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: none;
+    height: 48px;
+    line-height: 1.5;
+    transition: border-color 0.15s;
+    background: #fff;
 }
-.dict-char{
-    font-weight:bold;
-    color:#e74c3c;
-    font-size:18px;
-    background:#fdf2f2;
-    padding:2px 6px;
-    border-radius:4px;
+.input-box textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52,152,219,0.12);
 }
-.line{
-    margin-top:6px;
+
+.output-display {
+    background: #fff;
+    border: 1px solid #dce1e8;
+    border-radius: 5px;
+    padding: 8px 10px;
+    min-height: 40px;
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 22px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    letter-spacing: 0.3px;
 }
-.tag{
-    display:inline-block;
-    padding:2px 8px;
-    border-radius:999px;
-    background:#eef2f7;
-    font-size:12px;
-    margin-right:6px;
+
+.dict-display {
+    background: #fff;
+    border: 1px solid #dce1e8;
+    border-radius: 5px;
+    padding: 4px 8px;
+    min-height: 28px;
+    max-height: 60px;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 1.5;
 }
-.small-note{
-    font-size:13px;
-    color:#777;
-    margin-top:8px;
+.dict-item {
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f2f5;
 }
-.output-display{
-    background:#fff;
-    border:1px solid #ccc;
-    border-radius:6px;
-    padding:12px;
-    min-height:100px;
-    max-height:400px;
-    overflow-y:auto;
-    font-size:18px;
-    line-height:1.8;
-    white-space:pre-wrap;
-    word-wrap:break-word;
+.dict-item:last-child { border-bottom: none; }
+.dict-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
 }
+.dict-char {
+    font-weight: 700;
+    font-size: 17px;
+    color: #e74c3c;
+    background: #fef2f2;
+    padding: 0 6px;
+    border-radius: 4px;
+    min-width: 26px;
+    text-align: center;
+}
+.line {
+    font-size: 12px;
+    line-height: 1.7;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: #eef2f7;
+    font-size: 10px;
+    font-weight: 600;
+    color: #5a6d82;
+}
+.input-hint {
+    font-size: 10px;
+    color: #a0b0c2;
+    margin-top: 2px;
+    line-height: 1.3;
+}
+.color-hanja { border-left: 3px solid #e74c3c; }
+.color-hangul { border-left: 3px solid #2ecc71; }
+.color-pinyin { border-left: 3px solid #3498db; }
+.color-canton { border-left: 3px solid #9b59b6; }
+.color-japan { border-left: 3px solid #e67e22; }
+.color-vietnam { border-left: 3px solid #1abc9c; }
+.color-manchu { border-left: 3px solid #8e44ad; }
+
+/* ===== 후보창 ===== */
+.candidate-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 2px solid #3498db;
+    border-radius: 0 0 8px 8px;
+    padding: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    z-index: 100;
+    margin-top: 1px;
+}
+.candidate-panel.show { display: block; }
+.candidate-item {
+    display: inline-block;
+    padding: 4px 10px;
+    margin: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.12s;
+    border: 1px solid transparent;
+    background: #f8f9fa;
+}
+.candidate-item:hover { background: #e8f0fe; border-color: #3498db; }
+.candidate-item .num {
+    display: inline-block;
+    width: 20px; height: 20px;
+    line-height: 20px;
+    text-align: center;
+    background: #eef2f7;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    color: #5a6d82;
+    margin-right: 4px;
+}
+.candidate-item .char { font-size: 20px; font-weight: 700; color: #2c3e50; }
+.candidate-item .info { font-size: 11px; color: #888; margin-left: 4px; }
+.candidate-item .tag-type { font-size: 9px; background: #eef2f7; padding: 1px 5px; border-radius: 10px; margin-left: 3px; color: #666; }
+.candidate-item.selected { background: #3498db; color: #fff; }
+.candidate-item.selected .char { color: #fff; }
+.candidate-item.selected .num { background: rgba(255,255,255,0.25); color: #fff; }
+.candidate-item.selected .info { color: rgba(255,255,255,0.85); }
+.candidate-item.selected .tag-type { background: rgba(255,255,255,0.25); color: #fff; }
+.input-wrapper { position: relative; }
+.candidate-footer {
+    font-size: 10px;
+    color: #999;
+    margin-top: 3px;
+    border-top: 1px solid #eee;
+    padding-top: 3px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#boxMean details summary { font-size: 11px; }
 </style>
 </head>
 <body>
@@ -179,72 +317,205 @@ textarea{
     <h2>📝 종합 한문 발음 편집기</h2>
 
     <div class="control-panel">
-        <div class="option-container">
-            <label class="option-label"><input type="checkbox" id="showHanja" checked onchange="toggleView('boxHanja', this)"> 한문 원문</label>
-            <label class="option-label"><input type="checkbox" id="showDokum" checked onchange="toggleView('boxDokum', this)"> 한글 독음</label>
-            <label class="option-label"><input type="checkbox" id="showPinyin" checked onchange="toggleView('boxPinyin', this)"> 북경어 병음</label>
-            <label class="option-label"><input type="checkbox" id="showCantonese" checked onchange="toggleView('boxCantonese', this)"> 광동어 병음</label>
-            <label class="option-label"><input type="checkbox" id="showMean" checked onchange="toggleView('boxMean', this)"> 음운 자전 해설</label>
-        </div>
-        <div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div class="option-container">
+                <label class="option-label"><input type="checkbox" id="showInputs" checked onchange="toggleView('inputSection', this)"> 입력창</label>
+                <label class="option-label"><input type="checkbox" id="showOutputs" checked onchange="toggleView('outputSection', this)"> 출력창</label>
+                <label class="option-label"><input type="checkbox" id="showMean" checked onchange="toggleView('boxMean', this)"> 음운 자전 해설</label>
+            </div>
             <button class="btn-stop-all" onclick="stopSpeak()">🛑 모든 음성 재생 중지</button>
+        </div>
+        <div class="info-text">
+            💡 한글/북경어/광동어/일본어/베트남어/만주어 6개 발음 · CC-CEDICT 86,857개 단어 사전 · 한청문감 만주어 주음
         </div>
     </div>
 
-    <div class="editor-section">
-        <div id="boxHanja" class="box">
-            <div class="header-row">
-                <label for="inputHanja">한문 원문 입력</label>
-            </div>
-            <textarea id="inputHanja" placeholder="여기에 한문을 입력하세요..."></textarea>
-            <div class="small-note">원문만 입력합니다. 이 칸에는 TTS가 없습니다.</div>
+    <!-- ===== 입력창 ===== -->
+    <div id="inputSection">
+        <div class="box input-box color-hanja" style="margin-bottom:10px;">
+            <div class="header-row"><label>🀄 한자 입력</label></div>
+            <textarea id="inputHanja" placeholder="한자를 입력하세요..."></textarea>
+            <div class="input-hint">예: 中國</div>
         </div>
+        <div class="grid-6" style="margin-bottom:10px;">
+            <div class="box input-box color-hangul">
+                <div class="header-row"><label>🇰🇷 한글 독음 입력</label></div>
+                <div class="input-wrapper">
+                    <textarea id="inputHangul" placeholder="한글 독음을 입력하세요..."></textarea>
+                    <div class="candidate-panel" id="candidatePanel">
+                        <div id="candidateList"></div>
+                        <div class="candidate-footer">
+                            <span>숫자키(1-9) 선택</span>
+                            <span>← → 이동 &nbsp;|&nbsp; Enter 확정 &nbsp;|&nbsp; ESC 닫기</span>
+                            <span id="candidateCount"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-hint">"중" → 中, 重, 眾...</div>
+            </div>
+            <div class="box input-box color-pinyin">
+                <div class="header-row"><label>🔤 북경어 병음 입력</label></div>
+                <div class="input-wrapper">
+                    <textarea id="inputPinyin" placeholder="북경어 병음을 한글로..."></textarea>
+                    <div class="candidate-panel" id="candidatePinyinPanel">
+                        <div id="candidatePinyinList"></div>
+                        <div class="candidate-footer">
+                            <span>숫자키(1-9) 선택</span>
+                            <span>← → 이동 &nbsp;|&nbsp; Enter 확정 &nbsp;|&nbsp; ESC 닫기</span>
+                            <span id="candidatePinyinCount"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-hint">"중궈" → 후보창에 "📚 中國" 표시 후 선택</div>
+            </div>
+            <div class="box input-box color-canton">
+                <div class="header-row"><label>🔊 광동어 병음 입력</label></div>
+                <div class="input-wrapper">
+                    <textarea id="inputCanton" placeholder="광동어 병음을 한글로..."></textarea>
+                    <div class="candidate-panel" id="candidateCantonPanel">
+                        <div id="candidateCantonList"></div>
+                        <div class="candidate-footer">
+                            <span>숫자키(1-9) 선택</span>
+                            <span>← → 이동 &nbsp;|&nbsp; Enter 확정 &nbsp;|&nbsp; ESC 닫기</span>
+                            <span id="candidateCantonCount"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-hint">"중" → 中, 重, 眾... (광동어 병음)</div>
+            </div>
+            <div class="box input-box color-japan">
+                <div class="header-row"><label>🗾 일본어 オンヨミ(カタカナ) 입력</label></div>
+                <div class="input-wrapper">
+                    <textarea id="inputJapan" placeholder="일본어 온요미를 한글로..."></textarea>
+                    <div class="candidate-panel" id="candidateJapanPanel">
+                        <div id="candidateJapanList"></div>
+                        <div class="candidate-footer">
+                            <span>숫자키(1-9) 선택</span>
+                            <span>← → 이동 &nbsp;|&nbsp; Enter 확정 &nbsp;|&nbsp; ESC 닫기</span>
+                            <span id="candidateJapanCount"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-hint">"중" → 中(チュウ), 重(ジュウ)...</div>
+            </div>
+            <div class="box input-box color-vietnam">
+                <div class="header-row"><label>🇻🇳 베트남어 발음 입력</label></div>
+                <div class="input-wrapper">
+                    <textarea id="inputVietnam" placeholder="베트남어 발음을 한글로..."></textarea>
+                    <div class="candidate-panel" id="candidateVietnamPanel">
+                        <div id="candidateVietnamList"></div>
+                        <div class="candidate-footer">
+                            <span>숫자키(1-9) 선택</span>
+                            <span>← → 이동 &nbsp;|&nbsp; Enter 확정 &nbsp;|&nbsp; ESC 닫기</span>
+                            <span id="candidateVietnamCount"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-hint">"중" → 中(trung), 眾(chúng)...</div>
+            </div>
+            <div class="box input-box color-manchu">
+                <div class="header-row"><label>📖 만주어 발음 입력</label></div>
+                <div class="input-wrapper">
+                    <textarea id="inputManchu" placeholder="만주어 발음을 한글로..."></textarea>
+                    <div class="candidate-panel" id="candidateManchuPanel">
+                        <div id="candidateManchuList"></div>
+                        <div class="candidate-footer">
+                            <span>숫자키(1-9) 선택</span>
+                            <span>← → 이동 &nbsp;|&nbsp; Enter 확정 &nbsp;|&nbsp; ESC 닫기</span>
+                            <span id="candidateManchuCount"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-hint">⚠️ 한청문감 데이터 12,840자 중 84자만 확인 (미완성)</div>
+            </div>
+        </div>
+    </div>
 
-        <div id="boxDokum" class="box">
+    <!-- ===== 출력창 6개 ===== -->
+    <div id="outputSection" class="grid-6">
+        <div class="box output-box color-hangul">
             <div class="header-row">
-                <label for="outputDokum">한글 독음</label>
-                <button class="btn-tts" onclick="speakText('outputDokumSpeech', 'ko-KR')">🔊 한국어 독음 듣기</button>
+                <label>🇰🇷 한글 독음</label>
+                <button class="btn-tts" onclick="speakText('outputDokumSpeech', 'ko-KR')">🔊 듣기</button>
             </div>
             <div id="outputDokum" class="output-display">결과 표시란</div>
             <textarea id="outputDokumSpeech" class="hidden" readonly></textarea>
         </div>
-
-        <div id="boxPinyin" class="box">
+        <div class="box output-box color-pinyin">
             <div class="header-row">
-                <label for="outputPinyin">북경어 병음 (4성 체계)</label>
-                <button class="btn-tts bj" onclick="speakText('outputPinyinSpeech', 'zh-CN')">🔊 북경어 발음 듣기</button>
+                <label>🔤 북경어 병음</label>
+                <button class="btn-tts bj" onclick="speakText('outputPinyinSpeech', 'zh-CN')">🔊 듣기</button>
             </div>
             <div id="outputPinyin" class="output-display">결과 표시란</div>
             <textarea id="outputPinyinSpeech" class="hidden" readonly></textarea>
         </div>
-
-        <div id="boxCantonese" class="box">
+        <div class="box output-box color-canton">
             <div class="header-row">
-                <label for="outputCantonese">광동어 병음 (6성 체계)</label>
-                <button class="btn-tts canton" onclick="speakText('outputCantoneseSpeech', 'zh-HK')">🔊 광동어 발음 듣기</button>
+                <label>🔊 광동어 병음</label>
+                <button class="btn-tts canton" onclick="speakText('outputCantonSpeech', 'zh-HK')">🔊 듣기</button>
             </div>
-            <div id="outputCantonese" class="output-display">결과 표시란</div>
-            <textarea id="outputCantoneseSpeech" class="hidden" readonly></textarea>
+            <div id="outputCanton" class="output-display">결과 표시란</div>
+            <textarea id="outputCantonSpeech" class="hidden" readonly></textarea>
         </div>
+        <div class="box output-box color-japan">
+            <div class="header-row">
+                <label>🗾 일본어 オンヨミ(カタカナ)</label>
+                <button class="btn-tts japan" onclick="speakText('outputJapanSpeech', 'ja-JP')">🔊 듣기</button>
+            </div>
+            <div id="outputJapan" class="output-display">결과 표시란</div>
+            <textarea id="outputJapanSpeech" class="hidden" readonly></textarea>
+        </div>
+        <div class="box output-box color-vietnam">
+            <div class="header-row">
+                <label>🇻🇳 베트남어 꾸옥응으</label>
+                <button class="btn-tts vietnam" onclick="speakText('outputVietnamSpeech', 'vi-VN')">🔊 듣기</button>
+            </div>
+            <div id="outputVietnam" class="output-display">결과 표시란</div>
+            <textarea id="outputVietnamSpeech" class="hidden" readonly></textarea>
+        </div>
+        <div class="box output-box color-manchu">
+            <div class="header-row">
+                <label>📖 만주어 발음 ⚠️미완성</label>
+                <button class="btn-tts manchu" disabled style="opacity:0.35;cursor:not-allowed;" title="만주어 TTS 미지원">🔊 TTS없음</button>
+            </div>
+            <div id="outputManchu" class="output-display">결과 표시란</div>
+            <textarea id="outputManchuSpeech" class="hidden" readonly></textarea>
+        </div>
+    </div>
 
-        <div id="boxMean" class="box">
-            <label style="margin-bottom: 8px;">📖 음운 변환 자전 해설</label>
-            <details style="background:#f0f4f8;padding:10px;border-radius:6px;margin-bottom:10px;font-size:13px;line-height:1.6;border-left:3px solid #3498db;">
-                <summary style="cursor:pointer;font-weight:bold;">🔤 변환 원리 보기 (훈민정음)</summary>
-                <div style="margin-top:8px;">
-                <b>📜 훈민정음</b><br>
-                "나랏말싸미 듕귁에 달아 문자와로 서르 사맛디 아니할쌔… 어린 백성이 말하고자 하는 바가 있어도 제 뜻을 펴지 못하노라"<br>
-                세종대왕(1443)은 백성이 쉽게 배울 수 있도록 소리 내는 기관의 모양을 본떠 28자를 창제. 1446년 《훈민정음》 반포.<br><br>
-
-                <b>🕊️ 사라진 글자</b><br>
-                현대 한글 24자에는 <b>·(아래아), 반치음(ㅿ), 순경음 비읍(ㅸ), 순경음 피읍(ㆄ)</b> 등 4자가 없어짐. 각각 중세 한국어의 모음·반잇소리·유성 양순 마찰음(v)·무성 순치 마찰음(f)을 표기했으며, 이후 중국어·영어 음역에 활용됨.<br><br>
-                <b>🎨 성조 색상:</b><br>
-                북경어: 1<span style="color:#E74C3C;font-weight:bold;">●</span> 2<span style="color:#E67E22;font-weight:bold;">●</span> 3<span style="color:#27AE60;font-weight:bold;">●</span> 4<span style="color:#3498DB;font-weight:bold;">●</span><br>
-                광동어: 1<span style="color:#E74C3C;font-weight:bold;">●</span> 2<span style="color:#E67E22;font-weight:bold;">●</span> 3<span style="color:#F1C40F;font-weight:bold;">●</span> 4<span style="color:#27AE60;font-weight:bold;">●</span> 5<span style="color:#3498DB;font-weight:bold;">●</span> 6<span style="color:#8E44AD;font-weight:bold;">●</span>
+    <!-- ===== 자전 해설 ===== -->
+    <div id="boxMean" class="box" style="padding:6px 10px 8px;background:#f5f7fa;border-color:#e0e5ed;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <label style="margin:0;font-size:11px;color:#7a8b9f;">📖 자전 해설</label>
+            <details style="font-size:11px;">
+                <summary style="cursor:pointer;color:#7a8b9f;">🔤 변환 원리</summary>
+                <div style="margin-top:4px;padding:6px;background:#fff;border-radius:4px;font-size:11px;line-height:1.5;color:#555;">
+                    <b>CC-CEDICT</b> 86,857단어 · 784음절<br>
+                    북경어 성조: 1<span style="color:#E74C3C;font-weight:bold;">●</span> 2<span style="color:#E67E22;font-weight:bold;">●</span> 3<span style="color:#27AE60;font-weight:bold;">●</span> 4<span style="color:#3498DB;font-weight:bold;">●</span><br>
+                    광동어 성조: 1<span style="color:#E74C3C;font-weight:bold;">●</span> 2<span style="color:#E67E22;font-weight:bold;">●</span> 3<span style="color:#F1C40F;font-weight:bold;">●</span> 4<span style="color:#27AE60;font-weight:bold;">●</span> 5<span style="color:#3498DB;font-weight:bold;">●</span> 6<span style="color:#8E44AD;font-weight:bold;">●</span>
                 </div>
             </details>
-            <div id="outputMean" class="dict-display">한문을 입력하면 분석이 시작됩니다.</div>
         </div>
+        <div id="outputMean" class="dict-display">입력하면 분석이 시작됩니다.</div>
+    </div>
+
+    <!-- ===== 만주어 발음 찾기 ===== -->
+    <div class="box color-manchu" style="margin-top:10px;padding:8px 12px 10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <label style="margin:0;font-size:11px;color:#7a8b9f;">📖 청어노걸대(淸語老乞大) 만주어 발음 찾기</label>
+        </div>
+        <div class="input-wrapper" style="margin-bottom:6px;">
+            <textarea id="inputManchu" placeholder="한글 발음을 입력하세요 (예: 암바, 지허, 거넘비)" style="width:100%;padding:6px 8px;border:1px solid #dce1e8;border-radius:5px;font-size:15px;font-family:inherit;resize:none;height:40px;line-height:1.5;background:#fff;"></textarea>
+            <div class="candidate-panel" id="candidateManchuPanel">
+                <div id="candidateManchuList"></div>
+                <div class="candidate-footer">
+                    <span>만주어 단어</span>
+                    <span>← → 이동 &nbsp;|&nbsp; Enter 선택 &nbsp;|&nbsp; ESC 닫기</span>
+                    <span id="candidateManchuCount"></span>
+                </div>
+            </div>
+        </div>
+        <div id="outputManchu" style="background:#fff;border:1px solid #dce1e8;border-radius:5px;padding:6px 10px;min-height:28px;max-height:80px;overflow-y:auto;font-size:13px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;">← 위 입력창에 한글 발음을 입력하세요</div>
     </div>
 </div>
 
@@ -254,17 +525,32 @@ textarea{
 <script src="hanja-canton.js"></script>
 <script src="jyutping-to-hangul.js"></script>
 <script src="hanja-mean.js"></script>
-<script>
-const inputHanjaDefault = "輕輕笑聲 在爲我送溫暖 你爲我注入快樂強電 輕輕說聲 漫長路快要走過 終於走到明媚晴天 聲聲歡呼躍起 像紅日發放金箭 我伴你往日笑面重現 輕輕叫聲 共抬望眼看高空 終於青天優美爲你獻 擁著你 當初溫馨再湧現 心裏邊 童年稚氣夢未污染 今日我 與你又試肩並肩 當年情 此刻是添上新鮮 一望你 眼裏溫馨已通電 心裏邊 從前夢一點未改變 今日我 與你又試肩並肩 當年情 再度添上新鮮";
+<script src="pinyin-hangul-hanja.js"></script>
+<script src="hanja-vietnam.js"></script>
+<script src="hanja-japan-read.js"></script>
+<script src="hanja-vietnam-read.js"></script>
+<script src="hanja-manchu-read.js"></script>
+<script src="manchu-data.js"></script>
 
+<script>
+// ============================================================
+// 1. 상수 및 전역 변수
+// ============================================================
 const pinyinToneColors = {
     '\u0304': '#E74C3C',
     '\u0301': '#E67E22',
     '\u030C': '#27AE60',
     '\u0300': '#3498DB'
 };
-const jyutpingToneColors = ['#E74C3C','#E67E22','#F1C40F','#27AE60','#3498DB','#8E44AD'];
+const jyutpingToneColors = ['#E74C3C', '#E67E22', '#F1C40F', '#27AE60', '#3498DB', '#8E44AD'];
 
+let currentCandidates = [];
+let selectedIndex = 0;
+let currentInputType = '';
+
+// ============================================================
+// 2. 핵심 유틸리티 함수
+// ============================================================
 function stripPinyinTone(p) {
     return p.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
@@ -278,18 +564,6 @@ function getPinyinToneColor(p) {
     return '#95A5A6';
 }
 
-function pinyinToneMark(p) {
-    const dec = p.normalize('NFD');
-    for (const ch of dec) {
-        const c = ch.charCodeAt(0);
-        if (c === 0x304) return '\u00b9';
-        if (c === 0x301) return '\u00b2';
-        if (c === 0x30C) return '\u00b3';
-        if (c === 0x300) return '\u2074';
-    }
-    return '';
-}
-
 function getJyutpingTone(j) {
     const m = j.match(/[0-9]$/);
     return m ? parseInt(m[0]) : 0;
@@ -300,12 +574,26 @@ function stripJyutpingTone(j) {
 }
 
 function analyzeHanjaSound(char) {
-    if (!hanjaKoMap || !hanjaKoMap[char]) return null;
-    return {
-        ko: hanjaKoMap[char],
-        pinyin: hanjaPinyinMap ? (hanjaPinyinMap[char] || null) : null,
-        canton: hanjaCantonMap ? (hanjaCantonMap[char] || null) : null
-    };
+    const ko = hanjaKoMap ? (hanjaKoMap[char] || null) : null;
+    const vietKo = (!ko && window.hanjaVietMap) ? (window.hanjaVietMap[char] || null) : null;
+    const baseKo = ko || vietKo;
+    const manchu = window.hanjaManchuReadMap ? (window.hanjaManchuReadMap[char] || null) : null;
+    if (baseKo) {
+        return {
+            ko: baseKo,
+            pinyin: hanjaPinyinMap ? (hanjaPinyinMap[char] || null) : null,
+            canton: hanjaCantonMap ? (hanjaCantonMap[char] || null) : null,
+            japan: window.hanjaJapanReadMap ? (window.hanjaJapanReadMap[char] || null) : null,
+            vietnam: window.hanjaVietnamReadMap ? (window.hanjaVietnamReadMap[char] || null) : null,
+            manchu: manchu
+        };
+    }
+    const japan = window.hanjaJapanReadMap ? (window.hanjaJapanReadMap[char] || null) : null;
+    const vietnam = window.hanjaVietnamReadMap ? (window.hanjaVietnamReadMap[char] || null) : null;
+    if (japan || vietnam || manchu) {
+        return { ko: null, pinyin: null, canton: null, japan: japan, vietnam: vietnam, manchu: manchu };
+    }
+    return null;
 }
 
 function getPyHangul(py) {
@@ -313,21 +601,21 @@ function getPyHangul(py) {
     return (window.pinyinToHangul && window.pinyinToHangul[base]) || base;
 }
 
-function getJpHangul(jy) {
-    return jy.split(' ').map(s => {
-        const base = stripJyutpingTone(s);
-        return (window.jyutpingToHangul && window.jyutpingToHangul[base]) || base;
-    }).join('');
+function getHanjaMean(c) {
+    return (hanjaMeanMap && hanjaMeanMap[c]) || null;
+}
+
+function makeColoredSpan(text, color) {
+    return color ? `<span style="color:${color}">${text}</span>` : text;
 }
 
 function toggleView(targetId, checkbox) {
     document.getElementById(targetId).classList.toggle('hidden', !checkbox.checked);
 }
 
-function getHanjaMean(c) {
-    return (hanjaMeanMap && hanjaMeanMap[c]) || null;
-}
-
+// ============================================================
+// 3. TTS
+// ============================================================
 function stopSpeak() {
     window.speechSynthesis.cancel();
 }
@@ -350,113 +638,1006 @@ function speakText(elementId, langCode) {
     utterance.lang = langCode;
     utterance.rate = 0.85;
     loadVoices();
-    const selected = ttsVoices.find(v => v.lang === langCode) || ttsVoices.find(v => v.lang && v.lang.startsWith(langCode.split("-")[0]));
+    const selected = ttsVoices.find(v => v.lang === langCode) ||
+        ttsVoices.find(v => v.lang && v.lang.startsWith(langCode.split('-')[0]));
     if (selected) utterance.voice = selected;
     window.speechSynthesis.speak(utterance);
 }
 
-function makeColoredSpan(text, color) {
-    return color ? `<span style="color:${color}">${text}</span>` : text;
+// ============================================================
+// 4. 역방향 매핑 생성
+// ============================================================
+
+// 4-1. 한글 독음 → 한자
+function buildHangulToHanjaMap() {
+    if (typeof hanjaKoMap === 'undefined') return;
+    window.hangulToHanjaMap = {};
+    for (const [hanja, hangul] of Object.entries(hanjaKoMap)) {
+        const cleanHangul = hangul.replace(/\s/g, '');
+        if (!window.hangulToHanjaMap[hangul]) window.hangulToHanjaMap[hangul] = [];
+        window.hangulToHanjaMap[hangul].push(hanja);
+        if (cleanHangul !== hangul) {
+            if (!window.hangulToHanjaMap[cleanHangul]) window.hangulToHanjaMap[cleanHangul] = [];
+            window.hangulToHanjaMap[cleanHangul].push(hanja);
+        }
+    }
+    if (typeof hanjaVietMap !== 'undefined') {
+        for (const [hanja, hangul] of Object.entries(hanjaVietMap)) {
+            if (!window.hangulToHanjaMap[hangul]) window.hangulToHanjaMap[hangul] = [];
+            window.hangulToHanjaMap[hangul].push(hanja);
+        }
+    }
+    for (const [key, value] of Object.entries(window.hangulToHanjaMap)) {
+        window.hangulToHanjaMap[key] = [...new Set(value)].sort();
+    }
 }
 
-function convertHanja() {
-    const inputText = document.getElementById("inputHanja").value;
-    let dokumHTML = "";
-    let dokumText = "";
-    let pinyinHTML = "";
-    let cantonHTML = "";
-    let meanHTML = "";
+// 4-2. 북경어 병음(한글) → 한자 (CC-CEDICT + 기존 매핑)
+function buildPinyinHangulToHanjaMap() {
+    // 기존 매핑
+    if (typeof hanjaPinyinMap !== 'undefined' && typeof pinyinToHangul !== 'undefined') {
+        window.pinyinHangulToHanjaMap = {};
+        for (const [hanja, pinyin] of Object.entries(hanjaPinyinMap)) {
+            const pinyinHangul = getPyHangul(pinyin);
+            if (!window.pinyinHangulToHanjaMap[pinyinHangul]) {
+                window.pinyinHangulToHanjaMap[pinyinHangul] = [];
+            }
+            window.pinyinHangulToHanjaMap[pinyinHangul].push(hanja);
+        }
+        for (const [key, value] of Object.entries(window.pinyinHangulToHanjaMap)) {
+            window.pinyinHangulToHanjaMap[key] = [...new Set(value)].sort();
+        }
+    }
 
-    for (const char of inputText) {
-        if (char === " " || char === "\n" || char === "\t") {
-            dokumHTML += char;
-            dokumText += char;
-            pinyinHTML += char;
-            cantonHTML += char;
+    // CC-CEDICT 매핑 병합 (현행 getPyHangul 기준으로 필터링)
+    if (typeof pinyinHangulToHanjaMap !== 'undefined') {
+        if (!window.pinyinHangulToHanjaMap) window.pinyinHangulToHanjaMap = {};
+        for (const [key, value] of Object.entries(pinyinHangulToHanjaMap)) {
+            if (!window.pinyinHangulToHanjaMap[key]) {
+                window.pinyinHangulToHanjaMap[key] = [];
+            }
+            for (const hanja of value) {
+                if (!window.pinyinHangulToHanjaMap[key].includes(hanja)) {
+                    const hanjaPy = hanjaPinyinMap[hanja];
+                    if (hanjaPy && getPyHangul(hanjaPy) !== key) continue;
+                    window.pinyinHangulToHanjaMap[key].push(hanja);
+                }
+            }
+            window.pinyinHangulToHanjaMap[key].sort();
+        }
+    }
+
+    // "종"은 zong + zhong 모두 포함 (사용자가 종 입력해도 中 찾을 수 있게)
+    if (window.pinyinHangulToHanjaMap && window.pinyinHangulToHanjaMap["중"]) {
+        if (!window.pinyinHangulToHanjaMap["종"]) window.pinyinHangulToHanjaMap["종"] = [];
+        for (const hanja of window.pinyinHangulToHanjaMap["중"]) {
+            if (!window.pinyinHangulToHanjaMap["종"].includes(hanja)) {
+                window.pinyinHangulToHanjaMap["종"].push(hanja);
+            }
+        }
+        window.pinyinHangulToHanjaMap["종"].sort();
+    }
+}
+
+// 4-3. 광동어 병음(한글) → 한자
+function buildCantonHangulToHanjaMap() {
+    if (typeof hanjaCantonMap === 'undefined' || typeof jyutpingToHangul === 'undefined') return;
+    window.cantonHangulToHanjaMap = {};
+    for (const [hanja, canton] of Object.entries(hanjaCantonMap)) {
+        const syllables = canton.split(' ');
+        let cantonHangul = '';
+        syllables.forEach(s => {
+            const base = stripJyutpingTone(s);
+            const han = (window.jyutpingToHangul && window.jyutpingToHangul[base]) || base;
+            cantonHangul += han;
+        });
+        if (!window.cantonHangulToHanjaMap[cantonHangul]) window.cantonHangulToHanjaMap[cantonHangul] = [];
+        window.cantonHangulToHanjaMap[cantonHangul].push(hanja);
+    }
+    for (const [key, value] of Object.entries(window.cantonHangulToHanjaMap)) {
+        window.cantonHangulToHanjaMap[key] = [...new Set(value)].sort();
+    }
+}
+
+// ============================================================
+// 5. 통합 후보 검색 (hangulToHanjaMap + pinyin + canton)
+// ============================================================
+function searchAllCandidates(hangulChar) {
+    const results = [];
+    const seen = new Set();
+    
+    // 1. 한글 독음 검색 (hangulToHanjaMap)
+    if (window.hangulToHanjaMap && window.hangulToHanjaMap[hangulChar]) {
+        window.hangulToHanjaMap[hangulChar].forEach(hanja => {
+            if (!seen.has(hanja)) {
+                seen.add(hanja);
+                results.push({ hanja: hanja, type: '한글 독음' });
+            }
+        });
+    }
+    
+    // 2. 북경어 병음 검색
+    if (window.pinyinHangulToHanjaMap && window.pinyinHangulToHanjaMap[hangulChar]) {
+        window.pinyinHangulToHanjaMap[hangulChar].forEach(hanja => {
+            if (!seen.has(hanja)) {
+                seen.add(hanja);
+                results.push({ hanja: hanja, type: '북경어' });
+            }
+        });
+    }
+    
+    // 3. 광동어 병음 검색
+    if (window.cantonHangulToHanjaMap && window.cantonHangulToHanjaMap[hangulChar]) {
+        window.cantonHangulToHanjaMap[hangulChar].forEach(hanja => {
+            if (!seen.has(hanja)) {
+                seen.add(hanja);
+                results.push({ hanja: hanja, type: '광동어' });
+            }
+        });
+    }
+    
+    return results;
+}
+
+// ============================================================
+// 6. 후보창 표시
+// ============================================================
+function showCandidates(panelId, listId, countId, results) {
+    const panel = document.getElementById(panelId);
+    const list = document.getElementById(listId);
+    const count = document.getElementById(countId);
+    
+    if (results.length === 0) {
+        panel.classList.remove('show');
+        return;
+    }
+    
+    currentCandidates = results.map(r => r.hanja);
+    selectedIndex = 0;
+    list.innerHTML = '';
+    
+    results.forEach((item, index) => {
+        const analysis = analyzeHanjaSound(item.hanja);
+        const mean = getHanjaMean(item.hanja);
+        const div = document.createElement('div');
+        div.className = 'candidate-item' + (index === 0 ? ' selected' : '');
+        div.dataset.index = index;
+        div.innerHTML = `
+            <span class="num">${index + 1}</span>
+            <span class="char">${item.hanja}</span>
+            <span class="info">${analysis ? analysis.ko : ''}${mean ? ' · ' + mean : ''}</span>
+            <span class="tag-type">${item.type}</span>
+        `;
+        div.onclick = function() {
+            selectCandidate(index);
+        };
+        div.onmouseover = function() {
+            selectCandidateIndex(index);
+        };
+        list.appendChild(div);
+    });
+    
+    count.textContent = '총 ' + results.length + '개';
+    panel.classList.add('show');
+}
+
+function selectCandidate(index) {
+    if (index >= 0 && index < currentCandidates.length) {
+        const hanja = currentCandidates[index];
+        const hanjaInput = document.getElementById('inputHanja');
+        hanjaInput.value = hanjaInput.value + hanja;
+        closeAllCandidates();
+        convertAll();
+        if (currentInputType === 'pinyin') {
+            const pinyinInput = document.getElementById('inputPinyin');
+            pinyinInput.value = '';
+            pinyinInput.focus();
+        } else if (currentInputType === 'canton') {
+            const cantonInput = document.getElementById('inputCanton');
+            cantonInput.value = '';
+            cantonInput.focus();
+        } else if (currentInputType === 'japan') {
+            const japanInput = document.getElementById('inputJapan');
+            japanInput.value = '';
+            japanInput.focus();
+        } else if (currentInputType === 'vietnam') {
+            const vietnamInput = document.getElementById('inputVietnam');
+            vietnamInput.value = '';
+            vietnamInput.focus();
+        } else if (currentInputType === 'manchu') {
+            const manchuInput = document.getElementById('inputManchu');
+            manchuInput.value = '';
+            manchuInput.focus();
+        } else {
+            hanjaInput.focus();
+            hanjaInput.selectionStart = hanjaInput.selectionEnd = hanjaInput.value.length;
+        }
+    }
+}
+
+function selectCandidateIndex(index) {
+    if (index >= 0 && index < currentCandidates.length) {
+        selectedIndex = index;
+        const openPanel = document.querySelector('.candidate-panel.show');
+        if (openPanel) {
+            openPanel.querySelectorAll('.candidate-item').forEach((el, i) => {
+                el.classList.toggle('selected', i === index);
+            });
+        }
+    }
+}
+
+function closeAllCandidates() {
+    document.getElementById('candidatePanel').classList.remove('show');
+    document.getElementById('candidatePinyinPanel').classList.remove('show');
+    document.getElementById('candidateCantonPanel').classList.remove('show');
+    document.getElementById('candidateJapanPanel').classList.remove('show');
+    document.getElementById('candidateVietnamPanel').classList.remove('show');
+    document.getElementById('candidateManchuPanel').classList.remove('show');
+    currentCandidates = [];
+}
+
+// ============================================================
+// 7. 모든 입력 처리 (통합 후보 + 단어 사전)
+// ============================================================
+
+// 한글 독음 입력
+function handleHangulInput() {
+    const input = document.getElementById('inputHangul');
+    const text = input.value.trim();
+    
+    if (!text) {
+        closeAllCandidates();
+        return;
+    }
+    
+    const lastChar = text[text.length - 1];
+    const isHangul = lastChar.charCodeAt(0) >= 0xAC00 && lastChar.charCodeAt(0) <= 0xD7A3;
+    
+    if (isHangul) {
+        if (!window.hangulToHanjaMap) buildHangulToHanjaMap();
+        if (!window.pinyinHangulToHanjaMap) buildPinyinHangulToHanjaMap();
+        if (!window.cantonHangulToHanjaMap) buildCantonHangulToHanjaMap();
+        
+        const results = searchAllCandidates(lastChar);
+        currentInputType = 'hangul';
+        showCandidates('candidatePanel', 'candidateList', 'candidateCount', results);
+    } else {
+        closeAllCandidates();
+    }
+}
+
+// ✅ 북경어 병음 입력 (단어 사전 후보 표시 - 바로 입력하지 않음!)
+function handlePinyinInput() {
+    const input = document.getElementById('inputPinyin');
+    const text = input.value.trim();
+    
+    document.getElementById('candidatePanel').classList.remove('show');
+    document.getElementById('candidateCantonPanel').classList.remove('show');
+    
+    if (!text) {
+        document.getElementById('candidatePinyinPanel').classList.remove('show');
+        return;
+    }
+    
+    const lastChar = text[text.length - 1];
+    const isHangul = lastChar.charCodeAt(0) >= 0xAC00 && lastChar.charCodeAt(0) <= 0xD7A3;
+    
+    if (isHangul) {
+        if (!window.hangulToHanjaMap) buildHangulToHanjaMap();
+        if (!window.pinyinHangulToHanjaMap) buildPinyinHangulToHanjaMap();
+        if (!window.cantonHangulToHanjaMap) buildCantonHangulToHanjaMap();
+        
+        const results = [];
+        const seen = new Set();
+        
+        // ✅ 1. 단어 사전 검색 (후보에 추가!)
+        if (typeof pinyinWordMap !== 'undefined') {
+            // 전체 텍스트 매칭
+            if (pinyinWordMap[text]) {
+                const hanja = pinyinWordMap[text];
+                if (!seen.has(hanja)) {
+                    seen.add(hanja);
+                    results.push({ hanja: hanja, type: '📚 단어' });
+                }
+            }
+            // 부분 매칭 (마지막 단어)
+            const parts = text.split(/\s+/);
+            if (parts.length > 1) {
+                const lastPart = parts[parts.length - 1];
+                if (pinyinWordMap[lastPart]) {
+                    const hanja = pinyinWordMap[lastPart];
+                    if (!seen.has(hanja)) {
+                        seen.add(hanja);
+                        results.push({ hanja: hanja, type: '📚 단어' });
+                    }
+                }
+            }
+        }
+        
+        // ✅ 2. 음절 단위 후보 검색
+        const syllableResults = searchAllCandidates(lastChar);
+        for (const item of syllableResults) {
+            if (!seen.has(item.hanja)) {
+                seen.add(item.hanja);
+                results.push(item);
+            }
+        }
+        
+        // ✅ 3. 후보창 표시 (절대 바로 입력하지 않음!)
+        currentInputType = 'pinyin';
+        showCandidates('candidatePinyinPanel', 'candidatePinyinList', 'candidatePinyinCount', results);
+    } else {
+        document.getElementById('candidatePinyinPanel').classList.remove('show');
+    }
+}
+
+// 광동어 병음 입력
+function handleCantonInput() {
+    const input = document.getElementById('inputCanton');
+    const text = input.value.trim();
+    
+    document.getElementById('candidatePanel').classList.remove('show');
+    document.getElementById('candidatePinyinPanel').classList.remove('show');
+    
+    if (!text) {
+        document.getElementById('candidateCantonPanel').classList.remove('show');
+        return;
+    }
+    
+    const lastChar = text[text.length - 1];
+    const isHangul = lastChar.charCodeAt(0) >= 0xAC00 && lastChar.charCodeAt(0) <= 0xD7A3;
+    
+    if (isHangul) {
+        if (!window.hangulToHanjaMap) buildHangulToHanjaMap();
+        if (!window.pinyinHangulToHanjaMap) buildPinyinHangulToHanjaMap();
+        if (!window.cantonHangulToHanjaMap) buildCantonHangulToHanjaMap();
+        
+        const results = searchAllCandidates(lastChar);
+        currentInputType = 'canton';
+        showCandidates('candidateCantonPanel', 'candidateCantonList', 'candidateCantonCount', results);
+    } else {
+        document.getElementById('candidateCantonPanel').classList.remove('show');
+    }
+}
+
+// ============================================================
+// 8. 키보드 이벤트
+// ============================================================
+document.addEventListener('keydown', function(e) {
+    const openPanel = document.querySelector('.candidate-panel.show');
+    if (!openPanel) return;
+    
+    if (e.key >= '1' && e.key <= '9') {
+        e.preventDefault();
+        const idx = parseInt(e.key) - 1;
+        if (idx < currentCandidates.length) {
+            selectCandidate(idx);
+        }
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = Math.min(selectedIndex + 1, currentCandidates.length - 1);
+        selectCandidateIndex(next);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = Math.max(selectedIndex - 1, 0);
+        selectCandidateIndex(prev);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        selectCandidate(selectedIndex);
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeAllCandidates();
+    }
+});
+
+// ============================================================
+// 9. 북경어/광동어 → 한자 변환 (단어 사전 우선)
+// ============================================================
+function splitHangulSyllables(text) {
+    const result = [];
+    for (const char of text) {
+        const code = char.charCodeAt(0);
+        if (code >= 0xAC00 && code <= 0xD7A3) {
+            result.push(char);
+        } else if (char !== ' ') {
+            result.push(char);
+        }
+    }
+    return result;
+}
+
+function convertPinyinToHanja(pinyinText) {
+    // ✅ 1. 단어 사전 먼저 검색 (CC-CEDICT 기반)
+    if (typeof pinyinWordMap !== 'undefined' && pinyinWordMap[pinyinText]) {
+        return pinyinWordMap[pinyinText];
+    }
+    
+    if (!window.pinyinHangulToHanjaMap) buildPinyinHangulToHanjaMap();
+    
+    // 2. 공백 분리
+    const parts = pinyinText.split(/\s+/);
+    let result = '';
+    
+    for (const part of parts) {
+        if (!part) continue;
+        
+        // 3. 단어 사전 재검색 (부분 단어)
+        if (typeof pinyinWordMap !== 'undefined' && pinyinWordMap[part]) {
+            result += pinyinWordMap[part];
+            continue;
+        }
+        
+        // 4. 음절 단위 변환
+        if (window.pinyinHangulToHanjaMap[part]) {
+            result += window.pinyinHangulToHanjaMap[part][0];
+        } else {
+            // 5. 음절 분해
+            const syllables = splitHangulSyllables(part);
+            for (const syllable of syllables) {
+                if (window.pinyinHangulToHanjaMap[syllable]) {
+                    result += window.pinyinHangulToHanjaMap[syllable][0];
+                } else {
+                    result += syllable;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+function convertCantonToHanja(cantonText) {
+    if (!window.cantonHangulToHanjaMap) buildCantonHangulToHanjaMap();
+    
+    const parts = cantonText.split(/\s+/);
+    let result = '';
+    
+    for (const part of parts) {
+        if (!part) continue;
+        if (window.cantonHangulToHanjaMap[part]) {
+            result += window.cantonHangulToHanjaMap[part][0];
+        } else {
+            const syllables = splitHangulSyllables(part);
+            for (const syllable of syllables) {
+                if (window.cantonHangulToHanjaMap[syllable]) {
+                    result += window.cantonHangulToHanjaMap[syllable][0];
+                } else {
+                    result += syllable;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+// ============================================================
+// 10. 가타카나→한글 변환 + 꾸옥응으→한글 변환
+// ============================================================
+
+var kanaToHangul = {
+'キャ':'캬','キュ':'큐','キョ':'쿄',
+'シャ':'샤','シュ':'슈','ショ':'쇼',
+'チャ':'챠','チュ':'추','チョ':'초',
+'ニャ':'냐','ニュ':'뉴','ニョ':'뇨',
+'ヒャ':'햐','ヒュ':'휴','ヒョ':'효',
+'ミャ':'먀','ミュ':'뮤','ミョ':'묘',
+'リャ':'랴','リュ':'류','リョ':'료',
+'ギャ':'갸','ギュ':'규','ギョ':'교',
+'ジャ':'쟈','ジュ':'쥬','ジョ':'죠',
+'ヂャ':'쟈','ヂュ':'쥬','ヂョ':'죠',
+'ビャ':'뱌','ビュ':'뷰','ビョ':'뵤',
+'ピャ':'퍄','ピュ':'퓨','ピョ':'표',
+'ガ':'가','ギ':'기','グ':'구','ゲ':'게','ゴ':'고',
+'ザ':'자','ジ':'지','ズ':'즈','ゼ':'제','ゾ':'조',
+'ダ':'다','ヂ':'지','ヅ':'즈','デ':'데','ド':'도',
+'バ':'바','ビ':'비','ブ':'부','ベ':'베','ボ':'보',
+'パ':'파','ピ':'피','プ':'푸','ペ':'페','ポ':'포',
+'ア':'아','イ':'이','ウ':'우','エ':'에','オ':'오',
+'カ':'카','キ':'키','ク':'쿠','ケ':'케','コ':'코',
+'サ':'사','シ':'시','ス':'스','セ':'세','ソ':'소',
+'タ':'타','チ':'치','ツ':'츠','テ':'테','ト':'토',
+'ナ':'나','ニ':'니','ヌ':'누','ネ':'네','ノ':'노',
+'ハ':'하','ヒ':'히','フ':'후','ヘ':'헤','ホ':'호',
+'マ':'마','ミ':'미','ム':'무','メ':'메','モ':'모',
+'ヤ':'야','ユ':'유','ヨ':'요',
+'ラ':'라','リ':'리','ル':'루','レ':'레','ロ':'로',
+'ワ':'와','ヲ':'오',
+'ヴ':'부','ヵ':'카','ヶ':'케',
+'ァ':'아','ィ':'이','ゥ':'우','ェ':'에','ォ':'오',
+'ャ':'야','ュ':'유','ョ':'요',
+};
+
+const 초성목록 = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const 중성목록 = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const 종성목록 = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+function isHangulSyllable(ch) { const c = ch.charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3; }
+
+function composeHangul(choIdx, jungIdx, jongIdx) {
+  return String.fromCharCode(0xAC00 + choIdx * 588 + jungIdx * 28 + jongIdx);
+}
+
+function decomposeHangul(ch) {
+  const code = ch.charCodeAt(0) - 0xAC00;
+  return { cho: Math.floor(code / 588), jung: Math.floor((code % 588) / 28), jong: code % 28 };
+}
+
+function convertKatakanaToHangul(text) {
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === 'ッ') continue;
+    if (text[i] === 'ー') {
+      if (result.length > 0 && isHangulSyllable(result[result.length-1])) {
+        const dc = decomposeHangul(result[result.length-1]);
+        const extVowel = {'ㅏ':'아','ㅐ':'에','ㅑ':'야','ㅒ':'예','ㅓ':'어','ㅔ':'에','ㅕ':'여','ㅖ':'예','ㅗ':'오','ㅘ':'와','ㅙ':'왜','ㅚ':'외','ㅛ':'요','ㅜ':'우','ㅝ':'워','ㅞ':'웨','ㅟ':'위','ㅠ':'유','ㅡ':'으','ㅢ':'의','ㅣ':'이'};
+        result += extVowel[중성목록[dc.jung]] || 'ㅡ';
+      }
+      continue;
+    }
+    if (i + 1 < text.length) {
+      const two = text.substr(i, 2);
+      if (kanaToHangul[two]) { result += kanaToHangul[two]; i++; continue; }
+    }
+    if (text[i] === 'ン') {
+      if (result.length > 0 && isHangulSyllable(result[result.length-1])) {
+        const prevChar = result[result.length-1];
+        const dc = decomposeHangul(prevChar);
+        if (dc.jong === 0) {
+          result = result.slice(0, -1) + composeHangul(dc.cho, dc.jung, 4);
+          continue;
+        }
+      }
+      result += '응';
+      continue;
+    }
+    result += kanaToHangul[text[i]] || text[i];
+  }
+  return result;
+}
+
+// 꾸옥응으→한글
+var vietInitJamo = { 'b':'ㅂ','c':'ㄱ','d':'ㅈ','đ':'ㄷ','g':'ㄱ','h':'ㅎ','k':'ㅋ','l':'ㄹ','m':'ㅁ',
+'n':'ㄴ','p':'ㅃ','r':'ㄹ','s':'ㅆ','t':'ㄸ','v':'ㅂ','x':'ㅅ',
+'ch':'ㅊ','gi':'ㅈ','kh':'ㅋ','ng':'ㅇ','ngh':'ㅇ','nh':'ㄴ','ph':'ㅍ','qu':'ㄲ','th':'ㅌ','tr':'ㅉ', };
+var vietFinalJamo = { 'c':'ㄱ','ch':'ㄱ','m':'ㅁ','n':'ㄴ','ng':'ㅇ','nh':'ㄴ','p':'ㅂ','t':'ㅌ', };
+
+function convertVietnamToHangul(text) {
+  let s = text.normalize('NFD').replace(/[\u0300\u0301\u0303\u0309\u0323]/g,'').normalize('NFC').toLowerCase();
+  let result = '';
+  const vSimple = {'a':'ㅏ','ă':'ㅏ','â':'ㅓ','e':'ㅔ','ê':'ㅔ','i':'ㅣ','o':'ㅗ','ô':'ㅗ','ơ':'ㅓ','u':'ㅜ','ư':'ㅡ','y':'ㅣ'};
+  let i = 0;
+  while (i < s.length) {
+    let initJamo = '';
+    let initLen = 0;
+    for (let len = Math.min(3, s.length-i); len >= 1; len--) {
+      const m = vietInitJamo[s.substr(i,len)];
+      if (m) { initJamo = m; initLen = len; break; }
+    }
+    if (initLen === 0) { initJamo = 'ㅇ'; initLen = 0; }
+    i += initLen;
+    if (i >= s.length) {
+      if (initLen > 1 && vSimple[s[i-1]]) {
+        // init consumed all but last char is vowel (e.g., "gi")
+        const vj = vSimple[s[i-1]];
+        const ci = 초성목록.indexOf(vietInitJamo[s[i-2]] || 'ㅇ');
+        const ji = 중성목록.indexOf(vj);
+        if (ci >= 0 && ji >= 0) result += composeHangul(ci, ji, 0);
+      }
+      break;
+    }
+    let vf = '';
+    while (i < s.length && /[a-z\u00e0-\u024f]/.test(s[i])) { vf += s[i]; i++; }
+    if (!vf) { result += s[i]; i++; continue; }
+    let vfIdx = 0;
+    while (vfIdx < vf.length) {
+      let v = '';
+      while (vfIdx < vf.length && /[aeiouyăâêôơư]/.test(vf[vfIdx])) { v += vf[vfIdx]; vfIdx++; }
+      if (!v) { v = vf[vfIdx]; vfIdx++; }
+      let f = '';
+      if (vfIdx < vf.length) {
+        for (let len = Math.min(2, vf.length-vfIdx); len >= 1; len--) {
+          const sub = vf.substr(vfIdx, len);
+          if (vietFinalJamo[sub] || (len === 1 && 'cchmnpgt'.includes(sub))) {
+            f = sub; vfIdx += len; break;
+          }
+        }
+      }
+      const vowelJamo = vSimple[v] || 'ㅡ';
+      let finalJ = '';
+      if (f) { finalJ = vietFinalJamo[f] || f; }
+      const choIdx = 초성목록.indexOf(initJamo || 'ㅇ');
+      const jungIdx = 중성목록.indexOf(vowelJamo);
+      if (choIdx >= 0 && jungIdx >= 0) {
+        const jongIdx = finalJ ? 종성목록.indexOf(finalJ) : 0;
+        result += composeHangul(choIdx, jungIdx, jongIdx >= 0 ? jongIdx : 0);
+      }
+      initJamo = 'ㅇ';
+    }
+  }
+  return result;
+}
+
+// ============================================================
+// 11. 한자 → 모든 출력 변환
+// ============================================================
+function convertHanjaToAll(hanjaText) {
+    let dokumHTML = '', dokumText = '', pinyinHTML = '', cantonHTML = '', japanHTML = '', japanText = '', vietnamHTML = '', vietnamText = '', manchuHTML = '', manchuText = '', meanHTML = '';
+
+    for (const char of hanjaText) {
+        if (char === ' ' || char === '\n' || char === '\t') {
+            dokumHTML += char; dokumText += char; pinyinHTML += char; cantonHTML += char; japanHTML += char; japanText += char; vietnamHTML += char; vietnamText += char; manchuHTML += char; manchuText += char;
             continue;
         }
 
         const analysis = analyzeHanjaSound(char);
-
         if (analysis) {
-            dokumText += analysis.ko;
-
-            const pyToneColor = analysis.pinyin ? getPinyinToneColor(analysis.pinyin) : null;
-            dokumHTML += makeColoredSpan(analysis.ko, pyToneColor);
-
-            let pyLine = "", ctLine = "";
+            if (analysis.ko) {
+                dokumText += analysis.ko;
+                const pyToneColor = analysis.pinyin ? getPinyinToneColor(analysis.pinyin) : null;
+                dokumHTML += makeColoredSpan(analysis.ko, pyToneColor);
+            } else {
+                dokumHTML += char;
+            }
 
             if (analysis.pinyin) {
                 const pyHan = getPyHangul(analysis.pinyin);
                 const tc = getPinyinToneColor(analysis.pinyin);
-                const tm = pinyinToneMark(analysis.pinyin);
                 pinyinHTML += makeColoredSpan(pyHan, tc);
-                pyLine = `<div class="line"><span class="tag">북경어 병음</span>${analysis.pinyin} <span style="color:${tc};font-weight:bold;">[${pyHan}] ${tm}</span></div>`;
             } else {
-                pinyinHTML += char;
-                pyLine = `<div class="line"><span class="tag">북경어 병음</span>미등록</div>`;
+                pinyinHTML += '?';
             }
 
             if (analysis.canton) {
                 const ctSyllables = analysis.canton.split(' ');
-                let ctHTML = '', ctTags = '';
-                ctSyllables.forEach((s, i) => {
+                let ctHTML = '';
+                ctSyllables.forEach(s => {
                     const base = stripJyutpingTone(s);
                     const han = (window.jyutpingToHangul && window.jyutpingToHangul[base]) || base;
                     const tone = getJyutpingTone(s);
-                    const tc = tone > 0 && tone <= 6 ? jyutpingToneColors[tone-1] : '#95A5A6';
+                    const tc = tone > 0 && tone <= 6 ? jyutpingToneColors[tone - 1] : '#95A5A6';
                     ctHTML += `<span style="color:${tc}">${han}</span>`;
-                    ctTags += `<span style="color:${tc};font-weight:bold;">${i > 0 ? ' ' : '['}${han}${i < ctSyllables.length - 1 ? '' : ']'}</span>`;
                 });
                 cantonHTML += ctHTML;
-                ctLine = `<div class="line"><span class="tag">광동어 병음</span>${analysis.canton} ${ctTags}</div>`;
             } else {
-                cantonHTML += char;
-                ctLine = `<div class="line"><span class="tag">광동어 병음</span>미등록</div>`;
+                cantonHTML += '?';
             }
 
-            const charColor = analysis.pinyin ? getPinyinToneColor(analysis.pinyin) : (analysis.canton ? jyutpingToneColors[(getJyutpingTone(analysis.canton) || 1) - 1] : '#e74c3c');
+            japanHTML += convertKatakanaToHangul(analysis.japan || '?');
+            japanText += analysis.japan || '';
+            vietnamHTML += convertVietnamToHangul(analysis.vietnam || '?');
+            vietnamText += analysis.vietnam || '';
+            manchuHTML += analysis.manchu || '-';
+            manchuText += analysis.manchu || '';
+
+            const charColor = analysis.pinyin ? getPinyinToneColor(analysis.pinyin) :
+                (analysis.canton ? jyutpingToneColors[(getJyutpingTone(analysis.canton) || 1) - 1] : '#e74c3c');
             const meanText = getHanjaMean(char);
-            const meanLine = meanText ? `<div class="line"><span class="tag">뜻(훈)</span>${meanText}</div>` : `<div class="line"><span class="tag">뜻(훈)</span>미등록</div>`;
             meanHTML += `
                 <div class="dict-item">
-                    <span class="dict-char" style="color:${charColor}">${char}</span>
-                    <div class="line"><span class="tag">한글 독음</span>${analysis.ko}</div>
-                    ${meanLine}
-                    ${pyLine}
-                    ${ctLine}
+                    <div class="dict-header">
+                        <span class="dict-char" style="color:${charColor}">${char}</span>
+                        <span class="tag">한글 독음</span>${analysis.ko || '미등록'}
+                        ${meanText ? `<span class="tag">뜻(훈)</span>${meanText}` : ''}
+                    </div>
+                    <div class="line"><span class="tag">북경어 병음</span>${analysis.pinyin || '미등록'}</div>
+                    <div class="line"><span class="tag">광동어 병음</span>${analysis.canton || '미등록'}</div>
+                    <div class="line"><span class="tag">일본어 온요미</span>${analysis.japan || '미등록'}</div>
+                    <div class="line"><span class="tag">베트남어 꾸옥응으</span>${analysis.vietnam || '미등록'}</div>
                 </div>`;
         } else {
-            dokumHTML += char;
-            dokumText += char;
-            pinyinHTML += char;
-            cantonHTML += char;
+            dokumHTML += char; dokumText += char; pinyinHTML += '?'; cantonHTML += '?'; japanHTML += '?'; japanText += '?'; vietnamHTML += '?'; manchuHTML += '-'; manchuText += '';
             meanHTML += `
                 <div class="dict-item">
-                    <span class="dict-char">${char}</span>
-                    <div class="line"><span class="tag">뜻(훈)</span><span style="color:#e74c3c;">미등록</span></div>
-                    <div class="line"><span class="tag">한글 독음</span>미등록</div>
-                    <div class="line"><span class="tag">북경어 병음</span>미등록</div>
-                    <div class="line"><span class="tag">광동어 병음</span>미등록</div>
+                    <div class="dict-header">
+                        <span class="dict-char">${char}</span>
+                        <span style="color:#e74c3c;font-size:12px;">⚠️ 미등록 한자</span>
+                    </div>
                 </div>`;
         }
     }
 
-    document.getElementById("outputDokum").innerHTML = dokumHTML.trim() || "결과 표시란";
-    document.getElementById("outputPinyin").innerHTML = pinyinHTML.trim() || "결과 표시란";
-    document.getElementById("outputCantonese").innerHTML = cantonHTML.trim() || "결과 표시란";
-    document.getElementById("outputDokumSpeech").value = dokumText.trim();
-    document.getElementById("outputPinyinSpeech").value = inputText.trim();
-    document.getElementById("outputCantoneseSpeech").value = inputText.trim();
-    document.getElementById("outputMean").innerHTML = meanHTML || "분석 결과가 여기에 표시됩니다.";
+    return {
+        dokum: dokumHTML,
+        pinyin: pinyinHTML,
+        canton: cantonHTML,
+        japan: japanHTML,
+        vietnam: vietnamHTML,
+        manchu: manchuHTML,
+        mean: meanHTML,
+        dokumText: dokumText,
+        japanText: japanText,
+        vietnamText: vietnamText,
+        manchuText: manchuText
+    };
 }
 
+// ============================================================
+// 11. 메인 변환 함수
+// ============================================================
+function convertAll() {
+    const hanjaText = document.getElementById('inputHanja').value.trim();
+    const pinyinText = document.getElementById('inputPinyin').value.trim();
+    const cantonText = document.getElementById('inputCanton').value.trim();
+    const japanText = document.getElementById('inputJapan').value.trim();
+    const vietnamText = document.getElementById('inputVietnam').value.trim();
+    const manchuText = document.getElementById('inputManchu').value.trim();
+
+    let finalHanja = hanjaText;
+
+    if (pinyinText && !hanjaText) {
+        finalHanja = convertPinyinToHanja(pinyinText);
+        document.getElementById('inputHanja').value = finalHanja;
+    }
+
+    if (cantonText && !hanjaText && !pinyinText) {
+        finalHanja = convertCantonToHanja(cantonText);
+        document.getElementById('inputHanja').value = finalHanja;
+    }
+
+    if (japanText && !hanjaText && !pinyinText && !cantonText) {
+        if (!window.hangulToHanjaMap) buildHangulToHanjaMap();
+        const parts = japanText.replace(/\s+/g, '');
+        let converted = '';
+        for (const ch of parts) {
+            const code = ch.charCodeAt(0);
+            if (code >= 0xAC00 && code <= 0xD7A3 && window.hangulToHanjaMap[ch]) {
+                converted += window.hangulToHanjaMap[ch][0];
+            } else {
+                converted += ch;
+            }
+        }
+        if (converted) {
+            finalHanja = converted;
+            document.getElementById('inputHanja').value = finalHanja;
+        }
+    }
+
+    if (vietnamText && !hanjaText && !pinyinText && !cantonText && !japanText) {
+        if (!window.hangulToHanjaMap) buildHangulToHanjaMap();
+        const parts = vietnamText.replace(/\s+/g, '');
+        let converted = '';
+        for (const ch of parts) {
+            const code = ch.charCodeAt(0);
+            if (code >= 0xAC00 && code <= 0xD7A3 && window.hangulToHanjaMap[ch]) {
+                converted += window.hangulToHanjaMap[ch][0];
+            } else {
+                converted += ch;
+            }
+        }
+        if (converted) {
+            finalHanja = converted;
+            document.getElementById('inputHanja').value = finalHanja;
+        }
+    }
+
+    if (manchuText && !hanjaText && !pinyinText && !cantonText && !japanText && !vietnamText) {
+        if (!window.hangulToHanjaMap) buildHangulToHanjaMap();
+        const parts = manchuText.replace(/\s+/g, '');
+        let converted = '';
+        for (const ch of parts) {
+            const code = ch.charCodeAt(0);
+            if (code >= 0xAC00 && code <= 0xD7A3 && window.hangulToHanjaMap[ch]) {
+                converted += window.hangulToHanjaMap[ch][0];
+            } else {
+                converted += ch;
+            }
+        }
+        if (converted) {
+            finalHanja = converted;
+            document.getElementById('inputHanja').value = finalHanja;
+        }
+    }
+
+    if (!finalHanja) {
+        document.getElementById('outputDokum').innerHTML = '결과 표시란';
+        document.getElementById('outputPinyin').innerHTML = '결과 표시란';
+        document.getElementById('outputCanton').innerHTML = '결과 표시란';
+        document.getElementById('outputJapan').innerHTML = '결과 표시란';
+        document.getElementById('outputVietnam').innerHTML = '결과 표시란';
+        document.getElementById('outputManchu').innerHTML = '결과 표시란';
+        document.getElementById('outputDokumSpeech').value = '';
+        document.getElementById('outputPinyinSpeech').value = '';
+        document.getElementById('outputCantonSpeech').value = '';
+        document.getElementById('outputJapanSpeech').value = '';
+        document.getElementById('outputVietnamSpeech').value = '';
+        document.getElementById('outputManchuSpeech').value = '';
+        document.getElementById('outputMean').innerHTML = '📝 입력된 내용이 없습니다.';
+        return;
+    }
+
+    const result = convertHanjaToAll(finalHanja);
+
+    document.getElementById('outputDokum').innerHTML = result.dokum || '결과 표시란';
+    document.getElementById('outputPinyin').innerHTML = result.pinyin || '결과 표시란';
+    document.getElementById('outputCanton').innerHTML = result.canton || '결과 표시란';
+    document.getElementById('outputJapan').innerHTML = result.japan || '결과 표시란';
+    document.getElementById('outputVietnam').innerHTML = result.vietnam || '결과 표시란';
+    document.getElementById('outputManchu').innerHTML = result.manchu || '결과 표시란';
+    document.getElementById('outputDokumSpeech').value = result.dokumText || '';
+    document.getElementById('outputPinyinSpeech').value = finalHanja || '';
+    document.getElementById('outputCantonSpeech').value = finalHanja || '';
+    document.getElementById('outputJapanSpeech').value = result.japanText || '';
+    document.getElementById('outputVietnamSpeech').value = result.vietnamText || '';
+    document.getElementById('outputManchuSpeech').value = result.manchuText || '';
+    document.getElementById('outputMean').innerHTML = result.mean || '분석 결과가 여기에 표시됩니다.';
+}
+
+// ============================================================
+// 12. 일본어/베트남어 입력 핸들러
+// ============================================================
+
+function handleJapanInput() {
+    const input = document.getElementById('inputJapan');
+    const text = input.value.trim();
+
+    document.getElementById('candidatePanel').classList.remove('show');
+    document.getElementById('candidatePinyinPanel').classList.remove('show');
+    document.getElementById('candidateCantonPanel').classList.remove('show');
+
+    if (!text) {
+        document.getElementById('candidateJapanPanel').classList.remove('show');
+        return;
+    }
+
+    const lastChar = text[text.length - 1];
+    const isHangul = lastChar.charCodeAt(0) >= 0xAC00 && lastChar.charCodeAt(0) <= 0xD7A3;
+
+    if (isHangul) {
+        if (!window.hangulToHanjaMap) buildHangulToHanjaMap();
+        if (!window.pinyinHangulToHanjaMap) buildPinyinHangulToHanjaMap();
+        if (!window.cantonHangulToHanjaMap) buildCantonHangulToHanjaMap();
+
+        const results = searchAllCandidates(lastChar);
+        currentInputType = 'japan';
+        showCandidates('candidateJapanPanel', 'candidateJapanList', 'candidateJapanCount', results);
+    } else {
+        document.getElementById('candidateJapanPanel').classList.remove('show');
+    }
+}
+
+function handleVietnamInput() {
+    const input = document.getElementById('inputVietnam');
+    const text = input.value.trim();
+
+    document.getElementById('candidatePanel').classList.remove('show');
+    document.getElementById('candidatePinyinPanel').classList.remove('show');
+    document.getElementById('candidateCantonPanel').classList.remove('show');
+
+    if (!text) {
+        document.getElementById('candidateVietnamPanel').classList.remove('show');
+        return;
+    }
+
+    const lastChar = text[text.length - 1];
+    const isHangul = lastChar.charCodeAt(0) >= 0xAC00 && lastChar.charCodeAt(0) <= 0xD7A3;
+
+    if (isHangul) {
+        if (!window.hangulToHanjaMap) buildHangulToHanjaMap();
+        if (!window.pinyinHangulToHanjaMap) buildPinyinHangulToHanjaMap();
+        if (!window.cantonHangulToHanjaMap) buildCantonHangulToHanjaMap();
+
+        const results = searchAllCandidates(lastChar);
+        currentInputType = 'vietnam';
+        showCandidates('candidateVietnamPanel', 'candidateVietnamList', 'candidateVietnamCount', results);
+    } else {
+        document.getElementById('candidateVietnamPanel').classList.remove('show');
+    }
+}
+
+// ============================================================
+// 13. 만주어 입력 처리 (한청문감 기반 한자 검색)
+// ============================================================
+
+function buildManchuHangulToHanjaMap() {
+    if (typeof hanjaManchuReadMap === 'undefined') return;
+    window.manchuHangulToHanjaMap = {};
+    for (const [hanja, hangul] of Object.entries(hanjaManchuReadMap)) {
+        if (!window.manchuHangulToHanjaMap[hangul]) {
+            window.manchuHangulToHanjaMap[hangul] = [];
+        }
+        if (!window.manchuHangulToHanjaMap[hangul].includes(hanja)) {
+            window.manchuHangulToHanjaMap[hangul].push(hanja);
+        }
+    }
+}
+
+function handleManchuInput() {
+    const input = document.getElementById('inputManchu');
+    const text = input.value.trim();
+
+    document.getElementById('candidatePanel').classList.remove('show');
+    document.getElementById('candidatePinyinPanel').classList.remove('show');
+    document.getElementById('candidateCantonPanel').classList.remove('show');
+    document.getElementById('candidateJapanPanel').classList.remove('show');
+    document.getElementById('candidateVietnamPanel').classList.remove('show');
+
+    if (!text) {
+        document.getElementById('candidateManchuPanel').classList.remove('show');
+        return;
+    }
+
+    const lastChar = text[text.length - 1];
+    const isHangul = lastChar.charCodeAt(0) >= 0xAC00 && lastChar.charCodeAt(0) <= 0xD7A3;
+
+    if (isHangul) {
+        if (!window.manchuHangulToHanjaMap) buildManchuHangulToHanjaMap();
+        if (!window.hangulToHanjaMap) buildHangulToHanjaMap();
+
+        const results = [];
+        const seen = new Set();
+
+        // 한청문감 기반 검색
+        if (window.manchuHangulToHanjaMap) {
+            for (const [hangul, hanjas] of Object.entries(window.manchuHangulToHanjaMap)) {
+                if (hangul === text || hangul.includes(text)) {
+                    for (const hanja of hanjas) {
+                        if (!seen.has(hanja)) {
+                            seen.add(hanja);
+                            const analysis = analyzeHanjaSound(hanja);
+                            const mean = getHanjaMean(hanja);
+                            results.push({
+                                hanja: hanja,
+                                type: '📖 만주',
+                                info: analysis ? analysis.manchu || '' : '',
+                                mean: mean
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        // 한글 독음으로도 검색 (기존 hangulToHanjaMap)
+        if (window.hangulToHanjaMap[text]) {
+            for (const hanja of window.hangulToHanjaMap[text]) {
+                if (!seen.has(hanja)) {
+                    seen.add(hanja);
+                    const analysis = analyzeHanjaSound(hanja);
+                    const mean = getHanjaMean(hanja);
+                    results.push({
+                        hanja: hanja,
+                        type: '🇰🇷 독음',
+                        info: analysis ? (analysis.manchu || analysis.ko || '') : '',
+                        mean: mean
+                    });
+                }
+            }
+        }
+
+        currentInputType = 'manchu';
+        currentCandidates = results;
+        showCandidates('candidateManchuPanel', 'candidateManchuList', 'candidateManchuCount', results);
+    } else {
+        document.getElementById('candidateManchuPanel').classList.remove('show');
+    }
+}
+
+// ============================================================
+// 14. 초기화 및 이벤트
+// ============================================================
 window.onload = function() {
-    document.getElementById("inputHanja").value = inputHanjaDefault;
-    convertHanja();
+    buildHangulToHanjaMap();
+    buildPinyinHangulToHanjaMap();
+    buildCantonHangulToHanjaMap();
+    buildManchuHangulToHanjaMap();
+
+    document.getElementById('inputHanja').value = '中國';
+    convertAll();
 };
 
-document.getElementById("inputHanja").addEventListener("input", convertHanja);
+document.getElementById('inputHanja').addEventListener('input', convertAll);
+document.getElementById('inputHangul').addEventListener('input', handleHangulInput);
+document.getElementById('inputPinyin').addEventListener('input', handlePinyinInput);
+document.getElementById('inputCanton').addEventListener('input', handleCantonInput);
+document.getElementById('inputJapan').addEventListener('input', handleJapanInput);
+document.getElementById('inputVietnam').addEventListener('input', handleVietnamInput);
+document.getElementById('inputManchu').addEventListener('input', handleManchuInput);
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.input-wrapper')) {
+        closeAllCandidates();
+    }
+});
 </script>
 </body>
 </html>

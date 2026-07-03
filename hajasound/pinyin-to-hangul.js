@@ -410,7 +410,7 @@ var pinyinToHangul = {
 "zhen":"전",
 "zheng":"정",
 "zhi":"즈",
-"zhong":"종",
+"zhong":"중",
 "zhou":"저우",
 "zhu":"주",
 "zhua":"좌",
