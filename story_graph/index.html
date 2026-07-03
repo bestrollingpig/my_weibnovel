@@ -2,14 +2,12 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<title>소설 관계도 분석기</title>
-<script type="importmap">
-{
-  "imports": {
-    "@xenova/transformers": "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0"
-  }
-}
-</script>
+<title>소설 관계도 분석기 - 수동 복사 + 비평 + 효과</title>
+
+<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+
 <style>
   :root {
     --bg: #12141a;
@@ -20,14 +18,16 @@
     --muted: #8a90a2;
     --accent: #5b9dff;
     --accent-hover: #4a86e8;
-    --c-char: #5b9dff;
-    --c-event: #ff6b6b;
-    --c-loc: #4ade80;
-    --c-item: #facc15;
+    --c-char: #4A90D9;
+    --c-event: #E74C3C;
+    --c-loc: #2ECC71;
+    --c-item: #F1C40F;
     --paper-bg: #ffffff;
     --paper-text: #2c2c2c;
     --paper-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     --paper-border: #e2e8f0;
+    --tooltip-bg: #1a1d27;
+    --tooltip-border: #2a2f3b;
   }
 
   body.dark-theme {
@@ -41,6 +41,8 @@
     --paper-text: #e6e8ee;
     --paper-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
     --paper-border: #2a2f3b;
+    --tooltip-bg: #1a1d27;
+    --tooltip-border: #2a2f3b;
   }
 
   body.light-theme {
@@ -56,6 +58,8 @@
     --paper-text: #1e293b;
     --paper-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     --paper-border: #e2e8f0;
+    --tooltip-bg: #ffffff;
+    --tooltip-border: #e2e8f0;
   }
 
   * { box-sizing: border-box; }
@@ -80,6 +84,7 @@
     padding: 0 16px;
     justify-content: space-between;
     z-index: 100;
+    flex-shrink: 0;
   }
   .top-nav .brand {
     font-size: 14px;
@@ -104,6 +109,7 @@
     display: flex;
     height: calc(100vh - 48px);
     flex: 1;
+    min-height: 0;
   }
   .panel {
     background: var(--panel);
@@ -114,9 +120,9 @@
     overflow: hidden;
     transition: background 0.3s, border-color 0.3s;
   }
-  #leftPanel { width: 280px; flex: none; }
-  #centerPanel { flex: 1; min-width: 320px; background: calc(var(--bg) + #030303); }
-  #rightPanel { width: 340px; flex: none; border-right: none; border-left: 1px solid var(--border); }
+  #leftPanel { width: 340px; flex: none; }
+  #centerPanel { flex: 1; min-width: 320px; background: calc(var(--bg) + #030303); display: flex; flex-direction: column; }
+  #rightPanel { width: 420px; flex: none; border-right: none; border-left: 1px solid var(--border); }
 
   .resizer {
     width: 6px;
@@ -133,10 +139,11 @@
     display: flex;
     border-bottom: 1px solid var(--border);
     background: var(--panel);
+    flex-shrink: 0;
   }
   .tab-btn {
     flex: 1;
-    padding: 10px;
+    padding: 10px 6px;
     font-size: 12px;
     font-weight: 600;
     text-align: center;
@@ -170,7 +177,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
   }
+
   button {
     background: var(--panel2);
     border: 1px solid var(--border);
@@ -183,6 +192,7 @@
     align-items: center;
     gap: 4px;
     transition: all 0.15s;
+    font-family: inherit;
   }
   button:hover {
     border-color: var(--accent);
@@ -198,12 +208,33 @@
     background: var(--accent-hover);
     color: #ffffff;
   }
+  button.success { background: #2ECC71; color: #fff; border-color: #2ECC71; }
+  button.success:hover { background: #27ae60; }
+  button.danger { background: #E74C3C; color: #fff; border-color: #E74C3C; }
+  button.danger:hover { background: #c0392b; }
+  button.warning { background: #F1C40F; color: #1a1a1a; border-color: #F1C40F; }
+  button.warning:hover { background: #f39c12; }
+
+  input, select, textarea {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 
   .filelist {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    flex: 1;
+    overflow-y: auto;
   }
   .filelist-item {
     display: flex;
@@ -216,15 +247,8 @@
     color: var(--muted);
     transition: all 0.15s;
   }
-  .filelist-item:hover {
-    background: var(--panel2);
-    color: var(--text);
-  }
-  .filelist-item.active {
-    background: rgba(91, 157, 255, 0.1);
-    color: var(--accent);
-    font-weight: 600;
-  }
+  .filelist-item:hover { background: var(--panel2); color: var(--text); }
+  .filelist-item.active { background: rgba(91,157,255,0.1); color: var(--accent); font-weight: 600; }
   .filelist-item .delete-btn {
     opacity: 0;
     border: none;
@@ -235,6 +259,7 @@
   }
   .filelist-item:hover .delete-btn { opacity: 1; }
   .filelist-item .delete-btn:hover { color: #ff6b6b; }
+  .filelist-item .has-graph { color: #4ade80; font-size: 12px; }
 
   .folder-cta-box {
     border: 2px dashed var(--border);
@@ -246,26 +271,9 @@
     flex-direction: column;
     gap: 12px;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
-  .folder-cta-box p {
-    margin: 0;
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .badge {
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    color: #fff;
-    font-weight: 600;
-  }
-  .badge.char { background: var(--c-char); }
-  .badge.event { background: var(--c-event); }
-  .badge.loc { background: var(--c-loc); }
-  .badge.item { background: var(--c-item); }
+  .folder-cta-box p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
 
   .editor-wrap {
     display: flex;
@@ -273,6 +281,7 @@
     height: 100%;
     overflow: hidden;
     position: relative;
+    flex: 1;
   }
 
   .menubar {
@@ -285,6 +294,8 @@
     gap: 0;
     position: relative;
     z-index: 100;
+    flex-shrink: 0;
+    overflow-x: auto;
   }
   .menubar .menu-item {
     padding: 4px 12px;
@@ -302,11 +313,12 @@
     font-size: 11px;
     color: var(--muted);
     padding: 4px 8px;
+    white-space: nowrap;
   }
 
   .dropdown {
     display: none;
-    position: absolute;
+    position: fixed;
     min-width: 220px;
     background: var(--panel);
     border: 1px solid var(--border);
@@ -326,21 +338,10 @@
     align-items: center;
     gap: 20px;
   }
-  .dropdown-item:hover {
-    background: var(--accent);
-    color: #fff;
-  }
-  .dropdown-item .shortcut {
-    font-size: 10px;
-    color: var(--muted);
-    margin-left: auto;
-  }
+  .dropdown-item:hover { background: var(--accent); color: #fff; }
+  .dropdown-item .shortcut { font-size: 10px; color: var(--muted); margin-left: auto; }
   .dropdown-item:hover .shortcut { color: rgba(255,255,255,0.7); }
-  .dropdown-sep {
-    height: 1px;
-    background: var(--border);
-    margin: 4px 8px;
-  }
+  .dropdown-sep { height: 1px; background: var(--border); margin: 4px 8px; }
 
   .fmt-toolbar {
     display: flex;
@@ -351,6 +352,7 @@
     gap: 6px;
     flex-wrap: wrap;
     min-height: 32px;
+    flex-shrink: 0;
   }
   .fmt-toolbar .btn-icon {
     width: 24px;
@@ -367,24 +369,9 @@
     cursor: pointer;
   }
   .fmt-toolbar .btn-icon:hover { background: var(--panel); }
-  .fmt-toolbar select {
-    font-size: 11px;
-    padding: 2px 4px;
-    height: 24px;
-    border-radius: 4px;
-  }
-  .fmt-sep {
-    width: 1px;
-    height: 16px;
-    background: var(--border);
-    flex-shrink: 0;
-  }
-  .zoom-badge {
-    font-size: 10px;
-    color: var(--muted);
-    min-width: 32px;
-    text-align: center;
-  }
+  .fmt-toolbar select { font-size: 11px; padding: 2px 4px; height: 24px; border-radius: 4px; }
+  .fmt-sep { width: 1px; height: 16px; background: var(--border); flex-shrink: 0; }
+  .zoom-badge { font-size: 10px; color: var(--muted); min-width: 32px; text-align: center; }
 
   .paper-container {
     flex: 1;
@@ -393,6 +380,7 @@
     display: flex;
     justify-content: center;
     background: rgba(0, 0, 0, 0.05);
+    min-height: 0;
   }
   body.light-theme .paper-container { background: #e2e8f0; }
   body.dark-theme .paper-container { background: #0f1115; }
@@ -425,10 +413,7 @@
     color: var(--muted);
     cursor: default;
   }
-  .paper.empty-state h3 {
-    margin: 0 0 10px 0;
-    color: var(--text);
-  }
+  .paper.empty-state h3 { margin: 0 0 10px 0; color: var(--text); }
 
   .status-bar {
     height: 24px;
@@ -440,6 +425,7 @@
     font-size: 11px;
     color: var(--muted);
     justify-content: space-between;
+    flex-shrink: 0;
   }
 
   .graph-wrap {
@@ -449,7 +435,6 @@
     flex-direction: column;
     min-height: 0;
   }
-
   .graph-header {
     padding: 10px 12px;
     background: var(--panel);
@@ -457,6 +442,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex-shrink: 0;
   }
   .graph-title {
     display: flex;
@@ -476,11 +462,7 @@
     display: flex;
     gap: 6px;
     align-items: center;
-  }
-  .graph-actions .btn-icon {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 4px;
+    flex-wrap: wrap;
   }
   .filter-checkbox {
     display: flex;
@@ -489,19 +471,51 @@
     cursor: pointer;
     background: var(--panel2);
     border: 1px solid var(--border);
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 4px;
     user-select: none;
     transition: all 0.15s;
+    font-size: 11px;
   }
   .filter-checkbox.active { border-color: var(--accent); }
+  .filter-checkbox .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 2px;
+  }
 
-  canvas {
+  .effect-buttons {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .effect-buttons button {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .effect-buttons button.active {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+    background: rgba(255,107,107,0.1);
+  }
+  .effect-buttons button.inactive {
+    border-color: #4ade80;
+    color: #4ade80;
+    background: rgba(74,222,128,0.05);
+  }
+
+  #cy {
     flex: 1;
     background: var(--panel2);
-    cursor: grab;
+    min-height: 100px;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
   }
-  canvas:active { cursor: grabbing; }
 
   .canvas-controls {
     position: absolute;
@@ -521,16 +535,20 @@
     justify-content: center;
     border-radius: 6px;
     font-size: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
   }
 
   .wiki-panel {
-    height: 240px;
+    height: 200px;
     border-top: 1px solid var(--border);
     padding: 12px;
     background: var(--panel);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    flex-shrink: 0;
   }
   .wiki-card {
     flex: 1;
@@ -543,149 +561,81 @@
     justify-content: space-between;
     align-items: center;
   }
-  .wiki-card .node-name {
-    font-size: 15px;
-    font-weight: 700;
-  }
-  .wiki-card select {
-    font-size: 11px;
-    padding: 2px 6px;
-  }
+  .wiki-card .node-name { font-size: 15px; font-weight: 700; }
+  .wiki-card select { font-size: 11px; padding: 2px 6px; }
   .wiki-card textarea {
     flex: 1;
     resize: none;
     font-size: 12px;
     padding: 8px;
     line-height: 1.4;
+    min-height: 40px;
   }
 
-  .tooltip {
-    position: absolute;
-    background: #0d0f14;
-    border: 1px solid var(--border);
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 12px;
-    max-width: 250px;
+  .graph-tooltip {
+    position: fixed;
+    background: var(--tooltip-bg);
+    border: 1px solid var(--tooltip-border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    max-width: 340px;
+    min-width: 200px;
     pointer-events: none;
     display: none;
-    z-index: 200;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    color: #e6e8ee;
-    line-height: 1.5;
-  }
-  .tooltip b { color: var(--accent); font-size: 13px; }
-  .tooltip hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
-
-  .ai-console {
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    max-width: 600px;
-    height: 200px;
-    background: rgba(13, 15, 20, 0.95);
-    border: 1px solid var(--accent);
-    box-shadow: 0 4px 30px rgba(91, 157, 255, 0.25);
-    border-radius: 10px;
     z-index: 500;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    font-family: monospace;
-  }
-  .ai-console-header {
-    background: #141822;
-    padding: 6px 12px;
-    font-size: 11px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border);
-  }
-  .ai-console-body {
-    flex: 1;
-    padding: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    color: var(--text);
     font-size: 12px;
-    overflow-y: auto;
-    color: #4ade80;
-    line-height: 1.4;
-    white-space: pre-wrap;
+    line-height: 1.6;
+    transition: opacity 0.15s;
   }
-
-  .model-status-bar {
-    background: var(--panel2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 10px;
-    margin-bottom: 10px;
+  .graph-tooltip .tt-header {
     display: flex;
     align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .graph-tooltip .tt-header .tt-type-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 12px;
+    color: #fff;
+  }
+  .graph-tooltip .tt-divider { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+  .graph-tooltip .tt-row {
+    display: flex;
     justify-content: space-between;
     font-size: 11px;
+    color: var(--muted);
   }
-  .model-status-bar .status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 6px;
-  }
-  .model-status-bar .status-dot.loading { background: #facc15; animation: pulse 1s infinite; }
-  .model-status-bar .status-dot.ready { background: #4ade80; }
-  .model-status-bar .status-dot.error { background: #ff6b6b; }
-  .model-status-bar .status-dot.idle { background: var(--muted); }
-  .model-progress-bar {
-    width: 100%;
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-top: 4px;
-  }
-  .model-progress-bar .fill {
-    height: 100%;
-    background: var(--accent);
-    width: 0%;
-    transition: width 0.3s;
+  .graph-tooltip .tt-desc { font-size: 12px; color: var(--text); margin: 4px 0; }
+  .graph-tooltip .tt-relations { font-size: 11px; color: var(--muted); }
+  .graph-tooltip .tt-relations .rel-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1px 0;
   }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  #findReplaceDialog {
-    display: none;
-    position: absolute;
-    top: 60px;
+  .toast {
+    position: fixed;
+    bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
     background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    z-index: 300;
-    padding: 14px 16px;
-    width: 340px;
-  }
-  #findReplaceDialog input { width: 100%; }
-  #insertTableDialog {
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 999;
     display: none;
-    position: absolute;
-    top: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    z-index: 300;
-    padding: 14px 16px;
-    width: 280px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    max-width: 90%;
+    text-align: center;
   }
-  #insertTableDialog input[type="number"] { width: 60px; }
 
   #helpDialog {
     display: none;
@@ -701,9 +651,9 @@
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
-    max-width: 640px;
+    max-width: 680px;
     max-height: 80vh;
-    width: 90%;
+    width: 92%;
     overflow-y: auto;
     padding: 24px 28px;
     box-shadow: 0 12px 40px rgba(0,0,0,0.5);
@@ -711,7 +661,6 @@
   .help-panel h2 { font-size: 18px; margin: 0 0 4px 0; color: var(--accent); }
   .help-panel .sub { font-size: 11px; color: var(--muted); margin-bottom: 20px; }
   .help-panel h3 { font-size: 14px; margin: 20px 0 8px 0; color: var(--text); }
-  .help-panel h3:first-of-type { margin-top: 0; }
   .help-panel p, .help-panel li { font-size: 12px; line-height: 1.7; color: var(--text); margin: 4px 0; }
   .help-panel ul { padding-left: 20px; margin: 4px 0; }
   .help-panel code {
@@ -747,18 +696,142 @@
   .help-panel .step-body { flex: 1; }
   .help-panel .step-body strong { display: block; font-size: 13px; }
   .help-panel .warning {
-    background: rgba(255, 107, 107, 0.1);
-    border: 1px solid rgba(255, 107, 107, 0.3);
+    background: rgba(255,107,107,0.1);
+    border: 1px solid rgba(255,107,107,0.3);
     border-radius: 6px;
     padding: 10px 12px;
     font-size: 11px;
     margin: 12px 0;
     color: #ff6b6b;
   }
+  .help-panel .info-box {
+    background: rgba(91,157,255,0.08);
+    border: 1px solid rgba(91,157,255,0.2);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 11px;
+    margin: 8px 0;
+  }
   .help-close {
     display: block;
     margin: 20px auto 0;
     padding: 8px 24px;
+  }
+  .help-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin: 8px 0;
+  }
+  .help-table th, .help-table td {
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    text-align: left;
+  }
+  .help-table th { background: var(--panel2); color: var(--text); font-weight: 600; }
+
+  /* ===== 비평 결과 스타일 ===== */
+  .critique-result {
+    background: var(--panel2);
+    border-radius: 8px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    margin-top: 10px;
+    display: none;
+  }
+  .critique-result.show { display: block; }
+
+  .score-summary {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+  .score-avg {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .score-avg .label { font-size: 14px; font-weight: 400; color: var(--muted); }
+  .score-grade {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+  }
+  .score-grade.excellent { background: rgba(74,222,128,0.2); color: #4ade80; }
+  .score-grade.good { background: rgba(250,204,21,0.2); color: #facc15; }
+  .score-grade.fair { background: rgba(251,146,60,0.2); color: #fb923c; }
+  .score-grade.poor { background: rgba(248,113,113,0.2); color: #f87171; }
+  .score-grade.critical { background: rgba(239,68,68,0.2); color: #ef4444; }
+
+  .score-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .score-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .score-bar-item .label { min-width: 90px; color: var(--muted); }
+  .score-bar-item .bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .score-bar-item .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+  .score-bar-item .score-num { min-width: 36px; text-align: right; font-weight: 600; }
+
+  .critique-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .critique-section h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 0 0 4px 0;
+  }
+  .critique-section p, .critique-section .text {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+    margin: 0 0 6px 0;
+    white-space: pre-wrap;
+  }
+  .critique-section .sentence-box {
+    background: var(--bg);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid var(--accent);
+    margin: 4px 0;
+  }
+  .critique-section .sentence-box.best { border-color: #4ade80; }
+  .critique-section .sentence-box.worst { border-color: #f87171; }
+  .critique-section .sentence-box .quote {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .critique-section .sentence-box .reason {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
   }
 
   @media (max-width: 800px) {
@@ -770,237 +843,328 @@
     .resizer { display: none; }
     .tab-btn { font-size: 11px; padding: 4px 10px; }
     .filelist-item { padding: 8px 10px; }
-    .filelist-item span { max-width: 160px !important; }
     .fmt-toolbar { flex-wrap: wrap; gap: 2px; }
     .help-panel { max-width: 95%; padding: 16px; }
     .btn, button { min-height: 36px; }
     .btn-icon { width: 32px; height: 28px; font-size: 13px; }
     .dropdown-item { padding: 10px 14px; font-size: 13px; }
-    canvas { touch-action: none; }
+    #cy { touch-action: none; min-height: 200px; }
+    .wiki-panel { height: 120px; }
+    #leftPanel { max-height: 45vh; }
+    .graph-tooltip { max-width: 280px; font-size: 11px; padding: 10px 14px; }
+    .score-summary { flex-wrap: wrap; gap: 10px; }
+    .score-bar-item .label { min-width: 70px; font-size: 11px; }
   }
-
   @media (max-width: 480px) {
     #leftPanel, #rightPanel { max-height: 35vh; }
     .menubar .menu-item { font-size: 10px; padding: 2px 6px; }
-    .topbar-left span { display: none; }
     .help-panel { padding: 12px; font-size: 11px; }
     .help-panel h2 { font-size: 16px; }
+    .graph-tooltip { max-width: 240px; font-size: 10px; padding: 8px 12px; }
+    .paper { padding: 30px 20px; min-height: 600px; }
+    .score-bar-item .label { min-width: 60px; font-size: 10px; }
+    .score-avg { font-size: 24px; }
   }
 </style>
 </head>
 <body class="dark-theme">
 
-  <div class="top-nav">
-    <div class="brand">⚓ 소설 관계도 분석기 <span>| Transformers.js (ONNX)</span></div>
-    <div class="nav-controls">
-      <button onclick="toggleTheme()" id="themeBtn">🌞 라이트 모드</button>
-      <button class="primary" id="openDirBtn" onclick="openLocalFolder()">📂 폴더 선택</button>
-    </div>
+<div class="top-nav">
+  <div class="brand">⚓ 소설 관계도 분석기 <span>| 수동 복사 + 비평 + 효과</span></div>
+  <div class="nav-controls">
+    <button onclick="toggleTheme()" id="themeBtn">🌞 라이트 모드</button>
+    <button class="primary" id="openDirBtn" onclick="openLocalFolder()">📂 폴더 선택</button>
   </div>
+</div>
 
-  <div class="layout">
-    
-    <div class="panel" id="leftPanel">
-      <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('manuscriptTab', this)">📝 원고</button>
+<div class="layout">
+
+  <!-- ===== LEFT PANEL ===== -->
+  <div class="panel" id="leftPanel">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('manuscriptTab', this)">📝 원고</button>
+      <button class="tab-btn" onclick="switchTab('critiqueTab', this)">📊 비평</button>
+    </div>
+
+    <!-- 원고 탭 -->
+    <div class="tab-content active" id="manuscriptTab">
+      <div id="folderConnectionPanel"></div>
+      <div class="panel-header">
+        문서 목록 <span id="docCount"></span>
+        <button id="newDocBtn" onclick="createNewDocument()" style="display:none;">+ 새 문서</button>
       </div>
-      <div class="tab-content active" id="manuscriptTab">
-        <div id="folderConnectionPanel"></div>
+      <div class="filelist" id="fileList"></div>
 
-        <div class="model-status-bar" id="modelStatusBar">
-          <span>
-            <span class="status-dot idle" id="modelDot"></span>
-            <span id="modelStatusText">모델 대기 중</span>
-          </span>
-          <span style="font-size:10px;color:var(--muted);">
-            <span id="modelProgressText">0%</span>
-          </span>
+      <!-- 분석 도구 -->
+      <div style="border-top:1px solid var(--border); padding-top:12px; margin-top:4px; flex-shrink:0;">
+        <div style="font-size:11px; font-weight:600; color:var(--text); margin-bottom:4px;">📋 관계도 분석</div>
+        <button onclick="copyWithPrompt()" class="primary" style="width:100%; font-size:12px; padding:8px;">
+          📋 프롬프트 + 텍스트 복사
+        </button>
+        <div id="copyToast" style="font-size:10px; color:var(--accent); margin-top:4px; display:none; text-align:center;">
+          ✅ 클립보드에 복사되었습니다! 외부 AI에 붙여넣고 분석하세요.
         </div>
-        <div class="model-progress-bar" id="modelProgressBar">
-          <div class="fill" id="modelProgressFill"></div>
+        <div style="margin-top:8px;">
+          <span style="font-size:11px; font-weight:600; color:var(--text);">📥 결과 붙여넣기 (JSON)</span>
+          <textarea id="resultPasteArea" rows="3" style="width:100%; font-size:11px; font-family:monospace; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:8px; color:var(--text); resize:vertical; margin-top:2px;" 
+            placeholder="NotebookLM/DeepSeek/Gemini의 분석 결과(JSON)를 붙여넣으세요..."></textarea>
+          <div style="display:flex; gap:4px; margin-top:4px; flex-wrap:wrap;">
+            <button onclick="processPastedResult()" class="primary" style="font-size:11px; padding:4px 12px;">📊 그래프 생성</button>
+            <button onclick="autoFixAndProcess()" style="font-size:11px; padding:4px 12px; border-color:#facc15; color:#facc15;">🔧 자동 수정</button>
+            <button onclick="clearResultArea()" style="font-size:11px; padding:4px 12px; border-color:#ff6b6b; color:#ff6b6b;">🗑️ 지우기</button>
+          </div>
+          <div id="parseResultFeedback" style="font-size:11px; margin-top:4px; color:var(--muted); display:none;">
+            <span id="parseStats">노드 0개, 엣지 0개</span>
+          </div>
         </div>
-
-        <div class="panel-header">
-          문서 목록 <span id="docCount"></span>
-          <button id="newDocBtn" onclick="createNewDocument()" style="display:none;">+ 새 문서</button>
-        </div>
-        <div class="filelist" id="fileList"></div>
       </div>
     </div>
 
-    <div class="resizer" id="resizerLeft"></div>
+    <!-- 비평 탭 -->
+    <div class="tab-content" id="critiqueTab">
+      <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
 
-    <div class="panel editor-wrap" id="centerPanel">
-      <div class="menubar">
-        <div class="menu-item" onclick="toggleMenu(this, 'fileMenu')">파일(F)</div>
-        <div class="menu-item" onclick="toggleMenu(this, 'editMenu')">편집(E)</div>
-        <div class="menu-item" onclick="toggleMenu(this, 'formatMenu')">서식(O)</div>
-        <div class="menu-item" onclick="toggleMenu(this, 'viewMenu')">보기(V)</div>
-        <div class="menu-item" onclick="toggleMenu(this, 'aiMenu')" style="color:var(--c-char);">AI(R)</div>
-        <div class="menu-item" onclick="toggleMenu(this, 'helpMenu')">도움말(H)</div>
-        <span class="status" id="statusText">폴더 연결 필요</span>
-        
-        <div class="dropdown" id="fileMenu">
-          <div class="dropdown-item" onclick="createNewDocument();closeAllMenus();">새 문서</div>
-          <div class="dropdown-item" onclick="openLocalFolder();closeAllMenus();">파일 열기</div>
-          <div class="dropdown-item" onclick="saveCurrentFile();closeAllMenus();">저장</div>
-          <div class="dropdown-item" onclick="saveAsFile();closeAllMenus();">다른 이름으로 저장</div>
-          <div class="dropdown-sep"></div>
-          <div class="dropdown-item" onclick="disconnectFolder();closeAllMenus();">폴더 연결 해제</div>
+        <!-- 1단계: 비평 프롬프트 복사 -->
+        <div style="background:var(--panel2); border-radius:8px; padding:12px; border:1px solid var(--border);">
+          <div style="font-size:12px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:6px;">
+            <span>①</span> 비평 프롬프트 복사
+          </div>
+          <div style="font-size:10px; color:var(--muted); margin:2px 0 6px 0; padding-left:18px;">
+            현재 원고를 웹소설 비평 프롬프트와 함께 복사합니다.
+          </div>
+          <button onclick="copyCritiquePrompt()" class="primary" style="width:100%; font-size:12px; padding:8px;">
+            📋 비평 프롬프트 + 텍스트 복사
+          </button>
+          <div id="critiqueCopyToast" style="font-size:10px; color:var(--accent); margin-top:4px; display:none; text-align:center;">
+            ✅ 비평 프롬프트가 복사되었습니다! 외부 AI에 붙여넣고 분석하세요.
+          </div>
         </div>
-        <div class="dropdown" id="editMenu">
-          <div class="dropdown-item" onclick="execCmd('undo');closeAllMenus();">실행 취소</div>
-          <div class="dropdown-item" onclick="execCmd('redo');closeAllMenus();">다시 실행</div>
-          <div class="dropdown-sep"></div>
-          <div class="dropdown-item" onclick="execCmd('cut');closeAllMenus();">잘라내기</div>
-          <div class="dropdown-item" onclick="execCmd('copy');closeAllMenus();">복사</div>
-          <div class="dropdown-item" onclick="execCmd('paste');closeAllMenus();">붙여넣기</div>
-          <div class="dropdown-sep"></div>
-          <div class="dropdown-item" onclick="openFindReplace();closeAllMenus();">찾기</div>
-          <div class="dropdown-item" onclick="execFind();closeAllMenus();">다음 찾기</div>
-        </div>
-        <div class="dropdown" id="formatMenu">
-          <div class="dropdown-item" onclick="execCmd('bold');closeAllMenus();">굵게</div>
-          <div class="dropdown-item" onclick="execCmd('italic');closeAllMenus();">기울임</div>
-          <div class="dropdown-item" onclick="execCmd('underline');closeAllMenus();">밑줄</div>
-          <div class="dropdown-sep"></div>
-          <div class="dropdown-item" onclick="execCmd('justifyLeft');closeAllMenus();">왼쪽 정렬</div>
-          <div class="dropdown-item" onclick="execCmd('justifyCenter');closeAllMenus();">가운데 정렬</div>
-          <div class="dropdown-item" onclick="execCmd('justifyRight');closeAllMenus();">오른쪽 정렬</div>
-        </div>
-        <div class="dropdown" id="viewMenu">
-          <div class="dropdown-item" onclick="zoomEditor(-10);closeAllMenus();">축소</div>
-          <div class="dropdown-item" onclick="zoomEditor(10);closeAllMenus();">확대</div>
-          <div class="dropdown-item" onclick="zoomReset();closeAllMenus();">기본값</div>
-          <div class="dropdown-sep"></div>
-          <div class="dropdown-item" onclick="toggleTheme();closeAllMenus();">테마 전환</div>
-        </div>
-        <div class="dropdown" id="aiMenu">
-          <div class="dropdown-item" onclick="runTransformersAnalysis();closeAllMenus();">🧠 Transformers 분석</div>
-          <div class="dropdown-item" onclick="toggleAutoAnalysis();closeAllMenus();">🔄 자동 분석</div>
-        </div>
-        <div class="dropdown" id="helpMenu">
-          <div class="dropdown-item" onclick="showHelp();closeAllMenus();">📖 도움말</div>
-          <div class="dropdown-item" onclick="showAbout();closeAllMenus();">정보</div>
-        </div>
-      </div>
 
-      <div class="fmt-toolbar">
-        <button class="btn-icon" onclick="execCmd('undo')">↩</button>
-        <button class="btn-icon" onclick="execCmd('redo')">↪</button>
-        <span class="fmt-sep"></span>
-        <select id="fontFamilySelect" onchange="execCmd('fontName', this.value)">
-          <option value="Pretendard">Pretendard</option>
-          <option value="바탕">바탕</option>
-          <option value="돋움">돋움</option>
-        </select>
-        <select id="fontSizeSelect" onchange="execCmd('fontSize', this.value)">
-          <option value="3">작게</option>
-          <option value="4" selected>보통</option>
-          <option value="5">크게</option>
-        </select>
-        <span class="fmt-sep"></span>
-        <button class="btn-icon" onclick="execCmd('bold')"><b>B</b></button>
-        <button class="btn-icon" onclick="execCmd('italic')"><i>I</i></button>
-        <button class="btn-icon" onclick="execCmd('underline')"><u>U</u></button>
-        <span class="fmt-sep"></span>
-        <span id="zoomLevel" class="zoom-badge">100%</span>
-        <button class="btn-icon" onclick="zoomEditor(-10)">−</button>
-        <button class="btn-icon" onclick="zoomEditor(10)">+</button>
-        <span class="fmt-sep"></span>
-        <button class="btn-icon" onclick="saveCurrentFile()" style="color:var(--accent);">💾</button>
-        <button class="btn-icon" onclick="runTransformersAnalysis()" style="color:var(--c-char);">🧠</button>
-        <button class="btn-icon" onclick="exportGraphToClipboard()" style="color:var(--c-item);">📋</button>
-      </div>
-
-      <div id="findReplaceDialog">
-        <div style="font-size:12px;font-weight:600;margin-bottom:10px;">🔍 찾기</div>
-        <input type="text" id="findInput" placeholder="찾을 내용" style="width:100%;margin-bottom:6px;" />
-        <div style="display:flex;gap:4px;justify-content:flex-end;">
-          <button onclick="execFind()" class="primary">찾기</button>
-          <button onclick="document.getElementById('findReplaceDialog').style.display='none'">닫기</button>
+        <!-- 2단계: 비평 결과 붙여넣기 -->
+        <div style="background:var(--panel2); border-radius:8px; padding:12px; border:1px solid var(--border);">
+          <div style="font-size:12px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:6px;">
+            <span>②</span> 비평 결과 붙여넣기 (JSON)
+          </div>
+          <div style="font-size:10px; color:var(--muted); margin:2px 0 6px 0; padding-left:18px;">
+            AI가 출력한 비평 결과(JSON)를 붙여넣으세요.
+          </div>
+          <textarea id="critiquePasteArea" rows="4" style="width:100%; font-size:11px; font-family:monospace; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:8px; color:var(--text); resize:vertical;" 
+            placeholder='{"scores": {...}, "critique": {...}}'></textarea>
+          <div style="display:flex; gap:4px; margin-top:4px;">
+            <button onclick="processCritiqueResult()" class="primary" style="font-size:11px; padding:4px 12px; flex:1;">📊 비평 결과 표시</button>
+            <button onclick="document.getElementById('critiquePasteArea').value=''; document.getElementById('critiqueResult').classList.remove('show');" style="font-size:11px; padding:4px 12px; border-color:#ff6b6b; color:#ff6b6b;">🗑️ 지우기</button>
+          </div>
         </div>
-        <div id="findResult" style="font-size:11px;color:var(--muted);margin-top:6px;"></div>
-      </div>
 
-      <div class="paper-container">
-        <div class="paper empty-state" id="editor" contenteditable="false">
-          <h3>📂 로컬 폴더를 연결하세요</h3>
-          <p style="max-width:450px;font-size:13px;line-height:1.6;">소설 파일이 있는 폴더를 선택하면 AI가 인물, 장소, 아이템, 사건을 추출하고 관계를 그래프로 보여줍니다.</p>
-          <button class="primary" onclick="openLocalFolder()" style="padding:10px 20px;font-size:14px;">📂 폴더 열기</button>
-        </div>
-      </div>
+        <!-- 3단계: 비평 결과 표시 -->
+        <div id="critiqueResult" class="critique-result"></div>
 
-      <div class="status-bar">
-        <span id="filePathDisplay">연결 없음</span>
-        <span id="lineColIndicator">줄 1, 열 1</span>
-        <span id="charCount">📝 글자: 0</span>
-        <span id="modelStatusMini" style="font-size:10px;color:var(--muted);">AI: 대기</span>
-      </div>
-    </div>
-
-    <div class="resizer" id="resizerRight"></div>
-
-    <div class="panel graph-wrap" id="rightPanel">
-      <div class="graph-header">
-        <div class="graph-title">지식 그래프 <span id="graphCount" style="font-weight:normal">노드 0</span></div>
-        <div class="graph-filters">
-          <span class="filter-checkbox active" onclick="toggleFilter('인물', this)"><span style="color:var(--c-char)">●</span> 인물</span>
-          <span class="filter-checkbox active" onclick="toggleFilter('사건', this)"><span style="color:var(--c-event)">●</span> 사건</span>
-          <span class="filter-checkbox active" onclick="toggleFilter('장소', this)"><span style="color:var(--c-loc)">●</span> 장소</span>
-          <span class="filter-checkbox active" onclick="toggleFilter('아이템', this)"><span style="color:var(--c-item)">●</span> 아이템</span>
-        </div>
-        <div class="graph-actions">
-          <button class="btn-icon" onclick="toggleAutoAnalysis()" id="autoAnalysisBtn">🔄 자동</button>
-          <button class="btn-icon" onclick="runTransformersAnalysis()" style="background:var(--c-char);color:#fff;font-weight:bold;">🧠 분석</button>
-        </div>
-      </div>
-      <canvas id="graph"></canvas>
-      <div class="canvas-controls">
-        <button onclick="zoomGraph(1.1)">+</button>
-        <button onclick="zoomGraph(0.9)">-</button>
-        <button onclick="resetGraphView()">⟲</button>
-      </div>
-      <div class="wiki-panel">
-        <div class="panel-header">노드 위키</div>
-        <div class="wiki-card" id="wikiCard">
-          <div style="color:var(--muted);font-size:12px;text-align:center;margin:auto;">노드를 클릭하면 정보가 표시됩니다.</div>
+        <div style="font-size:10px; color:var(--muted); padding:4px 8px; line-height:1.5; background:var(--panel2); border-radius:4px; border:1px solid var(--border);">
+          💡 <b>비평 프롬프트</b>는 웹소설 장르 문법과 독자 친절함을 기준으로<br>
+          문장·묘사·전개·캐릭터·가독성을 100점 만점으로 평가합니다.
         </div>
       </div>
     </div>
   </div>
 
-  <div class="tooltip" id="tooltip"></div>
-  <div class="ai-console" id="aiConsole">
-    <div class="ai-console-header">
-      <span>🧠 Transformers.js 분석 로그</span>
-      <span style="color:#ef4444;cursor:pointer;" onclick="closeConsole()">[X]</span>
+  <div class="resizer" id="resizerLeft"></div>
+
+  <!-- ===== CENTER PANEL ===== -->
+  <div class="panel editor-wrap" id="centerPanel">
+    <div class="menubar">
+      <div class="menu-item" onclick="toggleMenu(this, 'fileMenu')">파일(F)</div>
+      <div class="menu-item" onclick="toggleMenu(this, 'editMenu')">편집(E)</div>
+      <div class="menu-item" onclick="toggleMenu(this, 'formatMenu')">서식(O)</div>
+      <div class="menu-item" onclick="toggleMenu(this, 'viewMenu')">보기(V)</div>
+      <div class="menu-item" onclick="toggleMenu(this, 'helpMenu')">도움말(H)</div>
+      <span class="status" id="statusText">폴더 연결 필요</span>
+
+      <div class="dropdown" id="fileMenu">
+        <div class="dropdown-item" onclick="createNewDocument();closeAllMenus();">새 문서</div>
+        <div class="dropdown-item" onclick="openLocalFolder();closeAllMenus();">파일 열기</div>
+        <div class="dropdown-item" onclick="saveCurrentFile();closeAllMenus();">저장</div>
+        <div class="dropdown-item" onclick="saveAsFile();closeAllMenus();">다른 이름으로 저장</div>
+        <div class="dropdown-sep"></div>
+        <div class="dropdown-item" onclick="disconnectFolder();closeAllMenus();">폴더 연결 해제</div>
+      </div>
+      <div class="dropdown" id="editMenu">
+        <div class="dropdown-item" onclick="execCmd('undo');closeAllMenus();">실행 취소</div>
+        <div class="dropdown-item" onclick="execCmd('redo');closeAllMenus();">다시 실행</div>
+        <div class="dropdown-sep"></div>
+        <div class="dropdown-item" onclick="execCmd('cut');closeAllMenus();">잘라내기</div>
+        <div class="dropdown-item" onclick="execCmd('copy');closeAllMenus();">복사</div>
+        <div class="dropdown-item" onclick="execCmd('paste');closeAllMenus();">붙여넣기</div>
+      </div>
+      <div class="dropdown" id="formatMenu">
+        <div class="dropdown-item" onclick="execCmd('bold');closeAllMenus();">굵게</div>
+        <div class="dropdown-item" onclick="execCmd('italic');closeAllMenus();">기울임</div>
+        <div class="dropdown-item" onclick="execCmd('underline');closeAllMenus();">밑줄</div>
+        <div class="dropdown-sep"></div>
+        <div class="dropdown-item" onclick="execCmd('justifyLeft');closeAllMenus();">왼쪽 정렬</div>
+        <div class="dropdown-item" onclick="execCmd('justifyCenter');closeAllMenus();">가운데 정렬</div>
+        <div class="dropdown-item" onclick="execCmd('justifyRight');closeAllMenus();">오른쪽 정렬</div>
+      </div>
+      <div class="dropdown" id="viewMenu">
+        <div class="dropdown-item" onclick="zoomEditor(-10);closeAllMenus();">축소</div>
+        <div class="dropdown-item" onclick="zoomEditor(10);closeAllMenus();">확대</div>
+        <div class="dropdown-item" onclick="zoomReset();closeAllMenus();">기본값</div>
+        <div class="dropdown-sep"></div>
+        <div class="dropdown-item" onclick="toggleTheme();closeAllMenus();">테마 전환</div>
+      </div>
+      <div class="dropdown" id="helpMenu">
+        <div class="dropdown-item" onclick="showHelp();closeAllMenus();">📖 도움말</div>
+        <div class="dropdown-item" onclick="showAbout();closeAllMenus();">정보</div>
+      </div>
     </div>
-    <div class="ai-console-body" id="aiConsoleBody"></div>
+
+    <div class="fmt-toolbar">
+      <button class="btn-icon" onclick="execCmd('undo')">↩</button>
+      <button class="btn-icon" onclick="execCmd('redo')">↪</button>
+      <span class="fmt-sep"></span>
+      <select id="fontFamilySelect" onchange="execCmd('fontName', this.value)">
+        <option value="Pretendard">Pretendard</option>
+        <option value="바탕">바탕</option>
+        <option value="돋움">돋움</option>
+      </select>
+      <select id="fontSizeSelect" onchange="execCmd('fontSize', this.value)">
+        <option value="3">작게</option>
+        <option value="4" selected>보통</option>
+        <option value="5">크게</option>
+      </select>
+      <span class="fmt-sep"></span>
+      <button class="btn-icon" onclick="execCmd('bold')"><b>B</b></button>
+      <button class="btn-icon" onclick="execCmd('italic')"><i>I</i></button>
+      <button class="btn-icon" onclick="execCmd('underline')"><u>U</u></button>
+      <span class="fmt-sep"></span>
+      <span id="zoomLevel" class="zoom-badge">100%</span>
+      <button class="btn-icon" onclick="zoomEditor(-10)">−</button>
+      <button class="btn-icon" onclick="zoomEditor(10)">+</button>
+      <span class="fmt-sep"></span>
+      <button class="btn-icon" onclick="saveCurrentFile()" style="color:var(--accent);">💾</button>
+      <button class="btn-icon" onclick="copyWithPrompt()" style="color:var(--c-item);">📋</button>
+    </div>
+
+    <div class="paper-container">
+      <div class="paper empty-state" id="editor" contenteditable="false">
+        <h3>📂 로컬 폴더를 연결하세요</h3>
+        <p style="max-width:450px;font-size:13px;line-height:1.6;">소설 파일이 있는 폴더를 선택하면 편집기가 활성화됩니다.</p>
+        <button class="primary" onclick="openLocalFolder()" style="padding:10px 20px;font-size:14px;">📂 폴더 열기</button>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span id="filePathDisplay">연결 없음</span>
+      <span id="lineColIndicator">줄 1, 열 1</span>
+      <span id="charCount">📝 글자: 0</span>
+    </div>
   </div>
 
-  <div id="helpDialog">
-    <div class="help-panel">
-      <h2>📖 소설 관계도 분석기</h2>
-      <div class="sub">Transformers.js 기반 · 버전 3.0</div>
-      <h3>시작하기</h3>
-      <div class="step"><div class="step-num">1</div><div class="step-body"><strong>폴더 열기</strong>소설 파일(.txt)이 있는 폴더를 선택하세요.</div></div>
-      <div class="step"><div class="step-num">2</div><div class="step-body"><strong>파일 선택</strong>분석할 소설 파일을 클릭하면 편집기에 내용이 표시됩니다.</div></div>
-      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>🧠 분석 실행</strong>버튼을 누르면 AI가 인물, 장소, 아이템, 사건을 추출합니다.</div></div>
-      <div class="step"><div class="step-num">4</div><div class="step-body"><strong>📋 내보내기</strong>그래프 데이터를 Cytoscape.js 형식으로 복사할 수 있습니다.</div></div>
-      <button class="primary help-close" onclick="closeHelp()">닫기</button>
+  <div class="resizer" id="resizerRight"></div>
+
+  <!-- ===== RIGHT PANEL ===== -->
+  <div class="panel graph-wrap" id="rightPanel">
+    <div class="graph-header">
+      <div class="graph-title">
+        지식 그래프 <span id="graphCount" style="font-weight:normal">노드 0 · 엣지 0</span>
+      </div>
+      <div class="graph-filters">
+        <span class="filter-checkbox active" onclick="toggleFilter('인물', this)">
+          <span class="dot" style="background:var(--c-char);"></span> 인물
+        </span>
+        <span class="filter-checkbox active" onclick="toggleFilter('사건', this)">
+          <span class="dot" style="background:var(--c-event);"></span> 사건
+        </span>
+        <span class="filter-checkbox active" onclick="toggleFilter('장소', this)">
+          <span class="dot" style="background:var(--c-loc);"></span> 장소
+        </span>
+        <span class="filter-checkbox active" onclick="toggleFilter('아이템', this)">
+          <span class="dot" style="background:var(--c-item);"></span> 아이템
+        </span>
+      </div>
+      <div class="graph-actions">
+        <button class="btn-icon" onclick="resetGraphView()" style="font-size:11px;">⟲ 초기화</button>
+        <button class="btn-icon" onclick="exportGraphToClipboard()" style="font-size:11px; border-color:#facc15; color:#facc15;">📋 내보내기</button>
+      </div>
+      <div class="effect-buttons">
+        <button id="btnBreathe" class="inactive" onclick="toggleBreathe()">🌊 떨림 OFF</button>
+        <button id="btnSpring" class="inactive" onclick="toggleSpring()">🌀 스프링 OFF</button>
+      </div>
+    </div>
+
+    <div id="cy"></div>
+
+    <div class="canvas-controls">
+      <button onclick="zoomGraph(1.15)">+</button>
+      <button onclick="zoomGraph(0.85)">-</button>
+      <button onclick="resetGraphView()">⟲</button>
+      <button onclick="exportPNG()" style="border-color:#4ade80; color:#4ade80; font-size:11px;">📷 PNG</button>
+    </div>
+
+    <div class="wiki-panel">
+      <div class="panel-header">노드 위키</div>
+      <div class="wiki-card" id="wikiCard">
+        <div style="color:var(--muted);font-size:12px;text-align:center;margin:auto;">
+          노드를 클릭하면 상세 정보가 표시됩니다.
+        </div>
+      </div>
     </div>
   </div>
+</div>
 
-<script type="module">
-import { pipeline, env } from '@xenova/transformers';
+<!-- ===== TOOLTIP ===== -->
+<div class="graph-tooltip" id="graphTooltip"></div>
 
-// ============================================================
-// 환경 설정
-// ============================================================
-env.allowRemoteModels = true;
-env.allowLocalModels = false;
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
 
+<!-- ===== HELP DIALOG ===== -->
+<div id="helpDialog">
+  <div class="help-panel">
+    <h2>📖 소설 관계도 분석기</h2>
+    <div class="sub">수동 복사 + 비평 + 효과 · 버전 5.0</div>
+
+    <h3>🔐 로컬 보안 유지</h3>
+    <div class="info-box">
+      모든 데이터는 <b>당신의 PC에만 저장</b>됩니다.<br>
+      외부 서버로 전송되는 데이터는 없으며, 외부 AI로 보내는 텍스트는 <b>당신이 직접 복사/붙여넣기</b>하는 방식입니다.
+    </div>
+
+    <h3>📌 사용 방법</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>📂 폴더 연결</strong>상단 "폴더 선택"으로 소설 파일 폴더를 선택하세요.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>📄 파일 선택</strong>좌측 파일 목록에서 분석할 소설 파일을 클릭하세요.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>📋 프롬프트 복사</strong>"프롬프트+텍스트 복사"로 분석 지시문을 복사하세요.</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>📥 결과 붙여넣기</strong>AI 출력(JSON)을 붙여넣고 "그래프 생성"을 클릭하세요.</div></div>
+
+    <h3>📊 비평 시스템</h3>
+    <ul>
+      <li><b>비평 탭</b>에서 전용 프롬프트를 복사할 수 있습니다.</li>
+      <li>웹소설 장르 문법과 독자 친절함을 기준으로 5개 항목을 평가합니다.</li>
+      <li>점수는 100점 만점이며, 등급(독보적/경쟁력/정체/이탈/해체)으로 표시됩니다.</li>
+      <li>총평, 핵심 분석, 최강/최약 문장을 함께 제공합니다.</li>
+    </ul>
+
+    <h3>🎨 그래프 조작</h3>
+    <ul>
+      <li><b>노드 드래그</b> — 마우스로 노드를 끌어 위치 조정 (물리 효과 적용)</li>
+      <li><b>휠 줌</b> — 마우스 휠로 확대/축소</li>
+      <li><b>노드 호버</b> — LLM 위키 스타일의 상세 툴팁 표시</li>
+      <li><b>노드 클릭</b> — 우측 위키 패널에 고정 표시</li>
+      <li><b>필터</b> — 상단 필터로 특정 타입만 표시</li>
+      <li><b>🌊 떨림</b> — 노드가 미세하게 떨리는 효과</li>
+      <li><b>🌀 스프링</b> — 드래그 후 탄성 운동 효과</li>
+    </ul>
+
+    <div class="warning">
+      ⚠️ <b>브라우저 요구사항</b><br>
+      Chrome 116+ 또는 Edge 116+ 권장.<br>
+      File System Access API (<code>showDirectoryPicker</code>)를 지원해야 합니다.
+    </div>
+
+    <button class="primary help-close" onclick="closeHelp()">닫기</button>
+  </div>
+</div>
+
+<script>
 // ============================================================
 // STATE
 // ============================================================
@@ -1008,20 +1172,23 @@ let dirHandle = null;
 let currentFileHandle = null;
 let currentFileName = null;
 let saveTimer = null;
-let analysisTimer = null;
-let autoAnalysisEnabled = false;
-let analysisInProgress = false;
-let modelReady = false;
-let isModelLoading = false;
-let nerPipeline = null;
 
 let nodes = new Map();
 let edges = [];
 let activeFilterTypes = new Set(['인물', '사건', '장소', '아이템']);
 let selectedNode = null;
 let hoverNode = null;
-let transform = { x: 0, y: 0, k: 1 };
-let particles = [];
+
+let cy = null;
+let tooltipTimeout = null;
+let hoverTimeout = null;
+
+// 효과 상태
+let breatheActive = false;
+let springActive = false;
+let breatheId = null;
+let springId = null;
+let nodeVelocities = new Map();
 
 // ============================================================
 // STORAGE
@@ -1091,63 +1258,58 @@ async function verifyPermission(handle, readWrite) {
 // DOM REFS
 // ============================================================
 const editorEl = document.getElementById('editor');
-const canvas = document.getElementById('graph');
-const ctx = canvas.getContext('2d');
-const tooltip = document.getElementById('tooltip');
+const tooltip = document.getElementById('graphTooltip');
+const toast = document.getElementById('toast');
+
+// ============================================================
+// COLORS
+// ============================================================
+const COLOR_MAP = {
+  '인물': '#4A90D9',
+  '사건': '#E74C3C',
+  '장소': '#2ECC71',
+  '아이템': '#F1C40F'
+};
+const TYPE_ORDER = ['인물', '사건', '장소', '아이템'];
+const TYPE_ICON = { '인물': '🧑', '사건': '⚡', '장소': '📍', '아이템': '🔧' };
+const TYPE_LABEL = { '인물': '인물', '사건': '사건', '장소': '장소', '아이템': '아이템' };
+const EMOTION_ICONS = {
+  '기쁨': '😊', '슬픔': '😢', '분노': '😡',
+  '두려움': '😨', '놀람': '😲', '혐오': '🤢', '중립': '😐'
+};
 
 // ============================================================
 // THEME
 // ============================================================
-window.toggleTheme = function() {
+function toggleTheme() {
   document.body.classList.toggle('dark-theme');
   document.body.classList.toggle('light-theme');
-  document.getElementById('themeBtn').textContent = 
+  document.getElementById('themeBtn').textContent =
     document.body.classList.contains('dark-theme') ? '🌞 라이트 모드' : '🌙 다크 모드';
-};
+}
 
 // ============================================================
 // EXEC COMMAND
 // ============================================================
-window.execCmd = function(cmd, val) {
+function execCmd(cmd, val) {
   if (cmd === 'save') { saveCurrentFile(); return; }
   document.execCommand(cmd, false, val);
-};
-
-// ============================================================
-// FIND
-// ============================================================
-window.openFindReplace = function() {
-  const dlg = document.getElementById('findReplaceDialog');
-  dlg.style.display = dlg.style.display === 'none' ? 'block' : 'none';
-  if (dlg.style.display === 'block') {
-    setTimeout(() => document.getElementById('findInput').focus(), 100);
-  }
-};
-
-window.execFind = function() {
-  const query = document.getElementById('findInput').value;
-  const result = document.getElementById('findResult');
-  if (!query) { result.textContent = '검색어를 입력하세요.'; return; }
-  if (window.find) {
-    const found = window.find(query, false, false, true, false, true, false);
-    result.textContent = found ? '찾음' : '없음';
-  }
-};
+}
 
 // ============================================================
 // ZOOM
 // ============================================================
 let zoomPercent = 100;
-window.zoomEditor = function(delta) {
+function zoomEditor(delta) {
   zoomPercent = Math.max(50, Math.min(200, zoomPercent + delta));
   editorEl.style.fontSize = (15 * zoomPercent / 100) + 'px';
   document.getElementById('zoomLevel').textContent = zoomPercent + '%';
-};
-window.zoomReset = function() {
+}
+function zoomReset() {
   zoomPercent = 100;
   editorEl.style.fontSize = '15px';
   document.getElementById('zoomLevel').textContent = '100%';
-};
+}
 
 // ============================================================
 // LINE/COL
@@ -1177,17 +1339,15 @@ document.addEventListener('selectionchange', updateLineCol);
 // ============================================================
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveCurrentFile(); }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); openFindReplace(); }
   if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomEditor(10); }
   if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); zoomEditor(-10); }
   if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); zoomReset(); }
-  if (e.key === 'F3') { e.preventDefault(); execFind(); }
 });
 
 // ============================================================
 // MENU
 // ============================================================
-window.toggleMenu = function(item, id) {
+function toggleMenu(item, id) {
   const menu = document.getElementById(id);
   const isOpen = menu.classList.contains('open');
   closeAllMenus();
@@ -1203,8 +1363,7 @@ window.toggleMenu = function(item, id) {
     menu.style.left = left + 'px';
     menu.style.top = top + 'px';
   }
-};
-
+}
 function closeAllMenus() {
   document.querySelectorAll('.dropdown').forEach(m => m.classList.remove('open'));
   document.querySelectorAll('.menubar .menu-item').forEach(m => m.classList.remove('active'));
@@ -1213,34 +1372,37 @@ document.addEventListener('mousedown', (e) => {
   if (!e.target.closest('.menubar') && !e.target.closest('.dropdown')) closeAllMenus();
 });
 
-function showHelp() {
-  document.getElementById('helpDialog').classList.add('open');
-}
-window.showHelp = showHelp;
-function closeHelp() {
-  document.getElementById('helpDialog').classList.remove('open');
-}
-window.closeHelp = closeHelp;
-
+function showHelp() { document.getElementById('helpDialog').classList.add('open'); }
+function closeHelp() { document.getElementById('helpDialog').classList.remove('open'); }
 function showAbout() {
-  alert('⚓ 소설 관계도 분석기 v3.0\n\nTransformers.js 기반\n한국어 NER (onnx-community/klue-bert-base)');
+  alert('⚓ 소설 관계도 분석기 v5.0\n\n📋 수동 복사 방식\n📊 웹소설 비평 시스템\n🖥️ Cytoscape.js 기반 그래프\n🌊 떨림 + 🌀 스프링 효과');
 }
-window.showAbout = showAbout;
 
 // ============================================================
 // TAB
 // ============================================================
-window.switchTab = function(id, btn) {
+function switchTab(id, btn) {
   document.querySelectorAll('#leftPanel .tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('#leftPanel .tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
-};
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimeout = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
 
 // ============================================================
 // FOLDER MANAGEMENT
 // ============================================================
-window.checkAndRestoreFolder = async function() {
+async function checkAndRestoreFolder() {
   const storedHandle = await getStoredHandle();
   const panel = document.getElementById('folderConnectionPanel');
   if (storedHandle) {
@@ -1258,9 +1420,9 @@ window.checkAndRestoreFolder = async function() {
       </div>
     `;
   }
-};
+}
 
-window.restoreFolderPermission = async function() {
+async function restoreFolderPermission() {
   const storedHandle = await getStoredHandle();
   if (!storedHandle) return;
   try {
@@ -1275,9 +1437,9 @@ window.restoreFolderPermission = async function() {
     await clearStoredHandle();
     await checkAndRestoreFolder();
   }
-};
+}
 
-window.openLocalFolder = async function() {
+async function openLocalFolder() {
   try {
     const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
     if (!await verifyPermission(handle, true)) {
@@ -1288,7 +1450,7 @@ window.openLocalFolder = async function() {
     await saveStoredHandle(dirHandle);
     await onFolderConnected();
   } catch (e) { console.warn('취소됨', e); }
-};
+}
 
 async function onFolderConnected() {
   document.getElementById('statusText').textContent = `📁 ${dirHandle.name}`;
@@ -1296,7 +1458,7 @@ async function onFolderConnected() {
   document.getElementById('openDirBtn').textContent = `📁 ${dirHandle.name}`;
   document.getElementById('openDirBtn').classList.add('primary');
   document.getElementById('newDocBtn').style.display = 'inline-flex';
-  
+
   document.getElementById('folderConnectionPanel').innerHTML = `
     <div style="background:var(--panel2);padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
       <span style="font-weight:600;">📂 ${dirHandle.name}</span>
@@ -1306,7 +1468,7 @@ async function onFolderConnected() {
   await refreshFileList();
 }
 
-window.disconnectFolder = async function() {
+async function disconnectFolder() {
   if (!confirm('폴더 연결을 해제하시겠습니까?')) return;
   dirHandle = null;
   currentFileHandle = null;
@@ -1329,8 +1491,11 @@ window.disconnectFolder = async function() {
   edges = [];
   updateGraphCounts();
   await checkAndRestoreFolder();
-};
+}
 
+// ============================================================
+// FILE LIST
+// ============================================================
 async function refreshFileList() {
   const listEl = document.getElementById('fileList');
   listEl.innerHTML = '';
@@ -1348,20 +1513,32 @@ async function refreshFileList() {
     return;
   }
   files.sort((a,b) => a.name.localeCompare(b.name));
-  files.forEach(({ name, handle }) => {
+  for (const { name, handle } of files) {
+    const hasGraph = await hasGraphFile(name);
     const item = document.createElement('div');
     item.className = 'filelist-item';
     if (name === currentFileName) item.classList.add('active');
     item.onclick = () => openFile(name, handle);
     item.innerHTML = `
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${name}</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        📄 ${name} ${hasGraph ? '<span class="has-graph">📊</span>' : ''}
+      </span>
       <button class="delete-btn" onclick="deleteFile('${name}', event)">✕</button>
     `;
     listEl.appendChild(item);
-  });
+  }
   if (!currentFileName && files.length > 0) {
     openFile(files[0].name, files[0].handle);
   }
+}
+
+async function hasGraphFile(fileName) {
+  try {
+    const analysisDir = await dirHandle.getDirectoryHandle('.analysis', { create: true });
+    const jsonName = fileName.replace(/\.(txt|md)$/, '.graph.json');
+    await analysisDir.getFileHandle(jsonName);
+    return true;
+  } catch { return false; }
 }
 
 async function openFile(name, handle) {
@@ -1377,14 +1554,11 @@ async function openFile(name, handle) {
     document.getElementById('statusText').textContent = `📄 ${name}`;
     document.getElementById('charCount').textContent = `📝 글자: ${text.length}`;
     await refreshFileList();
-    if (autoAnalysisEnabled && modelReady) {
-      clearTimeout(analysisTimer);
-      analysisTimer = setTimeout(runTransformersAnalysis, 3000);
-    }
+    await loadGraphForCurrentFile();
   } catch (e) { alert('파일 읽기 오류: ' + e.message); }
 }
 
-window.createNewDocument = async function() {
+async function createNewDocument() {
   if (!dirHandle) return;
   const name = prompt('파일 이름:', '새파일.txt');
   if (!name) return;
@@ -1396,9 +1570,9 @@ window.createNewDocument = async function() {
     await w.close();
     await openFile(clean, fh);
   } catch (e) { alert('생성 실패: ' + e.message); }
-};
+}
 
-window.deleteFile = async function(name, event) {
+async function deleteFile(name, event) {
   event.stopPropagation();
   if (!confirm(`'${name}'을(를) 삭제하시겠습니까?`)) return;
   try {
@@ -1415,19 +1589,19 @@ window.deleteFile = async function(name, event) {
     }
     await refreshFileList();
   } catch (e) { alert('삭제 실패: ' + e.message); }
-};
+}
 
-window.saveCurrentFile = async function() {
+async function saveCurrentFile() {
   if (!dirHandle || !currentFileHandle) return;
   try {
     const w = await currentFileHandle.createWritable();
     await w.write(editorEl.innerText);
     await w.close();
     document.getElementById('statusText').textContent = `💾 ${currentFileName}`;
-  } catch (e) { /* 조용히 실패 */ }
-};
+  } catch (e) {}
+}
 
-window.saveAsFile = async function() {
+async function saveAsFile() {
   if (!dirHandle) { alert('폴더를 먼저 연결하세요.'); return; }
   const name = prompt('파일 이름:', currentFileName || '문서.txt');
   if (!name) return;
@@ -1441,344 +1615,927 @@ window.saveAsFile = async function() {
     currentFileName = clean;
     await refreshFileList();
   } catch (e) { alert('저장 실패: ' + e.message); }
-};
-
-// ============================================================
-// MODEL LOADING - onnx-community/klue-bert-base
-// ============================================================
-
-function updateModelStatus(status, progress = 0, text = '') {
-  const dot = document.getElementById('modelDot');
-  const statusText = document.getElementById('modelStatusText');
-  const progressText = document.getElementById('modelProgressText');
-  const fill = document.getElementById('modelProgressFill');
-  const mini = document.getElementById('modelStatusMini');
-  
-  dot.className = 'status-dot ' + status;
-  const map = { idle: '대기', loading: '모델 로딩 중...', ready: '✅ 준비 완료', error: '❌ 오류' };
-  statusText.textContent = map[status] || text;
-  progressText.textContent = progress > 0 ? Math.round(progress) + '%' : '';
-  fill.style.width = progress + '%';
-  mini.textContent = status === 'ready' ? 'AI: 온' : 'AI: 대기';
 }
-
-async function loadModel() {
-  if (modelReady || isModelLoading) return;
-  isModelLoading = true;
-  updateModelStatus('loading', 0);
-  
-  try {
-    updateModelStatus('loading', 10, '한국어 NER 모델 다운로드 중...');
-    
-    nerPipeline = await pipeline('token-classification', 'onnx-community/klue-bert-base', {
-      revision: 'main',
-      progress_callback: (info) => {
-        if (info.progress) {
-          const percent = Math.round(info.progress * 100);
-          updateModelStatus('loading', percent, `다운로드 중... ${percent}%`);
-        }
-      }
-    });
-    
-    modelReady = true;
-    isModelLoading = false;
-    updateModelStatus('ready');
-    logToConsole('✅ Transformers.js 모델 준비 완료!');
-    logToConsole('   - onnx-community/klue-bert-base (한국어 NER)');
-    
-  } catch (e) {
-    console.error('모델 로딩 실패:', e);
-    updateModelStatus('error', 0, e.message);
-    isModelLoading = false;
-    logToConsole('❌ 모델 로딩 실패: ' + e.message);
-  }
-}
-
-// ============================================================
-// TEXT CHUNKING
-// ============================================================
-
-function splitIntoChunks(text, maxChunkSize = 2000) {
-  const sentences = text.split(/(?<=[.!?…])\s+|\n+/).filter(s => s.trim().length > 0);
-  if (sentences.length === 0) return [];
-  
-  const chunks = [];
-  let currentChunk = '';
-  let currentSize = 0;
-  
-  for (const sent of sentences) {
-    const sentSize = sent.length;
-    if (currentSize + sentSize > maxChunkSize) {
-      if (currentChunk) chunks.push(currentChunk);
-      currentChunk = sent;
-      currentSize = sentSize;
-    } else {
-      currentChunk += (currentChunk ? ' ' : '') + sent;
-      currentSize += sentSize;
-    }
-  }
-  if (currentChunk) chunks.push(currentChunk);
-  return chunks;
-}
-
-// ============================================================
-// ANALYSIS
-// ============================================================
-
-function mapEntityType(label) {
-  if (label === 'PER') return '인물';
-  if (label === 'LOC') return '장소';
-  if (label === 'ORG') return '사건';
-  return '아이템';
-}
-
-async function runTransformersAnalysis() {
-  if (!dirHandle || !currentFileName) {
-    alert('먼저 폴더를 연결하고 파일을 열어주세요.');
-    return;
-  }
-  
-  if (analysisInProgress) {
-    logToConsole('⏳ 이미 분석 중입니다...');
-    return;
-  }
-  
-  if (!modelReady) {
-    logToConsole('📦 한국어 NER 모델을 다운로드합니다...');
-    await loadModel();
-    if (!modelReady) {
-      logToConsole('❌ 모델 로드 실패');
-      return;
-    }
-  }
-  
-  document.getElementById('aiConsole').style.display = 'flex';
-  document.getElementById('aiConsoleBody').textContent = '';
-  
-  analysisInProgress = true;
-  logToConsole('🧠 Transformers.js 분석 시작...');
-  
-  try {
-    const fullText = editorEl.innerText;
-    if (!fullText || fullText.trim().length < 10) {
-      logToConsole('⚠️ 분석할 텍스트가 너무 짧습니다.');
-      analysisInProgress = false;
-      return;
-    }
-    
-    await saveCurrentFile();
-    
-    const chunks = splitIntoChunks(fullText, 2000);
-    logToConsole(`📄 ${chunks.length}개 청크로 분할됨 (전체 ${fullText.length}자)`);
-    
-    const allEntities = new Map();
-    const entityPairs = [];
-    
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      const progress = Math.round((i + 1) / chunks.length * 100);
-      updateModelStatus('loading', progress, `청크 ${i+1}/${chunks.length} 분석 중`);
-      
-      logToConsole(`📝 청크 ${i+1}/${chunks.length} 분석 중... (${chunk.length}자)`);
-      
-      try {
-        const nerResults = await nerPipeline(chunk);
-        const chunkEntities = [];
-        
-        for (const item of nerResults) {
-          if (item.score < 0.5) continue;
-          const name = item.word;
-          const type = mapEntityType(item.entity_group);
-          
-          if (!allEntities.has(name)) {
-            allEntities.set(name, { name, type, count: 1 });
-          } else {
-            allEntities.get(name).count++;
-          }
-          chunkEntities.push(name);
-        }
-        
-        for (let j = 0; j < chunkEntities.length; j++) {
-          for (let k = j + 1; k < chunkEntities.length; k++) {
-            entityPairs.push([chunkEntities[j], chunkEntities[k]]);
-          }
-        }
-        
-        logToConsole(`   → ${chunkEntities.length}개 엔티티 발견`);
-        
-      } catch (e) {
-        logToConsole(`   ❌ 청크 분석 실패: ${e.message}`);
-      }
-    }
-    
-    const entities = [...allEntities.values()];
-    entities.forEach(e => {
-      if (!nodes.has(e.name)) {
-        nodes.set(e.name, {
-          name: e.name,
-          type: e.type || '인물',
-          mentions: e.count || 1,
-          x: canvas.width/2 + (Math.random()-0.5)*200,
-          y: canvas.height/2 + (Math.random()-0.5)*200,
-          vx: 0, vy: 0, isDragging: false
-        });
-      } else {
-        nodes.get(e.name).mentions += e.count || 1;
-      }
-    });
-    
-    const relationCount = {};
-    for (const [a, b] of entityPairs) {
-      if (a === b) continue;
-      const key = [a, b].sort().join('|');
-      relationCount[key] = (relationCount[key] || 0) + 1;
-    }
-    
-    for (const [key, count] of Object.entries(relationCount)) {
-      if (count < 2) continue;
-      const [a, b] = key.split('|');
-      if (nodes.has(a) && nodes.has(b)) {
-        const exists = edges.some(e => 
-          (e.from === a && e.to === b) || (e.from === b && e.to === a)
-        );
-        if (!exists) {
-          edges.push({ from: a, to: b, label: '관계', weight: count });
-        }
-      }
-    }
-    
-    updateGraphCounts();
-    logToConsole(`\n✅ 분석 완료!`);
-    logToConsole(`   - ${nodes.size}개 노드, ${edges.size}개 엣지`);
-    
-    const graphData = exportGraphToCytoscape();
-    console.log('📊 Cytoscape 형식:', JSON.stringify(graphData, null, 2));
-    
-    updateModelStatus('ready');
-    
-  } catch (e) {
-    logToConsole('❌ 분석 오류: ' + e.message);
-    console.error(e);
-    updateModelStatus('error', 0, e.message);
-  } finally {
-    analysisInProgress = false;
-  }
-}
-window.runTransformersAnalysis = runTransformersAnalysis;
-
-// ============================================================
-// EXPORT
-// ============================================================
-
-const colorHex = { '인물': '#5b9dff', '사건': '#ff6b6b', '장소': '#4ade80', '아이템': '#facc15' };
-
-function exportGraphToCytoscape() {
-  const elements = [];
-  for (const [name, node] of nodes) {
-    elements.push({
-      data: {
-        id: name,
-        label: name,
-        color: colorHex[node.type] || '#999',
-        type: node.type,
-        mentions: node.mentions
-      }
-    });
-  }
-  for (const edge of edges) {
-    elements.push({
-      data: {
-        source: edge.from,
-        target: edge.to,
-        label: edge.label || '관계',
-        weight: edge.weight || 1
-      }
-    });
-  }
-  return { elements };
-}
-
-function exportGraphToClipboard() {
-  const graphData = exportGraphToCytoscape();
-  const jsonStr = JSON.stringify(graphData, null, 2);
-  navigator.clipboard.writeText(jsonStr).then(() => {
-    alert('✅ 그래프 데이터가 클립보드에 복사되었습니다.');
-  }).catch(() => {
-    const textarea = document.createElement('textarea');
-    textarea.value = jsonStr;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-    alert('✅ 그래프 데이터가 클립보드에 복사되었습니다.');
-  });
-}
-window.exportGraphToClipboard = exportGraphToClipboard;
-
-// ============================================================
-// AUTO ANALYSIS
-// ============================================================
-
-function toggleAutoAnalysis() {
-  autoAnalysisEnabled = !autoAnalysisEnabled;
-  const btn = document.getElementById('autoAnalysisBtn');
-  if (autoAnalysisEnabled) {
-    btn.textContent = '⏹ 중지';
-    btn.style.background = '#ff6b6b';
-    btn.style.color = '#fff';
-    logToConsole('🔄 자동 분석 켜짐');
-    if (modelReady) setTimeout(runTransformersAnalysis, 3000);
-  } else {
-    btn.textContent = '🔄 자동';
-    btn.style.background = '';
-    btn.style.color = '';
-    clearTimeout(analysisTimer);
-    logToConsole('⏸ 자동 분석 꺼짐');
-  }
-}
-window.toggleAutoAnalysis = toggleAutoAnalysis;
 
 // ============================================================
 // EDITOR EVENTS
 // ============================================================
-
 editorEl.addEventListener('input', () => {
   if (!dirHandle) return;
   clearTimeout(saveTimer);
-  clearTimeout(analysisTimer);
   saveTimer = setTimeout(saveCurrentFile, 800);
-  if (autoAnalysisEnabled && modelReady) {
-    analysisTimer = setTimeout(runTransformersAnalysis, 3000);
-  }
   const text = editorEl.innerText;
   document.getElementById('charCount').textContent = `📝 글자: ${text.length}`;
   updateLineCol();
 });
 
 // ============================================================
-// CANVAS GRAPH
+// 관계도 분석 프롬프트 (상수)
 // ============================================================
+const ANALYSIS_PROMPT = `당신은 소설 분석 전문가입니다. 다음 텍스트에서 등장인물, 장소, 사건, 아이템을 추출하고, 각 개체 간의 관계를 JSON 형식으로 출력해주세요.
 
-function resizeCanvas() {
-  const rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height - 305;
+출력 형식 (반드시 아래 JSON 형식을 지켜주세요):
+{
+  "entities": [
+    {"name": "이름", "type": "인물|장소|사건|아이템", "description": "설명"}
+  ],
+  "relations": [
+    {"from": "출발", "to": "도착", "label": "관계명", "type": "행위|위치|소지|동반|이동|목적|참여|발생|대립|우호|가족"}
+  ]
 }
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
 
-function getVisibleNodes() {
-  return [...nodes.values()].filter(n => activeFilterTypes.has(n.type));
-}
+분석할 텍스트:`;
 
-function getVisibleEdges() {
-  return edges.filter(e => {
-    const a = nodes.get(e.from), b = nodes.get(e.to);
-    return a && b && activeFilterTypes.has(a.type) && activeFilterTypes.has(b.type);
+function copyWithPrompt() {
+  const text = editorEl.innerText || editorEl.textContent || '';
+  if (!text || text.trim().length < 10) {
+    alert('⚠️ 분석할 텍스트가 너무 짧습니다. (최소 10자 이상)');
+    return;
+  }
+  const full = ANALYSIS_PROMPT + '\n\n' + text;
+
+  navigator.clipboard.writeText(full).then(() => {
+    document.getElementById('copyToast').style.display = 'block';
+    setTimeout(() => { document.getElementById('copyToast').style.display = 'none'; }, 3000);
+    showToast('✅ 프롬프트 + 텍스트가 복사되었습니다!');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = full;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    document.getElementById('copyToast').style.display = 'block';
+    setTimeout(() => { document.getElementById('copyToast').style.display = 'none'; }, 3000);
+    showToast('✅ 복사 완료! (Fallback)');
   });
 }
 
-window.toggleFilter = function(type, el) {
+// ============================================================
+// 비평 프롬프트 (상수)
+// ============================================================
+const CRITIQUE_PROMPT = `# 웹소설 형식·내용·친절함 통합 비평 시스템 (Reader-First 100pt)
+
+당신은 웹소설 장르 문법과 서사 심리학에 정통하며, 무엇보다 '독자에 대한 친절함'을 상업성의 최고 가치로 두는 냉정하고 예리한 수석 비평가입니다. 텍스트를 받으면 인사 없이 아래 형식대로 즉시 분석을 시작하세요. 모든 항목은 100점 만점으로 채점하며, 70~80점대 중간 점수로 얼버무리지 말고 엄격하고 날카롭게 평가하세요.
+
+## 점수 산정 기준 (100점 만점)
+- 91~100점: 독보적 (최상위권 수준. 수정이 불필요함)
+- 71~90점: 경쟁력 (유료 연재 가능 수준. 흡입력이 높고 대중성이 확실함)
+- 51~70점: 정체 (평이한 수준. 활자는 읽히나 상업적 쾌감이나 배려가 부족함)
+- 31~50점: 이탈 (조기 하차 유발 수준. 문장이나 전개 교정 필수)
+- 1~30점: 해체 (연재 불가 수준. 전면 재작성 필요)
+
+## 평가 항목 (각 100점 만점)
+1. 문장과 리듬: 호흡의 완급 조절, Show(보여주기)와 Tell(말하기)의 균형, 문장의 직관성과 매끄러운 연결
+2. 묘사와 이미지: 시각 외 다감각의 활용, 눈앞에 정밀하게 그려지는 선명도와 미장센
+3. 정보와 전개: 첫 문장의 자이가르닉 효과(의심/호기심 유발), 끊임없는 의문 유착(간질간질한 텐션), 사건의 흥미도, 끝부분의 자이가르닉 재발동(다음 장면 유도)
+4. 캐릭터와 대사: 주인공의 호감 가는 매력적인 행동, 독자의 감정적 공감대 형성(특정 감정의 동기화), 대사 속 권력 관계
+5. 가독성과 친절함: 과도한 설정 과시(설명충)나 난해한 갈등으로 독자를 지치게 하지 않는가, 독자에게 스트레스나 답답함(불필요한 고구마)을 주지 않고 장르적 보상을 친절하게 제공하는가
+
+---
+
+## 텍스트 분석 출력 형식 (반드시 아래 JSON 형식으로만 출력)
+
+{
+  "scores": {
+    "문장과 리듬": 0,
+    "묘사와 이미지": 0,
+    "정보와 전개": 0,
+    "캐릭터와 대사": 0,
+    "가독성과 친절함": 0
+  },
+  "average": 0,
+  "critique": {
+    "summary": "이 글의 가장 강력한 상업적 무기와 치명적인 약점 (독자가 겪게 될 최종적인 독서 경험과 피로도 정의)",
+    "analysis": "문체 측면: ...\n서사 심리 측면: ...\n친절함 측면: ...",
+    "best_sentence": {
+      "quote": "최강의 문장 인용구",
+      "reason": "호기심을 극대화했거나 독자에게 가장 친절한 쾌감을 준 구체적인 이유"
+    },
+    "worst_sentence": {
+      "quote": "최약의 문장 인용구",
+      "reason": "갈등을 불필요하게 복잡하게 만들었거나 독자에게 불친절하여 피로감을 유발한 구체적인 이유"
+    }
+  }
+}`;
+
+function copyCritiquePrompt() {
+  const text = editorEl.innerText || editorEl.textContent || '';
+  if (!text || text.trim().length < 50) {
+    alert('⚠️ 비평할 텍스트가 너무 짧습니다. (최소 50자 이상)');
+    return;
+  }
+  const full = CRITIQUE_PROMPT + '\n\n## 분석할 텍스트\n\n' + text;
+
+  navigator.clipboard.writeText(full).then(() => {
+    document.getElementById('critiqueCopyToast').style.display = 'block';
+    setTimeout(() => { document.getElementById('critiqueCopyToast').style.display = 'none'; }, 3000);
+    showToast('✅ 비평 프롬프트 + 텍스트가 복사되었습니다!');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = full;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    document.getElementById('critiqueCopyToast').style.display = 'block';
+    setTimeout(() => { document.getElementById('critiqueCopyToast').style.display = 'none'; }, 3000);
+    showToast('✅ 복사 완료! (Fallback)');
+  });
+}
+
+// ============================================================
+// PASTE + PROCESS (그래프)
+// ============================================================
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('resultPasteArea').value = text;
+    showToast('✅ 클립보드에서 붙여넣기 완료!');
+  } catch (e) {
+    showToast('⚠️ 권한이 필요합니다. Ctrl+V로 직접 붙여넣어주세요.');
+  }
+}
+
+function autoFixJSON(raw) {
+  let fixed = raw;
+  fixed = fixed.replace(/^\uFEFF/, '');
+  fixed = fixed.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+  fixed = fixed.replace(/\/\/.*$/gm, '');
+  fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+  fixed = fixed.trim();
+  return fixed;
+}
+
+function applyGraphData(data) {
+  nodes.clear();
+  edges = [];
+
+  if (data.entities && Array.isArray(data.entities)) {
+    const sorted = [...data.entities].sort((a, b) => {
+      const ia = TYPE_ORDER.indexOf(a.type || '인물');
+      const ib = TYPE_ORDER.indexOf(b.type || '인물');
+      return ia - ib;
+    });
+    sorted.forEach(e => {
+      const name = e.name?.trim();
+      if (!name) return;
+      nodes.set(name, {
+        name: name,
+        type: e.type || '인물',
+        desc: e.description || '',
+        mentions: e.mentions || 1,
+        emotion: e.emotion || '중립'
+      });
+    });
+  }
+
+  if (data.relations && Array.isArray(data.relations)) {
+    data.relations.forEach(r => {
+      const from = r.from?.trim();
+      const to = r.to?.trim();
+      if (!from || !to) return;
+      if (nodes.has(from) && nodes.has(to)) {
+        edges.push({
+          from: from,
+          to: to,
+          label: r.label || '관계',
+          type: r.type || '연결',
+          negated: r.negated || false,
+          sentiment: r.sentiment || '중립',
+          weight: 1
+        });
+      }
+    });
+  }
+
+  const stats = `노드 ${nodes.size}개, 엣지 ${edges.size}개`;
+  document.getElementById('parseStats').textContent = stats;
+  document.getElementById('parseResultFeedback').style.display = 'block';
+  document.getElementById('parseResultFeedback').style.color = 'var(--text)';
+  updateGraphCounts();
+  showToast(`✅ 그래프 생성 완료! ${stats}`);
+
+  syncCytoscapeFromNodes();
+  setTimeout(saveGraphToFile, 500);
+}
+
+function processPastedResult() {
+  let raw = document.getElementById('resultPasteArea').value.trim();
+  if (!raw) {
+    alert('⚠️ 분석 결과를 먼저 붙여넣어주세요.');
+    return;
+  }
+
+  try {
+    const data = JSON.parse(raw);
+    applyGraphData(data);
+    return;
+  } catch (e) {
+    const fixed = autoFixJSON(raw);
+    try {
+      const data = JSON.parse(fixed);
+      document.getElementById('resultPasteArea').value = fixed;
+      showToast('🔧 자동 수정 완료!');
+      applyGraphData(data);
+      return;
+    } catch (e2) {
+      document.getElementById('parseStats').textContent = `❌ 오류: ${e2.message}`;
+      document.getElementById('parseResultFeedback').style.display = 'block';
+      document.getElementById('parseResultFeedback').style.color = '#ff6b6b';
+      alert(`❌ JSON 파싱 실패\n\n${e2.message}\n\n💡 "자동 수정" 버튼을 누르거나 직접 수정해주세요.`);
+    }
+  }
+}
+
+function autoFixAndProcess() {
+  const raw = document.getElementById('resultPasteArea').value.trim();
+  if (!raw) {
+    alert('⚠️ 분석 결과를 먼저 붙여넣어주세요.');
+    return;
+  }
+  const fixed = autoFixJSON(raw);
+  document.getElementById('resultPasteArea').value = fixed;
+  processPastedResult();
+}
+
+function clearResultArea() {
+  document.getElementById('resultPasteArea').value = '';
+  document.getElementById('parseResultFeedback').style.display = 'none';
+  showToast('🗑️ 결과 영역이 초기화되었습니다.');
+}
+
+// ============================================================
+// 비평 결과 처리
+// ============================================================
+function processCritiqueResult() {
+  const raw = document.getElementById('critiquePasteArea').value.trim();
+  if (!raw) {
+    alert('⚠️ 비평 결과(JSON)를 먼저 붙여넣어주세요.');
+    return;
+  }
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    let fixed = raw;
+    fixed = fixed.replace(/^\uFEFF/, '');
+    fixed = fixed.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    fixed = fixed.replace(/\/\/.*$/gm, '');
+    fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+    fixed = fixed.trim();
+    try {
+      data = JSON.parse(fixed);
+      document.getElementById('critiquePasteArea').value = fixed;
+      showToast('🔧 자동 수정 완료!');
+    } catch (e2) {
+      alert('❌ JSON 파싱 실패: ' + e.message + '\n\n올바른 JSON 형식인지 확인하세요.');
+      return;
+    }
+  }
+
+  renderCritiqueResult(data);
+}
+
+function renderCritiqueResult(data) {
+  const container = document.getElementById('critiqueResult');
+  const scores = data.scores || {};
+  const avg = data.average || 0;
+  const critique = data.critique || {};
+
+  let grade = '해체';
+  let gradeClass = 'critical';
+  if (avg >= 91) { grade = '독보적'; gradeClass = 'excellent'; }
+  else if (avg >= 71) { grade = '경쟁력'; gradeClass = 'good'; }
+  else if (avg >= 51) { grade = '정체'; gradeClass = 'fair'; }
+  else if (avg >= 31) { grade = '이탈'; gradeClass = 'poor'; }
+
+  const items = ['문장과 리듬', '묘사와 이미지', '정보와 전개', '캐릭터와 대사', '가독성과 친절함'];
+  const scoreLabels = {
+    '문장과 리듬': '문장과 리듬',
+    '묘사와 이미지': '묘사와 이미지',
+    '정보와 전개': '정보와 전개',
+    '캐릭터와 대사': '캐릭터와 대사',
+    '가독성과 친절함': '가독성과 친절함'
+  };
+
+  let barsHTML = '';
+  items.forEach(key => {
+    const val = scores[key] || 0;
+    const pct = Math.min(100, Math.max(0, val));
+    barsHTML += `
+      <div class="score-bar-item">
+        <span class="label">${scoreLabels[key] || key}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%; background:${pct >= 70 ? '#4ade80' : pct >= 50 ? '#facc15' : '#f87171'};"></div>
+        </div>
+        <span class="score-num">${Math.round(val)}</span>
+      </div>
+    `;
+  });
+
+  container.innerHTML = `
+    <div class="score-summary">
+      <div class="score-avg">
+        ${Math.round(avg)}<span class="label"> / 100</span>
+      </div>
+      <div class="score-grade ${gradeClass}">${grade}</div>
+      <div style="font-size:11px; color:var(--muted); margin-left:auto;">${items.length}개 항목 평균</div>
+    </div>
+
+    <div class="score-bars">${barsHTML}</div>
+
+    ${critique.summary ? `
+    <div class="critique-section">
+      <h4>📌 총평</h4>
+      <p class="text">${critique.summary}</p>
+    </div>` : ''}
+
+    ${critique.analysis ? `
+    <div class="critique-section">
+      <h4>🔍 핵심 분석</h4>
+      <p class="text">${critique.analysis.replace(/\n/g, '<br>')}</p>
+    </div>` : ''}
+
+    ${critique.best_sentence ? `
+    <div class="critique-section">
+      <h4>✅ 최강의 문장</h4>
+      <div class="sentence-box best">
+        <div class="quote">"${critique.best_sentence.quote || ''}"</div>
+        ${critique.best_sentence.reason ? `<div class="reason">${critique.best_sentence.reason}</div>` : ''}
+      </div>
+    </div>` : ''}
+
+    ${critique.worst_sentence ? `
+    <div class="critique-section">
+      <h4>❌ 최약의 문장</h4>
+      <div class="sentence-box worst">
+        <div class="quote">"${critique.worst_sentence.quote || ''}"</div>
+        ${critique.worst_sentence.reason ? `<div class="reason">${critique.worst_sentence.reason}</div>` : ''}
+      </div>
+    </div>` : ''}
+  `;
+
+  container.classList.add('show');
+  showToast('📊 비평 결과가 표시되었습니다!');
+}
+
+// ============================================================
+// GRAPH SAVE / LOAD
+// ============================================================
+async function saveGraphToFile() {
+  if (!dirHandle || !currentFileName) {
+    showToast('⚠️ 저장하려면 폴더와 파일을 먼저 열어주세요.');
+    return;
+  }
+  if (nodes.size === 0) {
+    showToast('⚠️ 저장할 그래프 데이터가 없습니다.');
+    return;
+  }
+
+  const graphData = {
+    fileName: currentFileName,
+    analyzedAt: new Date().toISOString(),
+    model: 'Manual',
+    entities: [...nodes.values()].map(n => ({
+      name: n.name,
+      type: n.type,
+      description: n.desc || '',
+      mentions: n.mentions || 1,
+      emotion: n.emotion || '중립'
+    })),
+    relations: edges.map(e => ({
+      from: e.from,
+      to: e.to,
+      label: e.label || '관계',
+      type: e.type || '연결',
+      negated: e.negated || false,
+      sentiment: e.sentiment || '중립'
+    }))
+  };
+
+  try {
+    const analysisDir = await dirHandle.getDirectoryHandle('.analysis', { create: true });
+    const jsonName = currentFileName.replace(/\.(txt|md)$/, '.graph.json');
+    const fileHandle = await analysisDir.getFileHandle(jsonName, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(JSON.stringify(graphData, null, 2));
+    await writable.close();
+    showToast('💾 그래프 데이터가 저장되었습니다: .analysis/' + jsonName);
+    await refreshFileList();
+  } catch (e) {
+    alert('저장 실패: ' + e.message);
+  }
+}
+
+async function loadGraphFromFile() {
+  if (!dirHandle || !currentFileName) {
+    showToast('⚠️ 불러오려면 폴더와 파일을 먼저 열어주세요.');
+    return;
+  }
+  await loadGraphForCurrentFile();
+}
+
+async function loadGraphForCurrentFile() {
+  try {
+    const analysisDir = await dirHandle.getDirectoryHandle('.analysis', { create: true });
+    const jsonName = currentFileName.replace(/\.(txt|md)$/, '.graph.json');
+    const fileHandle = await analysisDir.getFileHandle(jsonName);
+    const file = await fileHandle.getFile();
+    const text = await file.text();
+    const data = JSON.parse(text);
+
+    nodes.clear();
+    edges = [];
+
+    if (data.entities) {
+      data.entities.forEach(e => {
+        nodes.set(e.name, {
+          name: e.name,
+          type: e.type || '인물',
+          desc: e.description || '',
+          mentions: e.mentions || 1,
+          emotion: e.emotion || '중립'
+        });
+      });
+    }
+    if (data.relations) {
+      data.relations.forEach(r => {
+        if (nodes.has(r.from) && nodes.has(r.to)) {
+          edges.push({
+            from: r.from,
+            to: r.to,
+            label: r.label || '관계',
+            type: r.type || '연결',
+            negated: r.negated || false,
+            sentiment: r.sentiment || '중립',
+            weight: 1
+          });
+        }
+      });
+    }
+
+    updateGraphCounts();
+    showToast('📂 그래프 데이터를 불러왔습니다.');
+    document.getElementById('parseStats').textContent = `노드 ${nodes.size}개, 엣지 ${edges.size}개`;
+    document.getElementById('parseResultFeedback').style.display = 'block';
+    document.getElementById('parseResultFeedback').style.color = 'var(--text)';
+    await refreshFileList();
+    syncCytoscapeFromNodes();
+  } catch (e) {}
+}
+
+// ============================================================
+// GRAPH EXPORT
+// ============================================================
+function exportGraphToClipboard() {
+  if (nodes.size === 0) {
+    showToast('⚠️ 내보낼 그래프 데이터가 없습니다.');
+    return;
+  }
+  const data = {
+    entities: [...nodes.values()].map(n => ({ name: n.name, type: n.type, description: n.desc })),
+    relations: edges.map(e => ({ from: e.from, to: e.to, label: e.label, type: e.type }))
+  };
+  const json = JSON.stringify(data, null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    showToast('✅ 그래프 데이터가 클립보드에 복사되었습니다.');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = json;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ 그래프 데이터가 클립보드에 복사되었습니다.');
+  });
+}
+
+// ============================================================
+// CYTOSCAPE GRAPH
+// ============================================================
+
+function initCytoscape() {
+  const container = document.getElementById('cy');
+  if (!container) return;
+  if (cy) { cy.destroy(); cy = null; }
+
+  cy = cytoscape({
+    container: container,
+    elements: getCytoscapeElements(),
+    style: [
+      {
+        selector: 'node',
+        style: {
+          'label': 'data(label)',
+          'background-color': 'data(color)',
+          'shape': 'round-rectangle',
+          'width': 'label',
+          'height': 30,
+          'padding': '10px',
+          'border-width': 2,
+          'border-color': '#333',
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'color': '#fff',
+          'font-weight': 'bold',
+          'font-size': 13,
+          'text-outline-width': 2,
+          'text-outline-color': '#000',
+          'min-width': '40px',
+        }
+      },
+      {
+        selector: 'node[type="인물"]',
+        style: { 'background-color': '#4A90D9' }
+      },
+      {
+        selector: 'node[type="사건"]',
+        style: { 'background-color': '#E74C3C' }
+      },
+      {
+        selector: 'node[type="장소"]',
+        style: { 'background-color': '#2ECC71' }
+      },
+      {
+        selector: 'node[type="아이템"]',
+        style: { 'background-color': '#F1C40F' }
+      },
+      {
+        selector: 'edge',
+        style: {
+          'label': 'data(label)',
+          'curve-style': 'bezier',
+          'line-color': '#999',
+          'width': 1.5,
+          'target-arrow-shape': 'triangle',
+          'target-arrow-color': '#999',
+          'font-size': 10,
+          'text-rotation': 'none',
+          'color': '#aaa',
+          'text-outline-width': 2,
+          'text-outline-color': '#1e222c',
+          'text-outline-opacity': 0.8,
+          'text-background-color': '#1e222c',
+          'text-background-opacity': 0.6,
+          'text-background-padding': '4px',
+          'text-background-shape': 'roundrectangle',
+        }
+      },
+      {
+        selector: 'node:selected',
+        style: { 'border-width': 4, 'border-color': '#FFD700', 'border-style': 'double' }
+      },
+      {
+        selector: 'edge:selected',
+        style: { 'width': 3, 'line-color': '#FFD700', 'target-arrow-color': '#FFD700' }
+      }
+    ],
+    layout: {
+      name: 'cose',
+      animate: true,
+      animationDuration: 500,
+      fit: true,
+      padding: 30,
+      nodeRepulsion: 12000,
+      idealEdgeLength: 120,
+      gravity: 0.03,
+      gravityRange: 250,
+      nodeOverlap: 8,
+      nestingFactor: 5,
+      numIter: 800,
+      initialTemp: 200,
+      coolingFactor: 0.95,
+      minTemp: 1.0
+    },
+    wheelSensitivity: 0.3,
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const name = node.data('id');
+    const nodeData = nodes.get(name);
+    if (nodeData) selectNode(nodeData);
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      document.getElementById('wikiCard').innerHTML = `
+        <div style="color:var(--muted);font-size:12px;text-align:center;margin:auto;">
+          노드를 클릭하면 상세 정보가 표시됩니다.
+        </div>
+      `;
+    }
+  });
+
+  // 노드 호버 → 툴팁 (마우스 커서 기준)
+  cy.on('mouseover', 'node', function(evt) {
+    const node = evt.target;
+    const name = node.data('id');
+    const nodeData = nodes.get(name);
+    if (!nodeData) return;
+
+    clearTimeout(hoverTimeout);
+    hoverTimeout = setTimeout(() => {
+      const relations = edges.filter(e => e.from === name || e.to === name);
+      let relHTML = '';
+      if (relations.length > 0) {
+        relHTML = relations.slice(0, 5).map(e => {
+          const other = e.from === name ? e.to : e.from;
+          const dir = e.from === name ? '→' : '←';
+          const sent = e.sentiment === '우호' ? '💚' : e.sentiment === '적대' ? '❤️' : '⚪';
+          return `<div class="rel-item"><span>${other} ${dir} ${e.label || '관계'}</span><span>${sent}</span></div>`;
+        }).join('');
+        if (relations.length > 5) {
+          relHTML += `<div style="color:var(--muted);font-size:10px;">+ ${relations.length - 5}개 더...</div>`;
+        }
+      }
+
+      tooltip.innerHTML = `
+        <div class="tt-header">
+          <span>${TYPE_ICON[nodeData.type] || '●'}</span>
+          <span style="font-size:15px;">${nodeData.name}</span>
+          <span class="tt-type-badge" style="background:${COLOR_MAP[nodeData.type] || '#888'};">
+            ${TYPE_LABEL[nodeData.type] || nodeData.type}
+          </span>
+        </div>
+        <div class="tt-row">
+          <span>📝 언급 ${nodeData.mentions || 1}회</span>
+          <span>${nodeData.emotion ? '😊 ' + nodeData.emotion : ''}</span>
+        </div>
+        ${nodeData.desc ? `<div class="tt-desc">📚 ${nodeData.desc}</div>` : ''}
+        ${relations.length > 0 ? `<hr class="tt-divider"><div class="tt-relations">${relHTML}</div>` : ''}
+      `;
+
+      // 마우스 커서 위치 기준
+      const mouseX = evt.originalEvent.clientX;
+      const mouseY = evt.originalEvent.clientY;
+      let left = mouseX + 16;
+      let top = mouseY + 16;
+      const tw = 340;
+      const th = tooltip.scrollHeight || 200;
+      if (left + tw > window.innerWidth - 10) left = mouseX - tw - 16;
+      if (top + th > window.innerHeight - 10) top = mouseY - th - 16;
+      if (top < 10) top = 10;
+      if (left < 10) left = 10;
+
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+      tooltip.style.display = 'block';
+    }, 300);
+  });
+
+  cy.on('mouseout', 'node', function() {
+    clearTimeout(hoverTimeout);
+    clearTimeout(tooltipTimeout);
+    tooltipTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 100);
+  });
+
+  // 드래그 종료 시 스프링 효과 (springActive일 때)
+  cy.on('dragfree', 'node', function(evt) {
+    if (springActive) {
+      const node = evt.target;
+      const id = node.id();
+      // 속도 초기화
+      nodeVelocities.set(id, { vx: 0, vy: 0 });
+    }
+  });
+
+  applyFilters();
+  return cy;
+}
+
+function getCytoscapeElements() {
+  const elements = [];
+  for (const [name, data] of nodes) {
+    const type = data.type || '인물';
+    const color = COLOR_MAP[type] || '#667eea';
+    elements.push({
+      data: {
+        id: name,
+        label: name.length > 10 ? name.substring(0, 9) + '…' : name,
+        color: color,
+        type: type,
+        mentions: data.mentions || 1,
+        emotion: data.emotion || '중립',
+        desc: data.desc || '',
+      }
+    });
+  }
+  for (const edge of edges) {
+    if (nodes.has(edge.from) && nodes.has(edge.to)) {
+      elements.push({
+        data: {
+          id: edge.from + '_' + edge.to + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+          source: edge.from,
+          target: edge.to,
+          label: edge.label || '관계',
+          type: edge.type || '연결',
+        }
+      });
+    }
+  }
+  return elements;
+}
+
+function syncCytoscapeFromNodes() {
+  if (!cy) return;
+  cy.elements().remove();
+  cy.add(getCytoscapeElements());
+  cy.layout({
+    name: 'cose',
+    animate: true,
+    animationDuration: 500,
+    fit: true,
+    padding: 30,
+    nodeRepulsion: 12000,
+    idealEdgeLength: 120,
+    gravity: 0.03,
+    gravityRange: 250,
+    nodeOverlap: 8,
+    nestingFactor: 5,
+    numIter: 800,
+    initialTemp: 200,
+    coolingFactor: 0.95,
+    minTemp: 1.0
+  }).run();
+  updateGraphCounts();
+  // 효과 재시작
+  if (breatheActive) startBreathe();
+  if (springActive) startSpring();
+}
+
+function applyFilters() {
+  if (!cy) return;
+  cy.nodes().forEach(n => {
+    const type = n.data('type');
+    if (type && activeFilterTypes.has(type)) {
+      n.style('display', 'element');
+    } else {
+      n.style('display', 'none');
+    }
+  });
+  cy.style().update();
+}
+
+// ============================================================
+// 효과: 떨림 (브리더)
+// ============================================================
+function toggleBreathe() {
+  breatheActive = !breatheActive;
+  const btn = document.getElementById('btnBreathe');
+  if (breatheActive) {
+    btn.textContent = '🌊 떨림 ON';
+    btn.className = 'active';
+    startBreathe();
+  } else {
+    btn.textContent = '🌊 떨림 OFF';
+    btn.className = 'inactive';
+    stopBreathe();
+    resetNodePositions();
+  }
+}
+
+function startBreathe() {
+  if (breatheId) return;
+  // 각 노드의 기본 위치 저장
+  cy.nodes().forEach(node => {
+    if (!node.data('baseX')) {
+      node.data('baseX', node.position('x'));
+      node.data('baseY', node.position('y'));
+    }
+  });
+  let phase = 0;
+  function breathe() {
+    if (!breatheActive || !cy) {
+      breatheId = null;
+      return;
+    }
+    phase += 0.03;
+    cy.nodes().forEach(node => {
+      const baseX = node.data('baseX');
+      const baseY = node.data('baseY');
+      if (baseX !== undefined && baseY !== undefined) {
+        node.position({
+          x: baseX + Math.sin(phase * 0.7 + node.id().length * 0.3) * 0.5,
+          y: baseY + Math.cos(phase * 0.5 + node.id().length * 0.7) * 0.5
+        });
+      }
+    });
+    breatheId = requestAnimationFrame(breathe);
+  }
+  breathe();
+}
+
+function stopBreathe() {
+  if (breatheId) {
+    cancelAnimationFrame(breatheId);
+    breatheId = null;
+  }
+}
+
+function resetNodePositions() {
+  if (!cy) return;
+  cy.nodes().forEach(node => {
+    if (node.data('baseX') !== undefined) {
+      node.position({
+        x: node.data('baseX'),
+        y: node.data('baseY')
+      });
+    }
+  });
+}
+
+// ============================================================
+// 효과: 스프링 (드래그 후 탄성)
+// ============================================================
+function toggleSpring() {
+  springActive = !springActive;
+  const btn = document.getElementById('btnSpring');
+  if (springActive) {
+    btn.textContent = '🌀 스프링 ON';
+    btn.className = 'active';
+    startSpring();
+  } else {
+    btn.textContent = '🌀 스프링 OFF';
+    btn.className = 'inactive';
+    stopSpring();
+  }
+}
+
+function startSpring() {
+  if (springId) return;
+  if (!cy) return;
+
+  // 각 노드의 기본 위치 저장 (드래그 전 기준)
+  cy.nodes().forEach(node => {
+    if (!node.data('baseX')) {
+      node.data('baseX', node.position('x'));
+      node.data('baseY', node.position('y'));
+    }
+    if (!nodeVelocities.has(node.id())) {
+      nodeVelocities.set(node.id(), { vx: 0, vy: 0 });
+    }
+  });
+
+  function springLoop() {
+    if (!springActive || !cy) {
+      springId = null;
+      return;
+    }
+
+    const damping = 0.92;
+    const springK = 0.04;
+
+    cy.nodes().forEach(node => {
+      const baseX = node.data('baseX');
+      const baseY = node.data('baseY');
+      if (baseX === undefined || baseY === undefined) return;
+
+      const pos = node.position();
+      const vel = nodeVelocities.get(node.id()) || { vx: 0, vy: 0 };
+
+      // 스프링 힘 (기준 위치로 복원)
+      const dx = baseX - pos.x;
+      const dy = baseY - pos.y;
+      vel.vx += dx * springK;
+      vel.vy += dy * springK;
+
+      // 감쇠
+      vel.vx *= damping;
+      vel.vy *= damping;
+
+      // 위치 업데이트
+      node.position({
+        x: pos.x + vel.vx,
+        y: pos.y + vel.vy
+      });
+
+      nodeVelocities.set(node.id(), vel);
+    });
+
+    springId = requestAnimationFrame(springLoop);
+  }
+  springLoop();
+}
+
+function stopSpring() {
+  if (springId) {
+    cancelAnimationFrame(springId);
+    springId = null;
+  }
+  nodeVelocities.clear();
+}
+
+// ============================================================
+// GRAPH FUNCTIONS
+// ============================================================
+function toggleFilter(type, el) {
   if (activeFilterTypes.has(type)) {
     activeFilterTypes.delete(type);
     el.classList.remove('active');
@@ -1786,19 +2543,33 @@ window.toggleFilter = function(type, el) {
     activeFilterTypes.add(type);
     el.classList.add('active');
   }
-};
+  applyFilters();
+}
 
 function updateGraphCounts() {
   document.getElementById('graphCount').textContent = `노드 ${nodes.size} · 엣지 ${edges.size}`;
 }
 
-window.selectNode = function(node) {
+function selectNode(node) {
   selectedNode = node;
   const card = document.getElementById('wikiCard');
-  const neighbors = edges.filter(e => e.from === node.name || e.to === node.name);
-  let html = `
+  const relations = edges.filter(e => e.from === node.name || e.to === node.name);
+
+  let relHTML = '';
+  if (relations.length > 0) {
+    relHTML = relations.map(e => {
+      const other = e.from === node.name ? e.to : e.from;
+      const dir = e.from === node.name ? '→' : '←';
+      return `<span style="background:var(--panel2);padding:2px 6px;border-radius:4px;font-size:10px;border:1px solid var(--border);">
+        ${other} ${dir} ${e.label || '관계'}
+      </span>`;
+    }).join(' ');
+  }
+
+  const color = COLOR_MAP[node.type] || '#888';
+  card.innerHTML = `
     <div class="title-row">
-      <span class="node-name">📌 ${node.name}</span>
+      <span class="node-name" style="color:${color};">${TYPE_ICON[node.type] || '●'} ${node.name}</span>
       <select onchange="updateNodeType('${node.name}', this.value)">
         <option value="인물" ${node.type==='인물'?'selected':''}>인물</option>
         <option value="사건" ${node.type==='사건'?'selected':''}>사건</option>
@@ -1806,284 +2577,83 @@ window.selectNode = function(node) {
         <option value="아이템" ${node.type==='아이템'?'selected':''}>아이템</option>
       </select>
     </div>
-    <div style="font-size:11px;color:var(--muted);">언급: ${node.mentions}회</div>
-    <textarea id="wikiDesc" placeholder="설명...">${node.desc || ''}</textarea>
-    <div style="display:flex;gap:6px;">
-      <button onclick="saveWikiDesc('${node.name}')" class="primary">저장</button>
-      <button onclick="removeNode('${node.name}')" style="border-color:#ff6b6b;color:#ff6b6b;">삭제</button>
+    <div style="font-size:11px;color:var(--muted);">언급: ${node.mentions || 1}회 ${node.emotion ? '| 감정: ' + node.emotion : ''}</div>
+    <textarea id="wikiDescArea" placeholder="노드 설명을 입력하세요...">${node.desc || ''}</textarea>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button onclick="saveWikiDesc('${node.name}')" class="primary" style="font-size:11px;padding:4px 10px;">💾 저장</button>
+      <button onclick="removeNode('${node.name}')" style="font-size:11px;padding:4px 10px;border-color:#ff6b6b;color:#ff6b6b;">🗑️ 삭제</button>
     </div>
+    ${relations.length > 0 ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">🔗 ${relHTML}</div>` : ''}
   `;
-  if (neighbors.length) {
-    html += `<div style="font-size:11px;margin-top:4px;">🔗 ${neighbors.map(e => {
-      const other = e.from === node.name ? e.to : e.from;
-      return `${node.name} → ${e.label} → ${other}`;
-    }).join('; ')}</div>`;
+
+  if (cy) {
+    cy.elements().unselect();
+    const cyNode = cy.getElementById(node.name);
+    if (cyNode.length) cyNode.select();
   }
-  card.innerHTML = html;
-};
+}
 
-window.updateNodeType = function(name, type) {
+function updateNodeType(name, type) {
   const n = nodes.get(name);
-  if (n) n.type = type;
-};
+  if (n) { n.type = type; syncCytoscapeFromNodes(); }
+}
 
-window.saveWikiDesc = function(name) {
+function saveWikiDesc(name) {
   const n = nodes.get(name);
   if (n) {
-    n.desc = document.getElementById('wikiDesc').value;
-    alert('저장됨');
+    n.desc = document.getElementById('wikiDescArea').value;
+    showToast('✅ 설명이 저장되었습니다.');
+    syncCytoscapeFromNodes();
   }
-};
+}
 
-window.removeNode = function(name) {
-  if (!confirm('삭제하시겠습니까?')) return;
+function removeNode(name) {
+  if (!confirm(`'${name}' 노드를 삭제하시겠습니까?`)) return;
   nodes.delete(name);
   edges = edges.filter(e => e.from !== name && e.to !== name);
   document.getElementById('wikiCard').innerHTML = `<div style="color:var(--muted);text-align:center;">노드 삭제됨</div>`;
   updateGraphCounts();
-};
-
-// ============================================================
-// CANVAS DRAWING
-// ============================================================
-
-function drawNode(ctx, n) {
-  const r = 10 + Math.min(20, n.mentions * 1.2);
-  const base = colorHex[n.type] || '#999';
-  const grad = ctx.createRadialGradient(n.x, n.y, 1, n.x, n.y, r);
-  grad.addColorStop(0, '#fff');
-  grad.addColorStop(0.3, base);
-  grad.addColorStop(1, base + 'cc');
-  ctx.beginPath();
-  ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-  ctx.fillStyle = grad;
-  if (n === hoverNode || n === selectedNode) { ctx.shadowColor = base; ctx.shadowBlur = 12; }
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = n === hoverNode ? 'rgba(230,232,238,0.95)' : 'rgba(138,144,162,0.25)';
-  ctx.font = (n === hoverNode) ? 'bold 12px sans-serif' : '11px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(n.name, n.x + r + 5, n.y + 2);
-}
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.save();
-  ctx.translate(transform.x, transform.y);
-  ctx.scale(transform.k, transform.k);
-  
-  const visibleNodes = getVisibleNodes();
-  const visibleEdges = getVisibleEdges();
-  
-  visibleEdges.forEach(e => {
-    const a = nodes.get(e.from), b = nodes.get(e.to);
-    if (!a || !b) return;
-    const focused = hoverNode && (e.from === hoverNode.name || e.to === hoverNode.name);
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.strokeStyle = focused ? 'rgba(91,157,255,0.45)' : 'rgba(58,64,81,0.15)';
-    ctx.lineWidth = focused ? 1.5 : 0.8;
-    ctx.stroke();
-    ctx.fillStyle = focused ? 'rgba(230,232,238,0.7)' : 'rgba(107,114,128,0.18)';
-    ctx.font = '9px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(e.label || '관계', (a.x + b.x) / 2, (a.y + b.y) / 2 - 2);
-  });
-  
-  particles.forEach(p => {
-    const f = nodes.get(p.from), t = nodes.get(p.to);
-    if (!f || !t) return;
-    const px = f.x + (t.x - f.x) * p.progress;
-    const py = f.y + (t.y - f.y) * p.progress;
-    ctx.beginPath();
-    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#6d8dfc';
-    ctx.shadowColor = '#6d8dfc';
-    ctx.shadowBlur = 6;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  });
-  
-  visibleNodes.forEach(n => drawNode(ctx, n));
-  ctx.restore();
+  syncCytoscapeFromNodes();
 }
 
 // ============================================================
-// CANVAS INTERACTIONS
+// CYTOSCAPE CONTROLS
 // ============================================================
-
-canvas.addEventListener('mousedown', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-  const cx = (mx - transform.x) / transform.k;
-  const cy = (my - transform.y) / transform.k;
-  
-  let clicked = null;
-  for (const n of getVisibleNodes()) {
-    const r = 10 + Math.min(20, n.mentions * 1.2);
-    if (Math.hypot(n.x - cx, n.y - cy) < r + 4) { clicked = n; break; }
-  }
-  
-  if (clicked) {
-    selectedNode = clicked;
-    selectedNode.isDragging = true;
-    selectNode(clicked);
-  } else {
-    transform.isDragging = true;
-    transform.dragStart = { x: mx - transform.x, y: my - transform.y };
-  }
-});
-
-canvas.addEventListener('mousemove', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-  const cx = (mx - transform.x) / transform.k;
-  const cy = (my - transform.y) / transform.k;
-  
-  if (selectedNode && selectedNode.isDragging) {
-    selectedNode.x = cx;
-    selectedNode.y = cy;
-    return;
-  }
-  
-  if (transform.isDragging) {
-    transform.x = mx - transform.dragStart.x;
-    transform.y = my - transform.dragStart.y;
-    return;
-  }
-  
-  hoverNode = null;
-  for (const n of getVisibleNodes()) {
-    const r = 10 + Math.min(20, n.mentions * 1.2);
-    if (Math.hypot(n.x - cx, n.y - cy) < r + 4) { hoverNode = n; break; }
-  }
-  
-  if (hoverNode) {
-    tooltip.style.display = 'block';
-    tooltip.style.left = `${e.clientX + 14}px`;
-    tooltip.style.top = `${e.clientY + 14}px`;
-    const conn = edges.filter(ed => ed.from === hoverNode.name || ed.to === hoverNode.name);
-    tooltip.innerHTML = `
-      <b>${hoverNode.name}</b> <span class="badge ${hoverNode.type==='인물'?'char':hoverNode.type==='사건'?'event':hoverNode.type==='장소'?'loc':'item'}">${hoverNode.type}</span><br>
-      언급: ${hoverNode.mentions}회
-      ${conn.length ? `<hr>🔗 ${conn.map(e => {
-        const other = e.from === hoverNode.name ? e.to : e.from;
-        return `${other} (${e.label || '관계'})`;
-      }).join(', ')}` : ''}
-    `;
-  } else {
-    tooltip.style.display = 'none';
-  }
-});
-
-canvas.addEventListener('mouseup', () => {
-  if (selectedNode) selectedNode.isDragging = false;
-  transform.isDragging = false;
-});
-
-canvas.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-  const cx = (mx - transform.x) / transform.k;
-  const cy = (my - transform.y) / transform.k;
-  const factor = e.deltaY < 0 ? 1.1 : 0.9;
-  transform.k = Math.max(0.2, Math.min(5, transform.k * factor));
-  transform.x = mx - cx * transform.k;
-  transform.y = my - cy * transform.k;
-});
-
-window.zoomGraph = function(f) {
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-  const tx = (cx - transform.x) / transform.k;
-  const ty = (cy - transform.y) / transform.k;
-  transform.k = Math.max(0.2, Math.min(5, transform.k * f));
-  transform.x = cx - tx * transform.k;
-  transform.y = cy - ty * transform.k;
-};
-
-window.resetGraphView = function() {
-  transform = { x: 0, y: 0, k: 1 };
-};
-
-// ============================================================
-// PHYSICS
-// ============================================================
-
-function tick() {
-  const visibleNodes = getVisibleNodes();
-  const visibleEdges = getVisibleEdges();
-  
-  for (let i = 0; i < visibleNodes.length; i++) {
-    for (let j = i + 1; j < visibleNodes.length; j++) {
-      const a = visibleNodes[i], b = visibleNodes[j];
-      let dx = a.x - b.x, dy = a.y - b.y;
-      let dist = Math.sqrt(dx*dx + dy*dy) || 1;
-      const force = 2000 / (dist * dist + 1);
-      dx /= dist; dy /= dist;
-      a.vx += dx * force * 0.01; a.vy += dy * force * 0.01;
-      b.vx -= dx * force * 0.01; b.vy -= dy * force * 0.01;
-    }
-  }
-  
-  visibleEdges.forEach(e => {
-    const a = nodes.get(e.from), b = nodes.get(e.to);
-    if (!a || !b) return;
-    const dx = b.x - a.x, dy = b.y - a.y;
-    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-    const force = (dist - 130) * 0.05;
-    a.vx += (dx / dist) * force; a.vy += (dy / dist) * force;
-    b.vx -= (dx / dist) * force; b.vy -= (dy / dist) * force;
-  });
-  
-  const cx = canvas.width / 2, cy = canvas.height / 2;
-  visibleNodes.forEach(n => {
-    if (n.isDragging) return;
-    n.vx += (cx - n.x) * 0.01;
-    n.vy += (cy - n.y) * 0.01;
-    n.vx *= 0.85; n.vy *= 0.85;
-    n.x += n.vx; n.y += n.vy;
-    n.x = Math.max(30, Math.min(canvas.width - 30, n.x));
-    n.y = Math.max(30, Math.min(canvas.height - 30, n.y));
-  });
-  
-  if (visibleEdges.length && Math.random() < 0.05) {
-    const e = visibleEdges[Math.floor(Math.random() * visibleEdges.length)];
-    if (nodes.get(e.from) && nodes.get(e.to)) {
-      particles.push({ from: e.from, to: e.to, progress: 0, speed: 0.006 + Math.random() * 0.01 });
-    }
-  }
-  particles.forEach(p => p.progress += p.speed);
-  particles = particles.filter(p => p.progress < 1);
-  
-  draw();
-  requestAnimationFrame(tick);
+function zoomGraph(factor) {
+  if (!cy) return;
+  const zoom = cy.zoom() * factor;
+  cy.zoom({ level: Math.min(2, Math.max(0.2, zoom)) });
 }
 
-// ============================================================
-// CONSOLE
-// ============================================================
-
-function logToConsole(text) {
-  const body = document.getElementById('aiConsoleBody');
-  body.textContent += text + '\n';
-  body.scrollTop = body.scrollHeight;
+function resetGraphView() {
+  if (!cy) return;
+  cy.fit();
+  cy.zoom(1);
+  cy.pan({ x: 0, y: 0 });
+  // 효과 재시작
+  if (breatheActive) startBreathe();
+  if (springActive) startSpring();
 }
-window.logToConsole = logToConsole;
-window.closeConsole = function() {
-  document.getElementById('aiConsole').style.display = 'none';
-};
+
+function exportPNG() {
+  if (!cy) return;
+  // scale: 2 → 2배율 고해상도
+  const pngData = cy.png({ 
+    bg: '#1e222c',
+    scale: 3,
+    maxWidth: 4000,
+    maxHeight: 4000
+  });
+  const link = document.createElement('a');
+  link.download = 'graph_' + new Date().toISOString().slice(0,10) + '.png';
+  link.href = pngData;
+  link.click();
+  showToast('📷 고해상도 PNG 저장 완료 (2x)');
+}
 
 // ============================================================
 // RESIZERS
 // ============================================================
-
 function makeResizer(el, target, side) {
   let startX, startWidth;
   el.addEventListener('mousedown', (e) => {
@@ -2096,7 +2666,6 @@ function makeResizer(el, target, side) {
       const delta = side === 'left' ? (ev.clientX - startX) : (startX - ev.clientX);
       const w = Math.max(180, Math.min(600, startWidth + delta));
       target.style.width = w + 'px';
-      resizeCanvas();
     };
     const onUp = () => {
       el.classList.remove('active');
@@ -2115,22 +2684,11 @@ makeResizer(document.getElementById('resizerRight'), document.getElementById('ri
 // ============================================================
 // INIT
 // ============================================================
-
 async function init() {
   await checkAndRestoreFolder();
-  nodes.forEach(n => {
-    n.x = canvas.width / 2 + (Math.random() - 0.5) * 200;
-    n.y = canvas.height / 2 + (Math.random() - 0.5) * 200;
-  });
-  requestAnimationFrame(tick);
-  updateModelStatus('idle');
-  
-  setTimeout(async () => {
-    if (!modelReady) {
-      logToConsole('📦 한국어 NER 모델을 백그라운드에서 다운로드합니다...');
-      await loadModel();
-    }
-  }, 2000);
+  initCytoscape();
+  updateGraphCounts();
+  showToast('🚀 분석기가 준비되었습니다. 폴더를 연결하세요.');
 }
 
 init();
