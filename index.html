@@ -30,8 +30,6 @@
     .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
     .btn-warning { background:linear-gradient(135deg,#f6d365 0%,#fda085 100%); }
     .btn-secondary { background:#6c757d; color:#fff; text-shadow:1px 1px 0 #000; }
-    .btn-gemini { background:#5555ff; }
-    .btn-gemini:hover { background:#4444cc; }
     button:active { transform:scale(0.98); }
     textarea { width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-family:'Malgun Gothic',monospace; font-size:0.9em; resize:vertical; min-height:120px; }
     .notes-area { flex:1; display:flex; flex-direction:column; gap:8px; }
@@ -640,26 +638,30 @@
   }
 
   // ============================================================
-  // 5. PNG 캡쳐 (해상도 조절)
+  // 5. PNG 캡쳐 (수정 완료)
   // ============================================================
   function capturePNG(toClipboard = false) {
     const scale = parseFloat(document.getElementById('resolutionScale').value) || 2;
-    const cyContainer = document.getElementById('cy');
-    const rect = cyContainer.getBoundingClientRect();
+    
+    // Cytoscape의 기본 render 함수 사용
+    const canvas = cy.renderer().canvas;
+    const originalWidth = canvas.width;
+    const originalHeight = canvas.height;
+    
+    // 새로운 캔버스 생성 (고해상도)
+    const newCanvas = document.createElement('canvas');
+    const rect = document.getElementById('cy').getBoundingClientRect();
     const width = Math.floor(rect.width * scale);
     const height = Math.floor(rect.height * scale);
-
-    // 임시 캔버스 생성
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-
-    // 흰색 배경
+    newCanvas.width = width;
+    newCanvas.height = height;
+    const ctx = newCanvas.getContext('2d');
+    
+    // 배경 채우기
     ctx.fillStyle = '#fafafa';
     ctx.fillRect(0, 0, width, height);
-
-    // Cytoscape를 PNG로 렌더링 (scale 적용)
+    
+    // 그래프 렌더링 (scale 적용)
     cy.render({
       ctx: ctx,
       width: width,
@@ -668,9 +670,13 @@
       fit: true,
       bg: '#fafafa'
     });
-
+    
     if (toClipboard) {
-      canvas.toBlob(function(blob) {
+      newCanvas.toBlob(function(blob) {
+        if (!blob) {
+          alert('❌ 이미지 생성 실패');
+          return;
+        }
         navigator.clipboard.write([
           new ClipboardItem({
             'image/png': blob
@@ -684,7 +690,7 @@
     } else {
       const link = document.createElement('a');
       link.download = 'graph_capture_'+scale+'x.png';
-      link.href = canvas.toDataURL('image/png');
+      link.href = newCanvas.toDataURL('image/png');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -811,7 +817,6 @@
     return segments.length > 0 ? segments : [{ voice: defaultVoice, text: processedText }];
   }
 
-  // Web Speech 전용 파서 (매핑 이름 사용)
   function parseMultiVoiceTextWeb(text, defaultVoice) {
     const segments = [];
     const lines = text.split('\n');
@@ -889,13 +894,11 @@
   }
 
   async function readWithSupertonic(text) {
-    // Supertonic 모델 로드 (ONNX)
     const defaultVoice = document.getElementById('voiceSelect').value;
     const speed = parseFloat(document.getElementById('speedControl').value);
     const steps = parseInt(document.getElementById('qualityControl')?.value) || 5;
     const isAudiobook = document.getElementById('audiobookMode').checked;
 
-    // Transformers.js 로드 (동적 import)
     const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@latest');
     env.allowLocalModels = false;
     env.remoteHost = 'https://huggingface.co';
@@ -949,7 +952,6 @@
     let off = 0;
     for (const chunk of combinedAudio) { finalAudio.set(chunk, off); off += chunk.length; }
 
-    // Play
     if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
     if (audioContext.state === 'suspended') audioContext.resume();
     stopReading();
@@ -1123,11 +1125,9 @@
                       <input type="range" id="qualityControl" min="1" max="20" step="1" value="5" oninput="document.getElementById('qualityValue').innerText=this.value">
                       <span id="qualityValue">5</span>`;
     document.querySelector('.tts-controls').insertBefore(qCtrl, document.querySelector('.tts-buttons'));
-    // resolution label
     document.getElementById('resolutionLabel').textContent = '2x';
   });
 
-  // Web Speech 음성 로드 초기화
   if (typeof speechSynthesis !== 'undefined') {
     speechSynthesis.onvoiceschanged = function() {
       if (document.getElementById('ttsProvider')?.value === 'web-speech') {
@@ -1139,7 +1139,7 @@
   }
 
   // ============================================================
-  // 10. 추가 유틸리티 (global)
+  // 10. Global functions
   // ============================================================
   window.addNode = addNode;
   window.addEdge = addEdge;
