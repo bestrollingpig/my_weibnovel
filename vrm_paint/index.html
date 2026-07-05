@@ -17,6 +17,7 @@
             color: #fff;
             overflow: hidden;
             height: 100vh;
+            user-select: none;
         }
 
         /* ====== 헤더 ====== */
@@ -47,6 +48,7 @@
             cursor: pointer;
             font-size: 13px;
             transition: all 0.3s;
+            white-space: nowrap;
         }
         header button:hover {
             background: rgba(233, 69, 96, 0.3);
@@ -60,11 +62,16 @@
         header button.primary:hover {
             background: #ff6b6b;
         }
+        header .shortcut {
+            font-size: 10px;
+            opacity: 0.5;
+            margin-left: 4px;
+        }
 
         /* ====== 컨테이너 ====== */
         .container {
             display: grid;
-            grid-template-columns: 1fr 320px;
+            grid-template-columns: 1fr 340px;
             height: calc(100vh - 62px);
         }
 
@@ -90,14 +97,27 @@
             padding: 12px;
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            max-height: 60%;
+            max-height: 55%;
             overflow-y: auto;
-            min-width: 120px;
+            min-width: 130px;
+            backdrop-filter: blur(10px);
         }
         .part-controls h4 {
             color: #fff;
             font-size: 12px;
             margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .part-controls h4 button {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .part-controls h4 button:hover {
+            color: #fff;
         }
         .part-item {
             display: flex;
@@ -116,6 +136,7 @@
             height: 10px;
             border-radius: 50%;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
         }
 
         /* ====== 줌 컨트롤 ====== */
@@ -137,6 +158,8 @@
             border-radius: 4px;
             font-size: 18px;
             cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
         }
         .zoom-controls button:hover {
             background: rgba(233, 69, 96, 0.4);
@@ -146,6 +169,17 @@
             text-align: center;
             font-size: 11px;
             padding: 4px;
+        }
+
+        /* ====== 선택 오버레이 ====== */
+        #selectionOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
         }
 
         /* ====== 사이드바 ====== */
@@ -164,6 +198,16 @@
             margin-bottom: 4px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             padding-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar h3 .badge {
+            font-size: 9px;
+            background: rgba(233, 69, 96, 0.3);
+            padding: 1px 8px;
+            border-radius: 10px;
+            color: #e94560;
         }
 
         /* ====== 도구 ====== */
@@ -182,6 +226,7 @@
             font-size: 12px;
             transition: all 0.2s;
             text-align: center;
+            position: relative;
         }
         .tool:hover {
             background: rgba(255, 255, 255, 0.1);
@@ -191,6 +236,24 @@
             background: #e94560;
             color: #fff;
             border-color: #e94560;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+        }
+        .tool .tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tool:hover .tooltip {
+            display: block;
         }
 
         /* ====== 선택 도구 ====== */
@@ -219,6 +282,7 @@
             cursor: pointer;
             background: transparent;
             padding: 0;
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
         .control-row input[type="range"] {
             flex: 1;
@@ -226,6 +290,7 @@
             background: rgba(255, 255, 255, 0.1);
             height: 3px;
             border-radius: 2px;
+            min-width: 60px;
         }
         .control-row input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -238,16 +303,23 @@
         .control-row label {
             font-size: 11px;
             color: #888;
-            min-width: 25px;
+            min-width: 30px;
+        }
+        .control-row .value-display {
+            font-size: 11px;
+            color: #e94560;
+            min-width: 30px;
+            text-align: right;
         }
 
         /* ====== 레이어 ====== */
         #layerList {
-            height: 70px;
+            height: 80px;
             overflow-y: auto;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
             padding: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .layer-item {
             padding: 3px 8px;
@@ -258,16 +330,29 @@
             display: flex;
             justify-content: space-between;
             font-size: 12px;
+            transition: all 0.2s;
+        }
+        .layer-item:hover {
+            background: rgba(255, 255, 255, 0.08);
         }
         .layer-item.active {
             background: #e94560;
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.2);
         }
         .layer-item .vis {
             cursor: pointer;
             opacity: 0.5;
+            transition: opacity 0.2s;
         }
         .layer-item .vis:hover {
             opacity: 1;
+        }
+        .layer-item .layer-name {
+            flex: 1;
+            margin-right: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .layer-btns {
@@ -283,6 +368,7 @@
             border-radius: 3px;
             cursor: pointer;
             font-size: 11px;
+            transition: all 0.2s;
         }
         .layer-btns button:hover {
             background: rgba(255, 255, 255, 0.1);
@@ -292,7 +378,7 @@
         /* ====== 선택 액션 ====== */
         .action-btns {
             display: none;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 3px;
         }
         .action-btns button {
@@ -303,10 +389,66 @@
             border-radius: 3px;
             cursor: pointer;
             font-size: 10px;
+            transition: all 0.2s;
         }
         .action-btns button:hover {
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
+        }
+        .action-btns button.danger:hover {
+            background: rgba(255, 68, 68, 0.3);
+            border-color: #ff4444;
+        }
+
+        /* ====== 히스토리 ====== */
+        .history-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .history-row button {
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #aaa;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+            flex: 1;
+        }
+        .history-row button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        .history-row button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        #historyCount {
+            color: #666;
+            font-size: 11px;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        /* ====== 단축키 도움말 ====== */
+        .shortcut-help {
+            font-size: 10px;
+            color: #555;
+            padding: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 4px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px 12px;
+        }
+        .shortcut-help kbd {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            color: #888;
         }
 
         /* ====== 스크롤바 ====== */
@@ -335,19 +477,68 @@
             z-index: 999;
             display: none;
             white-space: nowrap;
+            backdrop-filter: blur(10px);
+            pointer-events: none;
         }
         .status-msg.show {
             display: block;
+            animation: fadeInUp 0.3s ease;
         }
         .status-msg.error {
             border-color: #ff4444;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* ====== 로딩 ====== */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 20px;
+        }
+        #loadingOverlay.show {
+            display: flex;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #e94560;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        #loadingText {
+            color: #aaa;
+            font-size: 14px;
         }
 
         /* ====== 반응형 ====== */
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
-                grid-template-rows: 1fr 350px;
+                grid-template-rows: 1fr 380px;
             }
             .sidebar {
                 border-left: none;
@@ -357,71 +548,128 @@
                 font-size: 12px;
                 padding: 8px 16px;
                 white-space: normal;
+                max-width: 90%;
+            }
+            .part-controls {
+                max-height: 40%;
+                min-width: 100px;
+                left: 10px;
+                top: 10px;
+                padding: 8px;
+            }
+            header h1 {
+                font-size: 16px;
+            }
+            header button {
+                font-size: 11px;
+                padding: 4px 10px;
+            }
+            .tool-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .select-tools {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        @media (max-width: 480px) {
+            header {
+                padding: 6px 10px;
+                gap: 6px;
+            }
+            header button {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+            .sidebar {
+                padding: 8px;
+            }
+            .container {
+                grid-template-rows: 1fr 340px;
+            }
+            .part-controls {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
 
+    <!-- 로딩 오버레이 -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">VRM 로딩 중...</div>
+    </div>
+
+    <!-- 상태 메시지 -->
     <div class="status-msg" id="statusMsg">✅ 준비 완료!</div>
 
+    <!-- 헤더 -->
     <header>
         <h1>🎨 VRM 3D 맵 에디터 Pro</h1>
         <button class="primary" id="loadVRM">📁 VRM 로드</button>
         <input type="file" id="vrmInput" accept=".vrm,.glb,.gltf" style="display:none" />
         <button id="exportPNG">🖼️ PNG 저장</button>
+        <button id="exportTexture">📦 텍스처 내보내기</button>
         <button id="resetView">🔄 리셋</button>
         <button id="toggleGrid">📐 그리드</button>
+        <button id="saveProject">💾 저장</button>
+        <button id="loadProject">📂 불러오기</button>
+        <input type="file" id="projectInput" accept=".json" style="display:none" />
     </header>
 
     <div class="container">
         <!-- 3D 뷰포트 -->
         <div id="viewport">
             <canvas id="threeCanvas"></canvas>
+            <canvas id="selectionOverlay"></canvas>
 
             <!-- 부위 컨트롤 -->
             <div class="part-controls" id="partControls">
-                <h4>🎯 부위 표시</h4>
+                <h4>
+                    🎯 부위 표시
+                    <button id="toggleAllParts">전체 토글</button>
+                </h4>
                 <div id="partList"><div style="color:#666;font-size:12px;">VRM을 로드하세요</div></div>
             </div>
 
             <!-- 줌 컨트롤 -->
             <div class="zoom-controls">
-                <button id="zoomIn">➕</button>
-                <button id="zoomOut">➖</button>
-                <button id="zoomFit">⬜</button>
+                <button id="zoomIn" title="확대">➕</button>
+                <button id="zoomOut" title="축소">➖</button>
+                <button id="zoomFit" title="전체 보기">⬜</button>
                 <div id="zoomLevel">100%</div>
             </div>
         </div>
 
         <!-- 사이드바 -->
         <div class="sidebar">
-            <h3>🛠️ 도구</h3>
+            <h3>🛠️ 도구 <span class="badge" id="toolBadge">브러시</span></h3>
             <div class="tool-grid">
-                <button class="tool active" data-tool="brush">🖌️</button>
-                <button class="tool" data-tool="eraser">🧹</button>
-                <button class="tool" data-tool="fill">🪣</button>
-                <button class="tool" data-tool="line">📏</button>
+                <button class="tool active" data-tool="brush">🖌️<span class="tooltip">브러시 (B)</span></button>
+                <button class="tool" data-tool="eraser">🧹<span class="tooltip">지우개 (E)</span></button>
+                <button class="tool" data-tool="fill">🪣<span class="tooltip">채우기 (F)</span></button>
+                <button class="tool" data-tool="line">📏<span class="tooltip">선 (L)</span></button>
             </div>
 
-            <h3>🔍 선택</h3>
+            <h3>🔍 선택 <span class="badge" id="selectBadge">비활성</span></h3>
             <div class="select-tools">
-                <button class="tool" data-tool="lasso">🖊️</button>
-                <button class="tool" data-tool="polygon">⬡</button>
-                <button class="tool" data-tool="rect-select">⬜</button>
-                <button class="tool" data-tool="circle-select">⭕</button>
-                <button class="tool" data-tool="magic">✨</button>
+                <button class="tool" data-tool="lasso">🖊️<span class="tooltip">라쏘 (1)</span></button>
+                <button class="tool" data-tool="polygon">⬡<span class="tooltip">폴리곤 (2)</span></button>
+                <button class="tool" data-tool="rect-select">⬜<span class="tooltip">사각형 (3)</span></button>
+                <button class="tool" data-tool="circle-select">⭕<span class="tooltip">원형 (4)</span></button>
+                <button class="tool" data-tool="magic">✨<span class="tooltip">매직 (5)</span></button>
             </div>
 
             <h3>🎨 색상</h3>
             <div class="control-row">
                 <input type="color" id="colorPicker" value="#ff6b6b" />
                 <input type="range" id="brushSize" min="1" max="50" value="10" />
-                <label id="sizeLabel">10</label>
+                <span class="value-display" id="sizeLabel">10</span>
             </div>
             <div class="control-row">
+                <label>투명도</label>
                 <input type="range" id="opacity" min="1" max="100" value="100" />
-                <label id="opacityLabel">100%</label>
+                <span class="value-display" id="opacityLabel">100%</span>
             </div>
 
             <h3>✂️ 선택 액션</h3>
@@ -429,22 +677,32 @@
                 <button id="fillSel">🎨 채우기</button>
                 <button id="clearSel">🧹 지우기</button>
                 <button id="extractSel">📄 분리</button>
-                <button id="deselect">❌ 해제</button>
+                <button id="deselect" class="danger">❌ 해제</button>
             </div>
 
-            <h3>📚 레이어</h3>
+            <h3>📚 레이어 <span class="badge" id="layerCount">0</span></h3>
             <div id="layerList"></div>
             <div class="layer-btns">
-                <button id="addLayer">➕</button>
-                <button id="deleteLayer">➖</button>
-                <button id="moveUp">⬆</button>
-                <button id="moveDown">⬇</button>
+                <button id="addLayer">➕ 추가</button>
+                <button id="deleteLayer">➖ 삭제</button>
+                <button id="moveUp">⬆ 위로</button>
+                <button id="moveDown">⬇ 아래로</button>
             </div>
 
-            <div style="display:flex;gap:6px;">
-                <button id="undo" style="flex:1;padding:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#aaa;border-radius:3px;cursor:pointer;font-size:11px;">↩️ 실행취소</button>
-                <button id="redo" style="flex:1;padding:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#aaa;border-radius:3px;cursor:pointer;font-size:11px;">↪️ 다시실행</button>
-                <span id="historyCount" style="color:#666;font-size:11px;display:flex;align-items:center;">0</span>
+            <h3>⏪ 히스토리</h3>
+            <div class="history-row">
+                <button id="undo" disabled>↩️ 실행취소</button>
+                <button id="redo" disabled>↪️ 다시실행</button>
+                <span id="historyCount">0</span>
+            </div>
+
+            <div class="shortcut-help">
+                <span><kbd>Ctrl+Z</kbd> 실행취소</span>
+                <span><kbd>Ctrl+Shift+Z</kbd> 다시실행</span>
+                <span><kbd>B</kbd> 브러시</span>
+                <span><kbd>E</kbd> 지우개</span>
+                <span><kbd>F</kbd> 채우기</span>
+                <span><kbd>Esc</kbd> 선택 해제</span>
             </div>
         </div>
     </div>
@@ -465,7 +723,7 @@
         import { VRMLoaderPlugin } from 'three/addons/loaders/VRMLoaderPlugin.js';
 
         // ============================================================
-        //  VRM 3D 맵 에디터 Pro - 풀버전
+        //  VRM 3D 맵 에디터 Pro - 전체 수정 완료
         // ============================================================
 
         class VRMMapEditorPro {
@@ -473,8 +731,13 @@
                 // DOM
                 this.viewport = document.getElementById('viewport');
                 this.canvas = document.getElementById('threeCanvas');
+                this.overlayCanvas = document.getElementById('selectionOverlay');
+                this.overlayCtx = this.overlayCanvas.getContext('2d');
                 this.statusMsg = document.getElementById('statusMsg');
                 this.vrmInput = document.getElementById('vrmInput');
+                this.projectInput = document.getElementById('projectInput');
+                this.loadingOverlay = document.getElementById('loadingOverlay');
+                this.loadingText = document.getElementById('loadingText');
 
                 // 상태
                 this.vrmModel = null;
@@ -486,8 +749,11 @@
                 this.layers = [];
                 this.history = [];
                 this.historyIndex = -1;
+                this.maxHistory = 30;
                 this.textureCache = {};
                 this.showGrid = false;
+                this.isDirty = false;
+                this.pendingComposite = new Set();
 
                 // 선택
                 this.selectionMask = null;
@@ -495,17 +761,28 @@
                 this.isSelecting = false;
                 this.isSelectionActive = false;
                 this.selectionMesh = null;
-                this.lassoLine = null;
                 this.lastUV = null;
                 this.currentMesh = null;
+                this.selectionOverlayMesh = null;
+                this.selectionPolygonPoints = [];
+
+                // 브러시
+                this.lastPaintTime = 0;
+                this.paintInterval = 16;
 
                 // 초기화
                 this.initThree();
                 this.initLayers();
                 this.setupEvents();
                 this.animate();
+                this.resizeOverlay();
 
                 this.showStatus('✅ 준비 완료! VRM 파일을 로드하세요');
+
+                // 윈도우 리사이즈
+                window.addEventListener('resize', () => {
+                    this.resizeOverlay();
+                });
             }
 
             // ====== 상태 메시지 ======
@@ -518,6 +795,12 @@
                 this.statusTimer = setTimeout(() => {
                     el.className = 'status-msg';
                 }, 3000);
+            }
+
+            // ====== 로딩 표시 ======
+            showLoading(show, text = '로딩 중...') {
+                this.loadingOverlay.classList.toggle('show', show);
+                this.loadingText.textContent = text;
             }
 
             // ====== Three.js 초기화 ======
@@ -540,6 +823,9 @@
                 this.renderer.setSize(this.viewport.clientWidth, this.viewport.clientHeight);
                 this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.2;
 
                 this.controls = new OrbitControls(this.camera, this.renderer.domElement);
                 this.controls.enableDamping = true;
@@ -547,6 +833,7 @@
                 this.controls.minDistance = 0.3;
                 this.controls.maxDistance = 20;
                 this.controls.target.set(0, 0, 0);
+                this.controls.update();
 
                 this.controls.addEventListener('change', () => {
                     const dist = this.camera.position.distanceTo(this.controls.target);
@@ -555,17 +842,22 @@
                 });
 
                 // 조명
-                const ambient = new THREE.AmbientLight(0x404060, 0.6);
+                const ambient = new THREE.AmbientLight(0x404060, 0.5);
                 this.scene.add(ambient);
 
-                const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+                const hemi = new THREE.HemisphereLight(0x4488ff, 0x002244, 0.6);
+                this.scene.add(hemi);
+
+                const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
                 dirLight.position.set(10, 20, 10);
                 dirLight.castShadow = true;
+                dirLight.shadow.mapSize.width = 1024;
+                dirLight.shadow.mapSize.height = 1024;
                 this.scene.add(dirLight);
 
-                const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
-                fillLight.position.set(-5, 0, 5);
-                this.scene.add(fillLight);
+                const rimLight = new THREE.DirectionalLight(0x4488ff, 0.5);
+                rimLight.position.set(-5, 5, -10);
+                this.scene.add(rimLight);
 
                 // 그리드
                 this.grid = new THREE.GridHelper(10, 10, 0x444466, 0x222244);
@@ -579,7 +871,9 @@
                     new THREE.MeshStandardMaterial({
                         color: 0x1a1a2e,
                         transparent: true,
-                        opacity: 0.8
+                        opacity: 0.8,
+                        roughness: 0.9,
+                        metalness: 0.0
                     })
                 );
                 ground.rotation.x = -Math.PI / 2;
@@ -593,7 +887,16 @@
                     this.camera.aspect = w / h;
                     this.camera.updateProjectionMatrix();
                     this.renderer.setSize(w, h);
+                    this.resizeOverlay();
                 });
+            }
+
+            resizeOverlay() {
+                const rect = this.viewport.getBoundingClientRect();
+                this.overlayCanvas.width = rect.width;
+                this.overlayCanvas.height = rect.height;
+                this.overlayCanvas.style.width = '100%';
+                this.overlayCanvas.style.height = '100%';
             }
 
             // ====== VRM 로드 ======
@@ -604,6 +907,7 @@
                 }
 
                 try {
+                    this.showLoading(true, 'VRM 로딩 중...');
                     this.showStatus('🔄 VRM 로딩 중...');
 
                     const loader = new GLTFLoader();
@@ -613,8 +917,10 @@
                     const gltf = await loader.loadAsync(url);
                     URL.revokeObjectURL(url);
 
+                    // 기존 모델 제거
                     if (this.vrmModel) {
                         this.scene.remove(this.vrmModel.scene);
+                        this.disposeModel(this.vrmModel.scene);
                     }
 
                     this.vrmModel = gltf;
@@ -625,21 +931,60 @@
 
                     this.detectParts(model);
                     this.textureCache = {};
+                    this.selectionMask = null;
+                    this.isSelectionActive = false;
+                    this.selectionPoints = [];
+
+                    // 레이어 초기화
+                    this.layers = [];
+                    this.initLayers();
+                    this.history = [];
+                    this.historyIndex = -1;
+                    this.saveHistory();
 
                     setTimeout(() => {
                         this.compositeAll();
+                        this.showLoading(false);
                         this.showStatus('✅ VRM 로드 완료!');
-                    }, 200);
+                        this.updateUI();
+                    }, 300);
 
                 } catch (error) {
                     console.error(error);
+                    this.showLoading(false);
                     this.showStatus('❌ VRM 로드 실패: ' + error.message, true);
                 }
+            }
+
+            disposeModel(model) {
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.geometry?.dispose();
+                        if (child.material) {
+                            if (Array.isArray(child.material)) {
+                                child.material.forEach(m => m.dispose());
+                            } else {
+                                child.material.dispose();
+                            }
+                        }
+                    }
+                });
             }
 
             // ====== 부위 감지 ======
             detectParts(model) {
                 const parts = {};
+                const keywords = {
+                    body: ['body', 'torso', 'spine', 'chest', 'hips'],
+                    head: ['head', 'face', 'neck', 'jaw'],
+                    hair: ['hair', 'hat', 'helmet'],
+                    arm: ['arm', 'hand', 'elbow', 'shoulder', 'wrist'],
+                    leg: ['leg', 'foot', 'knee', 'ankle', 'thigh'],
+                    eye: ['eye', 'pupil', 'iris'],
+                    clothes: ['cloth', 'outfit', 'dress', 'shirt', 'pants', 'skirt', 'jacket', 'coat'],
+                    other: ['other']
+                };
+
                 const colors = {
                     body: '#ff6b6b',
                     head: '#ffd93d',
@@ -651,21 +996,29 @@
                     other: '#636e72'
                 };
 
+                const nameMap = {};
+
                 model.traverse((child) => {
                     if (child.isMesh) {
                         const name = child.name.toLowerCase();
                         let key = 'other';
-                        if (name.includes('body')) key = 'body';
-                        else if (name.includes('head')) key = 'head';
-                        else if (name.includes('hair')) key = 'hair';
-                        else if (name.includes('arm') || name.includes('hand')) key = 'arm';
-                        else if (name.includes('leg') || name.includes('foot')) key = 'leg';
-                        else if (name.includes('eye')) key = 'eye';
-                        else if (name.includes('cloth') || name.includes('outfit')) key = 'clothes';
-
+                        for (const [k, words] of Object.entries(keywords)) {
+                            if (words.some(w => name.includes(w))) {
+                                key = k;
+                                break;
+                            }
+                        }
                         if (!parts[key]) parts[key] = [];
                         parts[key].push(child);
                         this.partVisibility[key] = true;
+                        nameMap[child.uuid] = key;
+                    }
+                });
+
+                // 메쉬에 부위 정보 저장
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.userData.partKey = nameMap[child.uuid] || 'other';
                     }
                 });
 
@@ -694,7 +1047,12 @@
                     return;
                 }
 
-                keys.forEach(key => {
+                const sortedKeys = keys.sort((a, b) => {
+                    const order = ['body', 'head', 'hair', 'arm', 'leg', 'eye', 'clothes', 'other'];
+                    return order.indexOf(a) - order.indexOf(b);
+                });
+
+                sortedKeys.forEach(key => {
                     const div = document.createElement('div');
                     div.className = 'part-item';
 
@@ -713,10 +1071,14 @@
 
                     const label = document.createElement('span');
                     label.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+                    const count = document.createElement('span');
+                    count.style.cssText = 'color:#666;font-size:10px;margin-left:auto;';
+                    count.textContent = this.meshParts[key]?.length || 0;
 
                     div.appendChild(cb);
                     div.appendChild(dot);
                     div.appendChild(label);
+                    div.appendChild(count);
                     list.appendChild(div);
                 });
             }
@@ -725,6 +1087,7 @@
             initLayers() {
                 this.addLayer('배경');
                 this.saveHistory();
+                this.updateUI();
             }
 
             addLayer(name) {
@@ -738,20 +1101,26 @@
                     name: name || '레이어 ' + (this.layers.length + 1),
                     visible: true,
                     canvas: canvas,
-                    ctx: ctx
+                    ctx: ctx,
+                    id: Date.now() + Math.random()
                 });
                 this.currentLayerIndex = this.layers.length - 1;
                 this.updateLayerList();
                 this.saveHistory();
+                this.updateUI();
             }
 
             deleteLayer() {
-                if (this.layers.length <= 1) return;
+                if (this.layers.length <= 1) {
+                    this.showStatus('❌ 최소 1개의 레이어가 필요합니다', true);
+                    return;
+                }
                 this.layers.splice(this.currentLayerIndex, 1);
                 if (this.currentLayerIndex >= this.layers.length) this.currentLayerIndex = this.layers.length - 1;
                 this.updateLayerList();
                 this.saveHistory();
                 this.compositeAll();
+                this.updateUI();
             }
 
             moveLayer(dir) {
@@ -763,6 +1132,43 @@
                 this.updateLayerList();
                 this.saveHistory();
                 this.compositeAll();
+                this.updateUI();
+            }
+
+            duplicateLayer() {
+                const src = this.layers[this.currentLayerIndex];
+                const canvas = document.createElement('canvas');
+                canvas.width = src.canvas.width;
+                canvas.height = src.canvas.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(src.canvas, 0, 0);
+                this.layers.push({
+                    name: src.name + ' (복사)',
+                    visible: true,
+                    canvas: canvas,
+                    ctx: ctx,
+                    id: Date.now() + Math.random()
+                });
+                this.currentLayerIndex = this.layers.length - 1;
+                this.updateLayerList();
+                this.saveHistory();
+                this.compositeAll();
+                this.updateUI();
+                this.showStatus('✅ 레이어 복사 완료!');
+            }
+
+            mergeDown() {
+                if (this.currentLayerIndex <= 0) return;
+                const target = this.layers[this.currentLayerIndex - 1];
+                const src = this.layers[this.currentLayerIndex];
+                target.ctx.drawImage(src.canvas, 0, 0);
+                this.layers.splice(this.currentLayerIndex, 1);
+                this.currentLayerIndex--;
+                this.updateLayerList();
+                this.saveHistory();
+                this.compositeAll();
+                this.updateUI();
+                this.showStatus('✅ 레이어 병합 완료!');
             }
 
             updateLayerList() {
@@ -772,6 +1178,7 @@
                     const div = document.createElement('div');
                     div.className = 'layer-item ' + (i === this.currentLayerIndex ? 'active' : '');
                     const name = document.createElement('span');
+                    name.className = 'layer-name';
                     name.textContent = layer.name;
                     const vis = document.createElement('span');
                     vis.className = 'vis';
@@ -790,6 +1197,7 @@
                     };
                     list.appendChild(div);
                 });
+                document.getElementById('layerCount').textContent = this.layers.length;
             }
 
             // ====== 텍스처 ======
@@ -803,7 +1211,7 @@
                 canvas.width = 2048;
                 canvas.height = 2048;
                 const ctx = canvas.getContext('2d');
-                if (tex.image) {
+                if (tex.image && tex.image.width > 0) {
                     ctx.drawImage(tex.image, 0, 0, 2048, 2048);
                 }
                 this.textureCache[key] = canvas;
@@ -816,22 +1224,38 @@
                 const ctx = canvas.getContext('2d');
                 const tex = mesh.material.map;
 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                if (tex && tex.image) {
-                    ctx.drawImage(tex.image, 0, 0, canvas.width, canvas.height);
+                // 원본 이미지 복원 (캐시에서)
+                const originalKey = mesh.uuid + '_original';
+                if (!this.textureCache[originalKey]) {
+                    // 원본 저장
+                    const origCanvas = document.createElement('canvas');
+                    origCanvas.width = 2048;
+                    origCanvas.height = 2048;
+                    const origCtx = origCanvas.getContext('2d');
+                    if (tex && tex.image && tex.image.width > 0) {
+                        origCtx.drawImage(tex.image, 0, 0, 2048, 2048);
+                    }
+                    this.textureCache[originalKey] = origCanvas;
                 }
 
+                // 원본으로 초기화
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(this.textureCache[originalKey], 0, 0);
+
+                // 레이어 합성
                 for (const layer of this.layers) {
                     if (layer.visible) {
-                        ctx.drawImage(layer.canvas, 0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(layer.canvas, 0, 0);
                     }
                 }
 
                 tex.image = canvas;
                 tex.needsUpdate = true;
+                this.isDirty = false;
             }
 
             compositeAll() {
+                // 모든 메쉬에 대해 합성
                 for (const key in this.meshParts) {
                     const meshes = this.meshParts[key] || [];
                     meshes.forEach(mesh => {
@@ -840,9 +1264,10 @@
                         }
                     });
                 }
+                this.isDirty = false;
             }
 
-            // ====== UV 페인팅 ======
+            // ====== UV 페인팅 (최적화) ======
             getUVFromClick(event) {
                 const rect = this.canvas.getBoundingClientRect();
                 const mouse = new THREE.Vector2(
@@ -864,7 +1289,10 @@
                 const hits = raycaster.intersectObjects(meshes);
                 if (hits.length > 0) {
                     const hit = hits[0];
-                    return { uv: hit.uv, mesh: hit.object, point: hit.point };
+                    // UV 좌표 유효성 검사
+                    if (hit.uv && !isNaN(hit.uv.x) && !isNaN(hit.uv.y)) {
+                        return { uv: hit.uv, mesh: hit.object, point: hit.point };
+                    }
                 }
                 return null;
             }
@@ -888,10 +1316,23 @@
                 ctx.fill();
                 ctx.restore();
 
-                this.compositeLayers(mesh);
+                // 더티 플래그 설정
+                this.isDirty = true;
+                this.pendingComposite.add(mesh);
+
+                // 즉시 합성하지 않고 일괄 처리
+                if (!this.compositeTimeout) {
+                    this.compositeTimeout = setTimeout(() => {
+                        for (const m of this.pendingComposite) {
+                            this.compositeLayers(m);
+                        }
+                        this.pendingComposite.clear();
+                        this.compositeTimeout = null;
+                    }, 50);
+                }
             }
 
-            // ====== Flood Fill ======
+            // ====== Flood Fill (스캔라인 최적화) ======
             floodFill(uv, mesh, color) {
                 const canvas = this.getTextureCanvas(mesh);
                 if (!canvas) return;
@@ -910,33 +1351,59 @@
                 const targetB = data[idx + 2];
                 const fill = this.hexToRgb(color);
 
+                // 같은 색이면 리턴
                 if (targetR === fill.r && targetG === fill.g && targetB === fill.b) return;
 
-                const queue = [
+                // 스캔라인 알고리즘
+                const visited = new Uint8Array(w * h);
+                const stack = [
                     [px, py]
                 ];
-                const visited = new Set();
 
-                while (queue.length > 0) {
-                    const [cx, cy] = queue.shift();
-                    const key = cx + ',' + cy;
-                    if (visited.has(key)) continue;
+                while (stack.length > 0) {
+                    const [cx, cy] = stack.pop();
                     if (cx < 0 || cx >= w || cy < 0 || cy >= h) continue;
+                    const vi = cy * w + cx;
+                    if (visited[vi]) continue;
 
-                    const di = (cy * w + cx) * 4;
-                    const cr = data[di];
-                    const cg = data[di + 1];
-                    const cb = data[di + 2];
-                    if (Math.abs(cr - targetR) > 10 || Math.abs(cg - targetG) > 10 || Math.abs(cb - targetB) > 10)
+                    const di = vi * 4;
+                    const cr = data[di],
+                        cg = data[di + 1],
+                        cb = data[di + 2];
+                    if (Math.abs(cr - targetR) > 5 || Math.abs(cg - targetG) > 5 || Math.abs(cb - targetB) > 5)
                         continue;
 
-                    visited.add(key);
-                    data[di] = fill.r;
-                    data[di + 1] = fill.g;
-                    data[di + 2] = fill.b;
-                    data[di + 3] = 255;
+                    visited[vi] = 1;
 
-                    queue.push([cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]);
+                    // 좌우 스캔
+                    let left = cx,
+                        right = cx;
+                    while (left > 0 && !visited[(cy * w + left - 1)]) {
+                        const li = (cy * w + left - 1) * 4;
+                        if (Math.abs(data[li] - targetR) > 5 || Math.abs(data[li + 1] - targetG) > 5 || Math.abs(data[li +
+                                2] - targetB) > 5) break;
+                        left--;
+                    }
+                    while (right < w - 1 && !visited[(cy * w + right + 1)]) {
+                        const ri = (cy * w + right + 1) * 4;
+                        if (Math.abs(data[ri] - targetR) > 5 || Math.abs(data[ri + 1] - targetG) > 5 || Math.abs(data[ri +
+                                2] - targetB) > 5) break;
+                        right++;
+                    }
+
+                    for (let x = left; x <= right; x++) {
+                        const vi2 = cy * w + x;
+                        visited[vi2] = 1;
+                        const di2 = vi2 * 4;
+                        data[di2] = fill.r;
+                        data[di2 + 1] = fill.g;
+                        data[di2 + 2] = fill.b;
+                        data[di2 + 3] = 255;
+
+                        // 위/아래 체크
+                        if (cy > 0 && !visited[(cy - 1) * w + x]) stack.push([x, cy - 1]);
+                        if (cy < h - 1 && !visited[(cy + 1) * w + x]) stack.push([x, cy + 1]);
+                    }
                 }
 
                 ctx.putImageData(img, 0, 0);
@@ -954,19 +1421,21 @@
                 } : { r: 0, g: 0, b: 0 };
             }
 
-            // ====== 선택 ======
+            // ====== 선택 도구 ======
             startSelection(uv, mesh) {
                 this.isSelecting = true;
                 this.selectionPoints = [uv];
                 this.selectionMesh = mesh;
                 this.isSelectionActive = false;
-                this.clearLassoLine();
+                this.selectionPolygonPoints = [];
+                this.clearSelectionOverlay();
             }
 
             addSelectionPoint(uv) {
                 if (!this.isSelecting) return;
                 this.selectionPoints.push(uv);
-                this.drawLassoLine();
+                this.selectionPolygonPoints.push(uv);
+                this.drawSelectionOverlay();
             }
 
             endSelection() {
@@ -978,7 +1447,10 @@
                 this.createSelectionMask();
                 this.isSelectionActive = true;
                 document.getElementById('actionBtns').style.display = 'grid';
-                this.showStatus('✅ 선택 완료!');
+                document.getElementById('selectBadge').textContent = '활성';
+                document.getElementById('selectBadge').style.color = '#4caf50';
+                this.showStatus('✅ 선택 완료! (' + this.selectionPoints.length + ' 포인트)');
+                this.drawSelectionOverlay();
             }
 
             cancelSelection() {
@@ -986,8 +1458,12 @@
                 this.selectionPoints = [];
                 this.isSelectionActive = false;
                 this.selectionMask = null;
-                this.clearLassoLine();
+                this.selectionMesh = null;
+                this.selectionPolygonPoints = [];
                 document.getElementById('actionBtns').style.display = 'none';
+                document.getElementById('selectBadge').textContent = '비활성';
+                document.getElementById('selectBadge').style.color = '';
+                this.clearSelectionOverlay();
             }
 
             createSelectionMask() {
@@ -1000,8 +1476,8 @@
                 const mask = new Uint8Array(w * h);
 
                 const pts = this.selectionPoints.map(p => ({
-                    x: Math.round(p.x * w),
-                    y: Math.round((1 - p.y) * h)
+                    x: Math.round(Math.max(0, Math.min(1, p.x)) * w),
+                    y: Math.round(Math.max(0, Math.min(1, (1 - p.y))) * h)
                 }));
 
                 this.fillPolygon(pts, w, h, mask);
@@ -1009,6 +1485,9 @@
             }
 
             fillPolygon(points, w, h, mask) {
+                if (points.length < 3) return;
+
+                // 에지 테이블 구성
                 const edges = [];
                 const n = points.length;
                 for (let i = 0; i < n; i++) {
@@ -1021,15 +1500,28 @@
                     const slope = (p2.x - p1.x) / (p2.y - p1.y);
                     edges.push({ yMin, yMax, x: xAtYMin, slope });
                 }
+
+                if (edges.length === 0) return;
+
                 edges.sort((a, b) => a.yMin - b.yMin);
 
                 let aet = [];
-                let cy = edges[0]?.yMin || 0;
+                let cy = edges[0].yMin;
+
                 while (aet.length > 0 || edges.length > 0) {
-                    while (edges.length > 0 && edges[0].yMin === cy) {
-                        aet.push(edges.shift());
+                    // 활성 에지 추가
+                    while (edges.length > 0 && edges[0].yMin <= cy) {
+                        const e = edges.shift();
+                        // yMax가 현재 cy보다 작으면 스킵
+                        if (e.yMax > cy) {
+                            aet.push(e);
+                        }
                     }
+
+                    // x 기준 정렬
                     aet.sort((a, b) => a.x - b.x);
+
+                    // 페어링하여 채우기
                     for (let i = 0; i < aet.length - 1; i += 2) {
                         const x1 = Math.max(0, Math.round(aet[i].x));
                         const x2 = Math.min(w - 1, Math.round(aet[i + 1].x));
@@ -1038,100 +1530,154 @@
                             if (idx >= 0 && idx < mask.length) mask[idx] = 255;
                         }
                     }
+
                     cy++;
+
+                    // yMax에 도달한 에지 제거
                     aet = aet.filter(e => cy < e.yMax);
+                    // x 업데이트
                     aet.forEach(e => e.x += e.slope);
                 }
-                return mask;
             }
 
-            drawLassoLine() {
-                this.clearLassoLine();
-                if (this.selectionPoints.length < 2 || !this.selectionMesh) return;
+            // ====== 선택 오버레이 ======
+            drawSelectionOverlay() {
+                if (this.selectionPoints.length < 2) return;
 
-                const mesh = this.selectionMesh;
-                const positions = [];
+                const ctx = this.overlayCtx;
+                const w = this.overlayCanvas.width;
+                const h = this.overlayCanvas.height;
 
-                for (const uv of this.selectionPoints) {
-                    const p = this.uvTo3D(uv, mesh);
-                    if (p) positions.push(p.x, p.y, p.z);
-                }
+                ctx.clearRect(0, 0, w, h);
 
-                if (positions.length < 6) return;
+                // 폴리곤 그리기
+                if (this.selectionPoints.length >= 3) {
+                    ctx.beginPath();
+                    const first = this.selectionPoints[0];
+                    const rect = this.canvas.getBoundingClientRect();
+                    const scaleX = w / this.canvas.width;
+                    const scaleY = h / this.canvas.height;
 
-                const geo = new THREE.BufferGeometry();
-                geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-                const mat = new THREE.LineBasicMaterial({
-                    color: 0xff6b6b,
-                    linewidth: 2,
-                    transparent: true,
-                    opacity: 0.8
-                });
-                this.lassoLine = new THREE.Line(geo, mat);
-                this.scene.add(this.lassoLine);
-            }
+                    ctx.moveTo(first.x * rect.width + rect.left * scaleX, (1 - first.y) * rect.height + rect.top * scaleY);
+                    for (let i = 1; i < this.selectionPoints.length; i++) {
+                        const p = this.selectionPoints[i];
+                        ctx.lineTo(p.x * rect.width + rect.left * scaleX, (1 - p.y) * rect.height + rect.top * scaleY);
+                    }
+                    ctx.closePath();
+                    ctx.fillStyle = 'rgba(233, 69, 96, 0.15)';
+                    ctx.fill();
+                    ctx.strokeStyle = '#e94560';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
 
-            clearLassoLine() {
-                if (this.lassoLine) {
-                    this.scene.remove(this.lassoLine);
-                    this.lassoLine = null;
-                }
-            }
-
-            uvTo3D(uv, mesh) {
-                if (!mesh || !mesh.geometry) return null;
-                const pos = mesh.geometry.attributes.position;
-                const uvs = mesh.geometry.attributes.uv;
-                if (!pos || !uvs) return null;
-
-                for (let i = 0; i < pos.count; i += 3) {
-                    const u1 = uvs.getX(i),
-                        v1 = uvs.getY(i);
-                    const u2 = uvs.getX(i + 1),
-                        v2 = uvs.getY(i + 1);
-                    const u3 = uvs.getX(i + 2),
-                        v3 = uvs.getY(i + 2);
-
-                    if (this.isUVInTriangle(uv, { u: u1, v: v1 }, { u: u2, v: v2 }, { u: u3, v: v3 })) {
-                        const p1 = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
-                        const p2 = new THREE.Vector3(pos.getX(i + 1), pos.getY(i + 1), pos.getZ(i + 1));
-                        const p3 = new THREE.Vector3(pos.getX(i + 2), pos.getY(i + 2), pos.getZ(i + 2));
-                        return this.barycentricInterpolate(uv,
-                            { uv: { u: u1, v: v1 }, pos: p1 },
-                            { uv: { u: u2, v: v2 }, pos: p2 },
-                            { uv: { u: u3, v: v3 }, pos: p3 }
-                        );
+                    // 포인트 표시
+                    for (const p of this.selectionPoints) {
+                        ctx.beginPath();
+                        ctx.arc(p.x * rect.width + rect.left * scaleX, (1 - p.y) * rect.height + rect.top * scaleY, 4, 0,
+                            Math.PI * 2);
+                        ctx.fillStyle = '#e94560';
+                        ctx.fill();
                     }
                 }
-                return null;
             }
 
-            isUVInTriangle(p, a, b, c) {
-                const d1 = this.sign(p, a, b);
-                const d2 = this.sign(p, b, c);
-                const d3 = this.sign(p, c, a);
-                const hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-                const hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-                return !(hasNeg && hasPos);
+            clearSelectionOverlay() {
+                this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
             }
 
-            sign(p1, p2, p3) {
-                return (p1.u - p3.u) * (p2.v - p3.v) - (p2.u - p3.u) * (p1.v - p3.v);
+            // ====== Rect/Circle 선택 ======
+            rectSelect(uv, mesh) {
+                // 사각형 선택 구현 - 간단히 폴리곤으로 변환
+                const size = 0.05;
+                const pts = [
+                    { x: uv.x - size, y: uv.y - size },
+                    { x: uv.x + size, y: uv.y - size },
+                    { x: uv.x + size, y: uv.y + size },
+                    { x: uv.x - size, y: uv.y + size }
+                ];
+                this.selectionPoints = pts;
+                this.selectionMesh = mesh;
+                this.createSelectionMask();
+                this.isSelectionActive = true;
+                document.getElementById('actionBtns').style.display = 'grid';
+                document.getElementById('selectBadge').textContent = '활성';
+                document.getElementById('selectBadge').style.color = '#4caf50';
+                this.drawSelectionOverlay();
+                this.showStatus('✅ 사각형 선택 완료!');
             }
 
-            barycentricInterpolate(p, a, b, c) {
-                const denom = (b.uv.u - a.uv.u) * (c.uv.v - a.uv.v) - (c.uv.u - a.uv.u) * (b.uv.v - a.uv.v);
-                if (Math.abs(denom) < 0.0001) return null;
+            circleSelect(uv, mesh) {
+                const size = 0.05;
+                const pts = [];
+                const segments = 12;
+                for (let i = 0; i < segments; i++) {
+                    const angle = (i / segments) * Math.PI * 2;
+                    pts.push({
+                        x: uv.x + Math.cos(angle) * size,
+                        y: uv.y + Math.sin(angle) * size
+                    });
+                }
+                this.selectionPoints = pts;
+                this.selectionMesh = mesh;
+                this.createSelectionMask();
+                this.isSelectionActive = true;
+                document.getElementById('actionBtns').style.display = 'grid';
+                document.getElementById('selectBadge').textContent = '활성';
+                document.getElementById('selectBadge').style.color = '#4caf50';
+                this.drawSelectionOverlay();
+                this.showStatus('✅ 원형 선택 완료!');
+            }
 
-                const w1 = ((b.uv.u - a.uv.u) * (p.v - a.uv.v) - (p.u - a.uv.u) * (b.uv.v - a.uv.v)) / denom;
-                const w2 = ((p.u - a.uv.u) * (c.uv.v - a.uv.v) - (c.uv.u - a.uv.u) * (p.v - a.uv.v)) / denom;
-                const w3 = 1 - w1 - w2;
+            // ====== 매직 선택 (색상 기반) ======
+            magicSelect(uv, mesh) {
+                const canvas = this.getTextureCanvas(mesh);
+                if (!canvas) return;
 
-                return new THREE.Vector3(
-                    w1 * a.pos.x + w2 * b.pos.x + w3 * c.pos.x,
-                    w1 * a.pos.y + w2 * b.pos.y + w3 * c.pos.y,
-                    w1 * a.pos.z + w2 * b.pos.z + w3 * c.pos.z
-                );
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width,
+                    h = canvas.height;
+                const px = Math.round(uv.x * w);
+                const py = Math.round((1 - uv.y) * h);
+
+                const img = ctx.getImageData(0, 0, w, h);
+                const data = img.data;
+                const idx = (py * w + px) * 4;
+                const targetR = data[idx],
+                    targetG = data[idx + 1],
+                    targetB = data[idx + 2];
+                const tolerance = 20;
+
+                const mask = new Uint8Array(w * h);
+                const stack = [
+                    [px, py]
+                ];
+
+                while (stack.length > 0) {
+                    const [cx, cy] = stack.pop();
+                    if (cx < 0 || cx >= w || cy < 0 || cy >= h) continue;
+                    const vi = cy * w + cx;
+                    if (mask[vi]) continue;
+
+                    const di = vi * 4;
+                    const cr = data[di],
+                        cg = data[di + 1],
+                        cb = data[di + 2];
+                    if (Math.abs(cr - targetR) > tolerance || Math.abs(cg - targetG) > tolerance || Math.abs(cb -
+                            targetB) > tolerance) continue;
+
+                    mask[vi] = 255;
+                    stack.push([cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]);
+                }
+
+                this.selectionMask = mask;
+                this.selectionMesh = mesh;
+                this.isSelectionActive = true;
+                document.getElementById('actionBtns').style.display = 'grid';
+                document.getElementById('selectBadge').textContent = '활성';
+                document.getElementById('selectBadge').style.color = '#4caf50';
+                this.showStatus('✅ 매직 선택 완료! (' + mask.filter(v => v === 255).length + ' 픽셀)');
             }
 
             // ====== 선택 액션 ======
@@ -1174,9 +1720,10 @@
                 const canvas = this.getTextureCanvas(mesh);
                 if (!canvas) return;
 
-                const ctx = canvas.getContext('2d');
-                const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = img.data;
+                const layer = this.layers[this.currentLayerIndex];
+                if (!layer) return;
+
+                const ctx = layer.ctx;
                 const w = canvas.width,
                     h = canvas.height;
 
@@ -1184,12 +1731,11 @@
                     for (let x = 0; x < w; x++) {
                         const idx = y * w + x;
                         if (this.selectionMask[idx] === 255) {
-                            const di = idx * 4;
-                            data[di + 3] = 0;
+                            ctx.clearRect(x, y, 1, 1);
                         }
                     }
                 }
-                ctx.putImageData(img, 0, 0);
+
                 this.compositeLayers(mesh);
                 this.saveHistory();
                 this.cancelSelection();
@@ -1231,14 +1777,57 @@
                 this.showStatus('✅ 선택 영역 레이어 분리 완료!');
             }
 
+            // ====== 선 그리기 ======
+            drawLine(uv1, uv2, mesh, color, size, opacity) {
+                const canvas = this.getTextureCanvas(mesh);
+                if (!canvas) return;
+                const layer = this.layers[this.currentLayerIndex];
+                if (!layer || !layer.visible) return;
+
+                const ctx = layer.ctx;
+                const x1 = uv1.x * canvas.width;
+                const y1 = (1 - uv1.y) * canvas.height;
+                const x2 = uv2.x * canvas.width;
+                const y2 = (1 - uv2.y) * canvas.height;
+                const r = size * canvas.width / 200;
+
+                ctx.save();
+                ctx.globalAlpha = opacity / 100;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = r * 2;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                ctx.restore();
+
+                this.isDirty = true;
+                this.compositeLayers(mesh);
+                this.saveHistory();
+            }
+
             // ====== 히스토리 ======
             saveHistory() {
-                const state = this.layers.map(layer => layer.canvas.toDataURL());
+                // 레이어 상태 저장 (압축)
+                const state = this.layers.map(layer => {
+                    const canvas = layer.canvas;
+                    // 작은 썸네일로 저장 (성능 최적화)
+                    const thumb = document.createElement('canvas');
+                    thumb.width = 256;
+                    thumb.height = 256;
+                    const tCtx = thumb.getContext('2d');
+                    tCtx.drawImage(canvas, 0, 0, 256, 256);
+                    return tCtx.getImageData(0, 0, 256, 256).data.buffer;
+                });
+
                 this.history = this.history.slice(0, this.historyIndex + 1);
                 this.history.push(state);
-                if (this.history.length > 30) this.history.shift();
+                if (this.history.length > this.maxHistory) {
+                    this.history.shift();
+                }
                 this.historyIndex = this.history.length - 1;
-                document.getElementById('historyCount').textContent = this.history.length;
+                this.updateHistoryUI();
             }
 
             undo() {
@@ -1246,6 +1835,7 @@
                     this.historyIndex--;
                     this.restoreState(this.history[this.historyIndex]);
                     this.showStatus('↩️ 실행취소');
+                    this.updateHistoryUI();
                 }
             }
 
@@ -1254,21 +1844,30 @@
                     this.historyIndex++;
                     this.restoreState(this.history[this.historyIndex]);
                     this.showStatus('↪️ 다시실행');
+                    this.updateHistoryUI();
                 }
             }
 
             restoreState(state) {
-                state.forEach((dataUrl, i) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        if (this.layers[i]) {
-                            this.layers[i].ctx.clearRect(0, 0, 2048, 2048);
-                            this.layers[i].ctx.drawImage(img, 0, 0);
-                        }
-                    };
-                    img.src = dataUrl;
+                state.forEach((buffer, i) => {
+                    if (this.layers[i]) {
+                        const imgData = new ImageData(new Uint8ClampedArray(buffer), 256, 256);
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = 256;
+                        tempCanvas.height = 256;
+                        const tCtx = tempCanvas.getContext('2d');
+                        tCtx.putImageData(imgData, 0, 0);
+                        this.layers[i].ctx.clearRect(0, 0, 2048, 2048);
+                        this.layers[i].ctx.drawImage(tempCanvas, 0, 0, 2048, 2048);
+                    }
                 });
                 setTimeout(() => this.compositeAll(), 100);
+            }
+
+            updateHistoryUI() {
+                document.getElementById('historyCount').textContent = this.historyIndex + 1 + '/' + this.history.length;
+                document.getElementById('undo').disabled = this.historyIndex <= 0;
+                document.getElementById('redo').disabled = this.historyIndex >= this.history.length - 1;
             }
 
             // ====== 내보내기 ======
@@ -1284,6 +1883,150 @@
                 this.showStatus('🖼️ PNG 저장 완료!');
             }
 
+            exportTexture() {
+                if (!this.vrmModel) {
+                    this.showStatus('❌ 먼저 VRM을 로드하세요', true);
+                    return;
+                }
+                // 첫 번째 메쉬의 텍스처 내보내기
+                let firstMesh = null;
+                for (const key in this.meshParts) {
+                    const meshes = this.meshParts[key] || [];
+                    if (meshes.length > 0) {
+                        firstMesh = meshes[0];
+                        break;
+                    }
+                }
+                if (!firstMesh || !firstMesh.material || !firstMesh.material.map) {
+                    this.showStatus('❌ 텍스처를 찾을 수 없습니다', true);
+                    return;
+                }
+
+                const canvas = this.getTextureCanvas(firstMesh);
+                if (!canvas) {
+                    this.showStatus('❌ 텍스처 캔버스를 생성할 수 없습니다', true);
+                    return;
+                }
+
+                const link = document.createElement('a');
+                link.download = 'texture-' + Date.now() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                this.showStatus('📦 텍스처 내보내기 완료!');
+            }
+
+            // ====== 프로젝트 저장 ======
+            saveProject() {
+                if (!this.vrmModel) {
+                    this.showStatus('❌ 먼저 VRM을 로드하세요', true);
+                    return;
+                }
+
+                const data = {
+                    version: '1.0',
+                    timestamp: Date.now(),
+                    layers: this.layers.map(layer => ({
+                        name: layer.name,
+                        visible: layer.visible,
+                        data: layer.canvas.toDataURL()
+                    })),
+                    partVisibility: this.partVisibility
+                };
+
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.download = 'project-' + Date.now() + '.json';
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+                this.showStatus('💾 프로젝트 저장 완료!');
+            }
+
+            loadProject(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.version && data.layers) {
+                            // 레이어 복원
+                            this.layers = [];
+                            data.layers.forEach((layerData, i) => {
+                                const canvas = document.createElement('canvas');
+                                canvas.width = 2048;
+                                canvas.height = 2048;
+                                const ctx = canvas.getContext('2d');
+                                const img = new Image();
+                                img.onload = () => {
+                                    ctx.drawImage(img, 0, 0);
+                                };
+                                img.src = layerData.data;
+                                this.layers.push({
+                                    name: layerData.name || '레이어 ' + (i + 1),
+                                    visible: layerData.visible !== undefined ? layerData.visible : true,
+                                    canvas: canvas,
+                                    ctx: ctx,
+                                    id: Date.now() + Math.random()
+                                });
+                            });
+
+                            if (this.layers.length === 0) {
+                                this.initLayers();
+                            }
+
+                            this.currentLayerIndex = 0;
+                            this.updateLayerList();
+                            setTimeout(() => {
+                                this.compositeAll();
+                                this.saveHistory();
+                                this.updateUI();
+                                this.showStatus('📂 프로젝트 불러오기 완료!');
+                            }, 200);
+
+                            // 부위 가시성 복원
+                            if (data.partVisibility) {
+                                this.partVisibility = data.partVisibility;
+                                for (const key in this.meshParts) {
+                                    const meshes = this.meshParts[key] || [];
+                                    const visible = this.partVisibility[key] !== false;
+                                    meshes.forEach(m => m.visible = visible);
+                                }
+                                this.updatePartControls();
+                            }
+                        } else {
+                            this.showStatus('❌ 잘못된 프로젝트 파일입니다', true);
+                        }
+                    } catch (err) {
+                        this.showStatus('❌ 프로젝트 로드 실패: ' + err.message, true);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // ====== UI 업데이트 ======
+            updateUI() {
+                this.updateLayerList();
+                this.updateHistoryUI();
+                document.getElementById('layerCount').textContent = this.layers.length;
+                this.updateToolBadge();
+            }
+
+            updateToolBadge() {
+                const names = {
+                    brush: '브러시',
+                    eraser: '지우개',
+                    fill: '채우기',
+                    line: '선',
+                    lasso: '라쏘',
+                    polygon: '폴리곤',
+                    'rect-select': '사각형',
+                    'circle-select': '원형',
+                    magic: '매직'
+                };
+                document.getElementById('toolBadge').textContent = names[this.currentTool] || this.currentTool;
+            }
+
+            // ====== 뷰 컨트롤 ======
             resetView() {
                 this.camera.position.set(3, 2, 5);
                 this.controls.target.set(0, 0, 0);
@@ -1295,6 +2038,18 @@
                 this.showGrid = !this.showGrid;
                 this.grid.visible = this.showGrid;
                 this.showStatus(this.showGrid ? '📐 그리드 표시' : '📐 그리드 숨김');
+            }
+
+            toggleAllParts() {
+                const allVisible = Object.values(this.partVisibility).every(v => v !== false);
+                const newState = !allVisible;
+                for (const key in this.partVisibility) {
+                    this.partVisibility[key] = newState;
+                    const meshes = this.meshParts[key] || [];
+                    meshes.forEach(m => m.visible = newState);
+                }
+                this.updatePartControls();
+                this.showStatus(newState ? '✅ 모든 부위 표시' : '🚫 모든 부위 숨김');
             }
 
             // ====== 이벤트 ======
@@ -1318,74 +2073,26 @@
                         tool.classList.add('active');
                         this.currentTool = tool.dataset.tool;
                         this.cancelSelection();
+                        this.updateToolBadge();
                     });
                 });
 
-                // 마우스
-                this.canvas.addEventListener('mousedown', (e) => {
-                    if (!this.vrmModel) return;
-                    const result = this.getUVFromClick(e);
-                    if (!result) return;
+                // 부위 전체 토글
+                document.getElementById('toggleAllParts').addEventListener('click', this.toggleAllParts.bind(this));
 
-                    if (this.currentTool === 'brush' || this.currentTool === 'eraser') {
-                        this.isPainting = true;
-                        this.lastUV = result.uv;
-                        this.currentMesh = result.mesh;
-                        const color = document.getElementById('colorPicker').value;
-                        const size = parseInt(document.getElementById('brushSize').value);
-                        const opacity = parseInt(document.getElementById('opacity').value);
-                        this.paintOnUV(result.uv, result.mesh, color, size, opacity);
-                    } else if (this.currentTool === 'fill') {
-                        this.floodFill(result.uv, result.mesh, document.getElementById('colorPicker').value);
-                    } else if (['lasso', 'polygon', 'rect-select', 'circle-select'].includes(this.currentTool)) {
-                        this.startSelection(result.uv, result.mesh);
-                    }
-                });
+                // 마우스 이벤트
+                this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+                this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+                this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+                this.canvas.addEventListener('mouseleave', this.onMouseLeave.bind(this));
 
-                this.canvas.addEventListener('mousemove', (e) => {
-                    if (!this.vrmModel) return;
-                    const result = this.getUVFromClick(e);
-                    if (!result) return;
-
-                    if (this.isPainting && (this.currentTool === 'brush' || this.currentTool === 'eraser')) {
-                        const color = document.getElementById('colorPicker').value;
-                        const size = parseInt(document.getElementById('brushSize').value);
-                        const opacity = parseInt(document.getElementById('opacity').value);
-                        this.paintOnUV(result.uv, result.mesh, color, size, opacity);
-                        this.lastUV = result.uv;
-                    } else if (this.isSelecting && ['lasso', 'polygon'].includes(this.currentTool)) {
-                        this.addSelectionPoint(result.uv);
-                    }
-                });
-
-                this.canvas.addEventListener('mouseup', () => {
-                    if (this.isPainting) {
-                        this.isPainting = false;
-                        this.saveHistory();
-                    }
-                    if (this.isSelecting && ['lasso', 'polygon'].includes(this.currentTool)) {
-                        this.endSelection();
-                    }
-                });
-
-                this.canvas.addEventListener('mouseleave', () => {
-                    if (this.isPainting) {
-                        this.isPainting = false;
-                        this.saveHistory();
-                    }
-                });
+                // 터치 이벤트 (모바일 지원)
+                this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
+                this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
+                this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
 
                 // 키보드
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        if (e.shiftKey) this.redo();
-                        else this.undo();
-                    }
-                    if (e.key === 'Escape') {
-                        this.cancelSelection();
-                    }
-                });
+                document.addEventListener('keydown', this.onKeyDown.bind(this));
 
                 // 줌
                 document.getElementById('zoomIn').addEventListener('click', () => {
@@ -1416,8 +2123,21 @@
 
                 // 내보내기
                 document.getElementById('exportPNG').addEventListener('click', this.exportPNG.bind(this));
+                document.getElementById('exportTexture').addEventListener('click', this.exportTexture.bind(this));
                 document.getElementById('resetView').addEventListener('click', this.resetView.bind(this));
                 document.getElementById('toggleGrid').addEventListener('click', this.toggleGrid.bind(this));
+
+                // 프로젝트
+                document.getElementById('saveProject').addEventListener('click', this.saveProject.bind(this));
+                document.getElementById('loadProject').addEventListener('click', () => {
+                    this.projectInput.click();
+                });
+                this.projectInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        this.loadProject(e.target.files[0]);
+                    }
+                    e.target.value = '';
+                });
 
                 // 브러시 옵션
                 document.getElementById('brushSize').addEventListener('input', (e) => {
@@ -1430,10 +2150,167 @@
                 console.log('✅ 모든 이벤트 연결 완료!');
             }
 
+            // ====== 마우스 이벤트 ======
+            onMouseDown(e) {
+                if (!this.vrmModel) return;
+                const result = this.getUVFromClick(e);
+                if (!result) return;
+
+                const tool = this.currentTool;
+
+                if (tool === 'brush' || tool === 'eraser') {
+                    this.isPainting = true;
+                    this.lastUV = result.uv;
+                    this.currentMesh = result.mesh;
+                    const color = tool === 'eraser' ? '#00000000' : document.getElementById('colorPicker').value;
+                    const size = parseInt(document.getElementById('brushSize').value);
+                    const opacity = tool === 'eraser' ? 100 : parseInt(document.getElementById('opacity').value);
+                    this.paintOnUV(result.uv, result.mesh, color, size, opacity);
+                } else if (tool === 'fill') {
+                    this.floodFill(result.uv, result.mesh, document.getElementById('colorPicker').value);
+                } else if (tool === 'line') {
+                    this.lineStart = result;
+                    this.lineStartUV = result.uv;
+                    this.lineMesh = result.mesh;
+                } else if (tool === 'lasso' || tool === 'polygon') {
+                    this.startSelection(result.uv, result.mesh);
+                } else if (tool === 'rect-select') {
+                    this.rectSelect(result.uv, result.mesh);
+                } else if (tool === 'circle-select') {
+                    this.circleSelect(result.uv, result.mesh);
+                } else if (tool === 'magic') {
+                    this.magicSelect(result.uv, result.mesh);
+                }
+            }
+
+            onMouseMove(e) {
+                if (!this.vrmModel) return;
+                const result = this.getUVFromClick(e);
+                if (!result) return;
+
+                if (this.isPainting && (this.currentTool === 'brush' || this.currentTool === 'eraser')) {
+                    const now = Date.now();
+                    if (now - this.lastPaintTime < this.paintInterval) return;
+                    this.lastPaintTime = now;
+
+                    const color = this.currentTool === 'eraser' ? '#00000000' : document.getElementById('colorPicker')
+                        .value;
+                    const size = parseInt(document.getElementById('brushSize').value);
+                    const opacity = this.currentTool === 'eraser' ? 100 : parseInt(document.getElementById('opacity')
+                        .value);
+                    this.paintOnUV(result.uv, result.mesh, color, size, opacity);
+                    this.lastUV = result.uv;
+                    this.currentMesh = result.mesh;
+                } else if (this.isSelecting && (this.currentTool === 'lasso' || this.currentTool === 'polygon')) {
+                    this.addSelectionPoint(result.uv);
+                }
+            }
+
+            onMouseUp(e) {
+                if (this.isPainting) {
+                    this.isPainting = false;
+                    this.saveHistory();
+                }
+                if (this.isSelecting && (this.currentTool === 'lasso' || this.currentTool === 'polygon')) {
+                    this.endSelection();
+                }
+                if (this.currentTool === 'line' && this.lineStart) {
+                    const result = this.getUVFromClick(e);
+                    if (result && result.mesh === this.lineMesh) {
+                        const color = document.getElementById('colorPicker').value;
+                        const size = parseInt(document.getElementById('brushSize').value);
+                        const opacity = parseInt(document.getElementById('opacity').value);
+                        this.drawLine(this.lineStartUV, result.uv, this.lineMesh, color, size, opacity);
+                    }
+                    this.lineStart = null;
+                    this.lineStartUV = null;
+                    this.lineMesh = null;
+                }
+            }
+
+            onMouseLeave(e) {
+                if (this.isPainting) {
+                    this.isPainting = false;
+                    this.saveHistory();
+                }
+            }
+
+            // ====== 터치 이벤트 ======
+            onTouchStart(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                this.onMouseDown(mouseEvent);
+            }
+
+            onTouchMove(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                this.onMouseMove(mouseEvent);
+            }
+
+            onTouchEnd(e) {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup', {});
+                this.onMouseUp(mouseEvent);
+            }
+
+            // ====== 키보드 이벤트 ======
+            onKeyDown(e) {
+                // Undo/Redo
+                if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    if (e.shiftKey) this.redo();
+                    else this.undo();
+                    return;
+                }
+
+                // 도구 단축키
+                const toolMap = {
+                    'b': 'brush',
+                    'e': 'eraser',
+                    'f': 'fill',
+                    'l': 'line',
+                    '1': 'lasso',
+                    '2': 'polygon',
+                    '3': 'rect-select',
+                    '4': 'circle-select',
+                    '5': 'magic'
+                };
+
+                if (e.key in toolMap) {
+                    const tool = toolMap[e.key];
+                    document.querySelectorAll('.tool').forEach(t => {
+                        t.classList.toggle('active', t.dataset.tool === tool);
+                    });
+                    this.currentTool = tool;
+                    this.cancelSelection();
+                    this.updateToolBadge();
+                }
+
+                // Escape
+                if (e.key === 'Escape') {
+                    this.cancelSelection();
+                }
+            }
+
             // ====== 애니메이션 ======
             animate() {
                 requestAnimationFrame(this.animate.bind(this));
                 this.controls.update();
+
+                // 오버레이 업데이트 (선택 상태 유지)
+                if (this.isSelectionActive && this.selectionPoints.length >= 3) {
+                    this.drawSelectionOverlay();
+                }
+
                 this.renderer.render(this.scene, this.camera);
             }
         }
