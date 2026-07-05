@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRM 3D 맵 에디터 Pro</title>
+    <style>
+        /* ====== 리셋 ====== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ====== 헤더 ====== */
+        header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px solid #e94560;
+            flex-wrap: wrap;
+            z-index: 100;
+            position: relative;
+        }
+        header h1 {
+            font-size: 20px;
+            background: linear-gradient(45deg, #e94560, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: auto;
+        }
+        header button {
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        header button:hover {
+            background: rgba(233, 69, 96, 0.3);
+            border-color: #e94560;
+            transform: translateY(-1px);
+        }
+        header button.primary {
+            background: #e94560;
+            border-color: #e94560;
+        }
+        header button.primary:hover {
+            background: #ff6b6b;
+        }
+
+        /* ====== 컨테이너 ====== */
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            height: calc(100vh - 62px);
+        }
+
+        /* ====== 3D 뷰포트 ====== */
+        #viewport {
+            position: relative;
+            background: #0a0a0a;
+            overflow: hidden;
+        }
+        #viewport canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ====== 부위 컨트롤 ====== */
+        .part-controls {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 60%;
+            overflow-y: auto;
+            min-width: 120px;
+        }
+        .part-controls h4 {
+            color: #fff;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+        .part-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 0;
+            color: #aaa;
+            font-size: 12px;
+        }
+        .part-item input[type="checkbox"] {
+            accent-color: #e94560;
+            cursor: pointer;
+        }
+        .part-item .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* ====== 줌 컨트롤 ====== */
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .zoom-controls button {
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .zoom-controls button:hover {
+            background: rgba(233, 69, 96, 0.4);
+        }
+        #zoomLevel {
+            color: #aaa;
+            text-align: center;
+            font-size: 11px;
+            padding: 4px;
+        }
+
+        /* ====== 사이드바 ====== */
+        .sidebar {
+            background: #1a1a2e;
+            padding: 12px;
+            overflow-y: auto;
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sidebar h3 {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 4px;
+        }
+
+        /* ====== 도구 ====== */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+        .tool {
+            padding: 6px 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #aaa;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .tool:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        .tool.active {
+            background: #e94560;
+            color: #fff;
+            border-color: #e94560;
+        }
+
+        /* ====== 선택 도구 ====== */
+        .select-tools {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+        }
+        .select-tools .tool {
+            font-size: 13px;
+            padding: 4px;
+        }
+
+        /* ====== 컨트롤 ====== */
+        .control-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .control-row input[type="color"] {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: transparent;
+            padding: 0;
+        }
+        .control-row input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            height: 3px;
+            border-radius: 2px;
+        }
+        .control-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e94560;
+            cursor: pointer;
+        }
+        .control-row label {
+            font-size: 11px;
+            color: #888;
+            min-width: 25px;
+        }
+
+        /* ====== 레이어 ====== */
+        #layerList {
+            height: 70px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 3px;
+        }
+        .layer-item {
+            padding: 3px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            margin: 2px 0;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        .layer-item.active {
+            background: #e94560;
+        }
+        .layer-item .vis {
+            cursor: pointer;
+            opacity: 0.5;
+        }
+        .layer-item .vis:hover {
+            opacity: 1;
+        }
+
+        .layer-btns {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3px;
+        }
+        .layer-btns button {
+            padding: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #aaa;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .layer-btns button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* ====== 선택 액션 ====== */
+        .action-btns {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px;
+        }
+        .action-btns button {
+            padding: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #aaa;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        .action-btns button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* ====== 스크롤바 ====== */
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e94560;
+            border-radius: 2px;
+        }
+
+        /* ====== 상태 메시지 ====== */
+        .status-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid #e94560;
+            font-size: 14px;
+            z-index: 999;
+            display: none;
+            white-space: nowrap;
+        }
+        .status-msg.show {
+            display: block;
+        }
+        .status-msg.error {
+            border-color: #ff4444;
+        }
+
+        /* ====== 반응형 ====== */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 350px;
+            }
+            .sidebar {
+                border-left: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .status-msg {
+                font-size: 12px;
+                padding: 8px 16px;
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="status-msg" id="statusMsg">✅ 준비 완료!</div>
+
+    <header>
+        <h1>🎨 VRM 3D 맵 에디터 Pro</h1>
+        <button class="primary" id="loadVRM">📁 VRM 로드</button>
+        <input type="file" id="vrmInput" accept=".vrm,.glb,.gltf" style="display:none" />
+        <button id="exportPNG">🖼️ PNG 저장</button>
+        <button id="resetView">🔄 리셋</button>
+        <button id="toggleGrid">📐 그리드</button>
+    </header>
+
+    <div class="container">
+        <!-- 3D 뷰포트 -->
+        <div id="viewport">
+            <canvas id="threeCanvas"></canvas>
+
+            <!-- 부위 컨트롤 -->
+            <div class="part-controls" id="partControls">
+                <h4>🎯 부위 표시</h4>
+                <div id="partList"><div style="color:#666;font-size:12px;">VRM을 로드하세요</div></div>
+            </div>
+
+            <!-- 줌 컨트롤 -->
+            <div class="zoom-controls">
+                <button id="zoomIn">➕</button>
+                <button id="zoomOut">➖</button>
+                <button id="zoomFit">⬜</button>
+                <div id="zoomLevel">100%</div>
+            </div>
+        </div>
+
+        <!-- 사이드바 -->
+        <div class="sidebar">
+            <h3>🛠️ 도구</h3>
+            <div class="tool-grid">
+                <button class="tool active" data-tool="brush">🖌️</button>
+                <button class="tool" data-tool="eraser">🧹</button>
+                <button class="tool" data-tool="fill">🪣</button>
+                <button class="tool" data-tool="line">📏</button>
+            </div>
+
+            <h3>🔍 선택</h3>
+            <div class="select-tools">
+                <button class="tool" data-tool="lasso">🖊️</button>
+                <button class="tool" data-tool="polygon">⬡</button>
+                <button class="tool" data-tool="rect-select">⬜</button>
+                <button class="tool" data-tool="circle-select">⭕</button>
+                <button class="tool" data-tool="magic">✨</button>
+            </div>
+
+            <h3>🎨 색상</h3>
+            <div class="control-row">
+                <input type="color" id="colorPicker" value="#ff6b6b" />
+                <input type="range" id="brushSize" min="1" max="50" value="10" />
+                <label id="sizeLabel">10</label>
+            </div>
+            <div class="control-row">
+                <input type="range" id="opacity" min="1" max="100" value="100" />
+                <label id="opacityLabel">100%</label>
+            </div>
+
+            <h3>✂️ 선택 액션</h3>
+            <div class="action-btns" id="actionBtns">
+                <button id="fillSel">🎨 채우기</button>
+                <button id="clearSel">🧹 지우기</button>
+                <button id="extractSel">📄 분리</button>
+                <button id="deselect">❌ 해제</button>
+            </div>
+
+            <h3>📚 레이어</h3>
+            <div id="layerList"></div>
+            <div class="layer-btns">
+                <button id="addLayer">➕</button>
+                <button id="deleteLayer">➖</button>
+                <button id="moveUp">⬆</button>
+                <button id="moveDown">⬇</button>
+            </div>
+
+            <div style="display:flex;gap:6px;">
+                <button id="undo" style="flex:1;padding:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#aaa;border-radius:3px;cursor:pointer;font-size:11px;">↩️ 실행취소</button>
+                <button id="redo" style="flex:1;padding:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#aaa;border-radius:3px;cursor:pointer;font-size:11px;">↪️ 다시실행</button>
+                <span id="historyCount" style="color:#666;font-size:11px;display:flex;align-items:center;">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { VRMLoaderPlugin } from 'three/addons/loaders/VRMLoaderPlugin.js';
+
+        // ============================================================
+        //  VRM 3D 맵 에디터 Pro - 풀버전
+        // ============================================================
+
+        class VRMMapEditorPro {
+            constructor() {
+                // DOM
+                this.viewport = document.getElementById('viewport');
+                this.canvas = document.getElementById('threeCanvas');
+                this.statusMsg = document.getElementById('statusMsg');
+                this.vrmInput = document.getElementById('vrmInput');
+
+                // 상태
+                this.vrmModel = null;
+                this.meshParts = {};
+                this.partVisibility = {};
+                this.isPainting = false;
+                this.currentTool = 'brush';
+                this.currentLayerIndex = 0;
+                this.layers = [];
+                this.history = [];
+                this.historyIndex = -1;
+                this.textureCache = {};
+                this.showGrid = false;
+
+                // 선택
+                this.selectionMask = null;
+                this.selectionPoints = [];
+                this.isSelecting = false;
+                this.isSelectionActive = false;
+                this.selectionMesh = null;
+                this.lassoLine = null;
+                this.lastUV = null;
+                this.currentMesh = null;
+
+                // 초기화
+                this.initThree();
+                this.initLayers();
+                this.setupEvents();
+                this.animate();
+
+                this.showStatus('✅ 준비 완료! VRM 파일을 로드하세요');
+            }
+
+            // ====== 상태 메시지 ======
+            showStatus(msg, isError) {
+                const el = this.statusMsg;
+                el.textContent = msg;
+                el.className = 'status-msg show';
+                if (isError) el.classList.add('error');
+                clearTimeout(this.statusTimer);
+                this.statusTimer = setTimeout(() => {
+                    el.className = 'status-msg';
+                }, 3000);
+            }
+
+            // ====== Three.js 초기화 ======
+            initThree() {
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x0a0a0a);
+
+                this.camera = new THREE.PerspectiveCamera(
+                    45,
+                    this.viewport.clientWidth / this.viewport.clientHeight,
+                    0.1,
+                    100
+                );
+                this.camera.position.set(3, 2, 5);
+
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: this.canvas,
+                    antialias: true
+                });
+                this.renderer.setSize(this.viewport.clientWidth, this.viewport.clientHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.08;
+                this.controls.minDistance = 0.3;
+                this.controls.maxDistance = 20;
+                this.controls.target.set(0, 0, 0);
+
+                this.controls.addEventListener('change', () => {
+                    const dist = this.camera.position.distanceTo(this.controls.target);
+                    const pct = Math.round((1 - Math.min(dist / 20, 1)) * 100);
+                    document.getElementById('zoomLevel').textContent = Math.max(0, pct) + '%';
+                });
+
+                // 조명
+                const ambient = new THREE.AmbientLight(0x404060, 0.6);
+                this.scene.add(ambient);
+
+                const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+                dirLight.position.set(10, 20, 10);
+                dirLight.castShadow = true;
+                this.scene.add(dirLight);
+
+                const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+                fillLight.position.set(-5, 0, 5);
+                this.scene.add(fillLight);
+
+                // 그리드
+                this.grid = new THREE.GridHelper(10, 10, 0x444466, 0x222244);
+                this.grid.position.y = -0.5;
+                this.grid.visible = false;
+                this.scene.add(this.grid);
+
+                // 바닥
+                const ground = new THREE.Mesh(
+                    new THREE.PlaneGeometry(20, 20),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x1a1a2e,
+                        transparent: true,
+                        opacity: 0.8
+                    })
+                );
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = -0.5;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+
+                window.addEventListener('resize', () => {
+                    const w = this.viewport.clientWidth;
+                    const h = this.viewport.clientHeight;
+                    this.camera.aspect = w / h;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(w, h);
+                });
+            }
+
+            // ====== VRM 로드 ======
+            async loadVRM(file) {
+                if (!file) {
+                    this.showStatus('❌ 파일이 없습니다', true);
+                    return;
+                }
+
+                try {
+                    this.showStatus('🔄 VRM 로딩 중...');
+
+                    const loader = new GLTFLoader();
+                    loader.register((parser) => new VRMLoaderPlugin(parser));
+
+                    const url = URL.createObjectURL(file);
+                    const gltf = await loader.loadAsync(url);
+                    URL.revokeObjectURL(url);
+
+                    if (this.vrmModel) {
+                        this.scene.remove(this.vrmModel.scene);
+                    }
+
+                    this.vrmModel = gltf;
+                    const model = gltf.scene;
+                    model.scale.set(0.8, 0.8, 0.8);
+                    model.position.y = -0.5;
+                    this.scene.add(model);
+
+                    this.detectParts(model);
+                    this.textureCache = {};
+
+                    setTimeout(() => {
+                        this.compositeAll();
+                        this.showStatus('✅ VRM 로드 완료!');
+                    }, 200);
+
+                } catch (error) {
+                    console.error(error);
+                    this.showStatus('❌ VRM 로드 실패: ' + error.message, true);
+                }
+            }
+
+            // ====== 부위 감지 ======
+            detectParts(model) {
+                const parts = {};
+                const colors = {
+                    body: '#ff6b6b',
+                    head: '#ffd93d',
+                    hair: '#6c5ce7',
+                    arm: '#00b894',
+                    leg: '#00cec9',
+                    eye: '#0984e3',
+                    clothes: '#fd79a8',
+                    other: '#636e72'
+                };
+
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        const name = child.name.toLowerCase();
+                        let key = 'other';
+                        if (name.includes('body')) key = 'body';
+                        else if (name.includes('head')) key = 'head';
+                        else if (name.includes('hair')) key = 'hair';
+                        else if (name.includes('arm') || name.includes('hand')) key = 'arm';
+                        else if (name.includes('leg') || name.includes('foot')) key = 'leg';
+                        else if (name.includes('eye')) key = 'eye';
+                        else if (name.includes('cloth') || name.includes('outfit')) key = 'clothes';
+
+                        if (!parts[key]) parts[key] = [];
+                        parts[key].push(child);
+                        this.partVisibility[key] = true;
+                    }
+                });
+
+                this.meshParts = parts;
+                this.updatePartControls();
+            }
+
+            updatePartControls() {
+                const list = document.getElementById('partList');
+                list.innerHTML = '';
+
+                const colors = {
+                    body: '#ff6b6b',
+                    head: '#ffd93d',
+                    hair: '#6c5ce7',
+                    arm: '#00b894',
+                    leg: '#00cec9',
+                    eye: '#0984e3',
+                    clothes: '#fd79a8',
+                    other: '#636e72'
+                };
+
+                const keys = Object.keys(this.meshParts);
+                if (keys.length === 0) {
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">부위를 찾을 수 없습니다</div>';
+                    return;
+                }
+
+                keys.forEach(key => {
+                    const div = document.createElement('div');
+                    div.className = 'part-item';
+
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = this.partVisibility[key] !== false;
+                    cb.onchange = () => {
+                        this.partVisibility[key] = cb.checked;
+                        const meshes = this.meshParts[key] || [];
+                        meshes.forEach(m => m.visible = cb.checked);
+                    };
+
+                    const dot = document.createElement('span');
+                    dot.className = 'dot';
+                    dot.style.background = colors[key] || '#888';
+
+                    const label = document.createElement('span');
+                    label.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+
+                    div.appendChild(cb);
+                    div.appendChild(dot);
+                    div.appendChild(label);
+                    list.appendChild(div);
+                });
+            }
+
+            // ====== 레이어 ======
+            initLayers() {
+                this.addLayer('배경');
+                this.saveHistory();
+            }
+
+            addLayer(name) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 2048;
+                canvas.height = 2048;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                this.layers.push({
+                    name: name || '레이어 ' + (this.layers.length + 1),
+                    visible: true,
+                    canvas: canvas,
+                    ctx: ctx
+                });
+                this.currentLayerIndex = this.layers.length - 1;
+                this.updateLayerList();
+                this.saveHistory();
+            }
+
+            deleteLayer() {
+                if (this.layers.length <= 1) return;
+                this.layers.splice(this.currentLayerIndex, 1);
+                if (this.currentLayerIndex >= this.layers.length) this.currentLayerIndex = this.layers.length - 1;
+                this.updateLayerList();
+                this.saveHistory();
+                this.compositeAll();
+            }
+
+            moveLayer(dir) {
+                const ni = this.currentLayerIndex + dir;
+                if (ni < 0 || ni >= this.layers.length) return;
+                [this.layers[this.currentLayerIndex], this.layers[ni]] =
+                    [this.layers[ni], this.layers[this.currentLayerIndex]];
+                this.currentLayerIndex = ni;
+                this.updateLayerList();
+                this.saveHistory();
+                this.compositeAll();
+            }
+
+            updateLayerList() {
+                const list = document.getElementById('layerList');
+                list.innerHTML = '';
+                this.layers.forEach((layer, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'layer-item ' + (i === this.currentLayerIndex ? 'active' : '');
+                    const name = document.createElement('span');
+                    name.textContent = layer.name;
+                    const vis = document.createElement('span');
+                    vis.className = 'vis';
+                    vis.textContent = layer.visible ? '👁️' : '🚫';
+                    vis.onclick = (e) => {
+                        e.stopPropagation();
+                        layer.visible = !layer.visible;
+                        this.updateLayerList();
+                        this.compositeAll();
+                    };
+                    div.appendChild(name);
+                    div.appendChild(vis);
+                    div.onclick = () => {
+                        this.currentLayerIndex = i;
+                        this.updateLayerList();
+                    };
+                    list.appendChild(div);
+                });
+            }
+
+            // ====== 텍스처 ======
+            getTextureCanvas(mesh) {
+                if (!mesh || !mesh.material || !mesh.material.map) return null;
+                const key = mesh.uuid;
+                if (this.textureCache[key]) return this.textureCache[key];
+
+                const tex = mesh.material.map;
+                const canvas = document.createElement('canvas');
+                canvas.width = 2048;
+                canvas.height = 2048;
+                const ctx = canvas.getContext('2d');
+                if (tex.image) {
+                    ctx.drawImage(tex.image, 0, 0, 2048, 2048);
+                }
+                this.textureCache[key] = canvas;
+                return canvas;
+            }
+
+            compositeLayers(mesh) {
+                const canvas = this.getTextureCanvas(mesh);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const tex = mesh.material.map;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (tex && tex.image) {
+                    ctx.drawImage(tex.image, 0, 0, canvas.width, canvas.height);
+                }
+
+                for (const layer of this.layers) {
+                    if (layer.visible) {
+                        ctx.drawImage(layer.canvas, 0, 0, canvas.width, canvas.height);
+                    }
+                }
+
+                tex.image = canvas;
+                tex.needsUpdate = true;
+            }
+
+            compositeAll() {
+                for (const key in this.meshParts) {
+                    const meshes = this.meshParts[key] || [];
+                    meshes.forEach(mesh => {
+                        if (mesh && mesh.material && mesh.material.map) {
+                            this.compositeLayers(mesh);
+                        }
+                    });
+                }
+            }
+
+            // ====== UV 페인팅 ======
+            getUVFromClick(event) {
+                const rect = this.canvas.getBoundingClientRect();
+                const mouse = new THREE.Vector2(
+                    ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                    -((event.clientY - rect.top) / rect.height) * 2 + 1
+                );
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, this.camera);
+
+                const meshes = [];
+                for (const key in this.meshParts) {
+                    const ms = this.meshParts[key] || [];
+                    ms.forEach(m => {
+                        if (m && m.visible) meshes.push(m);
+                    });
+                }
+
+                const hits = raycaster.intersectObjects(meshes);
+                if (hits.length > 0) {
+                    const hit = hits[0];
+                    return { uv: hit.uv, mesh: hit.object, point: hit.point };
+                }
+                return null;
+            }
+
+            paintOnUV(uv, mesh, color, size, opacity) {
+                const canvas = this.getTextureCanvas(mesh);
+                if (!canvas) return;
+                const layer = this.layers[this.currentLayerIndex];
+                if (!layer || !layer.visible) return;
+
+                const ctx = layer.ctx;
+                const px = uv.x * canvas.width;
+                const py = (1 - uv.y) * canvas.height;
+                const r = size * canvas.width / 200;
+
+                ctx.save();
+                ctx.globalAlpha = opacity / 100;
+                ctx.beginPath();
+                ctx.arc(px, py, r, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.restore();
+
+                this.compositeLayers(mesh);
+            }
+
+            // ====== Flood Fill ======
+            floodFill(uv, mesh, color) {
+                const canvas = this.getTextureCanvas(mesh);
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                const px = Math.round(uv.x * w);
+                const py = Math.round((1 - uv.y) * h);
+
+                const img = ctx.getImageData(0, 0, w, h);
+                const data = img.data;
+                const idx = (py * w + px) * 4;
+                const targetR = data[idx];
+                const targetG = data[idx + 1];
+                const targetB = data[idx + 2];
+                const fill = this.hexToRgb(color);
+
+                if (targetR === fill.r && targetG === fill.g && targetB === fill.b) return;
+
+                const queue = [
+                    [px, py]
+                ];
+                const visited = new Set();
+
+                while (queue.length > 0) {
+                    const [cx, cy] = queue.shift();
+                    const key = cx + ',' + cy;
+                    if (visited.has(key)) continue;
+                    if (cx < 0 || cx >= w || cy < 0 || cy >= h) continue;
+
+                    const di = (cy * w + cx) * 4;
+                    const cr = data[di];
+                    const cg = data[di + 1];
+                    const cb = data[di + 2];
+                    if (Math.abs(cr - targetR) > 10 || Math.abs(cg - targetG) > 10 || Math.abs(cb - targetB) > 10)
+                        continue;
+
+                    visited.add(key);
+                    data[di] = fill.r;
+                    data[di + 1] = fill.g;
+                    data[di + 2] = fill.b;
+                    data[di + 3] = 255;
+
+                    queue.push([cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]);
+                }
+
+                ctx.putImageData(img, 0, 0);
+                this.compositeLayers(mesh);
+                this.saveHistory();
+                this.showStatus('🪣 채우기 완료!');
+            }
+
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 0, g: 0, b: 0 };
+            }
+
+            // ====== 선택 ======
+            startSelection(uv, mesh) {
+                this.isSelecting = true;
+                this.selectionPoints = [uv];
+                this.selectionMesh = mesh;
+                this.isSelectionActive = false;
+                this.clearLassoLine();
+            }
+
+            addSelectionPoint(uv) {
+                if (!this.isSelecting) return;
+                this.selectionPoints.push(uv);
+                this.drawLassoLine();
+            }
+
+            endSelection() {
+                if (!this.isSelecting || this.selectionPoints.length < 3) {
+                    this.cancelSelection();
+                    return;
+                }
+                this.isSelecting = false;
+                this.createSelectionMask();
+                this.isSelectionActive = true;
+                document.getElementById('actionBtns').style.display = 'grid';
+                this.showStatus('✅ 선택 완료!');
+            }
+
+            cancelSelection() {
+                this.isSelecting = false;
+                this.selectionPoints = [];
+                this.isSelectionActive = false;
+                this.selectionMask = null;
+                this.clearLassoLine();
+                document.getElementById('actionBtns').style.display = 'none';
+            }
+
+            createSelectionMask() {
+                const mesh = this.selectionMesh;
+                const canvas = this.getTextureCanvas(mesh);
+                if (!canvas) return;
+
+                const w = canvas.width;
+                const h = canvas.height;
+                const mask = new Uint8Array(w * h);
+
+                const pts = this.selectionPoints.map(p => ({
+                    x: Math.round(p.x * w),
+                    y: Math.round((1 - p.y) * h)
+                }));
+
+                this.fillPolygon(pts, w, h, mask);
+                this.selectionMask = mask;
+            }
+
+            fillPolygon(points, w, h, mask) {
+                const edges = [];
+                const n = points.length;
+                for (let i = 0; i < n; i++) {
+                    const p1 = points[i];
+                    const p2 = points[(i + 1) % n];
+                    if (p1.y === p2.y) continue;
+                    const yMin = Math.min(p1.y, p2.y);
+                    const yMax = Math.max(p1.y, p2.y);
+                    const xAtYMin = (p1.y < p2.y) ? p1.x : p2.x;
+                    const slope = (p2.x - p1.x) / (p2.y - p1.y);
+                    edges.push({ yMin, yMax, x: xAtYMin, slope });
+                }
+                edges.sort((a, b) => a.yMin - b.yMin);
+
+                let aet = [];
+                let cy = edges[0]?.yMin || 0;
+                while (aet.length > 0 || edges.length > 0) {
+                    while (edges.length > 0 && edges[0].yMin === cy) {
+                        aet.push(edges.shift());
+                    }
+                    aet.sort((a, b) => a.x - b.x);
+                    for (let i = 0; i < aet.length - 1; i += 2) {
+                        const x1 = Math.max(0, Math.round(aet[i].x));
+                        const x2 = Math.min(w - 1, Math.round(aet[i + 1].x));
+                        for (let x = x1; x <= x2; x++) {
+                            const idx = cy * w + x;
+                            if (idx >= 0 && idx < mask.length) mask[idx] = 255;
+                        }
+                    }
+                    cy++;
+                    aet = aet.filter(e => cy < e.yMax);
+                    aet.forEach(e => e.x += e.slope);
+                }
+                return mask;
+            }
+
+            drawLassoLine() {
+                this.clearLassoLine();
+                if (this.selectionPoints.length < 2 || !this.selectionMesh) return;
+
+                const mesh = this.selectionMesh;
+                const positions = [];
+
+                for (const uv of this.selectionPoints) {
+                    const p = this.uvTo3D(uv, mesh);
+                    if (p) positions.push(p.x, p.y, p.z);
+                }
+
+                if (positions.length < 6) return;
+
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                const mat = new THREE.LineBasicMaterial({
+                    color: 0xff6b6b,
+                    linewidth: 2,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                this.lassoLine = new THREE.Line(geo, mat);
+                this.scene.add(this.lassoLine);
+            }
+
+            clearLassoLine() {
+                if (this.lassoLine) {
+                    this.scene.remove(this.lassoLine);
+                    this.lassoLine = null;
+                }
+            }
+
+            uvTo3D(uv, mesh) {
+                if (!mesh || !mesh.geometry) return null;
+                const pos = mesh.geometry.attributes.position;
+                const uvs = mesh.geometry.attributes.uv;
+                if (!pos || !uvs) return null;
+
+                for (let i = 0; i < pos.count; i += 3) {
+                    const u1 = uvs.getX(i),
+                        v1 = uvs.getY(i);
+                    const u2 = uvs.getX(i + 1),
+                        v2 = uvs.getY(i + 1);
+                    const u3 = uvs.getX(i + 2),
+                        v3 = uvs.getY(i + 2);
+
+                    if (this.isUVInTriangle(uv, { u: u1, v: v1 }, { u: u2, v: v2 }, { u: u3, v: v3 })) {
+                        const p1 = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
+                        const p2 = new THREE.Vector3(pos.getX(i + 1), pos.getY(i + 1), pos.getZ(i + 1));
+                        const p3 = new THREE.Vector3(pos.getX(i + 2), pos.getY(i + 2), pos.getZ(i + 2));
+                        return this.barycentricInterpolate(uv,
+                            { uv: { u: u1, v: v1 }, pos: p1 },
+                            { uv: { u: u2, v: v2 }, pos: p2 },
+                            { uv: { u: u3, v: v3 }, pos: p3 }
+                        );
+                    }
+                }
+                return null;
+            }
+
+            isUVInTriangle(p, a, b, c) {
+                const d1 = this.sign(p, a, b);
+                const d2 = this.sign(p, b, c);
+                const d3 = this.sign(p, c, a);
+                const hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+                const hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+                return !(hasNeg && hasPos);
+            }
+
+            sign(p1, p2, p3) {
+                return (p1.u - p3.u) * (p2.v - p3.v) - (p2.u - p3.u) * (p1.v - p3.v);
+            }
+
+            barycentricInterpolate(p, a, b, c) {
+                const denom = (b.uv.u - a.uv.u) * (c.uv.v - a.uv.v) - (c.uv.u - a.uv.u) * (b.uv.v - a.uv.v);
+                if (Math.abs(denom) < 0.0001) return null;
+
+                const w1 = ((b.uv.u - a.uv.u) * (p.v - a.uv.v) - (p.u - a.uv.u) * (b.uv.v - a.uv.v)) / denom;
+                const w2 = ((p.u - a.uv.u) * (c.uv.v - a.uv.v) - (c.uv.u - a.uv.u) * (p.v - a.uv.v)) / denom;
+                const w3 = 1 - w1 - w2;
+
+                return new THREE.Vector3(
+                    w1 * a.pos.x + w2 * b.pos.x + w3 * c.pos.x,
+                    w1 * a.pos.y + w2 * b.pos.y + w3 * c.pos.y,
+                    w1 * a.pos.z + w2 * b.pos.z + w3 * c.pos.z
+                );
+            }
+
+            // ====== 선택 액션 ======
+            fillSelection() {
+                if (!this.isSelectionActive || !this.selectionMask) return;
+                const color = document.getElementById('colorPicker').value;
+                const mesh = this.selectionMesh;
+                const canvas = this.getTextureCanvas(mesh);
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = img.data;
+                const w = canvas.width,
+                    h = canvas.height;
+                const fill = this.hexToRgb(color);
+
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const idx = y * w + x;
+                        if (this.selectionMask[idx] === 255) {
+                            const di = idx * 4;
+                            data[di] = fill.r;
+                            data[di + 1] = fill.g;
+                            data[di + 2] = fill.b;
+                            data[di + 3] = 255;
+                        }
+                    }
+                }
+                ctx.putImageData(img, 0, 0);
+                this.compositeLayers(mesh);
+                this.saveHistory();
+                this.cancelSelection();
+                this.showStatus('✅ 선택 영역 채우기 완료!');
+            }
+
+            clearSelection() {
+                if (!this.isSelectionActive || !this.selectionMask) return;
+                const mesh = this.selectionMesh;
+                const canvas = this.getTextureCanvas(mesh);
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = img.data;
+                const w = canvas.width,
+                    h = canvas.height;
+
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const idx = y * w + x;
+                        if (this.selectionMask[idx] === 255) {
+                            const di = idx * 4;
+                            data[di + 3] = 0;
+                        }
+                    }
+                }
+                ctx.putImageData(img, 0, 0);
+                this.compositeLayers(mesh);
+                this.saveHistory();
+                this.cancelSelection();
+                this.showStatus('✅ 선택 영역 지우기 완료!');
+            }
+
+            extractSelection() {
+                if (!this.isSelectionActive || !this.selectionMask) return;
+                const mesh = this.selectionMesh;
+                const canvas = this.getTextureCanvas(mesh);
+                if (!canvas) return;
+
+                const newLayer = this.layers[this.currentLayerIndex];
+                const ctx = newLayer.ctx;
+                const w = canvas.width,
+                    h = canvas.height;
+
+                const img = canvas.getContext('2d').getImageData(0, 0, w, h);
+                const data = img.data;
+                ctx.clearRect(0, 0, w, h);
+
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const idx = y * w + x;
+                        if (this.selectionMask[idx] === 255) {
+                            const di = idx * 4;
+                            ctx.fillStyle =
+                                `rgba(${data[di]},${data[di+1]},${data[di+2]},${data[di+3]/255})`;
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+
+                this.clearSelection();
+                this.addLayer('선택영역');
+                this.updateLayerList();
+                this.compositeAll();
+                this.saveHistory();
+                this.showStatus('✅ 선택 영역 레이어 분리 완료!');
+            }
+
+            // ====== 히스토리 ======
+            saveHistory() {
+                const state = this.layers.map(layer => layer.canvas.toDataURL());
+                this.history = this.history.slice(0, this.historyIndex + 1);
+                this.history.push(state);
+                if (this.history.length > 30) this.history.shift();
+                this.historyIndex = this.history.length - 1;
+                document.getElementById('historyCount').textContent = this.history.length;
+            }
+
+            undo() {
+                if (this.historyIndex > 0) {
+                    this.historyIndex--;
+                    this.restoreState(this.history[this.historyIndex]);
+                    this.showStatus('↩️ 실행취소');
+                }
+            }
+
+            redo() {
+                if (this.historyIndex < this.history.length - 1) {
+                    this.historyIndex++;
+                    this.restoreState(this.history[this.historyIndex]);
+                    this.showStatus('↪️ 다시실행');
+                }
+            }
+
+            restoreState(state) {
+                state.forEach((dataUrl, i) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        if (this.layers[i]) {
+                            this.layers[i].ctx.clearRect(0, 0, 2048, 2048);
+                            this.layers[i].ctx.drawImage(img, 0, 0);
+                        }
+                    };
+                    img.src = dataUrl;
+                });
+                setTimeout(() => this.compositeAll(), 100);
+            }
+
+            // ====== 내보내기 ======
+            exportPNG() {
+                if (!this.vrmModel) {
+                    this.showStatus('❌ 먼저 VRM을 로드하세요', true);
+                    return;
+                }
+                const link = document.createElement('a');
+                link.download = 'vrm-map-' + Date.now() + '.png';
+                link.href = this.canvas.toDataURL('image/png');
+                link.click();
+                this.showStatus('🖼️ PNG 저장 완료!');
+            }
+
+            resetView() {
+                this.camera.position.set(3, 2, 5);
+                this.controls.target.set(0, 0, 0);
+                this.controls.update();
+                this.showStatus('🔄 뷰 리셋');
+            }
+
+            toggleGrid() {
+                this.showGrid = !this.showGrid;
+                this.grid.visible = this.showGrid;
+                this.showStatus(this.showGrid ? '📐 그리드 표시' : '📐 그리드 숨김');
+            }
+
+            // ====== 이벤트 ======
+            setupEvents() {
+                // VRM 로드
+                document.getElementById('loadVRM').addEventListener('click', () => {
+                    this.vrmInput.click();
+                });
+
+                this.vrmInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        this.loadVRM(e.target.files[0]);
+                    }
+                    e.target.value = '';
+                });
+
+                // 도구
+                document.querySelectorAll('.tool').forEach(tool => {
+                    tool.addEventListener('click', () => {
+                        document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+                        tool.classList.add('active');
+                        this.currentTool = tool.dataset.tool;
+                        this.cancelSelection();
+                    });
+                });
+
+                // 마우스
+                this.canvas.addEventListener('mousedown', (e) => {
+                    if (!this.vrmModel) return;
+                    const result = this.getUVFromClick(e);
+                    if (!result) return;
+
+                    if (this.currentTool === 'brush' || this.currentTool === 'eraser') {
+                        this.isPainting = true;
+                        this.lastUV = result.uv;
+                        this.currentMesh = result.mesh;
+                        const color = document.getElementById('colorPicker').value;
+                        const size = parseInt(document.getElementById('brushSize').value);
+                        const opacity = parseInt(document.getElementById('opacity').value);
+                        this.paintOnUV(result.uv, result.mesh, color, size, opacity);
+                    } else if (this.currentTool === 'fill') {
+                        this.floodFill(result.uv, result.mesh, document.getElementById('colorPicker').value);
+                    } else if (['lasso', 'polygon', 'rect-select', 'circle-select'].includes(this.currentTool)) {
+                        this.startSelection(result.uv, result.mesh);
+                    }
+                });
+
+                this.canvas.addEventListener('mousemove', (e) => {
+                    if (!this.vrmModel) return;
+                    const result = this.getUVFromClick(e);
+                    if (!result) return;
+
+                    if (this.isPainting && (this.currentTool === 'brush' || this.currentTool === 'eraser')) {
+                        const color = document.getElementById('colorPicker').value;
+                        const size = parseInt(document.getElementById('brushSize').value);
+                        const opacity = parseInt(document.getElementById('opacity').value);
+                        this.paintOnUV(result.uv, result.mesh, color, size, opacity);
+                        this.lastUV = result.uv;
+                    } else if (this.isSelecting && ['lasso', 'polygon'].includes(this.currentTool)) {
+                        this.addSelectionPoint(result.uv);
+                    }
+                });
+
+                this.canvas.addEventListener('mouseup', () => {
+                    if (this.isPainting) {
+                        this.isPainting = false;
+                        this.saveHistory();
+                    }
+                    if (this.isSelecting && ['lasso', 'polygon'].includes(this.currentTool)) {
+                        this.endSelection();
+                    }
+                });
+
+                this.canvas.addEventListener('mouseleave', () => {
+                    if (this.isPainting) {
+                        this.isPainting = false;
+                        this.saveHistory();
+                    }
+                });
+
+                // 키보드
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        if (e.shiftKey) this.redo();
+                        else this.undo();
+                    }
+                    if (e.key === 'Escape') {
+                        this.cancelSelection();
+                    }
+                });
+
+                // 줌
+                document.getElementById('zoomIn').addEventListener('click', () => {
+                    this.controls.dollyIn();
+                });
+                document.getElementById('zoomOut').addEventListener('click', () => {
+                    this.controls.dollyOut();
+                });
+                document.getElementById('zoomFit').addEventListener('click', this.resetView.bind(this));
+
+                // 레이어
+                document.getElementById('addLayer').addEventListener('click', () => {
+                    this.addLayer('레이어 ' + (this.layers.length + 1));
+                });
+                document.getElementById('deleteLayer').addEventListener('click', this.deleteLayer.bind(this));
+                document.getElementById('moveUp').addEventListener('click', () => this.moveLayer(1));
+                document.getElementById('moveDown').addEventListener('click', () => this.moveLayer(-1));
+
+                // 히스토리
+                document.getElementById('undo').addEventListener('click', this.undo.bind(this));
+                document.getElementById('redo').addEventListener('click', this.redo.bind(this));
+
+                // 선택 액션
+                document.getElementById('fillSel').addEventListener('click', this.fillSelection.bind(this));
+                document.getElementById('clearSel').addEventListener('click', this.clearSelection.bind(this));
+                document.getElementById('extractSel').addEventListener('click', this.extractSelection.bind(this));
+                document.getElementById('deselect').addEventListener('click', this.cancelSelection.bind(this));
+
+                // 내보내기
+                document.getElementById('exportPNG').addEventListener('click', this.exportPNG.bind(this));
+                document.getElementById('resetView').addEventListener('click', this.resetView.bind(this));
+                document.getElementById('toggleGrid').addEventListener('click', this.toggleGrid.bind(this));
+
+                // 브러시 옵션
+                document.getElementById('brushSize').addEventListener('input', (e) => {
+                    document.getElementById('sizeLabel').textContent = e.target.value;
+                });
+                document.getElementById('opacity').addEventListener('input', (e) => {
+                    document.getElementById('opacityLabel').textContent = e.target.value + '%';
+                });
+
+                console.log('✅ 모든 이벤트 연결 완료!');
+            }
+
+            // ====== 애니메이션 ======
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // ============================================================
+        //  실행
+        // ============================================================
+        console.log('🚀 VRM 3D 맵 에디터 Pro 시작!');
+        const app = new VRMMapEditorPro();
+        window.app = app;
+    </script>
+</body>
+</html>
