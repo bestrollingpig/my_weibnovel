@@ -2,2696 +2,561 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>소설 관계도 분석기 - 수동 복사 + 비평 + 효과</title>
+<link rel="stylesheet" href="css/style.css" />
 
 <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
 <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
 <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
-
-<style>
-  :root {
-    --bg: #12141a;
-    --panel: #181b23;
-    --panel2: #1e222c;
-    --border: #2a2f3b;
-    --text: #e6e8ee;
-    --muted: #8a90a2;
-    --accent: #5b9dff;
-    --accent-hover: #4a86e8;
-    --c-char: #4A90D9;
-    --c-event: #E74C3C;
-    --c-loc: #2ECC71;
-    --c-item: #F1C40F;
-    --paper-bg: #ffffff;
-    --paper-text: #2c2c2c;
-    --paper-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    --paper-border: #e2e8f0;
-    --tooltip-bg: #1a1d27;
-    --tooltip-border: #2a2f3b;
-  }
-
-  body.dark-theme {
-    --bg: #0b0c10;
-    --panel: #14161d;
-    --panel2: #1b1e26;
-    --border: #242936;
-    --text: #e1e4ed;
-    --muted: #798296;
-    --paper-bg: #181b23;
-    --paper-text: #e6e8ee;
-    --paper-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
-    --paper-border: #2a2f3b;
-    --tooltip-bg: #1a1d27;
-    --tooltip-border: #2a2f3b;
-  }
-
-  body.light-theme {
-    --bg: #f4f6fa;
-    --panel: #ffffff;
-    --panel2: #f8fafc;
-    --border: #cbd5e1;
-    --text: #0f172a;
-    --muted: #64748b;
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
-    --paper-bg: #ffffff;
-    --paper-text: #1e293b;
-    --paper-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    --paper-border: #e2e8f0;
-    --tooltip-bg: #ffffff;
-    --tooltip-border: #e2e8f0;
-  }
-
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: background 0.3s, color 0.3s;
-  }
-
-  .top-nav {
-    height: 48px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    justify-content: space-between;
-    z-index: 100;
-    flex-shrink: 0;
-  }
-  .top-nav .brand {
-    font-size: 14px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--accent);
-  }
-  .top-nav .brand span {
-    color: var(--text);
-    font-weight: 400;
-    font-size: 12px;
-  }
-  .top-nav .nav-controls {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .layout {
-    display: flex;
-    height: calc(100vh - 48px);
-    flex: 1;
-    min-height: 0;
-  }
-  .panel {
-    background: var(--panel);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    overflow: hidden;
-    transition: background 0.3s, border-color 0.3s;
-  }
-  #leftPanel { width: 340px; flex: none; }
-  #centerPanel { flex: 1; min-width: 320px; background: calc(var(--bg) + #030303); display: flex; flex-direction: column; }
-  #rightPanel { width: 420px; flex: none; border-right: none; border-left: 1px solid var(--border); }
-
-  .resizer {
-    width: 6px;
-    flex: none;
-    cursor: col-resize;
-    background: var(--border);
-    position: relative;
-    z-index: 10;
-    transition: background 0.2s;
-  }
-  .resizer:hover, .resizer.active { background: var(--accent); }
-
-  .tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-    flex-shrink: 0;
-  }
-  .tab-btn {
-    flex: 1;
-    padding: 10px 6px;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-    background: var(--panel2);
-  }
-  .tab-content {
-    display: none;
-    flex: 1;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: 12px;
-  }
-  .tab-content.active { display: flex; }
-
-  .panel-header {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-  }
-
-  button {
-    background: var(--panel2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.15s;
-    font-family: inherit;
-  }
-  button:hover {
-    border-color: var(--accent);
-    background: var(--panel);
-    color: var(--accent);
-  }
-  button.primary {
-    background: var(--accent);
-    color: #ffffff;
-    border-color: var(--accent);
-  }
-  button.primary:hover {
-    background: var(--accent-hover);
-    color: #ffffff;
-  }
-  button.success { background: #2ECC71; color: #fff; border-color: #2ECC71; }
-  button.success:hover { background: #27ae60; }
-  button.danger { background: #E74C3C; color: #fff; border-color: #E74C3C; }
-  button.danger:hover { background: #c0392b; }
-  button.warning { background: #F1C40F; color: #1a1a1a; border-color: #F1C40F; }
-  button.warning:hover { background: #f39c12; }
-
-  input, select, textarea {
-    background: var(--panel2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 12px;
-    outline: none;
-    transition: border-color 0.15s;
-    font-family: inherit;
-  }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-
-  .filelist {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-bottom: 12px;
-    flex: 1;
-    overflow-y: auto;
-  }
-  .filelist-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 10px;
-    border-radius: 6px;
-    font-size: 13px;
-    cursor: pointer;
-    color: var(--muted);
-    transition: all 0.15s;
-  }
-  .filelist-item:hover { background: var(--panel2); color: var(--text); }
-  .filelist-item.active { background: rgba(91,157,255,0.1); color: var(--accent); font-weight: 600; }
-  .filelist-item .delete-btn {
-    opacity: 0;
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    padding: 2px 4px;
-    cursor: pointer;
-  }
-  .filelist-item:hover .delete-btn { opacity: 1; }
-  .filelist-item .delete-btn:hover { color: #ff6b6b; }
-  .filelist-item .has-graph { color: #4ade80; font-size: 12px; }
-
-  .folder-cta-box {
-    border: 2px dashed var(--border);
-    border-radius: 10px;
-    padding: 20px 14px;
-    text-align: center;
-    background: var(--panel2);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-  .folder-cta-box p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
-
-  .editor-wrap {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-    position: relative;
-    flex: 1;
-  }
-
-  .menubar {
-    display: flex;
-    align-items: center;
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    height: 30px;
-    padding: 0 2px;
-    gap: 0;
-    position: relative;
-    z-index: 100;
-    flex-shrink: 0;
-    overflow-x: auto;
-  }
-  .menubar .menu-item {
-    padding: 4px 12px;
-    font-size: 12px;
-    cursor: pointer;
-    border-radius: 4px;
-    user-select: none;
-    position: relative;
-    white-space: nowrap;
-  }
-  .menubar .menu-item:hover { background: var(--panel2); }
-  .menubar .menu-item.active { background: var(--panel2); }
-  .menubar .status {
-    margin-left: auto;
-    font-size: 11px;
-    color: var(--muted);
-    padding: 4px 8px;
-    white-space: nowrap;
-  }
-
-  .dropdown {
-    display: none;
-    position: fixed;
-    min-width: 220px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
-    z-index: 200;
-    padding: 4px;
-  }
-  .dropdown.open { display: block; }
-  .dropdown-item {
-    padding: 5px 14px;
-    font-size: 12px;
-    cursor: pointer;
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-  }
-  .dropdown-item:hover { background: var(--accent); color: #fff; }
-  .dropdown-item .shortcut { font-size: 10px; color: var(--muted); margin-left: auto; }
-  .dropdown-item:hover .shortcut { color: rgba(255,255,255,0.7); }
-  .dropdown-sep { height: 1px; background: var(--border); margin: 4px 8px; }
-
-  .fmt-toolbar {
-    display: flex;
-    align-items: center;
-    padding: 4px 10px;
-    background: var(--panel2);
-    border-bottom: 1px solid var(--border);
-    gap: 6px;
-    flex-wrap: wrap;
-    min-height: 32px;
-    flex-shrink: 0;
-  }
-  .fmt-toolbar .btn-icon {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .fmt-toolbar .btn-icon:hover { background: var(--panel); }
-  .fmt-toolbar select { font-size: 11px; padding: 2px 4px; height: 24px; border-radius: 4px; }
-  .fmt-sep { width: 1px; height: 16px; background: var(--border); flex-shrink: 0; }
-  .zoom-badge { font-size: 10px; color: var(--muted); min-width: 32px; text-align: center; }
-
-  .paper-container {
-    flex: 1;
-    overflow-y: auto;
-    padding: 30px 10px;
-    display: flex;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.05);
-    min-height: 0;
-  }
-  body.light-theme .paper-container { background: #e2e8f0; }
-  body.dark-theme .paper-container { background: #0f1115; }
-
-  .paper {
-    width: 100%;
-    max-width: 760px;
-    min-height: 960px;
-    background: var(--paper-bg);
-    color: var(--paper-text);
-    box-shadow: var(--paper-shadow);
-    border: 1px solid var(--paper-border);
-    padding: 60px 70px;
-    font-size: 15px;
-    line-height: 1.8;
-    outline: none;
-    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
-    white-space: pre-wrap;
-    word-break: break-all;
-    box-sizing: border-box;
-    transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
-    height: max-content;
-  }
-  .paper.empty-state {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    color: var(--muted);
-    cursor: default;
-  }
-  .paper.empty-state h3 { margin: 0 0 10px 0; color: var(--text); }
-
-  .status-bar {
-    height: 24px;
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    font-size: 11px;
-    color: var(--muted);
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
-
-  .graph-wrap {
-    flex: 1;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-  .graph-header {
-    padding: 10px 12px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-  .graph-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .graph-filters {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    font-size: 11px;
-  }
-  .graph-actions {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .filter-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    background: var(--panel2);
-    border: 1px solid var(--border);
-    padding: 2px 8px;
-    border-radius: 4px;
-    user-select: none;
-    transition: all 0.15s;
-    font-size: 11px;
-  }
-  .filter-checkbox.active { border-color: var(--accent); }
-  .filter-checkbox .dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 2px;
-  }
-
-  .effect-buttons {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    margin-top: 4px;
-  }
-  .effect-buttons button {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 4px;
-  }
-  .effect-buttons button.active {
-    border-color: #ff6b6b;
-    color: #ff6b6b;
-    background: rgba(255,107,107,0.1);
-  }
-  .effect-buttons button.inactive {
-    border-color: #4ade80;
-    color: #4ade80;
-    background: rgba(74,222,128,0.05);
-  }
-
-  #cy {
-    flex: 1;
-    background: var(--panel2);
-    min-height: 100px;
-    width: 100%;
-    height: 100%;
-    touch-action: none;
-  }
-
-  .canvas-controls {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    z-index: 5;
-  }
-  .canvas-controls button {
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    font-size: 14px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    color: var(--text);
-  }
-
-  .wiki-panel {
-    height: 200px;
-    border-top: 1px solid var(--border);
-    padding: 12px;
-    background: var(--panel);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    flex-shrink: 0;
-  }
-  .wiki-card {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .wiki-card .title-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .wiki-card .node-name { font-size: 15px; font-weight: 700; }
-  .wiki-card select { font-size: 11px; padding: 2px 6px; }
-  .wiki-card textarea {
-    flex: 1;
-    resize: none;
-    font-size: 12px;
-    padding: 8px;
-    line-height: 1.4;
-    min-height: 40px;
-  }
-
-  .graph-tooltip {
-    position: fixed;
-    background: var(--tooltip-bg);
-    border: 1px solid var(--tooltip-border);
-    border-radius: 10px;
-    padding: 14px 18px;
-    max-width: 340px;
-    min-width: 200px;
-    pointer-events: none;
-    display: none;
-    z-index: 500;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    color: var(--text);
-    font-size: 12px;
-    line-height: 1.6;
-    transition: opacity 0.15s;
-  }
-  .graph-tooltip .tt-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .graph-tooltip .tt-header .tt-type-badge {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 1px 8px;
-    border-radius: 12px;
-    color: #fff;
-  }
-  .graph-tooltip .tt-divider { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
-  .graph-tooltip .tt-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: var(--muted);
-  }
-  .graph-tooltip .tt-desc { font-size: 12px; color: var(--text); margin: 4px 0; }
-  .graph-tooltip .tt-relations { font-size: 11px; color: var(--muted); }
-  .graph-tooltip .tt-relations .rel-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 1px 0;
-  }
-
-  .toast {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--panel);
-    border: 1px solid var(--accent);
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-size: 13px;
-    color: var(--text);
-    z-index: 999;
-    display: none;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    max-width: 90%;
-    text-align: center;
-  }
-
-  #helpDialog {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-  }
-  #helpDialog.open { display: flex; }
-  .help-panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    max-width: 680px;
-    max-height: 80vh;
-    width: 92%;
-    overflow-y: auto;
-    padding: 24px 28px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-  }
-  .help-panel h2 { font-size: 18px; margin: 0 0 4px 0; color: var(--accent); }
-  .help-panel .sub { font-size: 11px; color: var(--muted); margin-bottom: 20px; }
-  .help-panel h3 { font-size: 14px; margin: 20px 0 8px 0; color: var(--text); }
-  .help-panel p, .help-panel li { font-size: 12px; line-height: 1.7; color: var(--text); margin: 4px 0; }
-  .help-panel ul { padding-left: 20px; margin: 4px 0; }
-  .help-panel code {
-    background: var(--panel2);
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 11px;
-    border: 1px solid var(--border);
-  }
-  .help-panel .step {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    margin: 8px 0;
-    padding: 8px 10px;
-    background: var(--panel2);
-    border-radius: 6px;
-    border-left: 3px solid var(--accent);
-  }
-  .help-panel .step-num {
-    background: var(--accent);
-    color: #fff;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-  .help-panel .step-body { flex: 1; }
-  .help-panel .step-body strong { display: block; font-size: 13px; }
-  .help-panel .warning {
-    background: rgba(255,107,107,0.1);
-    border: 1px solid rgba(255,107,107,0.3);
-    border-radius: 6px;
-    padding: 10px 12px;
-    font-size: 11px;
-    margin: 12px 0;
-    color: #ff6b6b;
-  }
-  .help-panel .info-box {
-    background: rgba(91,157,255,0.08);
-    border: 1px solid rgba(91,157,255,0.2);
-    border-radius: 6px;
-    padding: 10px 12px;
-    font-size: 11px;
-    margin: 8px 0;
-  }
-  .help-close {
-    display: block;
-    margin: 20px auto 0;
-    padding: 8px 24px;
-  }
-  .help-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11px;
-    margin: 8px 0;
-  }
-  .help-table th, .help-table td {
-    border: 1px solid var(--border);
-    padding: 6px 8px;
-    text-align: left;
-  }
-  .help-table th { background: var(--panel2); color: var(--text); font-weight: 600; }
-
-  /* ===== 비평 결과 스타일 ===== */
-  .critique-result {
-    background: var(--panel2);
-    border-radius: 8px;
-    padding: 14px;
-    border: 1px solid var(--border);
-    margin-top: 10px;
-    display: none;
-  }
-  .critique-result.show { display: block; }
-
-  .score-summary {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 12px;
-    background: var(--bg);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    border: 1px solid var(--border);
-  }
-  .score-avg {
-    font-size: 32px;
-    font-weight: 700;
-    line-height: 1;
-  }
-  .score-avg .label { font-size: 14px; font-weight: 400; color: var(--muted); }
-  .score-grade {
-    font-size: 16px;
-    font-weight: 600;
-    padding: 4px 14px;
-    border-radius: 20px;
-  }
-  .score-grade.excellent { background: rgba(74,222,128,0.2); color: #4ade80; }
-  .score-grade.good { background: rgba(250,204,21,0.2); color: #facc15; }
-  .score-grade.fair { background: rgba(251,146,60,0.2); color: #fb923c; }
-  .score-grade.poor { background: rgba(248,113,113,0.2); color: #f87171; }
-  .score-grade.critical { background: rgba(239,68,68,0.2); color: #ef4444; }
-
-  .score-bars {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-  .score-bar-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 12px;
-  }
-  .score-bar-item .label { min-width: 90px; color: var(--muted); }
-  .score-bar-item .bar-track {
-    flex: 1;
-    height: 8px;
-    background: var(--bg);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .score-bar-item .bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.6s ease;
-  }
-  .score-bar-item .score-num { min-width: 36px; text-align: right; font-weight: 600; }
-
-  .critique-section {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
-  }
-  .critique-section h4 {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent);
-    margin: 0 0 4px 0;
-  }
-  .critique-section p, .critique-section .text {
-    font-size: 12px;
-    line-height: 1.7;
-    color: var(--text);
-    margin: 0 0 6px 0;
-    white-space: pre-wrap;
-  }
-  .critique-section .sentence-box {
-    background: var(--bg);
-    padding: 8px 12px;
-    border-radius: 6px;
-    border-left: 3px solid var(--accent);
-    margin: 4px 0;
-  }
-  .critique-section .sentence-box.best { border-color: #4ade80; }
-  .critique-section .sentence-box.worst { border-color: #f87171; }
-  .critique-section .sentence-box .quote {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-  }
-  .critique-section .sentence-box .reason {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  @media (max-width: 800px) {
-    .menubar { overflow-x: auto; gap: 2px; padding: 2px 6px; }
-    .menubar .menu-item { font-size: 11px; padding: 3px 8px; }
-    .layout { flex-direction: column; }
-    #leftPanel, #rightPanel { width: 100% !important; max-height: 40vh; }
-    #centerPanel { width: 100% !important; }
-    .resizer { display: none; }
-    .tab-btn { font-size: 11px; padding: 4px 10px; }
-    .filelist-item { padding: 8px 10px; }
-    .fmt-toolbar { flex-wrap: wrap; gap: 2px; }
-    .help-panel { max-width: 95%; padding: 16px; }
-    .btn, button { min-height: 36px; }
-    .btn-icon { width: 32px; height: 28px; font-size: 13px; }
-    .dropdown-item { padding: 10px 14px; font-size: 13px; }
-    #cy { touch-action: none; min-height: 200px; }
-    .wiki-panel { height: 120px; }
-    #leftPanel { max-height: 45vh; }
-    .graph-tooltip { max-width: 280px; font-size: 11px; padding: 10px 14px; }
-    .score-summary { flex-wrap: wrap; gap: 10px; }
-    .score-bar-item .label { min-width: 70px; font-size: 11px; }
-  }
-  @media (max-width: 480px) {
-    #leftPanel, #rightPanel { max-height: 35vh; }
-    .menubar .menu-item { font-size: 10px; padding: 2px 6px; }
-    .help-panel { padding: 12px; font-size: 11px; }
-    .help-panel h2 { font-size: 16px; }
-    .graph-tooltip { max-width: 240px; font-size: 10px; padding: 8px 12px; }
-    .paper { padding: 30px 20px; min-height: 600px; }
-    .score-bar-item .label { min-width: 60px; font-size: 10px; }
-    .score-avg { font-size: 24px; }
-  }
-</style>
+<script src="https://unpkg.com/soundfont-player@0.12.0/dist/soundfont-player.js"></script>
 </head>
 <body class="dark-theme">
-
-<div class="top-nav">
-  <div class="brand">⚓ 소설 관계도 분석기 <span>| 수동 복사 + 비평 + 효과</span></div>
-  <div class="nav-controls">
-    <button onclick="toggleTheme()" id="themeBtn">🌞 라이트 모드</button>
-    <button class="primary" id="openDirBtn" onclick="openLocalFolder()">📂 폴더 선택</button>
-  </div>
-</div>
-
-<div class="layout">
-
-  <!-- ===== LEFT PANEL ===== -->
-  <div class="panel" id="leftPanel">
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('manuscriptTab', this)">📝 원고</button>
-      <button class="tab-btn" onclick="switchTab('critiqueTab', this)">📊 비평</button>
+  <!-- 상단 네비게이션 -->
+  <div class="top-nav">
+    <div class="brand">⚓ 소설 관계도 분석기 <span>| 수동 복사 + 비평 + 효과</span></div>
+    <div class="nav-controls">
+      <button id="themeBtn" onclick="window.app.toggleTheme()">🌞 라이트 모드</button>
+      <button class="primary" id="openDirBtn" onclick="window.app.openLocalFolder()">📂 폴더 선택</button>
     </div>
+  </div>
 
-    <!-- 원고 탭 -->
-    <div class="tab-content active" id="manuscriptTab">
+  <!-- 메인 레이아웃 -->
+  <div class="layout">
+    <!-- 왼쪽 패널: 파일 목록 -->
+    <div class="panel" id="leftPanel">
       <div id="folderConnectionPanel"></div>
       <div class="panel-header">
         문서 목록 <span id="docCount"></span>
-        <button id="newDocBtn" onclick="createNewDocument()" style="display:none;">+ 새 문서</button>
+        <button id="newDocBtn" onclick="window.editor.createNewDocument()" style="display:none;">+ 새 문서</button>
       </div>
       <div class="filelist" id="fileList"></div>
-
-      <!-- 분석 도구 -->
-      <div style="border-top:1px solid var(--border); padding-top:12px; margin-top:4px; flex-shrink:0;">
-        <div style="font-size:11px; font-weight:600; color:var(--text); margin-bottom:4px;">📋 관계도 분석</div>
-        <button onclick="copyWithPrompt()" class="primary" style="width:100%; font-size:12px; padding:8px;">
-          📋 프롬프트 + 텍스트 복사
-        </button>
-        <div id="copyToast" style="font-size:10px; color:var(--accent); margin-top:4px; display:none; text-align:center;">
-          ✅ 클립보드에 복사되었습니다! 외부 AI에 붙여넣고 분석하세요.
-        </div>
-        <div style="margin-top:8px;">
-          <span style="font-size:11px; font-weight:600; color:var(--text);">📥 결과 붙여넣기 (JSON)</span>
-          <textarea id="resultPasteArea" rows="3" style="width:100%; font-size:11px; font-family:monospace; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:8px; color:var(--text); resize:vertical; margin-top:2px;" 
-            placeholder="NotebookLM/DeepSeek/Gemini의 분석 결과(JSON)를 붙여넣으세요..."></textarea>
-          <div style="display:flex; gap:4px; margin-top:4px; flex-wrap:wrap;">
-            <button onclick="processPastedResult()" class="primary" style="font-size:11px; padding:4px 12px;">📊 그래프 생성</button>
-            <button onclick="autoFixAndProcess()" style="font-size:11px; padding:4px 12px; border-color:#facc15; color:#facc15;">🔧 자동 수정</button>
-            <button onclick="clearResultArea()" style="font-size:11px; padding:4px 12px; border-color:#ff6b6b; color:#ff6b6b;">🗑️ 지우기</button>
-          </div>
-          <div id="parseResultFeedback" style="font-size:11px; margin-top:4px; color:var(--muted); display:none;">
-            <span id="parseStats">노드 0개, 엣지 0개</span>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- 비평 탭 -->
-    <div class="tab-content" id="critiqueTab">
-      <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
+    <div class="resizer" id="resizerLeft"></div>
 
-        <!-- 1단계: 비평 프롬프트 복사 -->
-        <div style="background:var(--panel2); border-radius:8px; padding:12px; border:1px solid var(--border);">
-          <div style="font-size:12px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:6px;">
-            <span>①</span> 비평 프롬프트 복사
-          </div>
-          <div style="font-size:10px; color:var(--muted); margin:2px 0 6px 0; padding-left:18px;">
-            현재 원고를 웹소설 비평 프롬프트와 함께 복사합니다.
-          </div>
-          <button onclick="copyCritiquePrompt()" class="primary" style="width:100%; font-size:12px; padding:8px;">
-            📋 비평 프롬프트 + 텍스트 복사
-          </button>
-          <div id="critiqueCopyToast" style="font-size:10px; color:var(--accent); margin-top:4px; display:none; text-align:center;">
-            ✅ 비평 프롬프트가 복사되었습니다! 외부 AI에 붙여넣고 분석하세요.
-          </div>
+    <!-- 중앙 패널: 편집기 -->
+    <div class="panel editor-wrap" id="centerPanel">
+      <div class="menubar">
+        <!-- 메뉴바 -->
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'fileMenu')">파일(F)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'editMenu')">편집(E)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'formatMenu')">서식(O)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'viewMenu')">보기(V)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'snapshotMenu')">스냅샷(S)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'helpMenu')">도움말(H)</div>
+        <span class="status" id="statusText">폴더 연결 필요</span>
+
+        <!-- 드롭다운 메뉴들 -->
+        <div class="dropdown" id="fileMenu">
+          <div class="dropdown-item" onclick="window.editor.createNewDocument();window.app.closeAllMenus();">새 문서</div>
+          <div class="dropdown-item" onclick="window.app.openLocalFolder();window.app.closeAllMenus();">파일 열기</div>
+          <div class="dropdown-item" onclick="window.editor.saveCurrentFile();window.app.closeAllMenus();">저장</div>
+          <div class="dropdown-item" onclick="window.editor.saveAsFile();window.app.closeAllMenus();">다른 이름으로 저장</div>
+          <div class="dropdown-item" onclick="window.editor.createBackup();window.app.closeAllMenus();">💾 수동 백업</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.editor.showMergeSplit();window.app.closeAllMenus();">📄 문서 합치기/분할</div>
+          <div class="dropdown-item" onclick="window.editor.showFindReplace();window.app.closeAllMenus();">🔍 폴더내 단어 찾기/바꾸기</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.app.disconnectFolder();window.app.closeAllMenus();">폴더 연결 해제</div>
         </div>
-
-        <!-- 2단계: 비평 결과 붙여넣기 -->
-        <div style="background:var(--panel2); border-radius:8px; padding:12px; border:1px solid var(--border);">
-          <div style="font-size:12px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:6px;">
-            <span>②</span> 비평 결과 붙여넣기 (JSON)
-          </div>
-          <div style="font-size:10px; color:var(--muted); margin:2px 0 6px 0; padding-left:18px;">
-            AI가 출력한 비평 결과(JSON)를 붙여넣으세요.
-          </div>
-          <textarea id="critiquePasteArea" rows="4" style="width:100%; font-size:11px; font-family:monospace; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:8px; color:var(--text); resize:vertical;" 
-            placeholder='{"scores": {...}, "critique": {...}}'></textarea>
-          <div style="display:flex; gap:4px; margin-top:4px;">
-            <button onclick="processCritiqueResult()" class="primary" style="font-size:11px; padding:4px 12px; flex:1;">📊 비평 결과 표시</button>
-            <button onclick="document.getElementById('critiquePasteArea').value=''; document.getElementById('critiqueResult').classList.remove('show');" style="font-size:11px; padding:4px 12px; border-color:#ff6b6b; color:#ff6b6b;">🗑️ 지우기</button>
-          </div>
+        <div class="dropdown" id="editMenu">
+          <div class="dropdown-item" onclick="window.editor.execCmd('undo');window.app.closeAllMenus();">실행 취소</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('redo');window.app.closeAllMenus();">다시 실행</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('cut');window.app.closeAllMenus();">잘라내기</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('copy');window.app.closeAllMenus();">복사</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('paste');window.app.closeAllMenus();">붙여넣기</div>
         </div>
-
-        <!-- 3단계: 비평 결과 표시 -->
-        <div id="critiqueResult" class="critique-result"></div>
-
-        <div style="font-size:10px; color:var(--muted); padding:4px 8px; line-height:1.5; background:var(--panel2); border-radius:4px; border:1px solid var(--border);">
-          💡 <b>비평 프롬프트</b>는 웹소설 장르 문법과 독자 친절함을 기준으로<br>
-          문장·묘사·전개·캐릭터·가독성을 100점 만점으로 평가합니다.
+        <div class="dropdown" id="formatMenu">
+          <div class="dropdown-item" onclick="window.editor.execCmd('bold');window.app.closeAllMenus();">굵게</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('italic');window.app.closeAllMenus();">기울임</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('underline');window.app.closeAllMenus();">밑줄</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('justifyLeft');window.app.closeAllMenus();">왼쪽 정렬</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('justifyCenter');window.app.closeAllMenus();">가운데 정렬</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('justifyRight');window.app.closeAllMenus();">오른쪽 정렬</div>
+        </div>
+        <div class="dropdown" id="viewMenu">
+          <div class="dropdown-item" onclick="window.editor.zoomEditor(-10);window.app.closeAllMenus();">축소</div>
+          <div class="dropdown-item" onclick="window.editor.zoomEditor(10);window.app.closeAllMenus();">확대</div>
+          <div class="dropdown-item" onclick="window.editor.zoomReset();window.app.closeAllMenus();">기본값</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.editor.toggleSplitMode();window.app.closeAllMenus();">📖 분할 모드</div>
+          <div class="dropdown-item" onclick="window.editor.toggleMobilePreview();window.app.closeAllMenus();">📱 모바일 프리뷰</div>
+          <div class="dropdown-item" onclick="window.editor.toggleTypewriterMode();window.app.closeAllMenus();">⌨️ 타자기 모드</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.app.toggleTheme();window.app.closeAllMenus();">테마 전환</div>
+        </div>
+        <div class="dropdown" id="snapshotMenu">
+          <div class="dropdown-item" onclick="window.editor.showSnapshotDialog();window.app.closeAllMenus();">📸 스냅샷 저장</div>
+          <div class="dropdown-item" onclick="window.editor.showSnapshotDialog();window.app.closeAllMenus();">📂 스냅샷 목록</div>
+        </div>
+        <div class="dropdown" id="helpMenu">
+          <div class="dropdown-item" onclick="window.app.showHelp();window.app.closeAllMenus();">📖 도움말</div>
+          <div class="dropdown-item" onclick="window.app.showAbout();window.app.closeAllMenus();">정보</div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <div class="resizer" id="resizerLeft"></div>
+      <!-- 편집기 TTS 패널 -->
+      <div id="editorTtsPanel" style="display:none;background:var(--panel2);border-bottom:1px solid var(--border);padding:6px 12px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;">
+          <span style="font-weight:600;color:var(--c-event);">🔊 본문 읽기</span>
+          <select id="editorTtsVoice" style="font-size:10px;padding:2px 4px;width:auto;min-width:120px;">
+            <option value="">기본 음성</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:4px;color:var(--muted);">
+            속도
+            <input type="range" id="editorTtsSpeed" min="0.5" max="2" step="0.1" value="0.9" style="width:60px;height:4px;" oninput="document.getElementById('editorTtsSpeedVal').textContent=this.value+'x'">
+            <span id="editorTtsSpeedVal" style="min-width:28px;">0.9x</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;color:var(--muted);font-size:10px;">
+            <input type="checkbox" id="editorTtsAudiobook" checked> 낭독 모드
+          </label>
+          <button onclick="window.editor.readEditorText()" class="primary" style="font-size:10px;padding:2px 10px;">▶ 읽기</button>
+          <button onclick="window.editor.stopEditorTts()" style="font-size:10px;padding:2px 10px;border-color:#ff6b6b;color:#ff6b6b;">⏹ 정지</button>
+          <span id="editorTtsStatus" style="font-size:10px;color:var(--muted);"></span>
+        </div>
+      </div>
 
-  <!-- ===== CENTER PANEL ===== -->
-  <div class="panel editor-wrap" id="centerPanel">
-    <div class="menubar">
-      <div class="menu-item" onclick="toggleMenu(this, 'fileMenu')">파일(F)</div>
-      <div class="menu-item" onclick="toggleMenu(this, 'editMenu')">편집(E)</div>
-      <div class="menu-item" onclick="toggleMenu(this, 'formatMenu')">서식(O)</div>
-      <div class="menu-item" onclick="toggleMenu(this, 'viewMenu')">보기(V)</div>
-      <div class="menu-item" onclick="toggleMenu(this, 'helpMenu')">도움말(H)</div>
-      <span class="status" id="statusText">폴더 연결 필요</span>
+      <!-- 툴바 -->
+      <div class="fmt-toolbar">
+        <button class="btn-icon" onclick="window.editor.execCmd('undo')" title="실행 취소">↩</button>
+        <button class="btn-icon" onclick="window.editor.execCmd('redo')" title="다시 실행">↪</button>
+        <span class="fmt-sep"></span>
+        <select id="fontFamilySelect" onchange="window.editor.execCmd('fontName', this.value)" title="글꼴">
+          <option value="Pretendard">Pretendard</option>
+          <option value="바탕">바탕</option>
+          <option value="돋움">돋움</option>
+        </select>
+        <select id="fontSizeSelect" onchange="window.editor.execCmd('fontSize', this.value)" title="크기">
+          <option value="3">작게</option>
+          <option value="4" selected>보통</option>
+          <option value="5">크게</option>
+        </select>
+        <span class="fmt-sep"></span>
+        <button class="btn-icon" onclick="window.editor.execCmd('bold')" title="굵게"><b>B</b></button>
+        <button class="btn-icon" onclick="window.editor.execCmd('italic')" title="기울임"><i>I</i></button>
+        <button class="btn-icon" onclick="window.editor.execCmd('underline')" title="밑줄"><u>U</u></button>
+        <span class="fmt-sep"></span>
+        <span id="zoomLevel" class="zoom-badge">100%</span>
+        <button class="btn-icon" onclick="window.editor.zoomEditor(-10)" title="축소">−</button>
+        <button class="btn-icon" onclick="window.editor.zoomEditor(10)" title="확대">+</button>
+        <span style="flex:1;"></span>
+        <button class="btn-icon" onclick="window.editor.saveCurrentFile()" title="저장" style="color:var(--accent);">💾</button>
+        <button class="btn-icon" onclick="window.editor.toggleEditorTts()" id="editorTtsBtn" title="본문 읽기" style="color:var(--c-event);">🔊</button>
+        <button class="btn-icon" id="typeMusicBtn" title="타자 음악" style="color:var(--c-loc);">🎵</button>
+        <button class="btn-icon split-toggle" onclick="window.editor.toggleSplitMode()" id="splitToggleBtn" title="분할 모드">📖</button>
+      </div>
 
-      <div class="dropdown" id="fileMenu">
-        <div class="dropdown-item" onclick="createNewDocument();closeAllMenus();">새 문서</div>
-        <div class="dropdown-item" onclick="openLocalFolder();closeAllMenus();">파일 열기</div>
-        <div class="dropdown-item" onclick="saveCurrentFile();closeAllMenus();">저장</div>
-        <div class="dropdown-item" onclick="saveAsFile();closeAllMenus();">다른 이름으로 저장</div>
-        <div class="dropdown-sep"></div>
-        <div class="dropdown-item" onclick="disconnectFolder();closeAllMenus();">폴더 연결 해제</div>
+      <!-- 타자 음악 패널 -->
+      <div id="typeMusicPanel" style="display:none;background:var(--panel2);border-bottom:1px solid var(--border);padding:6px 12px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;">
+          <span style="font-weight:600;color:var(--c-loc);">⌨️ 타자 음악</span>
+          <label style="font-size:9px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:2px;">
+            <input type="checkbox" id="tmKeySoundOn" checked> 키음
+          </label>
+          <span style="font-size:10px;color:var(--muted);">키보드:</span>
+          <select id="tmSwitchType" style="font-size:10px;padding:2px 4px;">
+            <option value="blue">청축 (클릭)</option>
+            <option value="brown" selected>갈축 (넌클릭)</option>
+            <option value="red">적축 (리니어)</option>
+            <option value="black">흑축 (무거움)</option>
+            <option value="pebble">조약돌</option>
+            <option value="mungge">몽글몽글</option>
+            <option value="custom">🎵 사용자 지정</option>
+          </select>
+          <label id="tmKeySoundLabel" style="font-size:10px;color:var(--accent);cursor:pointer;display:none;">
+            📂 키음
+            <input type="file" id="tmKeySoundFile" accept="audio/*" style="display:none;">
+          </label>
+          <span style="width:1px;height:16px;background:var(--border);"></span>
+          <span style="font-size:10px;color:var(--muted);">배경음악:</span>
+          <label style="font-size:10px;color:var(--accent);cursor:pointer;">
+            📂 파일
+            <input type="file" id="tmAudioFile" accept="audio/*,.mid" style="display:none;">
+          </label>
+          <button id="tmPlayBtn" onclick="window.typeMusic.togglePlay()" style="font-size:10px;padding:2px 8px;">▶ 재생</button>
+          <span id="tmFileName" style="font-size:9px;color:var(--muted);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          <span style="width:1px;height:16px;background:var(--border);"></span>
+          <span style="font-size:10px;color:var(--muted);">효과음:</span>
+          <input type="range" id="tmFxVol" min="0" max="1" step="0.05" value="0.6" style="width:45px;height:3px;" oninput="document.getElementById('tmFxVolLabel').textContent=Math.round(this.value*100)+'%'">
+          <span id="tmFxVolLabel" style="font-size:9px;color:var(--muted);min-width:25px;">60%</span>
+          <span style="font-size:10px;color:var(--muted);">음악:</span>
+          <input type="range" id="tmMusicVol" min="0" max="1" step="0.05" value="0.4" style="width:45px;height:3px;" oninput="document.getElementById('tmMusicVolLabel').textContent=Math.round(this.value*100)+'%'">
+          <span id="tmMusicVolLabel" style="font-size:9px;color:var(--muted);min-width:25px;">40%</span>
+          <label style="font-size:9px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:2px;">
+            <input type="checkbox" id="tmSpeedSync" checked> ⌨ 연동
+          </label>
+          <span id="tmRpmDisplay" style="font-size:9px;color:var(--c-loc);min-width:32px;text-align:right;">0 RPM</span>
+        </div>
       </div>
-      <div class="dropdown" id="editMenu">
-        <div class="dropdown-item" onclick="execCmd('undo');closeAllMenus();">실행 취소</div>
-        <div class="dropdown-item" onclick="execCmd('redo');closeAllMenus();">다시 실행</div>
-        <div class="dropdown-sep"></div>
-        <div class="dropdown-item" onclick="execCmd('cut');closeAllMenus();">잘라내기</div>
-        <div class="dropdown-item" onclick="execCmd('copy');closeAllMenus();">복사</div>
-        <div class="dropdown-item" onclick="execCmd('paste');closeAllMenus();">붙여넣기</div>
-      </div>
-      <div class="dropdown" id="formatMenu">
-        <div class="dropdown-item" onclick="execCmd('bold');closeAllMenus();">굵게</div>
-        <div class="dropdown-item" onclick="execCmd('italic');closeAllMenus();">기울임</div>
-        <div class="dropdown-item" onclick="execCmd('underline');closeAllMenus();">밑줄</div>
-        <div class="dropdown-sep"></div>
-        <div class="dropdown-item" onclick="execCmd('justifyLeft');closeAllMenus();">왼쪽 정렬</div>
-        <div class="dropdown-item" onclick="execCmd('justifyCenter');closeAllMenus();">가운데 정렬</div>
-        <div class="dropdown-item" onclick="execCmd('justifyRight');closeAllMenus();">오른쪽 정렬</div>
-      </div>
-      <div class="dropdown" id="viewMenu">
-        <div class="dropdown-item" onclick="zoomEditor(-10);closeAllMenus();">축소</div>
-        <div class="dropdown-item" onclick="zoomEditor(10);closeAllMenus();">확대</div>
-        <div class="dropdown-item" onclick="zoomReset();closeAllMenus();">기본값</div>
-        <div class="dropdown-sep"></div>
-        <div class="dropdown-item" onclick="toggleTheme();closeAllMenus();">테마 전환</div>
-      </div>
-      <div class="dropdown" id="helpMenu">
-        <div class="dropdown-item" onclick="showHelp();closeAllMenus();">📖 도움말</div>
-        <div class="dropdown-item" onclick="showAbout();closeAllMenus();">정보</div>
-      </div>
-    </div>
 
-    <div class="fmt-toolbar">
-      <button class="btn-icon" onclick="execCmd('undo')">↩</button>
-      <button class="btn-icon" onclick="execCmd('redo')">↪</button>
-      <span class="fmt-sep"></span>
-      <select id="fontFamilySelect" onchange="execCmd('fontName', this.value)">
-        <option value="Pretendard">Pretendard</option>
-        <option value="바탕">바탕</option>
-        <option value="돋움">돋움</option>
-      </select>
-      <select id="fontSizeSelect" onchange="execCmd('fontSize', this.value)">
-        <option value="3">작게</option>
-        <option value="4" selected>보통</option>
-        <option value="5">크게</option>
-      </select>
-      <span class="fmt-sep"></span>
-      <button class="btn-icon" onclick="execCmd('bold')"><b>B</b></button>
-      <button class="btn-icon" onclick="execCmd('italic')"><i>I</i></button>
-      <button class="btn-icon" onclick="execCmd('underline')"><u>U</u></button>
-      <span class="fmt-sep"></span>
-      <span id="zoomLevel" class="zoom-badge">100%</span>
-      <button class="btn-icon" onclick="zoomEditor(-10)">−</button>
-      <button class="btn-icon" onclick="zoomEditor(10)">+</button>
-      <span class="fmt-sep"></span>
-      <button class="btn-icon" onclick="saveCurrentFile()" style="color:var(--accent);">💾</button>
-      <button class="btn-icon" onclick="copyWithPrompt()" style="color:var(--c-item);">📋</button>
-    </div>
+      <!-- 찾기 인라인 -->
+      <div class="find-inline" id="findInline" style="display:none;">
+        <input type="text" id="findInput" placeholder="찾을 단어..." oninput="window.editor.doFindInDoc()" onkeydown="if(event.key==='Enter'){event.shiftKey?window.editor.doFindPrev():window.editor.doFindNext()}">
+        <span class="count" id="findCount"></span>
+        <button onclick="window.editor.doFindPrev()">▲</button>
+        <button onclick="window.editor.doFindNext()">▼</button>
+        <button onclick="window.editor.closeFindInline()" style="border-color:transparent;color:var(--muted);">✕</button>
+      </div>
 
-    <div class="paper-container">
-      <div class="paper empty-state" id="editor" contenteditable="false">
-        <h3>📂 로컬 폴더를 연결하세요</h3>
+      <!-- 편집기 -->
+      <div class="paper-container" id="mainPaperContainer">
+        <div class="paper empty-state" id="editor" contenteditable="false">
+          <h3>📂 로컬 폴더를 연결하세요</h3>
         <p style="max-width:450px;font-size:13px;line-height:1.6;">소설 파일이 있는 폴더를 선택하면 편집기가 활성화됩니다.</p>
-        <button class="primary" onclick="openLocalFolder()" style="padding:10px 20px;font-size:14px;">📂 폴더 열기</button>
+        <button class="primary" onclick="window.app.openLocalFolder()" style="padding:10px 20px;font-size:14px;">📂 폴더 열기</button>
+      </div>
+      </div>
+
+      <!-- 오버레이 레이어 (그래프 노드 이미지용) -->
+      <div id="overlays"></div>
+
+      <!-- 분할 모드 -->
+      <div class="split-container" id="splitContainer" style="display:none;">
+        <div class="split-pane" id="splitPaneMain">
+          <div class="paper-container" style="padding:10px;">
+            <div class="paper" id="splitEditor" contenteditable="true" style="min-height:600px;max-width:100%;padding:30px 40px;"></div>
+          </div>
+        </div>
+        <div class="split-divider" id="splitDivider"></div>
+        <div class="split-pane" id="splitPaneRef">
+          <div style="padding:4px 10px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;flex-shrink:0;">
+            <span>📖 참고 문서</span>
+            <select id="splitRefFileSelect" onchange="window.editor.loadSplitRefFile(this.value)" style="font-size:10px;padding:2px 4px;width:auto;">
+              <option value="">참고 파일 선택</option>
+            </select>
+          </div>
+          <div class="paper-container" style="padding:10px;">
+            <div class="paper" id="splitRefEditor" contenteditable="false" style="min-height:600px;max-width:100%;padding:30px 40px;background:var(--panel2);color:var(--muted);font-size:13px;">
+              참고할 파일을 선택하세요.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 상태바 -->
+      <div class="status-bar">
+        <span id="filePathDisplay">연결 없음</span>
+        <span id="saveStatus" style="font-size:10px;color:var(--muted);min-width:60px;"></span>
+        <span id="lineColIndicator">줄 1, 열 1</span>
+        <span id="charCount">📝 글자: 0</span>
+        <button onclick="window.editor.showDocStats()" style="font-size:9px;padding:1px 6px;border:none;background:transparent;color:var(--muted);cursor:pointer;">📊 통계</button>
       </div>
     </div>
 
-    <div class="status-bar">
-      <span id="filePathDisplay">연결 없음</span>
-      <span id="lineColIndicator">줄 1, 열 1</span>
-      <span id="charCount">📝 글자: 0</span>
-    </div>
-  </div>
+    <div class="resizer" id="resizerRight"></div>
 
-  <div class="resizer" id="resizerRight"></div>
-
-  <!-- ===== RIGHT PANEL ===== -->
-  <div class="panel graph-wrap" id="rightPanel">
-    <div class="graph-header">
-      <div class="graph-title">
-        지식 그래프 <span id="graphCount" style="font-weight:normal">노드 0 · 엣지 0</span>
+    <!-- 오른쪽 패널: 그래프 -->
+    <div class="panel graph-wrap" id="rightPanel">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="window.app.switchRightTab('graphViewTab', this)">🌐 그래프</button>
+        <button class="tab-btn" onclick="window.app.switchRightTab('analysisToolTab', this)">📋 분석</button>
+        <button class="tab-btn" onclick="window.app.switchRightTab('critiqueToolTab', this)">📊 비평</button>
       </div>
-      <div class="graph-filters">
-        <span class="filter-checkbox active" onclick="toggleFilter('인물', this)">
-          <span class="dot" style="background:var(--c-char);"></span> 인물
-        </span>
-        <span class="filter-checkbox active" onclick="toggleFilter('사건', this)">
-          <span class="dot" style="background:var(--c-event);"></span> 사건
-        </span>
-        <span class="filter-checkbox active" onclick="toggleFilter('장소', this)">
-          <span class="dot" style="background:var(--c-loc);"></span> 장소
-        </span>
-        <span class="filter-checkbox active" onclick="toggleFilter('아이템', this)">
-          <span class="dot" style="background:var(--c-item);"></span> 아이템
-        </span>
-      </div>
-      <div class="graph-actions">
-        <button class="btn-icon" onclick="resetGraphView()" style="font-size:11px;">⟲ 초기화</button>
-        <button class="btn-icon" onclick="exportGraphToClipboard()" style="font-size:11px; border-color:#facc15; color:#facc15;">📋 내보내기</button>
-      </div>
-      <div class="effect-buttons">
-        <button id="btnBreathe" class="inactive" onclick="toggleBreathe()">🌊 떨림 OFF</button>
-        <button id="btnSpring" class="inactive" onclick="toggleSpring()">🌀 스프링 OFF</button>
-      </div>
-    </div>
 
-    <div id="cy"></div>
-
-    <div class="canvas-controls">
-      <button onclick="zoomGraph(1.15)">+</button>
-      <button onclick="zoomGraph(0.85)">-</button>
-      <button onclick="resetGraphView()">⟲</button>
-      <button onclick="exportPNG()" style="border-color:#4ade80; color:#4ade80; font-size:11px;">📷 PNG</button>
-    </div>
-
-    <div class="wiki-panel">
-      <div class="panel-header">노드 위키</div>
-      <div class="wiki-card" id="wikiCard">
-        <div style="color:var(--muted);font-size:12px;text-align:center;margin:auto;">
-          노드를 클릭하면 상세 정보가 표시됩니다.
+      <div class="tab-content active flex-col" id="graphViewTab">
+        <div class="graph-header" style="padding:6px 10px;gap:4px;">
+          <div class="graph-filters">
+            <span class="filter-checkbox active" onclick="window.graph.toggleFilter('인물', this)">
+              <span class="dot" style="background:var(--c-char);"></span> 인물
+            </span>
+            <span class="filter-checkbox active" onclick="window.graph.toggleFilter('사건', this)">
+              <span class="dot" style="background:var(--c-event);"></span> 사건
+            </span>
+            <span class="filter-checkbox active" onclick="window.graph.toggleFilter('장소', this)">
+              <span class="dot" style="background:var(--c-loc);"></span> 장소
+            </span>
+            <span class="filter-checkbox active" onclick="window.graph.toggleFilter('아이템', this)">
+              <span class="dot" style="background:var(--c-item);"></span> 아이템
+            </span>
+            <span style="flex:1;"></span>
+            <span id="graphCount" style="font-size:10px;color:var(--muted);">노드 0 · 엣지 0</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:10px;color:var(--muted);">레이아웃:</span>
+            <button class="btn-icon" onclick="window.graph.runGraphLayout('cose')" style="font-size:10px;padding:2px 6px;border-color:var(--border);" title="기본 레이아웃 (cose)">기본</button>
+            <button class="btn-icon" onclick="window.graph.runGraphLayout('dagre')" style="font-size:10px;padding:2px 6px;border-color:var(--border);" title="트리 구조 레이아웃">🌲 트리</button>
+            <button class="btn-icon" onclick="window.graph.runGraphLayout('mindmap')" style="font-size:10px;padding:2px 6px;border-color:var(--border);" title="마인드맵 레이아웃">🧠 마인드맵</button>
+            <button class="btn-icon" onclick="window.graph.resetGraphView()" style="font-size:10px;" title="그래프 확대/위치 초기화">⟲ 초기화</button>
+            <button class="btn-icon" onclick="window.graph.exportGraphToClipboard()" style="font-size:10px;border-color:#facc15;color:#facc15;" title="그래프 JSON을 클립보드에 복사">📋 내보내기</button>
+            <button id="btnBreathe" class="inactive" onclick="window.graph.toggleBreathe()" style="font-size:10px;padding:2px 6px;" title="노드 떨림 효과 켜기/끄기">🌊 떨림</button>
+            <button id="btnSpring" class="inactive" onclick="window.graph.toggleSpring()" style="font-size:10px;padding:2px 6px;" title="노드 스프링 효과 켜기/끄기">🌀 스프링</button>
+            <button onclick="window.graph.openGraphFloating()" style="font-size:10px;padding:2px 6px;" title="전체화면으로 보기">⛶ 확대</button>
+          </div>
+        </div>
+        <div id="cy"></div>
+        <div id="overlays"></div>
+        <div class="canvas-controls">
+          <button onclick="window.graph.zoomGraph(1.15)" title="확대">+</button>
+          <button onclick="window.graph.zoomGraph(0.85)" title="축소">-</button>
+          <button onclick="window.graph.resetGraphView()" title="위치/확대 초기화">⟲</button>
+          <button onclick="window.graph.exportPNG()" style="border-color:#4ade80; color:#4ade80; font-size:11px;" title="그래프를 PNG 이미지로 저장">📷 저장</button>
+          <button onclick="window.graph.exportPNG(true)" style="border-color:#facc15; color:#facc15; font-size:10px;" title="그래프를 PNG로 클립보드에 복사">📋 복사</button>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:4px;padding:4px;background:var(--panel);border-radius:4px;border:1px solid var(--border);">
+            <span style="font-size:9px;color:var(--muted);white-space:nowrap;">해상도</span>
+            <input type="range" id="pngScale" min="1" max="5" step="0.5" value="2" style="width:50px;height:3px;" oninput="document.getElementById('pngScaleLabel').textContent=this.value+'x'">
+            <span id="pngScaleLabel" style="font-size:9px;color:var(--muted);min-width:20px;">2x</span>
+          </div>
+        </div>
+        <div class="wiki-panel" id="wikiPanel">
+          <div class="panel-header" style="cursor:pointer;">
+            <span onclick="window.graph.cycleWikiMode()" style="flex:1;">
+              노드 위키 <span id="wikiModeLabel" style="font-size:10px;color:var(--muted);font-weight:400;">· 편집</span>
+              <span style="font-size:10px;color:var(--muted);">(클릭 전환)</span>
+            </span>
+            <span id="wikiCollapseBtn" onclick="window.graph.toggleWikiPanel()" style="font-size:11px;color:var(--muted);cursor:pointer;padding:0 4px;">▼</span>
+          </div>
+          <div class="wiki-card" id="wikiCard">
+            <div style="color:var(--muted);font-size:12px;text-align:center;margin:auto;">
+              노드를 클릭하면 상세 정보가 표시됩니다.
+            </div>
+          </div>
+          <div id="wikiTtsSection" class="tts-section" style="display:none;">
+            <h4>🔊 TTS 읽어주기</h4>
+            <select id="ttsProvider" onchange="window.graph.onTtsProviderChange()">
+              <option value="web-speech">🌐 크롬 기본 음성</option>
+            </select>
+            <div id="webSpeechVoiceSelectContainer">
+              <label>음성 선택</label>
+              <select id="webSpeechVoiceSelect"></select>
+            </div>
+            <div class="tts-speed-row">
+              <label>속도</label>
+              <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="0.9" oninput="document.getElementById('speedValue').textContent=this.value+'x'">
+              <span id="speedValue">0.9x</span>
+            </div>
+            <label><input type="checkbox" id="audiobookMode" checked> 🎧 낭독 모드</label>
+            <div class="voice-map-container" style="margin:4px 0;">
+              <div style="font-size:10px;color:var(--muted);">👥 캐릭터별 목소리:</div>
+              <div id="voiceMappingContainer"></div>
+              <div style="display:flex;gap:4px;margin-top:2px;">
+                <input type="text" id="mapCharName" placeholder="캐릭터명" style="flex:1;font-size:10px;padding:2px 4px;">
+                <select id="mapVoiceSelect" style="flex:1.5;font-size:10px;padding:2px 4px;"></select>
+                <button onclick="window.graph.addVoiceMapping()" style="font-size:9px;padding:2px 6px;">추가</button>
+              </div>
+            </div>
+            <div class="tts-btns">
+              <button onclick="window.graph.readWikiText()" class="primary">🔊 읽기</button>
+              <button onclick="window.graph.stopReading()">⏹️ 정지</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content flex-col" id="analysisToolTab">
+        <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 10px;">
+          <div class="tool-card">
+            <div class="tool-card-title">① 프롬프트 복사</div>
+            <div class="tool-card-desc">현재 원고를 관계도 분석 프롬프트와 함께 복사합니다.</div>
+            <button onclick="window.modules.copyWithPrompt()" class="primary" style="width:100%;padding:8px;font-size:12px;">
+              📋 프롬프트 + 텍스트 복사
+            </button>
+            <div id="copyToast" style="font-size:10px;color:var(--accent);margin-top:4px;display:none;text-align:center;">
+              ✅ 클립보드에 복사되었습니다! 외부 AI에 붙여넣고 분석하세요.
+            </div>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-title">② 결과 붙여넣기 (JSON)</div>
+            <div class="tool-card-desc">AI가 출력한 관계도 분석 결과(JSON)를 붙여넣으세요.</div>
+            <textarea id="resultPasteArea" rows="4" style="width:100%;font-size:11px;font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);resize:vertical;" 
+              placeholder="NotebookLM/DeepSeek/Gemini의 분석 결과(JSON)를 붙여넣으세요..."></textarea>
+            <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">
+              <button onclick="window.modules.processPastedResult()" class="primary" style="font-size:11px;padding:4px 12px;">📊 그래프 생성</button>
+              <button onclick="window.modules.autoFixAndProcess()" style="font-size:11px;padding:4px 12px;border-color:#facc15;color:#facc15;">🔧 자동 수정</button>
+              <button onclick="window.modules.clearResultArea()" style="font-size:11px;padding:4px 12px;border-color:#ff6b6b;color:#ff6b6b;">🗑️ 지우기</button>
+            </div>
+            <div id="parseResultFeedback" style="font-size:11px;margin-top:4px;color:var(--muted);display:none;">
+              <span id="parseStats">노드 0개, 엣지 0개</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content flex-col" id="critiqueToolTab">
+        <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0;">
+          <div class="tool-card">
+            <div class="tool-card-title">① 비평 프롬프트 복사</div>
+            <div class="tool-card-desc">현재 원고를 웹소설 비평 프롬프트와 함께 복사합니다.</div>
+            <button onclick="window.modules.copyCritiquePrompt()" class="primary" style="width:100%;padding:8px;font-size:12px;">
+              📋 비평 프롬프트 + 텍스트 복사
+            </button>
+            <div id="critiqueCopyToast" style="font-size:10px;color:var(--accent);margin-top:4px;display:none;text-align:center;">
+              ✅ 비평 프롬프트가 복사되었습니다! 외부 AI에 붙여넣고 분석하세요.
+            </div>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-title">② 비평 결과 붙여넣기 (JSON)</div>
+            <div class="tool-card-desc">AI가 출력한 비평 결과(JSON)를 붙여넣으세요.</div>
+            <textarea id="critiquePasteArea" rows="4" style="width:100%;font-size:11px;font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);resize:vertical;" 
+              placeholder='{"scores": {...}, "critique": {...}}'></textarea>
+            <div style="display:flex;gap:4px;margin-top:4px;">
+              <button onclick="window.modules.processCritiqueResult()" class="primary" style="font-size:11px;padding:4px 12px;flex:1;">📊 비평 결과 표시</button>
+              <button onclick="document.getElementById('critiquePasteArea').value=''; document.getElementById('critiqueResult').classList.remove('show');" style="font-size:11px;padding:4px 12px;border-color:#ff6b6b;color:#ff6b6b;">🗑️ 지우기</button>
+            </div>
+          </div>
+          <div id="critiqueResult" class="critique-result"></div>
+          <div style="font-size:10px;color:var(--muted);padding:8px;line-height:1.5;background:var(--panel2);border-radius:6px;border:1px solid var(--border);">
+            💡 <b>비평 프롬프트</b>는 웹소설 장르 문법과 독자 친절함을 기준으로<br>
+            문장·묘사·전개·캐릭터·가독성을 100점 만점으로 평가합니다.
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ===== TOOLTIP ===== -->
-<div class="graph-tooltip" id="graphTooltip"></div>
+  <!-- 툴팁 -->
+  <div class="graph-tooltip" id="graphTooltip"></div>
 
-<!-- ===== TOAST ===== -->
-<div class="toast" id="toast"></div>
-
-<!-- ===== HELP DIALOG ===== -->
-<div id="helpDialog">
-  <div class="help-panel">
-    <h2>📖 소설 관계도 분석기</h2>
-    <div class="sub">수동 복사 + 비평 + 효과 · 버전 5.0</div>
-
-    <h3>🔐 로컬 보안 유지</h3>
-    <div class="info-box">
-      모든 데이터는 <b>당신의 PC에만 저장</b>됩니다.<br>
-      외부 서버로 전송되는 데이터는 없으며, 외부 AI로 보내는 텍스트는 <b>당신이 직접 복사/붙여넣기</b>하는 방식입니다.
+  <!-- 오버레이들 -->
+  <div class="findreplace-overlay" id="findReplaceOverlay">
+    <div class="findreplace-box">
+      <h3>🔍 폴더 내 모든 문서에서 찾기/바꾸기</h3>
+      <label>찾을 단어</label>
+      <input type="text" id="frFind" placeholder="찾을 단어 입력">
+      <label>바꿀 단어</label>
+      <input type="text" id="frReplace" placeholder="바꿀 단어 입력">
+      <div class="btn-row">
+        <button onclick="window.editor.findInAllFiles()" class="primary">🔍 찾기</button>
+        <button onclick="window.editor.replaceInAllFiles()" class="warning">📝 모두 바꾸기</button>
+        <button onclick="window.editor.closeFindReplace()">닫기</button>
+      </div>
+      <div class="result-msg" id="frResult"></div>
     </div>
-
-    <h3>📌 사용 방법</h3>
-    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>📂 폴더 연결</strong>상단 "폴더 선택"으로 소설 파일 폴더를 선택하세요.</div></div>
-    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>📄 파일 선택</strong>좌측 파일 목록에서 분석할 소설 파일을 클릭하세요.</div></div>
-    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>📋 프롬프트 복사</strong>"프롬프트+텍스트 복사"로 분석 지시문을 복사하세요.</div></div>
-    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>📥 결과 붙여넣기</strong>AI 출력(JSON)을 붙여넣고 "그래프 생성"을 클릭하세요.</div></div>
-
-    <h3>📊 비평 시스템</h3>
-    <ul>
-      <li><b>비평 탭</b>에서 전용 프롬프트를 복사할 수 있습니다.</li>
-      <li>웹소설 장르 문법과 독자 친절함을 기준으로 5개 항목을 평가합니다.</li>
-      <li>점수는 100점 만점이며, 등급(독보적/경쟁력/정체/이탈/해체)으로 표시됩니다.</li>
-      <li>총평, 핵심 분석, 최강/최약 문장을 함께 제공합니다.</li>
-    </ul>
-
-    <h3>🎨 그래프 조작</h3>
-    <ul>
-      <li><b>노드 드래그</b> — 마우스로 노드를 끌어 위치 조정 (물리 효과 적용)</li>
-      <li><b>휠 줌</b> — 마우스 휠로 확대/축소</li>
-      <li><b>노드 호버</b> — LLM 위키 스타일의 상세 툴팁 표시</li>
-      <li><b>노드 클릭</b> — 우측 위키 패널에 고정 표시</li>
-      <li><b>필터</b> — 상단 필터로 특정 타입만 표시</li>
-      <li><b>🌊 떨림</b> — 노드가 미세하게 떨리는 효과</li>
-      <li><b>🌀 스프링</b> — 드래그 후 탄성 운동 효과</li>
-    </ul>
-
-    <div class="warning">
-      ⚠️ <b>브라우저 요구사항</b><br>
-      Chrome 116+ 또는 Edge 116+ 권장.<br>
-      File System Access API (<code>showDirectoryPicker</code>)를 지원해야 합니다.
-    </div>
-
-    <button class="primary help-close" onclick="closeHelp()">닫기</button>
   </div>
-</div>
-
-<script>
-// ============================================================
-// STATE
-// ============================================================
-let dirHandle = null;
-let currentFileHandle = null;
-let currentFileName = null;
-let saveTimer = null;
-
-let nodes = new Map();
-let edges = [];
-let activeFilterTypes = new Set(['인물', '사건', '장소', '아이템']);
-let selectedNode = null;
-let hoverNode = null;
-
-let cy = null;
-let tooltipTimeout = null;
-let hoverTimeout = null;
-
-// 효과 상태
-let breatheActive = false;
-let springActive = false;
-let breatheId = null;
-let springId = null;
-let nodeVelocities = new Map();
-
-// ============================================================
-// STORAGE
-// ============================================================
-const DB_NAME = "novel_analyzer_fsa_db";
-const STORE_NAME = "handles";
-const KEY_NAME = "last_directory";
-
-function getDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-    };
-    request.onsuccess = (e) => resolve(e.target.result);
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-async function saveStoredHandle(handle) {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.put(handle, KEY_NAME);
-    request.onsuccess = () => resolve();
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-async function getStoredHandle() {
-  try {
-    const db = await getDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, "readonly");
-      const store = tx.objectStore(STORE_NAME);
-      const request = store.get(KEY_NAME);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = (e) => reject(e.target.error);
-    });
-  } catch (e) { return null; }
-}
-
-async function clearStoredHandle() {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.delete(KEY_NAME);
-    request.onsuccess = () => resolve();
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-async function verifyPermission(handle, readWrite) {
-  const options = {};
-  if (readWrite) options.mode = 'readwrite';
-  if ((await handle.queryPermission(options)) === 'granted') return true;
-  if ((await handle.requestPermission(options)) === 'granted') return true;
-  return false;
-}
-
-// ============================================================
-// DOM REFS
-// ============================================================
-const editorEl = document.getElementById('editor');
-const tooltip = document.getElementById('graphTooltip');
-const toast = document.getElementById('toast');
-
-// ============================================================
-// COLORS
-// ============================================================
-const COLOR_MAP = {
-  '인물': '#4A90D9',
-  '사건': '#E74C3C',
-  '장소': '#2ECC71',
-  '아이템': '#F1C40F'
-};
-const TYPE_ORDER = ['인물', '사건', '장소', '아이템'];
-const TYPE_ICON = { '인물': '🧑', '사건': '⚡', '장소': '📍', '아이템': '🔧' };
-const TYPE_LABEL = { '인물': '인물', '사건': '사건', '장소': '장소', '아이템': '아이템' };
-const EMOTION_ICONS = {
-  '기쁨': '😊', '슬픔': '😢', '분노': '😡',
-  '두려움': '😨', '놀람': '😲', '혐오': '🤢', '중립': '😐'
-};
-
-// ============================================================
-// THEME
-// ============================================================
-function toggleTheme() {
-  document.body.classList.toggle('dark-theme');
-  document.body.classList.toggle('light-theme');
-  document.getElementById('themeBtn').textContent =
-    document.body.classList.contains('dark-theme') ? '🌞 라이트 모드' : '🌙 다크 모드';
-}
-
-// ============================================================
-// EXEC COMMAND
-// ============================================================
-function execCmd(cmd, val) {
-  if (cmd === 'save') { saveCurrentFile(); return; }
-  document.execCommand(cmd, false, val);
-}
-
-// ============================================================
-// ZOOM
-// ============================================================
-let zoomPercent = 100;
-function zoomEditor(delta) {
-  zoomPercent = Math.max(50, Math.min(200, zoomPercent + delta));
-  editorEl.style.fontSize = (15 * zoomPercent / 100) + 'px';
-  document.getElementById('zoomLevel').textContent = zoomPercent + '%';
-}
-function zoomReset() {
-  zoomPercent = 100;
-  editorEl.style.fontSize = '15px';
-  document.getElementById('zoomLevel').textContent = '100%';
-}
-
-// ============================================================
-// LINE/COL
-// ============================================================
-function updateLineCol() {
-  const sel = window.getSelection();
-  if (!sel.rangeCount || !editorEl.contains(sel.anchorNode)) {
-    document.getElementById('lineColIndicator').textContent = '줄 1, 열 1';
-    return;
-  }
-  const text = editorEl.innerText;
-  const range = sel.getRangeAt(0);
-  const preRange = range.cloneRange();
-  preRange.selectNodeContents(editorEl);
-  preRange.setEnd(range.startContainer, range.startOffset);
-  const caretPos = preRange.toString().length;
-  const before = text.substring(0, caretPos);
-  const line = (before.match(/\n/g) || []).length + 1;
-  const lastNewline = before.lastIndexOf('\n');
-  const col = caretPos - lastNewline;
-  document.getElementById('lineColIndicator').textContent = `줄 ${line}, 열 ${col}`;
-}
-document.addEventListener('selectionchange', updateLineCol);
-
-// ============================================================
-// KEYBOARD
-// ============================================================
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveCurrentFile(); }
-  if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomEditor(10); }
-  if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); zoomEditor(-10); }
-  if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); zoomReset(); }
-});
-
-// ============================================================
-// MENU
-// ============================================================
-function toggleMenu(item, id) {
-  const menu = document.getElementById(id);
-  const isOpen = menu.classList.contains('open');
-  closeAllMenus();
-  if (!isOpen) {
-    const rect = item.getBoundingClientRect();
-    menu.classList.add('open');
-    item.classList.add('active');
-    menu.style.position = 'fixed';
-    let left = rect.left;
-    let top = rect.bottom;
-    if (left + 240 > window.innerWidth) left = window.innerWidth - 248;
-    if (top + 300 > window.innerHeight) top = rect.top - 304;
-    menu.style.left = left + 'px';
-    menu.style.top = top + 'px';
-  }
-}
-function closeAllMenus() {
-  document.querySelectorAll('.dropdown').forEach(m => m.classList.remove('open'));
-  document.querySelectorAll('.menubar .menu-item').forEach(m => m.classList.remove('active'));
-}
-document.addEventListener('mousedown', (e) => {
-  if (!e.target.closest('.menubar') && !e.target.closest('.dropdown')) closeAllMenus();
-});
-
-function showHelp() { document.getElementById('helpDialog').classList.add('open'); }
-function closeHelp() { document.getElementById('helpDialog').classList.remove('open'); }
-function showAbout() {
-  alert('⚓ 소설 관계도 분석기 v5.0\n\n📋 수동 복사 방식\n📊 웹소설 비평 시스템\n🖥️ Cytoscape.js 기반 그래프\n🌊 떨림 + 🌀 스프링 효과');
-}
-
-// ============================================================
-// TAB
-// ============================================================
-function switchTab(id, btn) {
-  document.querySelectorAll('#leftPanel .tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('#leftPanel .tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  btn.classList.add('active');
-}
-
-// ============================================================
-// TOAST
-// ============================================================
-let toastTimeout = null;
-function showToast(msg) {
-  toast.textContent = msg;
-  toast.style.display = 'block';
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3000);
-}
-
-// ============================================================
-// FOLDER MANAGEMENT
-// ============================================================
-async function checkAndRestoreFolder() {
-  const storedHandle = await getStoredHandle();
-  const panel = document.getElementById('folderConnectionPanel');
-  if (storedHandle) {
-    panel.innerHTML = `
-      <div class="folder-cta-box" style="padding:12px;margin-bottom:10px;">
-        <p style="font-weight:600;color:var(--text)">이전 폴더: ${storedHandle.name}</p>
-        <button class="primary" onclick="restoreFolderPermission()">연결 복원</button>
+  <div class="merge-overlay" id="mergeOverlay">
+    <div class="merge-box">
+      <h3 id="mergeTitle">📄 문서 합치기</h3>
+      <div style="margin-bottom:8px;">
+        <button onclick="window.editor.showMergeView()" class="primary" style="font-size:11px;padding:4px 12px;">📄 합치기</button>
+        <button onclick="window.editor.showSplitView()" style="font-size:11px;padding:4px 12px;border-color:#4ade80;color:#4ade80;">✂️ 분할하기</button>
       </div>
-    `;
-  } else {
-    panel.innerHTML = `
-      <div class="folder-cta-box" style="padding:12px;margin-bottom:10px;">
-        <p>연결된 폴더가 없습니다.</p>
-        <button class="primary" onclick="openLocalFolder()">📂 폴더 열기</button>
+      <div id="mergeFileList"></div>
+      <div id="mergeOptions" style="display:none;">
+        <label id="mergeOptLabel">병합할 파일 순서 (쉼표로 구분)</label>
+        <input type="text" id="mergeOrder" placeholder="파일1.txt, 파일2.txt, ...">
       </div>
-    `;
-  }
-}
-
-async function restoreFolderPermission() {
-  const storedHandle = await getStoredHandle();
-  if (!storedHandle) return;
-  try {
-    if (await verifyPermission(storedHandle, true)) {
-      dirHandle = storedHandle;
-      await onFolderConnected();
-    } else {
-      alert('권한이 거부되었습니다.');
-    }
-  } catch (e) {
-    alert('오류: ' + e.message);
-    await clearStoredHandle();
-    await checkAndRestoreFolder();
-  }
-}
-
-async function openLocalFolder() {
-  try {
-    const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
-    if (!await verifyPermission(handle, true)) {
-      alert('쓰기 권한이 필요합니다.');
-      return;
-    }
-    dirHandle = handle;
-    await saveStoredHandle(dirHandle);
-    await onFolderConnected();
-  } catch (e) { console.warn('취소됨', e); }
-}
-
-async function onFolderConnected() {
-  document.getElementById('statusText').textContent = `📁 ${dirHandle.name}`;
-  document.getElementById('filePathDisplay').textContent = dirHandle.name;
-  document.getElementById('openDirBtn').textContent = `📁 ${dirHandle.name}`;
-  document.getElementById('openDirBtn').classList.add('primary');
-  document.getElementById('newDocBtn').style.display = 'inline-flex';
-
-  document.getElementById('folderConnectionPanel').innerHTML = `
-    <div style="background:var(--panel2);padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-weight:600;">📂 ${dirHandle.name}</span>
-      <button onclick="disconnectFolder()" style="border-color:#ff6b6b;color:#ff6b6b;">해제</button>
+      <div id="splitOptions" style="display:none;">
+        <label>분할할 파일 선택</label>
+        <select id="splitFileSelect" style="width:100%;"></select>
+        <label>분할 기준 (글자 수)</label>
+        <input type="number" id="splitSize" value="1000" min="100" max="50000">
+      </div>
+      <div class="btn-row">
+        <button id="mergeExecBtn" onclick="window.editor.executeMerge()" class="primary" style="display:none;">실행</button>
+        <button id="splitExecBtn" onclick="window.editor.executeSplit()" class="primary" style="display:none;border-color:#4ade80;color:#4ade80;">✂️ 분할 실행</button>
+        <button onclick="window.editor.closeMergeSplit()">닫기</button>
+      </div>
+      <div class="result-msg" id="mergeResult"></div>
     </div>
-  `;
-  await refreshFileList();
-}
-
-async function disconnectFolder() {
-  if (!confirm('폴더 연결을 해제하시겠습니까?')) return;
-  dirHandle = null;
-  currentFileHandle = null;
-  currentFileName = null;
-  await clearStoredHandle();
-  document.getElementById('newDocBtn').style.display = 'none';
-  document.getElementById('openDirBtn').textContent = '📂 폴더 선택';
-  document.getElementById('openDirBtn').classList.remove('primary');
-  document.getElementById('filePathDisplay').textContent = '연결 없음';
-  document.getElementById('statusText').textContent = '연결 해제됨';
-  editorEl.contentEditable = 'false';
-  editorEl.classList.add('empty-state');
-  editorEl.innerHTML = `
-    <h3>📂 로컬 폴더를 연결하세요</h3>
-    <button class="primary" onclick="openLocalFolder()" style="padding:10px 20px;font-size:14px;">📂 폴더 열기</button>
-  `;
-  document.getElementById('fileList').innerHTML = '';
-  document.getElementById('docCount').textContent = '';
-  nodes.clear();
-  edges = [];
-  updateGraphCounts();
-  await checkAndRestoreFolder();
-}
-
-// ============================================================
-// FILE LIST
-// ============================================================
-async function refreshFileList() {
-  const listEl = document.getElementById('fileList');
-  listEl.innerHTML = '';
-  let count = 0;
-  const files = [];
-  for await (const [name, handle] of dirHandle.entries()) {
-    if (handle.kind === 'file' && /\.(txt|md)$/i.test(name)) {
-      count++;
-      files.push({ name, handle });
-    }
-  }
-  document.getElementById('docCount').textContent = `(${count})`;
-  if (count === 0) {
-    listEl.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">📂 파일이 없습니다</div>`;
-    return;
-  }
-  files.sort((a,b) => a.name.localeCompare(b.name));
-  for (const { name, handle } of files) {
-    const hasGraph = await hasGraphFile(name);
-    const item = document.createElement('div');
-    item.className = 'filelist-item';
-    if (name === currentFileName) item.classList.add('active');
-    item.onclick = () => openFile(name, handle);
-    item.innerHTML = `
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-        📄 ${name} ${hasGraph ? '<span class="has-graph">📊</span>' : ''}
-      </span>
-      <button class="delete-btn" onclick="deleteFile('${name}', event)">✕</button>
-    `;
-    listEl.appendChild(item);
-  }
-  if (!currentFileName && files.length > 0) {
-    openFile(files[0].name, files[0].handle);
-  }
-}
-
-async function hasGraphFile(fileName) {
-  try {
-    const analysisDir = await dirHandle.getDirectoryHandle('.analysis', { create: true });
-    const jsonName = fileName.replace(/\.(txt|md)$/, '.graph.json');
-    await analysisDir.getFileHandle(jsonName);
-    return true;
-  } catch { return false; }
-}
-
-async function openFile(name, handle) {
-  try {
-    currentFileHandle = handle;
-    currentFileName = name;
-    const file = await handle.getFile();
-    const text = await file.text();
-    editorEl.contentEditable = 'true';
-    editorEl.classList.remove('empty-state');
-    editorEl.innerText = text;
-    document.getElementById('filePathDisplay').textContent = `${dirHandle.name}/${name}`;
-    document.getElementById('statusText').textContent = `📄 ${name}`;
-    document.getElementById('charCount').textContent = `📝 글자: ${text.length}`;
-    await refreshFileList();
-    await loadGraphForCurrentFile();
-  } catch (e) { alert('파일 읽기 오류: ' + e.message); }
-}
-
-async function createNewDocument() {
-  if (!dirHandle) return;
-  const name = prompt('파일 이름:', '새파일.txt');
-  if (!name) return;
-  const clean = name.endsWith('.txt') || name.endsWith('.md') ? name : name + '.txt';
-  try {
-    const fh = await dirHandle.getFileHandle(clean, { create: true });
-    const w = await fh.createWritable();
-    await w.write('');
-    await w.close();
-    await openFile(clean, fh);
-  } catch (e) { alert('생성 실패: ' + e.message); }
-}
-
-async function deleteFile(name, event) {
-  event.stopPropagation();
-  if (!confirm(`'${name}'을(를) 삭제하시겠습니까?`)) return;
-  try {
-    await dirHandle.removeEntry(name);
-    if (currentFileName === name) {
-      currentFileName = null;
-      currentFileHandle = null;
-      editorEl.contentEditable = 'false';
-      editorEl.classList.add('empty-state');
-      editorEl.innerHTML = `<h3>📂 파일을 선택하세요</h3>`;
-      nodes.clear();
-      edges = [];
-      updateGraphCounts();
-    }
-    await refreshFileList();
-  } catch (e) { alert('삭제 실패: ' + e.message); }
-}
-
-async function saveCurrentFile() {
-  if (!dirHandle || !currentFileHandle) return;
-  try {
-    const w = await currentFileHandle.createWritable();
-    await w.write(editorEl.innerText);
-    await w.close();
-    document.getElementById('statusText').textContent = `💾 ${currentFileName}`;
-  } catch (e) {}
-}
-
-async function saveAsFile() {
-  if (!dirHandle) { alert('폴더를 먼저 연결하세요.'); return; }
-  const name = prompt('파일 이름:', currentFileName || '문서.txt');
-  if (!name) return;
-  const clean = name.endsWith('.txt') || name.endsWith('.md') ? name : name + '.txt';
-  try {
-    const fh = await dirHandle.getFileHandle(clean, { create: true });
-    const w = await fh.createWritable();
-    await w.write(editorEl.innerText);
-    await w.close();
-    currentFileHandle = fh;
-    currentFileName = clean;
-    await refreshFileList();
-  } catch (e) { alert('저장 실패: ' + e.message); }
-}
-
-// ============================================================
-// EDITOR EVENTS
-// ============================================================
-editorEl.addEventListener('input', () => {
-  if (!dirHandle) return;
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveCurrentFile, 800);
-  const text = editorEl.innerText;
-  document.getElementById('charCount').textContent = `📝 글자: ${text.length}`;
-  updateLineCol();
-});
-
-// ============================================================
-// 관계도 분석 프롬프트 (상수)
-// ============================================================
-const ANALYSIS_PROMPT = `당신은 소설 분석 전문가입니다. 다음 텍스트에서 등장인물, 장소, 사건, 아이템을 추출하고, 각 개체 간의 관계를 JSON 형식으로 출력해주세요.
-
-출력 형식 (반드시 아래 JSON 형식을 지켜주세요):
-{
-  "entities": [
-    {"name": "이름", "type": "인물|장소|사건|아이템", "description": "설명"}
-  ],
-  "relations": [
-    {"from": "출발", "to": "도착", "label": "관계명", "type": "행위|위치|소지|동반|이동|목적|참여|발생|대립|우호|가족"}
-  ]
-}
-
-분석할 텍스트:`;
-
-function copyWithPrompt() {
-  const text = editorEl.innerText || editorEl.textContent || '';
-  if (!text || text.trim().length < 10) {
-    alert('⚠️ 분석할 텍스트가 너무 짧습니다. (최소 10자 이상)');
-    return;
-  }
-  const full = ANALYSIS_PROMPT + '\n\n' + text;
-
-  navigator.clipboard.writeText(full).then(() => {
-    document.getElementById('copyToast').style.display = 'block';
-    setTimeout(() => { document.getElementById('copyToast').style.display = 'none'; }, 3000);
-    showToast('✅ 프롬프트 + 텍스트가 복사되었습니다!');
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = full;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    document.getElementById('copyToast').style.display = 'block';
-    setTimeout(() => { document.getElementById('copyToast').style.display = 'none'; }, 3000);
-    showToast('✅ 복사 완료! (Fallback)');
-  });
-}
-
-// ============================================================
-// 비평 프롬프트 (상수)
-// ============================================================
-const CRITIQUE_PROMPT = `# 웹소설 형식·내용·친절함 통합 비평 시스템 (Reader-First 100pt)
-
-당신은 웹소설 장르 문법과 서사 심리학에 정통하며, 무엇보다 '독자에 대한 친절함'을 상업성의 최고 가치로 두는 냉정하고 예리한 수석 비평가입니다. 텍스트를 받으면 인사 없이 아래 형식대로 즉시 분석을 시작하세요. 모든 항목은 100점 만점으로 채점하며, 70~80점대 중간 점수로 얼버무리지 말고 엄격하고 날카롭게 평가하세요.
-
-## 점수 산정 기준 (100점 만점)
-- 91~100점: 독보적 (최상위권 수준. 수정이 불필요함)
-- 71~90점: 경쟁력 (유료 연재 가능 수준. 흡입력이 높고 대중성이 확실함)
-- 51~70점: 정체 (평이한 수준. 활자는 읽히나 상업적 쾌감이나 배려가 부족함)
-- 31~50점: 이탈 (조기 하차 유발 수준. 문장이나 전개 교정 필수)
-- 1~30점: 해체 (연재 불가 수준. 전면 재작성 필요)
-
-## 평가 항목 (각 100점 만점)
-1. 문장과 리듬: 호흡의 완급 조절, Show(보여주기)와 Tell(말하기)의 균형, 문장의 직관성과 매끄러운 연결
-2. 묘사와 이미지: 시각 외 다감각의 활용, 눈앞에 정밀하게 그려지는 선명도와 미장센
-3. 정보와 전개: 첫 문장의 자이가르닉 효과(의심/호기심 유발), 끊임없는 의문 유착(간질간질한 텐션), 사건의 흥미도, 끝부분의 자이가르닉 재발동(다음 장면 유도)
-4. 캐릭터와 대사: 주인공의 호감 가는 매력적인 행동, 독자의 감정적 공감대 형성(특정 감정의 동기화), 대사 속 권력 관계
-5. 가독성과 친절함: 과도한 설정 과시(설명충)나 난해한 갈등으로 독자를 지치게 하지 않는가, 독자에게 스트레스나 답답함(불필요한 고구마)을 주지 않고 장르적 보상을 친절하게 제공하는가
-
----
-
-## 텍스트 분석 출력 형식 (반드시 아래 JSON 형식으로만 출력)
-
-{
-  "scores": {
-    "문장과 리듬": 0,
-    "묘사와 이미지": 0,
-    "정보와 전개": 0,
-    "캐릭터와 대사": 0,
-    "가독성과 친절함": 0
-  },
-  "average": 0,
-  "critique": {
-    "summary": "이 글의 가장 강력한 상업적 무기와 치명적인 약점 (독자가 겪게 될 최종적인 독서 경험과 피로도 정의)",
-    "analysis": "문체 측면: ...\n서사 심리 측면: ...\n친절함 측면: ...",
-    "best_sentence": {
-      "quote": "최강의 문장 인용구",
-      "reason": "호기심을 극대화했거나 독자에게 가장 친절한 쾌감을 준 구체적인 이유"
-    },
-    "worst_sentence": {
-      "quote": "최약의 문장 인용구",
-      "reason": "갈등을 불필요하게 복잡하게 만들었거나 독자에게 불친절하여 피로감을 유발한 구체적인 이유"
-    }
-  }
-}`;
-
-function copyCritiquePrompt() {
-  const text = editorEl.innerText || editorEl.textContent || '';
-  if (!text || text.trim().length < 50) {
-    alert('⚠️ 비평할 텍스트가 너무 짧습니다. (최소 50자 이상)');
-    return;
-  }
-  const full = CRITIQUE_PROMPT + '\n\n## 분석할 텍스트\n\n' + text;
-
-  navigator.clipboard.writeText(full).then(() => {
-    document.getElementById('critiqueCopyToast').style.display = 'block';
-    setTimeout(() => { document.getElementById('critiqueCopyToast').style.display = 'none'; }, 3000);
-    showToast('✅ 비평 프롬프트 + 텍스트가 복사되었습니다!');
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = full;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    document.getElementById('critiqueCopyToast').style.display = 'block';
-    setTimeout(() => { document.getElementById('critiqueCopyToast').style.display = 'none'; }, 3000);
-    showToast('✅ 복사 완료! (Fallback)');
-  });
-}
-
-// ============================================================
-// PASTE + PROCESS (그래프)
-// ============================================================
-async function pasteFromClipboard() {
-  try {
-    const text = await navigator.clipboard.readText();
-    document.getElementById('resultPasteArea').value = text;
-    showToast('✅ 클립보드에서 붙여넣기 완료!');
-  } catch (e) {
-    showToast('⚠️ 권한이 필요합니다. Ctrl+V로 직접 붙여넣어주세요.');
-  }
-}
-
-function autoFixJSON(raw) {
-  let fixed = raw;
-  fixed = fixed.replace(/^\uFEFF/, '');
-  fixed = fixed.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-  fixed = fixed.replace(/\/\/.*$/gm, '');
-  fixed = fixed.replace(/,\s*([}\]])/g, '$1');
-  fixed = fixed.trim();
-  return fixed;
-}
-
-function applyGraphData(data) {
-  nodes.clear();
-  edges = [];
-
-  if (data.entities && Array.isArray(data.entities)) {
-    const sorted = [...data.entities].sort((a, b) => {
-      const ia = TYPE_ORDER.indexOf(a.type || '인물');
-      const ib = TYPE_ORDER.indexOf(b.type || '인물');
-      return ia - ib;
-    });
-    sorted.forEach(e => {
-      const name = e.name?.trim();
-      if (!name) return;
-      nodes.set(name, {
-        name: name,
-        type: e.type || '인물',
-        desc: e.description || '',
-        mentions: e.mentions || 1,
-        emotion: e.emotion || '중립'
-      });
-    });
-  }
-
-  if (data.relations && Array.isArray(data.relations)) {
-    data.relations.forEach(r => {
-      const from = r.from?.trim();
-      const to = r.to?.trim();
-      if (!from || !to) return;
-      if (nodes.has(from) && nodes.has(to)) {
-        edges.push({
-          from: from,
-          to: to,
-          label: r.label || '관계',
-          type: r.type || '연결',
-          negated: r.negated || false,
-          sentiment: r.sentiment || '중립',
-          weight: 1
-        });
-      }
-    });
-  }
-
-  const stats = `노드 ${nodes.size}개, 엣지 ${edges.size}개`;
-  document.getElementById('parseStats').textContent = stats;
-  document.getElementById('parseResultFeedback').style.display = 'block';
-  document.getElementById('parseResultFeedback').style.color = 'var(--text)';
-  updateGraphCounts();
-  showToast(`✅ 그래프 생성 완료! ${stats}`);
-
-  syncCytoscapeFromNodes();
-  setTimeout(saveGraphToFile, 500);
-}
-
-function processPastedResult() {
-  let raw = document.getElementById('resultPasteArea').value.trim();
-  if (!raw) {
-    alert('⚠️ 분석 결과를 먼저 붙여넣어주세요.');
-    return;
-  }
-
-  try {
-    const data = JSON.parse(raw);
-    applyGraphData(data);
-    return;
-  } catch (e) {
-    const fixed = autoFixJSON(raw);
-    try {
-      const data = JSON.parse(fixed);
-      document.getElementById('resultPasteArea').value = fixed;
-      showToast('🔧 자동 수정 완료!');
-      applyGraphData(data);
-      return;
-    } catch (e2) {
-      document.getElementById('parseStats').textContent = `❌ 오류: ${e2.message}`;
-      document.getElementById('parseResultFeedback').style.display = 'block';
-      document.getElementById('parseResultFeedback').style.color = '#ff6b6b';
-      alert(`❌ JSON 파싱 실패\n\n${e2.message}\n\n💡 "자동 수정" 버튼을 누르거나 직접 수정해주세요.`);
-    }
-  }
-}
-
-function autoFixAndProcess() {
-  const raw = document.getElementById('resultPasteArea').value.trim();
-  if (!raw) {
-    alert('⚠️ 분석 결과를 먼저 붙여넣어주세요.');
-    return;
-  }
-  const fixed = autoFixJSON(raw);
-  document.getElementById('resultPasteArea').value = fixed;
-  processPastedResult();
-}
-
-function clearResultArea() {
-  document.getElementById('resultPasteArea').value = '';
-  document.getElementById('parseResultFeedback').style.display = 'none';
-  showToast('🗑️ 결과 영역이 초기화되었습니다.');
-}
-
-// ============================================================
-// 비평 결과 처리
-// ============================================================
-function processCritiqueResult() {
-  const raw = document.getElementById('critiquePasteArea').value.trim();
-  if (!raw) {
-    alert('⚠️ 비평 결과(JSON)를 먼저 붙여넣어주세요.');
-    return;
-  }
-
-  let data;
-  try {
-    data = JSON.parse(raw);
-  } catch (e) {
-    let fixed = raw;
-    fixed = fixed.replace(/^\uFEFF/, '');
-    fixed = fixed.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-    fixed = fixed.replace(/\/\/.*$/gm, '');
-    fixed = fixed.replace(/,\s*([}\]])/g, '$1');
-    fixed = fixed.trim();
-    try {
-      data = JSON.parse(fixed);
-      document.getElementById('critiquePasteArea').value = fixed;
-      showToast('🔧 자동 수정 완료!');
-    } catch (e2) {
-      alert('❌ JSON 파싱 실패: ' + e.message + '\n\n올바른 JSON 형식인지 확인하세요.');
-      return;
-    }
-  }
-
-  renderCritiqueResult(data);
-}
-
-function renderCritiqueResult(data) {
-  const container = document.getElementById('critiqueResult');
-  const scores = data.scores || {};
-  const avg = data.average || 0;
-  const critique = data.critique || {};
-
-  let grade = '해체';
-  let gradeClass = 'critical';
-  if (avg >= 91) { grade = '독보적'; gradeClass = 'excellent'; }
-  else if (avg >= 71) { grade = '경쟁력'; gradeClass = 'good'; }
-  else if (avg >= 51) { grade = '정체'; gradeClass = 'fair'; }
-  else if (avg >= 31) { grade = '이탈'; gradeClass = 'poor'; }
-
-  const items = ['문장과 리듬', '묘사와 이미지', '정보와 전개', '캐릭터와 대사', '가독성과 친절함'];
-  const scoreLabels = {
-    '문장과 리듬': '문장과 리듬',
-    '묘사와 이미지': '묘사와 이미지',
-    '정보와 전개': '정보와 전개',
-    '캐릭터와 대사': '캐릭터와 대사',
-    '가독성과 친절함': '가독성과 친절함'
-  };
-
-  let barsHTML = '';
-  items.forEach(key => {
-    const val = scores[key] || 0;
-    const pct = Math.min(100, Math.max(0, val));
-    barsHTML += `
-      <div class="score-bar-item">
-        <span class="label">${scoreLabels[key] || key}</span>
-        <div class="bar-track">
-          <div class="bar-fill" style="width:${pct}%; background:${pct >= 70 ? '#4ade80' : pct >= 50 ? '#facc15' : '#f87171'};"></div>
-        </div>
-        <span class="score-num">${Math.round(val)}</span>
+  </div>
+  <div class="mobile-preview-overlay" id="mobilePreviewOverlay">
+    <div class="mobile-preview-box">
+      <div class="header">
+        <h3>📱 모바일 프리뷰</h3>
+        <select id="mobilePreviewTheme" onchange="window.editor.updateMobilePreview()">
+          <option value="light">라이트</option>
+          <option value="sepia">세피아</option>
+          <option value="dark">다크</option>
+        </select>
+        <button onclick="window.editor.closeMobilePreview()">✕</button>
       </div>
-    `;
-  });
-
-  container.innerHTML = `
-    <div class="score-summary">
-      <div class="score-avg">
-        ${Math.round(avg)}<span class="label"> / 100</span>
+      <div class="mobile-phone-frame" id="mobilePhoneFrame">
+        <div class="content" id="mobilePreviewContent"></div>
       </div>
-      <div class="score-grade ${gradeClass}">${grade}</div>
-      <div style="font-size:11px; color:var(--muted); margin-left:auto;">${items.length}개 항목 평균</div>
+      <div class="footer">
+        <span style="font-size:11px;color:var(--muted);">글자수: <span id="mobilePreviewChars">0</span></span>
+      </div>
     </div>
-
-    <div class="score-bars">${barsHTML}</div>
-
-    ${critique.summary ? `
-    <div class="critique-section">
-      <h4>📌 총평</h4>
-      <p class="text">${critique.summary}</p>
-    </div>` : ''}
-
-    ${critique.analysis ? `
-    <div class="critique-section">
-      <h4>🔍 핵심 분석</h4>
-      <p class="text">${critique.analysis.replace(/\n/g, '<br>')}</p>
-    </div>` : ''}
-
-    ${critique.best_sentence ? `
-    <div class="critique-section">
-      <h4>✅ 최강의 문장</h4>
-      <div class="sentence-box best">
-        <div class="quote">"${critique.best_sentence.quote || ''}"</div>
-        ${critique.best_sentence.reason ? `<div class="reason">${critique.best_sentence.reason}</div>` : ''}
+  </div>
+  <div class="graph-floating-wrap" id="graphFloatingOverlay">
+    <div class="graph-floating" id="graphFloatingWindow">
+      <div class="header" id="graphFloatingHeader">
+        <h3>🌐 지식 그래프</h3>
+        <button class="close-btn" onclick="window.graph.closeGraphFloating()">✕ 닫기</button>
       </div>
-    </div>` : ''}
-
-    ${critique.worst_sentence ? `
-    <div class="critique-section">
-      <h4>❌ 최약의 문장</h4>
-      <div class="sentence-box worst">
-        <div class="quote">"${critique.worst_sentence.quote || ''}"</div>
-        ${critique.worst_sentence.reason ? `<div class="reason">${critique.worst_sentence.reason}</div>` : ''}
+      <div class="cy-container" id="cyFloating"></div>
+      <div class="resize-handle" id="graphFloatingResize"></div>
+    </div>
+  </div>
+  <div class="snapshot-overlay" id="snapshotOverlay">
+    <div class="snapshot-box">
+      <div class="header">
+        <h3>📸 스냅샷</h3>
+        <button onclick="window.editor.closeSnapshotDialog()">✕</button>
       </div>
-    </div>` : ''}
-  `;
-
-  container.classList.add('show');
-  showToast('📊 비평 결과가 표시되었습니다!');
-}
-
-// ============================================================
-// GRAPH SAVE / LOAD
-// ============================================================
-async function saveGraphToFile() {
-  if (!dirHandle || !currentFileName) {
-    showToast('⚠️ 저장하려면 폴더와 파일을 먼저 열어주세요.');
-    return;
-  }
-  if (nodes.size === 0) {
-    showToast('⚠️ 저장할 그래프 데이터가 없습니다.');
-    return;
-  }
-
-  const graphData = {
-    fileName: currentFileName,
-    analyzedAt: new Date().toISOString(),
-    model: 'Manual',
-    entities: [...nodes.values()].map(n => ({
-      name: n.name,
-      type: n.type,
-      description: n.desc || '',
-      mentions: n.mentions || 1,
-      emotion: n.emotion || '중립'
-    })),
-    relations: edges.map(e => ({
-      from: e.from,
-      to: e.to,
-      label: e.label || '관계',
-      type: e.type || '연결',
-      negated: e.negated || false,
-      sentiment: e.sentiment || '중립'
-    }))
-  };
-
-  try {
-    const analysisDir = await dirHandle.getDirectoryHandle('.analysis', { create: true });
-    const jsonName = currentFileName.replace(/\.(txt|md)$/, '.graph.json');
-    const fileHandle = await analysisDir.getFileHandle(jsonName, { create: true });
-    const writable = await fileHandle.createWritable();
-    await writable.write(JSON.stringify(graphData, null, 2));
-    await writable.close();
-    showToast('💾 그래프 데이터가 저장되었습니다: .analysis/' + jsonName);
-    await refreshFileList();
-  } catch (e) {
-    alert('저장 실패: ' + e.message);
-  }
-}
-
-async function loadGraphFromFile() {
-  if (!dirHandle || !currentFileName) {
-    showToast('⚠️ 불러오려면 폴더와 파일을 먼저 열어주세요.');
-    return;
-  }
-  await loadGraphForCurrentFile();
-}
-
-async function loadGraphForCurrentFile() {
-  try {
-    const analysisDir = await dirHandle.getDirectoryHandle('.analysis', { create: true });
-    const jsonName = currentFileName.replace(/\.(txt|md)$/, '.graph.json');
-    const fileHandle = await analysisDir.getFileHandle(jsonName);
-    const file = await fileHandle.getFile();
-    const text = await file.text();
-    const data = JSON.parse(text);
-
-    nodes.clear();
-    edges = [];
-
-    if (data.entities) {
-      data.entities.forEach(e => {
-        nodes.set(e.name, {
-          name: e.name,
-          type: e.type || '인물',
-          desc: e.description || '',
-          mentions: e.mentions || 1,
-          emotion: e.emotion || '중립'
-        });
-      });
-    }
-    if (data.relations) {
-      data.relations.forEach(r => {
-        if (nodes.has(r.from) && nodes.has(r.to)) {
-          edges.push({
-            from: r.from,
-            to: r.to,
-            label: r.label || '관계',
-            type: r.type || '연결',
-            negated: r.negated || false,
-            sentiment: r.sentiment || '중립',
-            weight: 1
-          });
-        }
-      });
-    }
-
-    updateGraphCounts();
-    showToast('📂 그래프 데이터를 불러왔습니다.');
-    document.getElementById('parseStats').textContent = `노드 ${nodes.size}개, 엣지 ${edges.size}개`;
-    document.getElementById('parseResultFeedback').style.display = 'block';
-    document.getElementById('parseResultFeedback').style.color = 'var(--text)';
-    await refreshFileList();
-    syncCytoscapeFromNodes();
-  } catch (e) {}
-}
-
-// ============================================================
-// GRAPH EXPORT
-// ============================================================
-function exportGraphToClipboard() {
-  if (nodes.size === 0) {
-    showToast('⚠️ 내보낼 그래프 데이터가 없습니다.');
-    return;
-  }
-  const data = {
-    entities: [...nodes.values()].map(n => ({ name: n.name, type: n.type, description: n.desc })),
-    relations: edges.map(e => ({ from: e.from, to: e.to, label: e.label, type: e.type }))
-  };
-  const json = JSON.stringify(data, null, 2);
-  navigator.clipboard.writeText(json).then(() => {
-    showToast('✅ 그래프 데이터가 클립보드에 복사되었습니다.');
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = json;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast('✅ 그래프 데이터가 클립보드에 복사되었습니다.');
-  });
-}
-
-// ============================================================
-// CYTOSCAPE GRAPH
-// ============================================================
-
-function initCytoscape() {
-  const container = document.getElementById('cy');
-  if (!container) return;
-  if (cy) { cy.destroy(); cy = null; }
-
-  cy = cytoscape({
-    container: container,
-    elements: getCytoscapeElements(),
-    style: [
-      {
-        selector: 'node',
-        style: {
-          'label': 'data(label)',
-          'background-color': 'data(color)',
-          'shape': 'round-rectangle',
-          'width': 'label',
-          'height': 30,
-          'padding': '10px',
-          'border-width': 2,
-          'border-color': '#333',
-          'text-valign': 'center',
-          'text-halign': 'center',
-          'color': '#fff',
-          'font-weight': 'bold',
-          'font-size': 13,
-          'text-outline-width': 2,
-          'text-outline-color': '#000',
-          'min-width': '40px',
-        }
-      },
-      {
-        selector: 'node[type="인물"]',
-        style: { 'background-color': '#4A90D9' }
-      },
-      {
-        selector: 'node[type="사건"]',
-        style: { 'background-color': '#E74C3C' }
-      },
-      {
-        selector: 'node[type="장소"]',
-        style: { 'background-color': '#2ECC71' }
-      },
-      {
-        selector: 'node[type="아이템"]',
-        style: { 'background-color': '#F1C40F' }
-      },
-      {
-        selector: 'edge',
-        style: {
-          'label': 'data(label)',
-          'curve-style': 'bezier',
-          'line-color': '#999',
-          'width': 1.5,
-          'target-arrow-shape': 'triangle',
-          'target-arrow-color': '#999',
-          'font-size': 10,
-          'text-rotation': 'none',
-          'color': '#aaa',
-          'text-outline-width': 2,
-          'text-outline-color': '#1e222c',
-          'text-outline-opacity': 0.8,
-          'text-background-color': '#1e222c',
-          'text-background-opacity': 0.6,
-          'text-background-padding': '4px',
-          'text-background-shape': 'roundrectangle',
-        }
-      },
-      {
-        selector: 'node:selected',
-        style: { 'border-width': 4, 'border-color': '#FFD700', 'border-style': 'double' }
-      },
-      {
-        selector: 'edge:selected',
-        style: { 'width': 3, 'line-color': '#FFD700', 'target-arrow-color': '#FFD700' }
-      }
-    ],
-    layout: {
-      name: 'cose',
-      animate: true,
-      animationDuration: 500,
-      fit: true,
-      padding: 30,
-      nodeRepulsion: 12000,
-      idealEdgeLength: 120,
-      gravity: 0.03,
-      gravityRange: 250,
-      nodeOverlap: 8,
-      nestingFactor: 5,
-      numIter: 800,
-      initialTemp: 200,
-      coolingFactor: 0.95,
-      minTemp: 1.0
-    },
-    wheelSensitivity: 0.3,
-  });
-
-  cy.on('tap', 'node', function(evt) {
-    const node = evt.target;
-    const name = node.data('id');
-    const nodeData = nodes.get(name);
-    if (nodeData) selectNode(nodeData);
-  });
-
-  cy.on('tap', function(evt) {
-    if (evt.target === cy) {
-      document.getElementById('wikiCard').innerHTML = `
-        <div style="color:var(--muted);font-size:12px;text-align:center;margin:auto;">
-          노드를 클릭하면 상세 정보가 표시됩니다.
+      <div class="body">
+        <div class="snapshot-save-row">
+          <input type="text" id="snapshotLabelInput" placeholder="스냅샷 이름 입력..." onkeydown="if(event.key==='Enter')window.editor.saveSnapshot()">
+          <button onclick="window.editor.saveSnapshot()" class="primary">💾 저장</button>
         </div>
-      `;
-    }
-  });
-
-  // 노드 호버 → 툴팁 (마우스 커서 기준)
-  cy.on('mouseover', 'node', function(evt) {
-    const node = evt.target;
-    const name = node.data('id');
-    const nodeData = nodes.get(name);
-    if (!nodeData) return;
-
-    clearTimeout(hoverTimeout);
-    hoverTimeout = setTimeout(() => {
-      const relations = edges.filter(e => e.from === name || e.to === name);
-      let relHTML = '';
-      if (relations.length > 0) {
-        relHTML = relations.slice(0, 5).map(e => {
-          const other = e.from === name ? e.to : e.from;
-          const dir = e.from === name ? '→' : '←';
-          const sent = e.sentiment === '우호' ? '💚' : e.sentiment === '적대' ? '❤️' : '⚪';
-          return `<div class="rel-item"><span>${other} ${dir} ${e.label || '관계'}</span><span>${sent}</span></div>`;
-        }).join('');
-        if (relations.length > 5) {
-          relHTML += `<div style="color:var(--muted);font-size:10px;">+ ${relations.length - 5}개 더...</div>`;
-        }
-      }
-
-      tooltip.innerHTML = `
-        <div class="tt-header">
-          <span>${TYPE_ICON[nodeData.type] || '●'}</span>
-          <span style="font-size:15px;">${nodeData.name}</span>
-          <span class="tt-type-badge" style="background:${COLOR_MAP[nodeData.type] || '#888'};">
-            ${TYPE_LABEL[nodeData.type] || nodeData.type}
-          </span>
-        </div>
-        <div class="tt-row">
-          <span>📝 언급 ${nodeData.mentions || 1}회</span>
-          <span>${nodeData.emotion ? '😊 ' + nodeData.emotion : ''}</span>
-        </div>
-        ${nodeData.desc ? `<div class="tt-desc">📚 ${nodeData.desc}</div>` : ''}
-        ${relations.length > 0 ? `<hr class="tt-divider"><div class="tt-relations">${relHTML}</div>` : ''}
-      `;
-
-      // 마우스 커서 위치 기준
-      const mouseX = evt.originalEvent.clientX;
-      const mouseY = evt.originalEvent.clientY;
-      let left = mouseX + 16;
-      let top = mouseY + 16;
-      const tw = 340;
-      const th = tooltip.scrollHeight || 200;
-      if (left + tw > window.innerWidth - 10) left = mouseX - tw - 16;
-      if (top + th > window.innerHeight - 10) top = mouseY - th - 16;
-      if (top < 10) top = 10;
-      if (left < 10) left = 10;
-
-      tooltip.style.left = left + 'px';
-      tooltip.style.top = top + 'px';
-      tooltip.style.display = 'block';
-    }, 300);
-  });
-
-  cy.on('mouseout', 'node', function() {
-    clearTimeout(hoverTimeout);
-    clearTimeout(tooltipTimeout);
-    tooltipTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 100);
-  });
-
-  // 드래그 종료 시 스프링 효과 (springActive일 때)
-  cy.on('dragfree', 'node', function(evt) {
-    if (springActive) {
-      const node = evt.target;
-      const id = node.id();
-      // 속도 초기화
-      nodeVelocities.set(id, { vx: 0, vy: 0 });
-    }
-  });
-
-  applyFilters();
-  return cy;
-}
-
-function getCytoscapeElements() {
-  const elements = [];
-  for (const [name, data] of nodes) {
-    const type = data.type || '인물';
-    const color = COLOR_MAP[type] || '#667eea';
-    elements.push({
-      data: {
-        id: name,
-        label: name.length > 10 ? name.substring(0, 9) + '…' : name,
-        color: color,
-        type: type,
-        mentions: data.mentions || 1,
-        emotion: data.emotion || '중립',
-        desc: data.desc || '',
-      }
-    });
-  }
-  for (const edge of edges) {
-    if (nodes.has(edge.from) && nodes.has(edge.to)) {
-      elements.push({
-        data: {
-          id: edge.from + '_' + edge.to + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-          source: edge.from,
-          target: edge.to,
-          label: edge.label || '관계',
-          type: edge.type || '연결',
-        }
-      });
-    }
-  }
-  return elements;
-}
-
-function syncCytoscapeFromNodes() {
-  if (!cy) return;
-  cy.elements().remove();
-  cy.add(getCytoscapeElements());
-  cy.layout({
-    name: 'cose',
-    animate: true,
-    animationDuration: 500,
-    fit: true,
-    padding: 30,
-    nodeRepulsion: 12000,
-    idealEdgeLength: 120,
-    gravity: 0.03,
-    gravityRange: 250,
-    nodeOverlap: 8,
-    nestingFactor: 5,
-    numIter: 800,
-    initialTemp: 200,
-    coolingFactor: 0.95,
-    minTemp: 1.0
-  }).run();
-  updateGraphCounts();
-  // 효과 재시작
-  if (breatheActive) startBreathe();
-  if (springActive) startSpring();
-}
-
-function applyFilters() {
-  if (!cy) return;
-  cy.nodes().forEach(n => {
-    const type = n.data('type');
-    if (type && activeFilterTypes.has(type)) {
-      n.style('display', 'element');
-    } else {
-      n.style('display', 'none');
-    }
-  });
-  cy.style().update();
-}
-
-// ============================================================
-// 효과: 떨림 (브리더)
-// ============================================================
-function toggleBreathe() {
-  breatheActive = !breatheActive;
-  const btn = document.getElementById('btnBreathe');
-  if (breatheActive) {
-    btn.textContent = '🌊 떨림 ON';
-    btn.className = 'active';
-    startBreathe();
-  } else {
-    btn.textContent = '🌊 떨림 OFF';
-    btn.className = 'inactive';
-    stopBreathe();
-    resetNodePositions();
-  }
-}
-
-function startBreathe() {
-  if (breatheId) return;
-  // 각 노드의 기본 위치 저장
-  cy.nodes().forEach(node => {
-    if (!node.data('baseX')) {
-      node.data('baseX', node.position('x'));
-      node.data('baseY', node.position('y'));
-    }
-  });
-  let phase = 0;
-  function breathe() {
-    if (!breatheActive || !cy) {
-      breatheId = null;
-      return;
-    }
-    phase += 0.03;
-    cy.nodes().forEach(node => {
-      const baseX = node.data('baseX');
-      const baseY = node.data('baseY');
-      if (baseX !== undefined && baseY !== undefined) {
-        node.position({
-          x: baseX + Math.sin(phase * 0.7 + node.id().length * 0.3) * 0.5,
-          y: baseY + Math.cos(phase * 0.5 + node.id().length * 0.7) * 0.5
-        });
-      }
-    });
-    breatheId = requestAnimationFrame(breathe);
-  }
-  breathe();
-}
-
-function stopBreathe() {
-  if (breatheId) {
-    cancelAnimationFrame(breatheId);
-    breatheId = null;
-  }
-}
-
-function resetNodePositions() {
-  if (!cy) return;
-  cy.nodes().forEach(node => {
-    if (node.data('baseX') !== undefined) {
-      node.position({
-        x: node.data('baseX'),
-        y: node.data('baseY')
-      });
-    }
-  });
-}
-
-// ============================================================
-// 효과: 스프링 (드래그 후 탄성)
-// ============================================================
-function toggleSpring() {
-  springActive = !springActive;
-  const btn = document.getElementById('btnSpring');
-  if (springActive) {
-    btn.textContent = '🌀 스프링 ON';
-    btn.className = 'active';
-    startSpring();
-  } else {
-    btn.textContent = '🌀 스프링 OFF';
-    btn.className = 'inactive';
-    stopSpring();
-  }
-}
-
-function startSpring() {
-  if (springId) return;
-  if (!cy) return;
-
-  // 각 노드의 기본 위치 저장 (드래그 전 기준)
-  cy.nodes().forEach(node => {
-    if (!node.data('baseX')) {
-      node.data('baseX', node.position('x'));
-      node.data('baseY', node.position('y'));
-    }
-    if (!nodeVelocities.has(node.id())) {
-      nodeVelocities.set(node.id(), { vx: 0, vy: 0 });
-    }
-  });
-
-  function springLoop() {
-    if (!springActive || !cy) {
-      springId = null;
-      return;
-    }
-
-    const damping = 0.92;
-    const springK = 0.04;
-
-    cy.nodes().forEach(node => {
-      const baseX = node.data('baseX');
-      const baseY = node.data('baseY');
-      if (baseX === undefined || baseY === undefined) return;
-
-      const pos = node.position();
-      const vel = nodeVelocities.get(node.id()) || { vx: 0, vy: 0 };
-
-      // 스프링 힘 (기준 위치로 복원)
-      const dx = baseX - pos.x;
-      const dy = baseY - pos.y;
-      vel.vx += dx * springK;
-      vel.vy += dy * springK;
-
-      // 감쇠
-      vel.vx *= damping;
-      vel.vy *= damping;
-
-      // 위치 업데이트
-      node.position({
-        x: pos.x + vel.vx,
-        y: pos.y + vel.vy
-      });
-
-      nodeVelocities.set(node.id(), vel);
-    });
-
-    springId = requestAnimationFrame(springLoop);
-  }
-  springLoop();
-}
-
-function stopSpring() {
-  if (springId) {
-    cancelAnimationFrame(springId);
-    springId = null;
-  }
-  nodeVelocities.clear();
-}
-
-// ============================================================
-// GRAPH FUNCTIONS
-// ============================================================
-function toggleFilter(type, el) {
-  if (activeFilterTypes.has(type)) {
-    activeFilterTypes.delete(type);
-    el.classList.remove('active');
-  } else {
-    activeFilterTypes.add(type);
-    el.classList.add('active');
-  }
-  applyFilters();
-}
-
-function updateGraphCounts() {
-  document.getElementById('graphCount').textContent = `노드 ${nodes.size} · 엣지 ${edges.size}`;
-}
-
-function selectNode(node) {
-  selectedNode = node;
-  const card = document.getElementById('wikiCard');
-  const relations = edges.filter(e => e.from === node.name || e.to === node.name);
-
-  let relHTML = '';
-  if (relations.length > 0) {
-    relHTML = relations.map(e => {
-      const other = e.from === node.name ? e.to : e.from;
-      const dir = e.from === node.name ? '→' : '←';
-      return `<span style="background:var(--panel2);padding:2px 6px;border-radius:4px;font-size:10px;border:1px solid var(--border);">
-        ${other} ${dir} ${e.label || '관계'}
-      </span>`;
-    }).join(' ');
-  }
-
-  const color = COLOR_MAP[node.type] || '#888';
-  card.innerHTML = `
-    <div class="title-row">
-      <span class="node-name" style="color:${color};">${TYPE_ICON[node.type] || '●'} ${node.name}</span>
-      <select onchange="updateNodeType('${node.name}', this.value)">
-        <option value="인물" ${node.type==='인물'?'selected':''}>인물</option>
-        <option value="사건" ${node.type==='사건'?'selected':''}>사건</option>
-        <option value="장소" ${node.type==='장소'?'selected':''}>장소</option>
-        <option value="아이템" ${node.type==='아이템'?'selected':''}>아이템</option>
-      </select>
+        <div id="snapshotList"></div>
+      </div>
     </div>
-    <div style="font-size:11px;color:var(--muted);">언급: ${node.mentions || 1}회 ${node.emotion ? '| 감정: ' + node.emotion : ''}</div>
-    <textarea id="wikiDescArea" placeholder="노드 설명을 입력하세요...">${node.desc || ''}</textarea>
-    <div style="display:flex;gap:4px;flex-wrap:wrap;">
-      <button onclick="saveWikiDesc('${node.name}')" class="primary" style="font-size:11px;padding:4px 10px;">💾 저장</button>
-      <button onclick="removeNode('${node.name}')" style="font-size:11px;padding:4px 10px;border-color:#ff6b6b;color:#ff6b6b;">🗑️ 삭제</button>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div id="helpDialog">
+    <div class="help-panel">
+      <h2>📖 소설 관계도 분석기</h2>
+      <div class="sub">수동 복사 + 비평 + 효과 · 버전 5.0</div>
+      <h3>🔐 로컬 보안 유지</h3>
+      <div class="info-box">
+        모든 데이터는 <b>당신의 PC에만 저장</b>됩니다.<br>
+        외부 서버로 전송되는 데이터는 없으며, 외부 AI로 보내는 텍스트는 <b>당신이 직접 복사/붙여넣기</b>하는 방식입니다.
+      </div>
+      <h3>📌 사용 방법</h3>
+      <div class="step"><div class="step-num">1</div><div class="step-body"><strong>📂 폴더 연결</strong>상단 "폴더 선택"으로 소설 파일 폴더를 선택하세요.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><strong>📄 파일 선택</strong>좌측 파일 목록에서 분석할 소설 파일을 클릭하세요.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>📋 프롬프트 복사</strong>"프롬프트+텍스트 복사"로 분석 지시문을 복사하세요.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><strong>📥 결과 붙여넣기</strong>AI 출력(JSON)을 붙여넣고 "그래프 생성"을 클릭하세요.</div></div>
+      <h3>📊 비평 시스템</h3>
+      <ul>
+        <li><b>비평 탭</b>에서 전용 프롬프트를 복사할 수 있습니다.</li>
+        <li>웹소설 장르 문법과 독자 친절함을 기준으로 5개 항목을 평가합니다.</li>
+        <li>점수는 100점 만점이며, 등급(독보적/경쟁력/정체/이탈/해체)으로 표시됩니다.</li>
+        <li>총평, 핵심 분석, 최강/최약 문장을 함께 제공합니다.</li>
+      </ul>
+      <h3>🎨 그래프 조작</h3>
+      <ul>
+        <li><b>노드 드래그</b> — 마우스로 노드를 끌어 위치 조정 (물리 효과 적용)</li>
+        <li><b>휠 줌</b> — 마우스 휠로 확대/축소</li>
+        <li><b>노드 호버</b> — LLM 위키 스타일의 상세 툴팁 표시</li>
+        <li><b>노드 클릭</b> — 우측 위키 패널에 고정 표시</li>
+        <li><b>필터</b> — 상단 필터로 인물/사건/장소/아이템 타입별 표시</li>
+        <li><b>레이아웃</b> — 기본(cose)/트리(dagre)/마인드맵 전환</li>
+        <li><b>⟲ 초기화</b> — 그래프 위치와 확대율 초기화</li>
+        <li><b>📋 내보내기</b> — 그래프 데이터(JSON)를 클립보드로 복사</li>
+        <li><b>🌊 떨림</b> — 노드가 미세하게 떨리는 효과</li>
+        <li><b>🌀 스프링</b> — 드래그 후 탄성 운동 효과</li>
+        <li><b>⛶ 확대</b> — 그래프를 전체화면으로 보기</li>
+        <li><b>📷 저장 / 📋 복사</b> — 그래프를 PNG 이미지로 저장하거나 클립보드에 복사</li>
+        <li><b>해상도</b> — PNG 내보내기 해상도 배율 설정 (1x~5x)</li>
+      </ul>
+      <h3>🖼️ 노드 이미지 첨부</h3>
+      <ul>
+        <li>노드 클릭 → 위키 패널의 <b>첨부 URL</b> 입력란에 이미지/유튜브 URL 입력</li>
+        <li>입력 즉시 그래프 노드 우측 상단에 📎 버튼이 나타납니다</li>
+        <li>📎 버튼을 클릭하면 이미지 미리보기 또는 유튜브 영상을 캔버스에 표시</li>
+        <li>URL은 <code>.graph.json</code> 파일에 저장되어 새로고침 후에도 유지됩니다</li>
+      </ul>
+      <h3>⌨️ 타자 음악</h3>
+      <ul>
+        <li>본문 편집기 툴바의 🎵 버튼으로 켜기/끄기</li>
+        <li><b>키음</b> 체크박스로 키보드 소리 on/off, 키보드 종류(청축/갈축/적축 등) 선택 가능</li>
+        <li><b>사용자 지정</b> 옵션으로 직접 업로드한 소리(물소리, 새소리 등)를 키음으로 사용</li>
+        <li><b>배경음악</b> MP3/WAV 파일 업로드, 타이핑 속도에 따라 음악 재생 속도 자동 연동</li>
+        <li><b>⌨ 연동</b> 체크 시 타이핑 속도(RPM)에 맞춰 음악 속도가 실시간 변경</li>
+        <li>일정 시간 idle 시 음악 볼륨이 자동으로 줄어듦 (덕킹)</li>
+      </ul>
+      <div class="warning">
+        ⚠️ <b>브라우저 요구사항</b><br>
+        Chrome 116+ 또는 Edge 116+ 권장.<br>
+        File System Access API (<code>showDirectoryPicker</code>)를 지원해야 합니다.
+      </div>
+      <button class="primary help-close" onclick="window.app.closeHelp()">닫기</button>
     </div>
-    ${relations.length > 0 ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">🔗 ${relHTML}</div>` : ''}
-  `;
+  </div>
 
-  if (cy) {
-    cy.elements().unselect();
-    const cyNode = cy.getElementById(node.name);
-    if (cyNode.length) cyNode.select();
-  }
-}
-
-function updateNodeType(name, type) {
-  const n = nodes.get(name);
-  if (n) { n.type = type; syncCytoscapeFromNodes(); }
-}
-
-function saveWikiDesc(name) {
-  const n = nodes.get(name);
-  if (n) {
-    n.desc = document.getElementById('wikiDescArea').value;
-    showToast('✅ 설명이 저장되었습니다.');
-    syncCytoscapeFromNodes();
-  }
-}
-
-function removeNode(name) {
-  if (!confirm(`'${name}' 노드를 삭제하시겠습니까?`)) return;
-  nodes.delete(name);
-  edges = edges.filter(e => e.from !== name && e.to !== name);
-  document.getElementById('wikiCard').innerHTML = `<div style="color:var(--muted);text-align:center;">노드 삭제됨</div>`;
-  updateGraphCounts();
-  syncCytoscapeFromNodes();
-}
-
-// ============================================================
-// CYTOSCAPE CONTROLS
-// ============================================================
-function zoomGraph(factor) {
-  if (!cy) return;
-  const zoom = cy.zoom() * factor;
-  cy.zoom({ level: Math.min(2, Math.max(0.2, zoom)) });
-}
-
-function resetGraphView() {
-  if (!cy) return;
-  cy.fit();
-  cy.zoom(1);
-  cy.pan({ x: 0, y: 0 });
-  // 효과 재시작
-  if (breatheActive) startBreathe();
-  if (springActive) startSpring();
-}
-
-function exportPNG() {
-  if (!cy) return;
-  // scale: 2 → 2배율 고해상도
-  const pngData = cy.png({ 
-    bg: '#1e222c',
-    scale: 3,
-    maxWidth: 4000,
-    maxHeight: 4000
-  });
-  const link = document.createElement('a');
-  link.download = 'graph_' + new Date().toISOString().slice(0,10) + '.png';
-  link.href = pngData;
-  link.click();
-  showToast('📷 고해상도 PNG 저장 완료 (2x)');
-}
-
-// ============================================================
-// RESIZERS
-// ============================================================
-function makeResizer(el, target, side) {
-  let startX, startWidth;
-  el.addEventListener('mousedown', (e) => {
-    startX = e.clientX;
-    startWidth = target.getBoundingClientRect().width;
-    el.classList.add('active');
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    const onMove = (ev) => {
-      const delta = side === 'left' ? (ev.clientX - startX) : (startX - ev.clientX);
-      const w = Math.max(180, Math.min(600, startWidth + delta));
-      target.style.width = w + 'px';
-    };
-    const onUp = () => {
-      el.classList.remove('active');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  });
-}
-makeResizer(document.getElementById('resizerLeft'), document.getElementById('leftPanel'), 'left');
-makeResizer(document.getElementById('resizerRight'), document.getElementById('rightPanel'), 'right');
-
-// ============================================================
-// INIT
-// ============================================================
-async function init() {
-  await checkAndRestoreFolder();
-  initCytoscape();
-  updateGraphCounts();
-  showToast('🚀 분석기가 준비되었습니다. 폴더를 연결하세요.');
-}
-
-init();
-</script>
+  <!-- 메인 JS -->
+  <script src="js/all.js"></script>
 </body>
 </html>
