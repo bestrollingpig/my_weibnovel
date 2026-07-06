@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>소설 관계도 분석기 - 수동 복사 + 비평 + 효과</title>
+<link rel="stylesheet" href="css/style.css" />
+
+<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+<script src="https://unpkg.com/soundfont-player@0.12.0/dist/soundfont-player.js"></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body class="dark-theme">
+  <!-- 상단 네비게이션 -->
+  <div class="top-nav">
+    <div class="brand">⚓ 소설 관계도 분석기 <span>| 수동 복사 + 비평 + 효과</span></div>
+    <div class="nav-controls">
+      <button id="themeBtn" onclick="window.app.toggleTheme()">🌞 라이트 모드</button>
+      <button class="primary" id="openDirBtn" onclick="window.app.openLocalFolder()">📂 폴더 선택</button>
+    </div>
+  </div>
+
+  <!-- 메인 레이아웃 -->
+  <div class="layout">
+    <!-- 왼쪽 패널: 파일 목록 -->
+    <div class="panel" id="leftPanel">
+      <div id="folderConnectionPanel"></div>
+      <div class="panel-header">
+        문서 목록 <span id="docCount"></span>
+        <button id="newDocBtn" onclick="window.editor.createNewDocument()" style="display:none;">+ 새 문서</button>
+      </div>
+      <div class="filelist" id="fileList"></div>
+    </div>
+
+    <div class="resizer" id="resizerLeft"></div>
+
+    <!-- 중앙 패널: 편집기 -->
+    <div class="panel editor-wrap" id="centerPanel">
+      <div class="menubar">
+        <!-- 메뉴바 -->
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'fileMenu')">파일(F)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'editMenu')">편집(E)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'formatMenu')">서식(O)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'viewMenu')">보기(V)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'snapshotMenu')">스냅샷(S)</div>
+        <div class="menu-item" onclick="window.app.toggleMenu(this, 'helpMenu')">도움말(H)</div>
+        <span class="status" id="statusText">폴더 연결 필요</span>
+
+        <!-- 드롭다운 메뉴들 -->
+        <div class="dropdown" id="fileMenu">
+          <div class="dropdown-item" onclick="window.editor.createNewDocument();window.app.closeAllMenus();">새 문서</div>
+          <div class="dropdown-item" onclick="window.app.openLocalFolder();window.app.closeAllMenus();">파일 열기</div>
+          <div class="dropdown-item" onclick="window.editor.saveCurrentFile();window.app.closeAllMenus();">저장</div>
+          <div class="dropdown-item" onclick="window.editor.saveAsFile();window.app.closeAllMenus();">다른 이름으로 저장</div>
+          <div class="dropdown-item" onclick="window.editor.createBackup();window.app.closeAllMenus();">💾 수동 백업</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.editor.showMergeSplit();window.app.closeAllMenus();">📄 문서 합치기/분할</div>
+          <div class="dropdown-item" onclick="window.editor.showFindReplace();window.app.closeAllMenus();">🔍 폴더내 단어 찾기/바꾸기</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.app.disconnectFolder();window.app.closeAllMenus();">폴더 연결 해제</div>
+        </div>
+        <div class="dropdown" id="editMenu">
+          <div class="dropdown-item" onclick="window.editor.execCmd('undo');window.app.closeAllMenus();">실행 취소</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('redo');window.app.closeAllMenus();">다시 실행</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('cut');window.app.closeAllMenus();">잘라내기</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('copy');window.app.closeAllMenus();">복사</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('paste');window.app.closeAllMenus();">붙여넣기</div>
+        </div>
+        <div class="dropdown" id="formatMenu">
+          <div class="dropdown-item" onclick="window.editor.execCmd('bold');window.app.closeAllMenus();">굵게</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('italic');window.app.closeAllMenus();">기울임</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('underline');window.app.closeAllMenus();">밑줄</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('justifyLeft');window.app.closeAllMenus();">왼쪽 정렬</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('justifyCenter');window.app.closeAllMenus();">가운데 정렬</div>
+          <div class="dropdown-item" onclick="window.editor.execCmd('justifyRight');window.app.closeAllMenus();">오른쪽 정렬</div>
+        </div>
+        <div class="dropdown" id="viewMenu">
+          <div class="dropdown-item" onclick="window.editor.zoomEditor(-10);window.app.closeAllMenus();">축소</div>
+          <div class="dropdown-item" onclick="window.editor.zoomEditor(10);window.app.closeAllMenus();">확대</div>
+          <div class="dropdown-item" onclick="window.editor.zoomReset();window.app.closeAllMenus();">기본값</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.editor.toggleSplitMode();window.app.closeAllMenus();">📖 분할 모드</div>
+          <div class="dropdown-item" onclick="window.editor.toggleMobilePreview();window.app.closeAllMenus();">📱 모바일 프리뷰</div>
+          <div class="dropdown-item" onclick="window.editor.toggleTypewriterMode();window.app.closeAllMenus();">⌨️ 타자기 모드</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="window.app.toggleTheme();window.app.closeAllMenus();">테마 전환</div>
+        </div>
+        <div class="dropdown" id="snapshotMenu">
+          <div class="dropdown-item" onclick="window.editor.showSnapshotDialog();window.app.closeAllMenus();">📸 스냅샷 저장</div>
+          <div class="dropdown-item" onclick="window.editor.showSnapshotDialog();window.app.closeAllMenus();">📂 스냅샷 목록</div>
+        </div>
+        <div class="dropdown" id="helpMenu">
+          <div class="dropdown-item" onclick="window.app.showHelp();window.app.closeAllMenus();">📖 도움말</div>
+          <div class="dropdown-item" onclick="window.app.showAbout();window.app.closeAllMenus();">정보</div>
+        </div>
+      </div>
+
+      <!-- 편집기 TTS 패널 -->
+      <div id="editorTtsPanel" style="display:none;background:var(--panel2);border-bottom:1px solid var(--border);padding:6px 12px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;">
+          <span style="font-weight:600;color:var(--c-event);">🔊 본문 읽기</span>
+          <select id="editorTtsVoice" style="font-size:10px;padding:2px 4px;width:auto;min-width:120px;">
+            <option value="">기본 음성</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:4px;color:var(--muted);">
+            속도
+            <input type="range" id="editorTtsSpeed" min="0.5" max="2" step="0.1" value="0.9" style="width:60px;height:4px;" oninput="document.getElementById('editorTtsSpeedVal').textContent=this.value+'x'">
+            <span id="editorTtsSpeedVal" style="min-width:28px;">0.9x</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;color:var(--muted);font-size:10px;">
+            <input type="checkbox" id="editorTtsAudiobook" checked> 낭독 모드
+          </label>
+          <button onclick="window.editor.readEditorText()" class="primary" style="font-size:10px;padding:2px 10px;">▶ 읽기</button>
+          <button onclick="window.editor.stopEditorTts()" style="font-size:10px;padding:2px 10px;border-color:#ff6b6b;color:#ff6b6b;">⏹ 정지</button>
+          <span id="editorTtsStatus" style="font-size:10px;color:var(--muted);"></span>
+        </div>
+      </div>
+
+      <!-- 툴바 -->
+      <div class="fmt-toolbar">
+        <button class="btn-icon" onclick="window.editor.execCmd('undo')" title="실행 취소">↩</button>
+        <button class="btn-icon" onclick="window.editor.execCmd('redo')" title="다시 실행">↪</button>
+        <span class="fmt-sep"></span>
+        <select id="fontFamilySelect" onchange="window.editor.execCmd('fontName', this.value)" title="글꼴">
+          <option value="Pretendard">Pretendard</option>
+          <option value="바탕">바탕</option>
+          <option value="돋움">돋움</option>
+        </select>
+        <select id="fontSizeSelect" onchange="window.editor.execCmd('fontSize', this.value)" title="크기">
+          <option value="3">작게</option>
+          <option value="4" selected>보통</option>
+          <option value="5">크게</option>
+        </select>
+        <span class="fmt-sep"></span>
+        <button class="btn-icon" onclick="window.editor.execCmd('bold')" title="굵게"><b>B</b></button>
+        <button class="btn-icon" onclick="window.editor.execCmd('italic')" title="기울임"><i>I</i></button>
+        <button class="btn-icon" onclick="window.editor.execCmd('underline')" title="밑줄"><u>U</u></button>
+        <span class="fmt-sep"></span>
+        <span id="zoomLevel" class="zoom-badge">100%</span>
+        <button class="btn-icon" onclick="window.editor.zoomEditor(-10)" title="축소">−</button>
+        <button class="btn-icon" onclick="window.editor.zoomEditor(10)" title="확대">+</button>
+        <span style="flex:1;"></span>
+        <button class="btn-icon" onclick="window.editor.saveCurrentFile()" title="저장" style="color:var(--accent);">💾</button>
+        <button class="btn-icon" onclick="window.editor.toggleEditorTts()" id="editorTtsBtn" title="본문 읽기" style="color:var(--c-event);">🔊</button>
+        <button class="btn-icon" id="typeMusicBtn" title="타자 음악" style="color:var(--c-loc);">🎵</button>
+        <button class="btn-icon split-toggle" onclick="window.editor.toggleSplitMode()" id="splitToggleBtn" title="분할 모드">📖</button>
+      </div>
+
+      <!-- 타자 음악 패널 -->
+      <div id="typeMusicPanel" style="display:none;background:var(--panel2);border-bottom:1px solid var(--border);padding:6px 12px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;">
+          <span style="font-weight:600;color:var(--c-loc);">⌨️ 타자 음악</span>
+          <label style="font-size:9px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:2px;">
+            <input type="checkbox" id="tmKeySoundOn" checked> 키음
+          </label>
+          <span style="font-size:10px;color:var(--muted);">키보드:</span>
+          <select id="tmSwitchType" style="font-size:10px;padding:2px 4px;">
+            <option value="blue">청축 (클릭)</option>
+            <option value="brown" selected>갈축 (넌클릭)</option>
+            <option value="red">적축 (리니어)</option>
+            <option value="black">흑축 (무거움)</option>
+            <option value="pebble">조약돌</option>
+            <option value="mungge">몽글몽글</option>
+            <option value="custom">🎵 사용자 지정</option>
+          </select>
+          <label id="tmKeySoundLabel" style="font-size:10px;color:var(--accent);cursor:pointer;display:none;">
+            📂 키음
+            <input type="file" id="tmKeySoundFile" accept="audio/*" style="display:none;">
+          </label>
+          <span style="width:1px;height:16px;background:var(--border);"></span>
+          <span style="font-size:10px;color:var(--muted);">배경음악:</span>
+          <label style="font-size:10px;color:var(--accent);cursor:pointer;">
+            📂 파일
+            <input type="file" id="tmAudioFile" accept="audio/*,.mid" style="display:none;">
+          </label>
+          <button id="tmPlayBtn" onclick="window.typeMusic.togglePlay()" style="font-size:10px;padding:2px 8px;">▶ 재생</button>
+          <span id="tmFileName" style="font-size:9px;color:var(--muted);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          <span style="width:1px;height:16px;background:var(--border);"></span>
+          <span style="font-size:10px;color:var(--muted);">효과음:</span>
+          <input type="range" id="tmFxVol" min="0" max="1" step="0.05" value="0.6" style="width:45px;height:3px;" oninput="document.getElementById('tmFxVolLabel').textContent=Math.round(this.value*100)+'%'">
+          <span id="tmFxVolLabel" style="font-size:9px;color:var(--muted);min-width:25px;">60%</span>
+          <span style="font-size:10px;color:var(--muted);">음악:</span>
+          <input type="range" id="tmMusicVol" min="0" max="1" step="0.05" value="0.4" style="width:45px;height:3px;" oninput="document.getElementById('tmMusicVolLabel').textContent=Math.round(this.value*100)+'%'">
+          <span id="tmMusicVolLabel" style="font-size:9px;color:var(--muted);min-width:25px;">40%</span>
+          <label style="font-size:9px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:2px;">
+            <input type="checkbox" id="tmSpeedSync" checked> ⌨ 연동
+          </label>
+          <span id="tmRpmDisplay" style="font-size:9px;color:var(--c-loc);min-width:32px;text-align:right;">0 RPM</span>
+        </div>
+      </div>
+
+      <!-- 찾기 인라인 -->
+      <div class="find-inline" id="findInline" style="display:none;">
+        <input type="text" id="findInput" placeholder="찾을 단어..." oninput="window.editor.doFindInDoc()" onkeydown="if(event.key==='Enter'){event.shiftKey?window.editor.doFindPrev():window.editor.doFindNext()}">
+        <span class="count" id="findCount"></span>
+        <button onclick="window.editor.doFindPrev()">▲</button>
+        <button onclick="window.editor.doFindNext()">▼</button>
+        <button onclick="window.editor.closeFindInline()" style="border-color:transparent;color:var(--muted);">✕</button>
+      </div>
+
+      <!-- 편집기 -->
+      <div class="paper-container" id="mainPaperContainer">
+        <div class="paper empty-state" id="editor" contenteditable="false">
+          <h3>📂 로컬 폴더를 연결하세요</h3>
+        <p style="max-width:450px;font-size:13px;line-height:1.6;">소설 파일이 있는 폴더를 선택하면 편집기가 활성화됩니다.</p>
+        <button class="primary" onclick="window.app.openLocalFolder()" style="padding:10px 20px;font-size:14px;">📂 폴더 열기</button>
+      </div>
+      </div>
+
+      <!-- 오버레이 레이어 (그래프 노드 이미지용) -->
+      <div id="overlays"></div>
+
+      <!-- 분할 모드 -->
+      <div class="split-container" id="splitContainer" style="display:none;">
+        <div class="split-pane" id="splitPaneMain">
+          <div class="paper-container" style="padding:10px;">
+            <div class="paper" id="splitEditor" contenteditable="true" style="min-height:600px;max-width:100%;padding:30px 40px;"></div>
+          </div>
+        </div>
+        <div class="split-divider" id="splitDivider"></div>
+        <div class="split-pane" id="splitPaneRef">
+          <div style="padding:4px 10px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;flex-shrink:0;">
+            <span>📖 참고 문서</span>
+            <select id="splitRefFileSelect" onchange="window.editor.loadSplitRefFile(this.value)" style="font-size:10px;padding:2px 4px;width:auto;">
+              <option value="">참고 파일 선택</option>
+            </select>
+          </div>
+          <div class="paper-container" style="padding:10px;">
+            <div class="paper" id="splitRefEditor" contenteditable="false" style="min-height:600px;max-width:100%;padding:30px 40px;background:var(--panel2);color:var(--muted);font-size:13px;">
+              참고할 파일을 선택하세요.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 상태바 -->
+      <div class="status-bar">
+        <span id="filePathDisplay">연결 없음</span>
+        <span id="saveStatus" style="font-size:10px;color:var(--muted);min-width:60px;"></span>
+        <span id="lineColIndicator">줄 1, 열 1</span>
+        <span id="charCount">📝 글자: 0</span>
+        <button onclick="window.editor.showDocStats()" style="font-size:9px;padding:1px 6px;border:none;background:transparent;color:var(--muted);cursor:pointer;">📊 통계</button>
+      </div>
+    </div>
+
+    <div class="resizer" id="resizerRight"></div>
+
+    <!-- 오른쪽 패널: 그래프 -->
+    <div class="panel graph-wrap" id="rightPanel">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="window.app.switchRightTab('graphViewTab', this)">🌐 그래프</button>
+        <button class="tab-btn" onclick="window.app.switchRightTab('analysisToolTab', this)">📋 분석</button>
+        <button class="tab-btn" onclick="window.app.switchRightTab('critiqueToolTab', this)">📊 비평</button>
+      </div>
+
+      <div class="tab-content active flex-col" id="graphViewTab">
+        <div class="graph-header" style="padding:6px 10px;gap:4px;">
+          <div class="graph-filters">
+            <span class="filter-checkbox active" onclick="window.graph.toggleFilter('인물', this)">
+              <span class="dot" style="background:var(--c-char);"></span> 인물
+            </span>
+            <span class="filter-checkbox active" onclick="window.graph.toggleFilter('사건', this)">
+              <span class="dot" style="background:var(--c-event);"></span> 사건
+            </span>
+            <span class="filter-checkbox active" onclick="window.graph.toggleFilter('장소', this)">
+              <span class="dot" style="background:var(--c-loc);"></span> 장소
+            </span>
+            <span class="filter-checkbox active" onclick="window.graph.toggleFilter('아이템', this)">
+              <span class="dot" style="background:var(--c-item);"></span> 아이템
+            </span>
+            <span style="flex:1;"></span>
+            <span id="graphCount" style="font-size:10px;color:var(--muted);">노드 0 · 엣지 0</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:10px;color:var(--muted);">레이아웃:</span>
+            <button class="btn-icon" onclick="window.graph.runGraphLayout('cose')" style="font-size:10px;padding:2px 6px;border-color:var(--border);" title="기본 레이아웃 (cose)">기본</button>
+            <button class="btn-icon" onclick="window.graph.runGraphLayout('dagre')" style="font-size:10px;padding:2px 6px;border-color:var(--border);" title="트리 구조 레이아웃">🌲 트리</button>
+            <button class="btn-icon" onclick="window.graph.runGraphLayout('mindmap')" style="font-size:10px;padding:2px 6px;border-color:var(--border);" title="마인드맵 레이아웃">🧠 마인드맵</button>
+            <button class="btn-icon" onclick="window.graph.resetGraphView()" style="font-size:10px;" title="그래프 확대/위치 초기화">⟲ 초기화</button>
+            <button class="btn-icon" onclick="window.graph.exportGraphToClipboard()" style="font-size:10px;border-color:#facc15;color:#facc15;" title="그래프 JSON을 클립보드에 복사">📋 내보내기</button>
+            <button id="btnBreathe" class="inactive" onclick="window.graph.toggleBreathe()" style="font-size:10px;padding:2px 6px;" title="노드 떨림 효과 켜기/끄기">🌊 떨림</button>
+            <button id="btnSpring" class="inactive" onclick="window.graph.toggleSpring()" style="font-size:10px;padding:2px 6px;" title="노드 스프링 효과 켜기/끄기">🌀 스프링</button>
+            <button onclick="window.graph.openGraphFloating()" style="font-size:10px;padding:2px 6px;" title="전체화면으로 보기">⛶ 확대</button>
+          </div>
+        </div>
+        <div id="cy"></div>
+        <div id="overlays"></div>
+        <div class="canvas-controls">
+          <button onclick="window.graph.zoomGraph(1.15)" title="확대">+</button>
+          <button onclick="window.graph.zoomGraph(0.85)" title="축소">-</button>
+          <button onclick="window.graph.resetGraphView()" title="위치/확대 초기화">⟲</button>
+          <button onclick="window.graph.exportPNG()" style="border-color:#4ade80; color:#4ade80; font-size:11px;" title="그래프를 PNG 이미지로 저장">📷 저장</button>
+          <button onclick="window.graph.exportPNG(true)" style="border-color:#facc15; color:#facc15; font-size:10px;" title="그래프를 PNG로 클립보드에 복사">📋 복사</button>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:4px;padding:4px;background:var(--panel);border-radius:4px;border:1px solid var(--border);">
+            <span style="font-size:9px;color:var(--muted);white-space:nowrap;">해상도</span>
+            <input type="range" id="pngScale" min="1" max="5" step="0.5" value="2" style="width:50px;height:3px;" oninput="document.getElementById('pngScaleLabel').textContent=this.value+'x'">
+            <span id="pngScaleLabel" style="font-size:9px;color:var(--muted);min-width:20px;">2x</span>
+          </div>
+        </div>
+        <div class="wiki-panel" id="wikiPanel">
+          <div class="panel-header" style="cursor:pointer;">
+            <span onclick="window.graph.cycleWikiMode()" style="flex:1;">
+              노드 위키 <span id="wikiModeLabel" style="font-size:10px;color:var(--muted);font-weight:400;">· 편집</span>
+              <span style="font-size:10px;color:var(--muted);">(클릭 전환)</span>
+            </span>
+            <span id="wikiCollapseBtn" onclick="window.graph.toggleWikiPanel()" style="font-size:11px;color:var(--muted);cursor:pointer;padding:0 4px;">▼</span>
+          </div>
+          <div class="wiki-card" id="wikiCard">
+            <div style="color:var(--muted);font-size:12px;text-align:center;margin:auto;">
+              노드를 클릭하면 상세 정보가 표시됩니다.
+            </div>
+          </div>
+          <div id="wikiTtsSection" class="tts-section" style="display:none;">
+            <h4>🔊 TTS 읽어주기</h4>
+            <select id="ttsProvider" onchange="window.graph.onTtsProviderChange()">
+              <option value="web-speech">🌐 크롬 기본 음성</option>
+            </select>
+            <div id="webSpeechVoiceSelectContainer">
+              <label>음성 선택</label>
+              <select id="webSpeechVoiceSelect"></select>
+            </div>
+            <div class="tts-speed-row">
+              <label>속도</label>
+              <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="0.9" oninput="document.getElementById('speedValue').textContent=this.value+'x'">
+              <span id="speedValue">0.9x</span>
+            </div>
+            <label><input type="checkbox" id="audiobookMode" checked> 🎧 낭독 모드</label>
+            <div class="voice-map-container" style="margin:4px 0;">
+              <div style="font-size:10px;color:var(--muted);">👥 캐릭터별 목소리:</div>
+              <div id="voiceMappingContainer"></div>
+              <div style="display:flex;gap:4px;margin-top:2px;">
+                <input type="text" id="mapCharName" placeholder="캐릭터명" style="flex:1;font-size:10px;padding:2px 4px;">
+                <select id="mapVoiceSelect" style="flex:1.5;font-size:10px;padding:2px 4px;"></select>
+                <button onclick="window.graph.addVoiceMapping()" style="font-size:9px;padding:2px 6px;">추가</button>
+              </div>
+            </div>
+            <div class="tts-btns">
+              <button onclick="window.graph.readWikiText()" class="primary">🔊 읽기</button>
+              <button onclick="window.graph.stopReading()">⏹️ 정지</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content flex-col" id="analysisToolTab">
+        <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 10px;">
+          <div class="tool-card">
+            <div class="tool-card-title">① 프롬프트 복사</div>
+            <div class="tool-card-desc">현재 원고를 관계도 분석 프롬프트와 함께 복사합니다.</div>
+            <button onclick="window.modules.copyWithPrompt()" class="primary" style="width:100%;padding:8px;font-size:12px;">
+              📋 프롬프트 + 텍스트 복사
+            </button>
+            <div id="copyToast" style="font-size:10px;color:var(--accent);margin-top:4px;display:none;text-align:center;">
+              ✅ 클립보드에 복사되었습니다! 외부 AI에 붙여넣고 분석하세요.
+            </div>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-title">② 결과 붙여넣기 (JSON)</div>
+            <div class="tool-card-desc">AI가 출력한 관계도 분석 결과(JSON)를 붙여넣으세요.</div>
+            <textarea id="resultPasteArea" rows="4" style="width:100%;font-size:11px;font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);resize:vertical;" 
+              placeholder="NotebookLM/DeepSeek/Gemini의 분석 결과(JSON)를 붙여넣으세요..."></textarea>
+            <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">
+              <button onclick="window.modules.processPastedResult()" class="primary" style="font-size:11px;padding:4px 12px;">📊 그래프 생성</button>
+              <button onclick="window.modules.autoFixAndProcess()" style="font-size:11px;padding:4px 12px;border-color:#facc15;color:#facc15;">🔧 자동 수정</button>
+              <button onclick="window.modules.clearResultArea()" style="font-size:11px;padding:4px 12px;border-color:#ff6b6b;color:#ff6b6b;">🗑️ 지우기</button>
+            </div>
+            <div id="parseResultFeedback" style="font-size:11px;margin-top:4px;color:var(--muted);display:none;">
+              <span id="parseStats">노드 0개, 엣지 0개</span>
+            </div>
+          </div>
+        </div>
+      </div>
+<div class="tab-content flex-col" id="critiqueToolTab">
+        <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0;">
+          <div class="tool-card">
+            <div class="tool-card-title">??비평 ?�롬?�트 복사</div>
+            <div class="tool-card-desc">?�재 ?�고�??�소??비평 ?�롬?�트?� ?�께 복사?�니??</div>
+            <button onclick="window.modules.copyCritiquePrompt()" class="primary" style="width:100%;padding:8px;font-size:12px;">
+              ?�� 비평 ?�롬?�트 + ?�스??복사
+            </button>
+            <div id="critiqueCopyToast" style="font-size:10px;color:var(--accent);margin-top:4px;display:none;text-align:center;">
+              ??비평 ?�롬?�트가 복사?�었?�니?? ?��? AI??붙여?�고 분석?�세??
+            </div>
+          </div>
+          <div class="tool-card" style="flex-shrink:0;">
+            <div class="tool-card-title">??비평 결과 이미지 ?�장</div>
+            <div class="tool-card-desc">?�시?�중?� 비평 결과�?이미지?�로 ?�장?�니?? (마스킹 ?�션 ?�공)</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
+                <input type="checkbox" id="critiqueMaskScores" checked> ?�수 영역
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
+                <input type="checkbox" id="critiqueMaskRadar" checked> ?��?� 차트
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
+                <input type="checkbox" id="critiqueMaskSummary" checked> 총평/?�심 분석
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
+                <input type="checkbox" id="critiqueMaskSentences" checked> 최강/최약 문장
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
+                <input type="checkbox" id="critiqueMaskDetailed" checked> ?�세 분석(?�체/?�흡/구조/?? ?�리/??르)
+              </label>
+              <span style="flex:1;"></span>
+              <span style="font-size:10px;color:var(--muted);white-space:nowrap;">?�상??</span>
+              <input type="range" id="critiquePngScale" min="1" max="4" step="0.5" value="2" style="width:60px;height:3px;" oninput="document.getElementById('critiquePngScaleLabel').textContent=this.value+'x'">
+              <span id="critiquePngScaleLabel" style="font-size:10px;color:var(--muted);min-width:20px;">2x</span>
+            </div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button onclick="window.modules.exportCritiqueAsImage()" class="primary" style="font-size:11px;padding:4px 12px;flex:1;">?�� 이미지 ?�장</button>
+              <button onclick="window.modules.exportCritiqueAsImage(true)" style="font-size:11px;padding:4px 12px;border-color:#facc15;color:#facc15;">?�� 복사</button>
+            </div>
+            <div id="critiqueExportToast" style="font-size:10px;color:var(--accent);margin-top:4px;display:none;text-align:center;"></div>
+          </div>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-title">② 비평 결과 붙여넣기 (JSON)</div>
+            <div class="tool-card-desc">AI가 출력한 비평 결과(JSON)를 붙여넣으세요.</div>
+            <textarea id="critiquePasteArea" rows="4" style="width:100%;font-size:11px;font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);resize:vertical;" 
+              placeholder='{"scores": {...}, "critique": {...}}'></textarea>
+            <div style="display:flex;gap:4px;margin-top:4px;">
+              <button onclick="window.modules.processCritiqueResult()" class="primary" style="font-size:11px;padding:4px 12px;flex:1;">📊 비평 결과 표시</button>
+              <button onclick="document.getElementById('critiquePasteArea').value=''; document.getElementById('critiqueResult').classList.remove('show');" style="font-size:11px;padding:4px 12px;border-color:#ff6b6b;color:#ff6b6b;">🗑️ 지우기</button>
+            </div>
+          </div>
+          <div id="critiqueResult" class="critique-result"></div>
+          <div style="font-size:10px;color:var(--muted);padding:8px;line-height:1.5;background:var(--panel2);border-radius:6px;border:1px solid var(--border);">
+            💡 <b>비평 프롬프트</b>는 웹소설 장르 문법과 독자 친절함을 기준으로<br>
+            문장·묘사·전개·캐릭터·가독성을 100점 만점으로 평가합니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 툴팁 -->
+  <div class="graph-tooltip" id="graphTooltip"></div>
+
+  <!-- 오버레이들 -->
+  <div class="findreplace-overlay" id="findReplaceOverlay">
+    <div class="findreplace-box">
+      <h3>🔍 폴더 내 모든 문서에서 찾기/바꾸기</h3>
+      <label>찾을 단어</label>
+      <input type="text" id="frFind" placeholder="찾을 단어 입력">
+      <label>바꿀 단어</label>
+      <input type="text" id="frReplace" placeholder="바꿀 단어 입력">
+      <div class="btn-row">
+        <button onclick="window.editor.findInAllFiles()" class="primary">🔍 찾기</button>
+        <button onclick="window.editor.replaceInAllFiles()" class="warning">📝 모두 바꾸기</button>
+        <button onclick="window.editor.closeFindReplace()">닫기</button>
+      </div>
+      <div class="result-msg" id="frResult"></div>
+    </div>
+  </div>
+  <div class="merge-overlay" id="mergeOverlay">
+    <div class="merge-box">
+      <h3 id="mergeTitle">📄 문서 합치기</h3>
+      <div style="margin-bottom:8px;">
+        <button onclick="window.editor.showMergeView()" class="primary" style="font-size:11px;padding:4px 12px;">📄 합치기</button>
+        <button onclick="window.editor.showSplitView()" style="font-size:11px;padding:4px 12px;border-color:#4ade80;color:#4ade80;">✂️ 분할하기</button>
+      </div>
+      <div id="mergeFileList"></div>
+      <div id="mergeOptions" style="display:none;">
+        <label id="mergeOptLabel">병합할 파일 순서 (쉼표로 구분)</label>
+        <input type="text" id="mergeOrder" placeholder="파일1.txt, 파일2.txt, ...">
+      </div>
+      <div id="splitOptions" style="display:none;">
+        <label>분할할 파일 선택</label>
+        <select id="splitFileSelect" style="width:100%;"></select>
+        <label>분할 기준 (글자 수)</label>
+        <input type="number" id="splitSize" value="1000" min="100" max="50000">
+      </div>
+      <div class="btn-row">
+        <button id="mergeExecBtn" onclick="window.editor.executeMerge()" class="primary" style="display:none;">실행</button>
+        <button id="splitExecBtn" onclick="window.editor.executeSplit()" class="primary" style="display:none;border-color:#4ade80;color:#4ade80;">✂️ 분할 실행</button>
+        <button onclick="window.editor.closeMergeSplit()">닫기</button>
+      </div>
+      <div class="result-msg" id="mergeResult"></div>
+    </div>
+  </div>
+  <div class="mobile-preview-overlay" id="mobilePreviewOverlay">
+    <div class="mobile-preview-box">
+      <div class="header">
+        <h3>📱 모바일 프리뷰</h3>
+        <select id="mobilePreviewTheme" onchange="window.editor.updateMobilePreview()">
+          <option value="light">라이트</option>
+          <option value="sepia">세피아</option>
+          <option value="dark">다크</option>
+        </select>
+        <button onclick="window.editor.closeMobilePreview()">✕</button>
+      </div>
+      <div class="mobile-phone-frame" id="mobilePhoneFrame">
+        <div class="content" id="mobilePreviewContent"></div>
+      </div>
+      <div class="footer">
+        <span style="font-size:11px;color:var(--muted);">글자수: <span id="mobilePreviewChars">0</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="graph-floating-wrap" id="graphFloatingOverlay">
+    <div class="graph-floating" id="graphFloatingWindow">
+      <div class="header" id="graphFloatingHeader">
+        <h3>🌐 지식 그래프</h3>
+        <button class="close-btn" onclick="window.graph.closeGraphFloating()">✕ 닫기</button>
+      </div>
+      <div class="cy-container" id="cyFloating"></div>
+      <div class="resize-handle" id="graphFloatingResize"></div>
+    </div>
+  </div>
+  <div class="snapshot-overlay" id="snapshotOverlay">
+    <div class="snapshot-box">
+      <div class="header">
+        <h3>📸 스냅샷</h3>
+        <button onclick="window.editor.closeSnapshotDialog()">✕</button>
+      </div>
+      <div class="body">
+        <div class="snapshot-save-row">
+          <input type="text" id="snapshotLabelInput" placeholder="스냅샷 이름 입력..." onkeydown="if(event.key==='Enter')window.editor.saveSnapshot()">
+          <button onclick="window.editor.saveSnapshot()" class="primary">💾 저장</button>
+        </div>
+        <div id="snapshotList"></div>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div id="helpDialog">
+    <div class="help-panel">
+      <h2>📖 소설 관계도 분석기</h2>
+      <div class="sub">수동 복사 + 비평 + 효과 · 버전 5.0</div>
+      <h3>🔐 로컬 보안 유지</h3>
+      <div class="info-box">
+        모든 데이터는 <b>당신의 PC에만 저장</b>됩니다.<br>
+        외부 서버로 전송되는 데이터는 없으며, 외부 AI로 보내는 텍스트는 <b>당신이 직접 복사/붙여넣기</b>하는 방식입니다.
+      </div>
+      <h3>📌 사용 방법</h3>
+      <div class="step"><div class="step-num">1</div><div class="step-body"><strong>📂 폴더 연결</strong>상단 "폴더 선택"으로 소설 파일 폴더를 선택하세요.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><strong>📄 파일 선택</strong>좌측 파일 목록에서 분석할 소설 파일을 클릭하세요.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>📋 프롬프트 복사</strong>"프롬프트+텍스트 복사"로 분석 지시문을 복사하세요.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><strong>📥 결과 붙여넣기</strong>AI 출력(JSON)을 붙여넣고 "그래프 생성"을 클릭하세요.</div></div>
+      <h3>📊 비평 시스템</h3>
+      <ul>
+        <li><b>비평 탭</b>에서 전용 프롬프트를 복사할 수 있습니다.</li>
+        <li>웹소설 장르 문법과 독자 친절함을 기준으로 5개 항목을 평가합니다.</li>
+        <li>점수는 100점 만점이며, 등급(독보적/경쟁력/정체/이탈/해체)으로 표시됩니다.</li>
+        <li>총평, 핵심 분석, 최강/최약 문장을 함께 제공합니다.</li>
+      </ul>
+      <h3>🎨 그래프 조작</h3>
+      <ul>
+        <li><b>노드 드래그</b> — 마우스로 노드를 끌어 위치 조정 (물리 효과 적용)</li>
+        <li><b>휠 줌</b> — 마우스 휠로 확대/축소</li>
+        <li><b>노드 호버</b> — LLM 위키 스타일의 상세 툴팁 표시</li>
+        <li><b>노드 클릭</b> — 우측 위키 패널에 고정 표시</li>
+        <li><b>필터</b> — 상단 필터로 인물/사건/장소/아이템 타입별 표시</li>
+        <li><b>레이아웃</b> — 기본(cose)/트리(dagre)/마인드맵 전환</li>
+        <li><b>⟲ 초기화</b> — 그래프 위치와 확대율 초기화</li>
+        <li><b>📋 내보내기</b> — 그래프 데이터(JSON)를 클립보드로 복사</li>
+        <li><b>🌊 떨림</b> — 노드가 미세하게 떨리는 효과</li>
+        <li><b>🌀 스프링</b> — 드래그 후 탄성 운동 효과</li>
+        <li><b>⛶ 확대</b> — 그래프를 전체화면으로 보기</li>
+        <li><b>📷 저장 / 📋 복사</b> — 그래프를 PNG 이미지로 저장하거나 클립보드에 복사</li>
+        <li><b>해상도</b> — PNG 내보내기 해상도 배율 설정 (1x~5x)</li>
+      </ul>
+      <h3>🖼️ 노드 이미지 첨부</h3>
+      <ul>
+        <li>노드 클릭 → 위키 패널의 <b>첨부 URL</b> 입력란에 이미지/유튜브 URL 입력</li>
+        <li>입력 즉시 그래프 노드 우측 상단에 📎 버튼이 나타납니다</li>
+        <li>📎 버튼을 클릭하면 이미지 미리보기 또는 유튜브 영상을 캔버스에 표시</li>
+        <li>URL은 <code>.graph.json</code> 파일에 저장되어 새로고침 후에도 유지됩니다</li>
+      </ul>
+      <h3>⌨️ 타자 음악</h3>
+      <ul>
+        <li>본문 편집기 툴바의 🎵 버튼으로 켜기/끄기</li>
+        <li><b>키음</b> 체크박스로 키보드 소리 on/off, 키보드 종류(청축/갈축/적축 등) 선택 가능</li>
+        <li><b>사용자 지정</b> 옵션으로 직접 업로드한 소리(물소리, 새소리 등)를 키음으로 사용</li>
+        <li><b>배경음악</b> MP3/WAV 파일 업로드, 타이핑 속도에 따라 음악 재생 속도 자동 연동</li>
+        <li><b>⌨ 연동</b> 체크 시 타이핑 속도(RPM)에 맞춰 음악 속도가 실시간 변경</li>
+        <li>일정 시간 idle 시 음악 볼륨이 자동으로 줄어듦 (덕킹)</li>
+      </ul>
+      <div class="warning">
+        ⚠️ <b>브라우저 요구사항</b><br>
+        Chrome 116+ 또는 Edge 116+ 권장.<br>
+        File System Access API (<code>showDirectoryPicker</code>)를 지원해야 합니다.
+      </div>
+      <button class="primary help-close" onclick="window.app.closeHelp()">닫기</button>
+    </div>
+  </div>
+
+  <!-- 메인 JS -->
+  <script src="js/all.js"></script>
+</body>
+</html>
