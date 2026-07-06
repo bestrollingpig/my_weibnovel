@@ -10,7 +10,6 @@
 <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
 <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
 <script src="https://unpkg.com/soundfont-player@0.12.0/dist/soundfont-player.js"></script>
-<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body class="dark-theme">
   <!-- 상단 네비게이션 -->
@@ -373,48 +372,17 @@
           </div>
         </div>
       </div>
-<div class="tab-content flex-col" id="critiqueToolTab">
+      <div class="tab-content flex-col" id="critiqueToolTab">
         <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0;">
           <div class="tool-card">
-            <div class="tool-card-title">??비평 ?�롬?�트 복사</div>
-            <div class="tool-card-desc">?�재 ?�고�??�소??비평 ?�롬?�트?� ?�께 복사?�니??</div>
+            <div class="tool-card-title">① 비평 프롬프트 복사</div>
+            <div class="tool-card-desc">현재 원고를 웹소설 비평 프롬프트와 함께 복사합니다.</div>
             <button onclick="window.modules.copyCritiquePrompt()" class="primary" style="width:100%;padding:8px;font-size:12px;">
-              ?�� 비평 ?�롬?�트 + ?�스??복사
+              📋 비평 프롬프트 + 텍스트 복사
             </button>
             <div id="critiqueCopyToast" style="font-size:10px;color:var(--accent);margin-top:4px;display:none;text-align:center;">
-              ??비평 ?�롬?�트가 복사?�었?�니?? ?��? AI??붙여?�고 분석?�세??
+              ✅ 비평 프롬프트가 복사되었습니다! 외부 AI에 붙여넣고 분석하세요.
             </div>
-          </div>
-          <div class="tool-card" style="flex-shrink:0;">
-            <div class="tool-card-title">??비평 결과 이미지 ?�장</div>
-            <div class="tool-card-desc">?�시?�중?� 비평 결과�?이미지?�로 ?�장?�니?? (마스킹 ?�션 ?�공)</div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
-                <input type="checkbox" id="critiqueMaskScores" checked> ?�수 영역
-              </label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
-                <input type="checkbox" id="critiqueMaskRadar" checked> ?��?� 차트
-              </label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
-                <input type="checkbox" id="critiqueMaskSummary" checked> 총평/?�심 분석
-              </label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
-                <input type="checkbox" id="critiqueMaskSentences" checked> 최강/최약 문장
-              </label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
-                <input type="checkbox" id="critiqueMaskDetailed" checked> ?�세 분석(?�체/?�흡/구조/?? ?�리/??르)
-              </label>
-              <span style="flex:1;"></span>
-              <span style="font-size:10px;color:var(--muted);white-space:nowrap;">?�상??</span>
-              <input type="range" id="critiquePngScale" min="1" max="4" step="0.5" value="2" style="width:60px;height:3px;" oninput="document.getElementById('critiquePngScaleLabel').textContent=this.value+'x'">
-              <span id="critiquePngScaleLabel" style="font-size:10px;color:var(--muted);min-width:20px;">2x</span>
-            </div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;">
-              <button onclick="window.modules.exportCritiqueAsImage()" class="primary" style="font-size:11px;padding:4px 12px;flex:1;">?�� 이미지 ?�장</button>
-              <button onclick="window.modules.exportCritiqueAsImage(true)" style="font-size:11px;padding:4px 12px;border-color:#facc15;color:#facc15;">?�� 복사</button>
-            </div>
-            <div id="critiqueExportToast" style="font-size:10px;color:var(--accent);margin-top:4px;display:none;text-align:center;"></div>
-          </div>
           </div>
           <div class="tool-card">
             <div class="tool-card-title">② 비평 결과 붙여넣기 (JSON)</div>
