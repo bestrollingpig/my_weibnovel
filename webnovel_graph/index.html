@@ -10,56 +10,24 @@
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
   <style>
-    :root {
-      --bg-primary: #f0f0f0;
-      --bg-secondary: #ffffff;
-      --bg-card: #f9f9f9;
-      --bg-input: #ffffff;
-      --text-primary: #333333;
-      --text-secondary: #666666;
-      --border-color: #ddd;
-      --shadow-color: rgba(0,0,0,0.1);
-      --help-bg: #f9f9f9;
-      --help-border: #e0e0e0;
-      --header-start: #667eea;
-      --header-end: #764ba2;
-    }
-
-    [data-theme="dark"] {
-      --bg-primary: #0f0f1a;
-      --bg-secondary: #1a1a2e;
-      --bg-card: #16213e;
-      --bg-input: #2d2d4e;
-      --text-primary: #e0e0e0;
-      --text-secondary: #aaaaaa;
-      --border-color: #444466;
-      --shadow-color: rgba(0,0,0,0.4);
-      --help-bg: #1a1a3e;
-      --help-border: #333366;
-    }
-
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family:'Malgun Gothic',sans-serif;
-      background:var(--bg-primary);
-      color:var(--text-primary);
+      background:#f0f0f0;
       height:100vh;
       display:flex;
       flex-direction:column;
-      transition: background 0.3s, color 0.3s;
     }
     header {
-      background:linear-gradient(135deg,var(--header-start) 0%,var(--header-end) 100%);
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
       color:#fff;
       padding:10px 20px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.2);
       display:flex;
       justify-content:space-between;
       align-items:center;
       flex-shrink:0;
     }
     header h1 { font-size:1.3em; text-shadow:1px 1px 0 #000; }
-    .header-right { display:flex; gap:10px; align-items:center; }
     .dark-toggle {
       background:rgba(255,255,255,0.15);
       border:1px solid rgba(255,255,255,0.25);
@@ -67,20 +35,16 @@
       padding:6px 12px;
       border-radius:20px;
       cursor:pointer;
-      font-size:0.9em;
-      transition:0.2s;
-      text-shadow:1px 1px 0 #000;
     }
     .dark-toggle:hover { background:rgba(255,255,255,0.3); }
 
     .main-container { display:flex; flex:1; overflow:hidden; }
     .left-panel {
       width:22%;
-      background:var(--bg-secondary);
+      background:#fff;
       padding:12px;
       overflow-y:auto;
-      border-right:2px solid var(--border-color);
-      transition: background 0.3s, border-color 0.3s;
+      border-right:2px solid #ddd;
     }
     .graph-area {
       width:56%;
@@ -90,13 +54,12 @@
     }
     .right-panel {
       width:22%;
-      background:var(--bg-secondary);
+      background:#fff;
       padding:12px;
       overflow-y:auto;
-      border-left:2px solid var(--border-color);
+      border-left:2px solid #ddd;
       display:flex;
       flex-direction:column;
-      transition: background 0.3s, border-color 0.3s;
     }
 
     .cy-wrapper {
@@ -104,10 +67,9 @@
       flex:1;
       width:100%;
       height:100%;
-      border:2px solid var(--border-color);
+      border:2px solid #ddd;
       border-radius:8px;
-      background:var(--bg-primary);
-      transition: border-color 0.3s, background 0.3s;
+      background:#fafafa;
     }
     #cy {
       position:absolute;
@@ -131,10 +93,9 @@
     .panel-section {
       margin-bottom:15px;
       padding:12px;
-      background:var(--bg-card);
+      background:#f9f9f9;
       border-radius:8px;
-      border:1px solid var(--border-color);
-      transition: background 0.3s, border-color 0.3s;
+      border:1px solid #e0e0e0;
     }
     .panel-section h3 {
       font-size:0.95em;
@@ -143,38 +104,27 @@
       border-bottom:2px solid #667eea;
       padding-bottom:4px;
     }
-    input[type="text"], input[type="number"], select {
+    input[type="text"], select {
       width:100%;
       padding:6px;
       margin:4px 0;
-      border:1px solid var(--border-color);
+      border:1px solid #ddd;
       border-radius:4px;
-      font-size:0.9em;
-      background:var(--bg-input);
-      color:var(--text-primary);
-      transition: background 0.3s, color 0.3s, border-color 0.3s;
     }
     input[readonly] {
       background-color:#e9ecef;
       color:#495057;
       cursor:not-allowed;
     }
-    [data-theme="dark"] input[readonly] {
-      background-color:#2d2d4e;
-      color:#aaaaaa;
-    }
     textarea {
       width:100%;
       padding:8px;
-      border:1px solid var(--border-color);
+      border:1px solid #ddd;
       border-radius:4px;
       font-family:'Malgun Gothic',monospace;
       font-size:0.9em;
       resize:vertical;
       min-height:120px;
-      background:var(--bg-input);
-      color:var(--text-primary);
-      transition: background 0.3s, color 0.3s, border-color 0.3s;
     }
 
     button {
@@ -188,7 +138,6 @@
       font-weight:bold;
       color:#fff;
       text-shadow:1px 1px 0 #000;
-      transition:0.2s;
     }
     button:active { transform:scale(0.98); }
     .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
@@ -196,191 +145,101 @@
     .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
     .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
     .btn-warning { background:linear-gradient(135deg,#f6d365 0%,#fda085 100%); }
-    .btn-secondary { background:#6c757d; color:#fff; text-shadow:1px 1px 0 #000; }
+    .btn-secondary { background:#6c757d; color:#fff; }
+    .btn-save-html { background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); }
 
-    .help-container {
-      margin-bottom:15px;
-      border-radius:8px;
-      border:1px solid var(--help-border);
-      background:var(--help-bg);
-      overflow:hidden;
-      transition: background 0.3s, border-color 0.3s;
-    }
-    .help-header {
-      padding:10px 14px;
-      cursor:pointer;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      user-select:none;
-      font-weight:bold;
-      color:var(--text-primary);
-    }
-    .help-header:hover { background:rgba(102,126,234,0.1); }
-    .help-header .arrow { transition:transform 0.3s; font-size:0.8em; }
-    .help-header .arrow.open { transform:rotate(180deg); }
-    .help-body {
-      max-height:0;
-      overflow:hidden;
-      transition:max-height 0.4s ease, padding 0.3s ease;
-      padding:0 14px;
-    }
-    .help-body.open {
-      max-height:2000px;
-      padding:0 14px 14px 14px;
-    }
-    .help-body h4 {
-      color:#667eea;
-      margin:12px 0 4px 0;
-      font-size:0.9em;
-      border-bottom:1px solid var(--border-color);
-      padding-bottom:3px;
-    }
-    .help-body h4:first-child { margin-top:4px; }
-    .help-body p, .help-body li {
-      font-size:0.82em;
-      line-height:1.6;
-      color:var(--text-secondary);
-      margin:2px 0;
-    }
-    .help-body ul { padding-left:18px; margin:4px 0; }
-    .help-body .method {
-      background:var(--bg-card);
-      padding:6px 10px;
-      border-radius:4px;
-      margin:6px 0;
-      border-left:3px solid #667eea;
-      font-size:0.82em;
-      transition: background 0.3s;
-    }
-    .help-body .method strong { color:#667eea; }
-    .help-body .shortcut {
-      display:inline-block;
-      background:var(--bg-input);
-      border:1px solid var(--border-color);
-      padding:1px 8px;
-      border-radius:4px;
-      font-size:0.75em;
-      font-family:monospace;
-      color:var(--text-primary);
-    }
-    .help-body code {
-      background:var(--bg-input);
-      padding:1px 6px;
-      border-radius:3px;
-      font-size:0.85em;
-      border:1px solid var(--border-color);
-    }
-
-    .help-text { font-size:0.75em; color:var(--text-secondary); margin-top:4px; padding:6px; background:var(--bg-card); border-radius:4px; transition: background 0.3s, color 0.3s; }
+    .help-text { font-size:0.75em; color:#888; margin-top:4px; padding:6px; background:#f9f9f9; border-radius:4px; }
     .connection-tools { display:flex; gap:5px; margin-bottom:4px; }
     .connection-tools button { padding:4px; font-size:0.75em; margin:0; }
     .drag-mode-active { background:#ff0055 !important; animation:pulse 2s infinite; }
     @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(255,0,85,0.7); } 70% { box-shadow:0 0 0 10px rgba(255,0,85,0); } 100% { box-shadow:0 0 0 0 rgba(255,0,85,0); } }
 
     .node-image-toggle { position:absolute; z-index:999; width:24px; height:24px; background:#fff; border:2px solid #333; border-radius:50%; text-align:center; line-height:20px; font-size:14px; cursor:pointer; box-shadow:2px 2px 5px rgba(0,0,0,0.2); pointer-events:auto; }
-    .node-image-popup { position:absolute; z-index:9999; background:var(--bg-secondary); border:1px solid var(--border-color); padding:5px; box-shadow:0 10px 25px rgba(0,0,0,0.5); display:none; pointer-events:auto; resize:both; overflow:auto; min-width:200px; min-height:150px; color:var(--text-primary); }
-    .node-content-text { font-size:0.9em; line-height:1.4; white-space:pre-wrap; background:var(--bg-card); padding:5px; border-radius:4px; border:1px solid var(--border-color); width:100%; height:100%; }
-    .node-content-iframe { width:100%; height:200px; border:none; border-radius:4px; }
-    .node-content-video { width:100%; border-radius:4px; }
-    .node-content-link-card { padding:10px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:4px; text-align:center; margin-bottom:5px; }
-    .node-content-link-card a { color:#0066cc; font-weight:bold; text-decoration:none; }
-    .node-image-popup img { max-width:100%; height:auto; display:block; border-radius:4px; }
-    .node-image-popup .close-btn { display:block; text-align:center; background:#ff5f6d; color:#fff; font-size:0.8em; padding:2px; cursor:pointer; margin-top:5px; border-radius:4px; font-weight:bold; }
+    .node-image-popup { position:absolute; z-index:9999; background:#fff; border:1px solid #ccc; padding:5px; box-shadow:0 10px 25px rgba(0,0,0,0.5); display:none; pointer-events:auto; resize:both; overflow:auto; min-width:200px; min-height:150px; }
 
-    .capture-controls { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
-    .capture-controls button { flex:1; padding:6px; font-size:0.8em; min-width:80px; }
-    .resolution-control { display:flex; align-items:center; gap:8px; margin:4px 0; }
-    .resolution-control label { font-size:0.85em; font-weight:bold; color:var(--text-primary); }
-    .resolution-control input { flex:1; }
+    .file-select-wrapper { display:flex; gap:6px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:6px 12px; margin:0; white-space:nowrap; }
+    .file-select-wrapper input[type="file"] { display:none; }
 
-    .info-badge { display:inline-block; padding:4px 10px; background:#667eea; color:#fff; border-radius:4px; font-size:0.8em; margin-bottom:8px; text-shadow:1px 1px 0 #000; }
-    .tts-controls { padding:10px; background:var(--bg-card); border-radius:6px; border:1px solid var(--border-color); }
-    .tts-loading { font-size:0.8em; color:#764ba2; font-weight:bold; margin-top:5px; display:none; }
+    .info-badge { display:inline-block; padding:4px 10px; background:#667eea; color:#fff; border-radius:4px; font-size:0.8em; margin-bottom:8px; }
+    .notes-textarea { flex:1; min-height:150px; line-height:1.6; }
+    .notes-area { flex:1; display:flex; flex-direction:column; gap:8px; }
+    .tts-controls { padding:10px; background:#f0f7ff; border-radius:6px; border:1px solid #d0e7ff; }
     .speed-control { display:flex; align-items:center; gap:10px; }
     .speed-control input[type="range"] { flex:1; }
     .tts-buttons { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
-    .voice-mapping { max-height:100px; overflow-y:auto; background:var(--bg-input); border:1px solid var(--border-color); border-radius:4px; padding:4px; font-size:0.8em; }
-    .voice-mapping-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; border-bottom:1px solid var(--border-color); padding:2px 0; }
+    .voice-mapping { max-height:100px; overflow-y:auto; background:#fff; border:1px solid #ddd; border-radius:4px; padding:4px; font-size:0.8em; }
+    .voice-mapping-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; border-bottom:1px solid #ddd; padding:2px 0; }
     .voice-mapping-item .del { color:red; cursor:pointer; font-weight:bold; }
-    .notes-textarea { flex:1; min-height:150px; line-height:1.6; }
-    .notes-area { flex:1; display:flex; flex-direction:column; gap:8px; }
+    .capture-controls { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+    .capture-controls button { flex:1; padding:6px; font-size:0.8em; min-width:80px; }
+    .resolution-control { display:flex; align-items:center; gap:8px; margin:4px 0; }
 
-    .capture-status {
-      padding:8px;
-      margin-top:6px;
-      border-radius:4px;
-      font-size:0.8em;
-      display:none;
-    }
-    .capture-status.success { background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; }
-    .capture-status.error { background:#ffebee; color:#c62828; border:1px solid #ef9a9a; }
-
-    .file-select-wrapper {
+    .sample-list { max-height:200px; overflow-y:auto; }
+    .sample-item {
       display:flex;
-      gap:6px;
+      justify-content:space-between;
       align-items:center;
-      flex-wrap:wrap;
+      padding:4px 8px;
+      margin:2px 0;
+      background:#fff;
+      border:1px solid #eee;
+      border-radius:4px;
     }
-    .file-select-wrapper select {
-      flex:1;
-      margin:0;
-      min-width:100px;
+    .sample-item button { width:auto; padding:2px 8px; margin:0; font-size:0.7em; }
+    .sample-item .name { flex:1; cursor:pointer; }
+    .sample-item .name:hover { color:#667eea; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
     }
-    .file-select-wrapper button {
-      width:auto;
-      padding:6px 12px;
-      margin:0;
-      white-space:nowrap;
+    [data-theme="dark"] .left-panel,
+    [data-theme="dark"] .right-panel {
+      background:#1a1a2e;
+      border-color:#444466;
     }
-    .folder-select-btn {
-      width:100%;
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] select,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .sample-item {
+      background:#2d2d4e;
+      border-color:#444466;
     }
   </style>
 </head>
 <body>
 <header>
   <h1>🌐 세계관 그래프 편집기</h1>
-  <div class="header-right">
-    <button class="dark-toggle" onclick="toggleDarkMode()" id="darkModeBtn">🌙 다크모드</button>
-  </div>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
 </header>
 
 <div class="main-container">
   <div class="left-panel">
-    <!-- 도움말 -->
-    <div class="help-container">
-      <div class="help-header" onclick="toggleHelp()">
-        <span>📖 도움말</span>
-        <span class="arrow" id="helpArrow">▼</span>
+    <div class="panel-section">
+      <h3>📂 샘플 불러오기</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json,.js" onchange="loadFile(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
       </div>
-      <div class="help-body" id="helpBody">
-        <h4>🚀 시작하기</h4>
-        <ul>
-          <li><strong>노드 추가</strong>: 이름 입력 후 '노드 추가' 또는 빈 공간 <span class="shortcut">더블클릭</span></li>
-          <li><strong>노드 선택</strong>: 노드 클릭하면 오른쪽 패널에 속성 표시</li>
-        </ul>
-        <h4>🔗 관계 연결 (3가지 방법)</h4>
-        <div class="method"><strong>① 클릭으로 연결</strong><br>출발 노드 클릭 → 도착 노드 클릭 → 라벨 입력 → 추가</div>
-        <div class="method"><strong>② Ctrl+드래그</strong><br><span class="shortcut">Ctrl</span> 누르고 출발→도착 드래그 → 라벨 입력</div>
-        <div class="method"><strong>③ 드래그 모드</strong><br>'드래그 모드' 켜고 노드간 드래그로 계속 연결</div>
-        <h4>📸 PNG 캡쳐</h4>
-        <ul>
-          <li><strong>해상도 조절</strong>: 1x ~ 4x</li>
-          <li><strong>PNG 저장</strong>: 전체 그래프 저장</li>
-          <li><strong>클립보드 복사</strong>: 이미지 복사</li>
-        </ul>
-        <h4>🔊 TTS 음성</h4>
-        <ul>
-          <li>메모 작성 후 '읽기'</li>
-          <li>캐릭터 매핑: <code>철수: 안녕</code></li>
-          <li>태그 사용: <code>[나래이터] 안녕</code></li>
-        </ul>
-        <h4>⌨️ 단축키</h4>
-        <ul>
-          <li><span class="shortcut">Delete</span>: 선택한 요소 삭제</li>
-          <li><span class="shortcut">Ctrl</span>+드래그: 빠른 연결</li>
-        </ul>
+      <div class="help-text">💡 JSON 또는 JS 파일을 선택하면 그래프에 표시됩니다</div>
+      
+      <div id="sampleListContainer" style="margin-top:8px; display:none;">
+        <h4 style="font-size:0.85em; margin-bottom:4px;">📋 불러온 샘플 목록</h4>
+        <div id="sampleList" class="sample-list"></div>
+        <button class="btn-danger" onclick="clearAllSamples()" style="margin-top:4px; font-size:0.75em;">🗑️ 전체 삭제</button>
       </div>
     </div>
 
@@ -397,33 +256,21 @@
         <button class="btn-info" onclick="clearEdgeInputs()">🔄 초기화</button>
         <button class="btn-info" onclick="swapEdgeInputs()">↔️ 교체</button>
       </div>
-      <input type="text" id="edgeSrc" placeholder="1. 출발 노드 클릭" readonly style="background:#e3f2fd; cursor:pointer;">
-      <input type="text" id="edgeTgt" placeholder="2. 도착 노드 클릭" readonly style="background:#ffebee; cursor:pointer;">
-      <input type="text" id="edgeLbl" placeholder="관계 라벨 (예: 친구, 적)">
+      <input type="text" id="edgeSrc" placeholder="1. 출발 노드 클릭" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="2. 도착 노드 클릭" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="관계 라벨">
       <button class="btn-primary" onclick="addEdge()">연결 추가</button>
-      <div class="help-text">💡 노드를 <b>클릭</b>하면 자동 입력</div>
-    </div>
-
-    <div class="panel-section">
-      <h3>📂 샘플 데이터</h3>
-      <button class="btn-info folder-select-btn" onclick="selectSampleFolder()">📁 폴더 선택 (JSON 찾기)</button>
-      <div class="file-select-wrapper" style="margin-top:6px;">
-        <select id="sampleFileSelect" style="display:none;">
-          <option value="">-- JSON 파일 선택 --</option>
-        </select>
-        <button id="loadSampleBtn" class="btn-warning" onclick="loadSelectedSampleFile()" style="display:none;">📂 불러오기</button>
-      </div>
-      <div class="help-text">💡 폴더를 선택하면 자동으로 JSON 파일 목록이 나타납니다</div>
+      <div class="help-text">💡 노드를 클릭하면 자동 입력</div>
     </div>
 
     <div class="panel-section">
       <h3>📂 데이터 관리</h3>
-      <input type="file" id="fileInput" accept=".json" style="display:none" onchange="uploadJSON(event)">
-      <button class="btn-info" onclick="document.getElementById('fileInput').click()">⬆️ JSON 업로드</button>
-      <input type="file" id="appendFileInput" accept=".json" style="display:none" onchange="appendJSON(event)">
-      <button class="btn-primary" onclick="document.getElementById('appendFileInput').click()">➕ JSON 추가 업로드</button>
+      <input type="file" id="uploadFileInput" accept=".json" style="display:none" onchange="uploadJSON(event)">
+      <button class="btn-info" onclick="document.getElementById('uploadFileInput').click()">⬆️ JSON 업로드</button>
       <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드</button>
       <button class="btn-success" onclick="saveToURL()">🔗 URL 공유</button>
+      <button class="btn-save-html" onclick="saveAsStandaloneHTML()">💾 현재 그래프를 HTML로 저장</button>
+      <div class="help-text">💡 현재 그래프 데이터가 포함된 독립적인 HTML 파일이 저장됩니다</div>
     </div>
 
     <div class="panel-section">
@@ -474,20 +321,20 @@
     <div class="panel-section notes-area">
       <h3>✏️ 속성 편집 / 삭제</h3>
       <div class="info-badge" id="notesInfo">노드/엣지를 선택하세요</div>
-      <label style="font-weight:bold; color:var(--text-primary);">이름/라벨</label>
+      <label style="font-weight:bold; color:#333;">이름/라벨</label>
       <input type="text" id="labelInput" placeholder="선택한 요소의 이름" disabled>
 
       <div id="colorControl" style="display:none;">
-        <label style="font-weight:bold; color:var(--text-primary); margin-top:8px;">노드 색상</label>
+        <label style="font-weight:bold; color:#333; margin-top:10px;">노드 색상</label>
         <input type="color" id="colorInput" value="#667eea" style="height:35px; padding:0;">
 
-        <label style="font-weight:bold; color:var(--text-primary); margin-top:8px;">📎 첨부 (이미지/영상/링크/텍스트)</label>
+        <label style="font-weight:bold; color:#333; margin-top:10px;">📎 첨부 (이미지/영상/링크/텍스트)</label>
         <div style="display:flex; gap:4px;">
           <input type="text" id="imageInput" placeholder="URL, 유튜브, 텍스트" style="flex:1;">
           <input type="file" id="hiddenFileInput" style="display:none;" onchange="handleFileUpload(this)">
           <button class="btn-info" onclick="document.getElementById('hiddenFileInput').click()" style="width:auto; padding:0 8px;">📂</button>
         </div>
-        <label style="font-weight:bold; color:var(--text-primary); margin-top:8px;">📝 메모</label>
+        <label style="font-weight:bold; color:#333; margin-top:10px;">📝 메모</label>
         <textarea class="notes-textarea" id="notesTextarea" placeholder="내용을 입력하세요..."></textarea>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
@@ -530,7 +377,7 @@
             <span id="qualityValue">5</span>
           </div>
 
-          <div style="margin-top:8px; padding-top:6px; border-top:1px dashed var(--border-color);">
+          <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #ccc;">
             <h4 style="font-size:0.85em; margin-bottom:4px;">👥 캐릭터별 목소리 매핑</h4>
             <div id="voiceMappingContainer" class="voice-mapping"></div>
             <div style="display:flex; gap:4px; margin-top:4px;">
@@ -555,9 +402,23 @@
   </div>
 </div>
 
+<!-- 비밀번호 모달 -->
+<div class="password-modal" id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; justify-content:center; align-items:center;">
+  <div style="background:#fff; padding:30px; border-radius:12px; min-width:320px; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+    <h3 style="margin-bottom:15px;">🔐 관리자 인증</h3>
+    <p style="font-size:0.85em; color:#666; margin-bottom:10px;">관리자 모드로 전환하려면 비밀번호를 입력하세요.</p>
+    <input type="password" id="adminPassword" placeholder="비밀번호 입력" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:4px; font-size:1em;" onkeydown="if(event.key==='Enter') checkPassword()">
+    <div id="passwordError" style="color:#ff6b6b; font-size:0.85em; margin-bottom:10px; display:none;">❌ 비밀번호가 틀렸습니다.</div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-secondary" onclick="closePasswordModal()" style="flex:1; padding:10px; margin:0;">취소</button>
+      <button class="btn-primary" onclick="checkPassword()" style="flex:1; padding:10px; margin:0;">확인</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ============================================================
-  // 1. Cytoscape 초기화 (빈 데이터로 시작)
+  // Cytoscape 초기화
   // ============================================================
   let initialData = [];
 
@@ -567,307 +428,105 @@
     style: [
       { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':30, 'padding':'10px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':14, 'text-outline-width':2, 'text-outline-color':'#000' } },
       { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':12 } },
-      { selector: 'edge.timeline', style: { 'line-color':'#ff0055', 'width':3, 'target-arrow-color':'#ff0055' } },
       { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
       { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
     ],
-    layout: { name: 'cose', animate: true },
-    boxSelectionEnabled: false
-  });
-
-  let selected = null;
-  let speechSynthesis = window.speechSynthesis;
-  let currentUtterance = null;
-  let edgeCreationMode = false, edgeSourceNode = null;
-  let isDragMode = false, tremorInterval = null, currentLayout = null;
-  let ttsPipeline = null, audioContext = null, currentSource = null;
-  let lastGeneratedAudioBlob = null, lastGeneratedSrtBlob = null;
-  let webSpeechVoices = [];
-  let characterVoiceMap = {};
-  let openImageNodes = new Set();
-  let layer = document.getElementById('overlays');
-
-  // 폴더 선택 관련 변수
-  let selectedFolderFiles = [];
-
-  const notesInfo = document.getElementById('notesInfo');
-  const labelInput = document.getElementById('labelInput');
-  const colorControl = document.getElementById('colorControl');
-  const colorInput = document.getElementById('colorInput');
-  const imageInput = document.getElementById('imageInput');
-  const notesTextarea = document.getElementById('notesTextarea');
-  const edgeSrcInput = document.getElementById('edgeSrc');
-  const edgeTgtInput = document.getElementById('edgeTgt');
-
-  // ============================================================
-  // 2. 도움말 토글
-  // ============================================================
-  let helpOpen = false;
-  function toggleHelp() {
-    helpOpen = !helpOpen;
-    document.getElementById('helpBody').classList.toggle('open');
-    document.getElementById('helpArrow').classList.toggle('open');
-  }
-
-  // ============================================================
-  // 3. 다크모드
-  // ============================================================
-  function toggleDarkMode() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('theme', 'light');
-      document.getElementById('darkModeBtn').textContent = '🌙 다크모드';
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('theme', 'dark');
-      document.getElementById('darkModeBtn').textContent = '☀️ 라이트모드';
-    }
-  }
-
-  function loadTheme() {
-    const saved = localStorage.getItem('theme');
-    if (saved === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.getElementById('darkModeBtn').textContent = '☀️ 라이트모드';
-    }
-  }
-
-  // ============================================================
-  // 4. PNG 캡쳐
-  // ============================================================
-  function capturePNG(toClipboard = false) {
-    const scale = parseFloat(document.getElementById('resolutionScale').value) || 2;
-    
-    try {
-      const pngData = cy.png({
-        scale: scale,
-        full: true,
-        bg: '#fafafa',
-        maxWidth: 4096,
-        maxHeight: 4096
-      });
-      
-      if (toClipboard) {
-        fetch(pngData)
-          .then(res => res.blob())
-          .then(blob => {
-            navigator.clipboard.write([
-              new ClipboardItem({ 'image/png': blob })
-            ]).then(() => {
-              alert('✅ 이미지가 클립보드에 복사되었습니다!');
-            }).catch(() => {
-              alert('❌ 클립보드 복사 실패. 다른 방법을 사용해보세요.');
-            });
-          })
-          .catch(() => {
-            alert('❌ 이미지 처리 중 오류가 발생했습니다.');
-          });
-      } else {
-        const link = document.createElement('a');
-        link.download = `graph_capture_${scale}x_${Date.now()}.png`;
-        link.href = pngData;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        alert(`✅ 이미지가 다운로드 폴더에 저장되었습니다! (${scale}x)`);
-      }
-    } catch(e) {
-      console.error('Capture error:', e);
-      alert('❌ 캡쳐 실패: ' + e.message);
-    }
-  }
-
-  document.getElementById('resolutionScale').addEventListener('input', function() {
-    document.getElementById('resolutionLabel').textContent = this.value + 'x';
+    layout: { name: 'cose', animate: true }
   });
 
   // ============================================================
-  // 5. 그래프 조작 함수
+  // 샘플 관리
   // ============================================================
-  function resetRightPanel() {
-    selected = null;
-    notesInfo.innerText = "노드/엣지를 선택하세요";
-    labelInput.value = ''; notesTextarea.value = ''; imageInput.value = '';
-    labelInput.disabled = true; notesTextarea.disabled = true;
-    colorControl.style.display = 'none';
-  }
+  let sampleList = [];
+  let sampleIdCounter = 0;
 
-  cy.on('tap', 'node', function(evt) {
-    const node = evt.target; const nodeId = node.id();
-    if (!isDragMode) {
-      if (edgeSrcInput.value === '') { edgeSrcInput.value = nodeId; node.animate({ style: { 'border-color':'#4facfe','border-width':4 } }, { duration:200 }); }
-      else if (edgeTgtInput.value === '' && edgeSrcInput.value !== nodeId) { edgeTgtInput.value = nodeId; node.animate({ style: { 'border-color':'#ff0055','border-width':4 } }, { duration:200 }); }
-    }
-    selected = { type:'node', id:nodeId };
-    notesInfo.innerText = "노드: "+nodeId;
-    labelInput.value = node.data('label') || '';
-    notesTextarea.value = node.data('notes') || '';
-    labelInput.disabled = false; notesTextarea.disabled = false;
-    colorControl.style.display = 'block';
-    colorInput.value = node.data('color') || '#667eea';
-    imageInput.value = node.data('image') || '';
-  });
+  function loadFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-  cy.on('tap', 'edge', function(evt) {
-    const edge = evt.target;
-    selected = { type:'edge', id:edge.id() };
-    notesInfo.innerText = "관계: "+edge.data('source')+" → "+edge.data('target');
-    labelInput.value = edge.data('label') || '';
-    notesTextarea.value = edge.data('notes') || '';
-    labelInput.disabled = false; notesTextarea.disabled = false;
-    colorControl.style.display = 'none';
-  });
-
-  cy.on('tap', function(evt) { if (evt.target === cy) resetRightPanel(); });
-
-  cy.on('dbltap', function(evt) {
-    if (evt.target === cy) {
-      const pos = evt.position;
-      const name = prompt("새 노드 이름:", "새 노드");
-      if (name && name.trim()) {
-        const id = name.trim();
-        if (cy.getElementById(id).length > 0) { alert("이미 존재합니다!"); return; }
-        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
-        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
-        if (isTremorOn) startObsidianTremor();
-      }
-    }
-  });
-
-  cy.on('mousedown', 'node', function(evt) {
-    if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey || isDragMode) {
-      edgeCreationMode = true; edgeSourceNode = evt.target;
-      evt.target.style({ 'border-width':'4px','border-color':'#43e97b','border-style':'dashed' });
-    }
-  });
-  cy.on('mouseover', 'node', function(evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style({ 'border-width':'4px','border-color':'#4facfe' }); });
-  cy.on('mouseout', 'node', function(evt) { if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) evt.target.style('border-width','2px'); });
-  cy.on('mouseup', 'node', function(evt) {
-    if (edgeCreationMode && edgeSourceNode && evt.target.id() !== edgeSourceNode.id()) {
-      const label = prompt("관계 라벨 입력:", "");
-      if (label !== null) {
-        const cls = (label && (label.toUpperCase()==="TIMELINE"||label.toUpperCase()==="타임라인")) ? "timeline" : "";
-        cy.add({ data:{ id:edgeSourceNode.id()+"_"+evt.target.id()+"_"+Date.now(), source:edgeSourceNode.id(), target:evt.target.id(), label:label||"", notes:"" }, classes:cls });
-        if (isTremorOn) startObsidianTremor();
-      }
-      edgeSourceNode.style('border-width','2px');
-      edgeCreationMode = false; edgeSourceNode = null;
-    }
-  });
-
-  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
-  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
-  function addEdge() {
-    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
-    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
-    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
-    const cls = (lbl && (lbl.toUpperCase()==="TIMELINE"||lbl.toUpperCase()==="타임라인")) ? "timeline" : "";
-    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" }, classes:cls });
-    runLayout('cose');
-    document.getElementById('edgeLbl').value='';
-  }
-
-  function addNode() {
-    const id = document.getElementById('newNode').value.trim();
-    if (!id) { alert('이름을 입력하세요!'); return; }
-    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
-    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
-    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
-    runLayout('cose');
-    document.getElementById('newNode').value='';
-  }
-
-  let isTremorOn = true;
-  function toggleTremor() {
-    isTremorOn = !isTremorOn;
-    const btn = document.getElementById('btnTremorMode');
-    if (isTremorOn) { btn.innerText="🌊 숨쉬기 ON"; btn.className='btn-info'; startObsidianTremor(); }
-    else { btn.innerText="🌊 숨쉬기 OFF"; btn.className='btn-secondary'; stopObsidianTremor(); }
-  }
-  function startObsidianTremor() {
-    if (!isTremorOn) return;
-    if (tremorInterval) return;
-    tremorInterval = setInterval(() => {
-      cy.nodes().forEach(node => {
-        if (node.selected()) return;
-        const deg = node.degree();
-        const strength = 2.0 / (1 + deg);
-        node.position({ x:node.position('x')+(Math.random()-0.5)*strength, y:node.position('y')+(Math.random()-0.5)*strength });
-      });
-    }, 50);
-  }
-  function stopObsidianTremor() { if (tremorInterval) { clearInterval(tremorInterval); tremorInterval=null; } }
-
-  function runLayout(layoutName) {
-    stopObsidianTremor();
-    if (currentLayout) { currentLayout.stop(); currentLayout=null; }
-    let opts = layoutName==='cose' ? { name:'cose', animate:true, animationDuration:500, fit:true, padding:10, nodeRepulsion:20000, idealEdgeLength:150, gravity:0.05 } :
-               layoutName==='dagre' ? { name:'dagre', rankDir:'TB', padding:10, animate:true } :
-               { name:'dagre', rankDir:'LR', rankSep:200, nodeSep:50, animate:true };
-    const layout = cy.layout(opts);
-    layout.on('layoutstop', updateNodeOverlays);
-    layout.run();
-    if (isTremorOn) setTimeout(startObsidianTremor, 500);
-  }
-
-  function toggleDragMode() {
-    isDragMode = !isDragMode;
-    const btn = document.getElementById('btnDragMode');
-    if (isDragMode) { btn.classList.add('drag-mode-active'); btn.innerText="🖱️ 드래그 ON"; cy.userZoomingEnabled(false); cy.userPanningEnabled(false); }
-    else { btn.classList.remove('drag-mode-active'); btn.innerText="🖱️ 드래그 모드"; cy.userZoomingEnabled(true); cy.userPanningEnabled(true); }
-  }
-
-  function deleteSelected() {
-    if (!selected) { alert('삭제할 요소를 선택하세요.'); return; }
-    const el = cy.getElementById(selected.id);
-    if (el.length===0) return;
-    const msg = selected.type==='node' ? `'${el.data('label')}' 노드를 삭제하시겠습니까? (연결된 선도 삭제)` : `'${el.data('label')||'관계'}' 선을 삭제하시겠습니까?`;
-    if (confirm(msg)) {
-      cy.remove(el);
-      resetRightPanel();
-      if (edgeSrcInput.value===selected.id || edgeTgtInput.value===selected.id) clearEdgeInputs();
-      selected = null;
-    }
-  }
-
-  document.addEventListener('keydown', function(e) {
-    const tag = document.activeElement.tagName.toUpperCase();
-    if (tag==='INPUT' || tag==='TEXTAREA') return;
-    if (e.key==='Delete' || e.key==='Backspace') { if (selected) deleteSelected(); }
-  });
-
-  // ============================================================
-  // 6. 데이터 관리
-  // ============================================================
-  function saveToURL() {
-    try {
-      const data = JSON.stringify(cy.json().elements);
-      const compressed = typeof LZString !== 'undefined' && LZString.compressToEncodedURIComponent ? LZString.compressToEncodedURIComponent(data) : encodeURIComponent(data);
-      window.location.hash = compressed;
-      alert('URL 저장 완료!');
-    } catch(e) { alert("URL 저장 실패: "+e.message); }
-  }
-
-  function downloadJSON() {
-    const a = document.createElement('a');
-    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
-    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
-    document.body.appendChild(a); a.click(); a.remove();
-  }
-
-  function uploadJSON(event) {
-    const file = event.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
-        const data = JSON.parse(e.target.result);
-        const els = extractElements(data);
-        if (els.length) { cy.elements().remove(); cy.add(els); runLayout('cose'); alert('성공!'); }
-        else alert('데이터 없음');
-      } catch(err) { alert('오류: '+err.message); }
+        let data;
+        if (file.name.endsWith('.js')) {
+          eval(e.target.result);
+          data = window.SAMPLE_DATA;
+        } else {
+          data = JSON.parse(e.target.result);
+        }
+        
+        const elements = extractElements(data);
+        if (!elements.length) { alert('유효한 데이터가 없습니다.'); return; }
+
+        sampleIdCounter++;
+        sampleList.push({
+          id: sampleIdCounter,
+          name: file.name,
+          data: elements
+        });
+
+        updateSampleList();
+        loadSampleData(elements);
+        alert(`✅ ${file.name} 로드 완료! (${elements.length}개 요소)`);
+        document.getElementById('fileInput').value = '';
+      } catch(err) {
+        alert('❌ 파일 읽기 오류: ' + err.message);
+      }
     };
     reader.readAsText(file);
+  }
+
+  function loadSampleData(data) {
+    cy.elements().remove();
+    cy.add(data);
+    runLayout('cose');
+  }
+
+  function loadSampleById(id) {
+    const sample = sampleList.find(s => s.id === id);
+    if (sample) {
+      loadSampleData(sample.data);
+    }
+  }
+
+  function deleteSample(id) {
+    if (!confirm('이 샘플을 삭제하시겠습니까?')) return;
+    sampleList = sampleList.filter(s => s.id !== id);
+    updateSampleList();
+    if (sampleList.length > 0) {
+      loadSampleData(sampleList[0].data);
+    } else {
+      cy.elements().remove();
+    }
+  }
+
+  function clearAllSamples() {
+    if (!confirm('모든 샘플을 삭제하시겠습니까?')) return;
+    sampleList = [];
+    updateSampleList();
+    cy.elements().remove();
+  }
+
+  function updateSampleList() {
+    const container = document.getElementById('sampleListContainer');
+    const list = document.getElementById('sampleList');
+    
+    if (sampleList.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+    container.style.display = 'block';
+    
+    list.innerHTML = '';
+    sampleList.forEach(sample => {
+      const div = document.createElement('div');
+      div.className = 'sample-item';
+      div.innerHTML = `
+        <span class="name" onclick="loadSampleById(${sample.id})">📄 ${sample.name}</span>
+        <button class="btn-danger" onclick="deleteSample(${sample.id})" style="background:#ff5f6d;">✕</button>
+      `;
+      list.appendChild(div);
+    });
   }
 
   function extractElements(data) {
@@ -886,66 +545,7 @@
   }
 
   // ============================================================
-  // 7. JSON 파일 추가 업로드
-  // ============================================================
-  function appendJSON(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const data = JSON.parse(e.target.result);
-        const els = extractElements(data);
-        if (!els.length) { alert('데이터 없음'); return; }
-        
-        const suffix = "_COPY_" + Date.now();
-        const idMap = {};
-        const newEls = [];
-        const offset = 200;
-
-        els.forEach(el => {
-          if (el.data && el.data.id && !el.data.source) {
-            const old = el.data.id;
-            const nid = old + suffix;
-            if (cy.getElementById(nid).length) return;
-            const n = JSON.parse(JSON.stringify(el));
-            n.data.id = nid;
-            n.position = n.position ? 
-              { x: n.position.x + offset, y: n.position.y + offset } : 
-              { x: Math.random() * 500, y: Math.random() * 500 };
-            idMap[old] = nid;
-            newEls.push(n);
-          }
-        });
-
-        els.forEach(el => {
-          if (el.data && el.data.source) {
-            if (idMap[el.data.source] && idMap[el.data.target]) {
-              const n = JSON.parse(JSON.stringify(el));
-              n.data.id = (n.data.id || "EDGE") + suffix;
-              n.data.source = idMap[el.data.source];
-              n.data.target = idMap[el.data.target];
-              newEls.push(n);
-            }
-          }
-        });
-
-        if (newEls.length) {
-          cy.add(newEls);
-          runLayout('cose');
-          alert(`✅ ${newEls.length}개 요소 추가 완료!`);
-        } else {
-          alert('추가할 요소가 없습니다.');
-        }
-      } catch (err) {
-        alert('오류: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  // ============================================================
-  // 8. JSON 텍스트 붙여넣기
+  // JSON 텍스트 붙여넣기
   // ============================================================
   function loadJSONFromTextarea(isAppend) {
     const jsonText = document.getElementById('jsonInputTextarea').value.trim();
@@ -1014,90 +614,567 @@
   }
 
   // ============================================================
-  // 9. 폴더 선택 - JSON 파일 목록 가져오기
+  // 현재 그래프를 HTML로 저장 (사용자용 - 가벼운 버전)
   // ============================================================
-  async function selectSampleFolder() {
-    try {
-      // File System Access API로 폴더 선택
-      const dirHandle = await window.showDirectoryPicker();
-      const jsonFiles = [];
-      
-      // 폴더 내 모든 JSON 파일 찾기
-      for await (const entry of dirHandle.values()) {
-        if (entry.kind === 'file' && entry.name.endsWith('.json')) {
-          const file = await entry.getFile();
-          jsonFiles.push({ name: entry.name, file: file, handle: entry });
-        }
-      }
-      
-      if (jsonFiles.length === 0) {
-        alert('선택한 폴더에 JSON 파일이 없습니다.');
-        return;
-      }
-      
-      selectedFolderFiles = jsonFiles;
-      
-      // 드롭다운 채우기
-      const select = document.getElementById('sampleFileSelect');
-      select.innerHTML = '<option value="">-- JSON 파일 선택 --</option>';
-      jsonFiles.forEach((item, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = item.name;
-        select.appendChild(option);
-      });
-      
-      select.style.display = 'block';
-      document.getElementById('loadSampleBtn').style.display = 'block';
-      
-      alert(`✅ ${jsonFiles.length}개의 JSON 파일을 찾았습니다!`);
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        alert('폴더 선택 중 오류가 발생했습니다: ' + err.message);
-      }
-    }
-  }
-
-  // ============================================================
-  // 10. 선택한 JSON 파일 불러오기
-  // ============================================================
-  async function loadSelectedSampleFile() {
-    const select = document.getElementById('sampleFileSelect');
-    const index = parseInt(select.value);
-    
-    if (isNaN(index) || index < 0 || index >= selectedFolderFiles.length) {
-      alert('JSON 파일을 선택해주세요.');
+  function saveAsStandaloneHTML() {
+    if (cy.elements().length === 0) {
+      alert('저장할 데이터가 없습니다.');
       return;
     }
-    
-    try {
-      const item = selectedFolderFiles[index];
-      const text = await item.file.text();
-      const data = JSON.parse(text);
-      const els = extractElements(data);
-      
-      if (!els.length) { alert('유효한 데이터가 없습니다.'); return; }
-      
-      if (cy.elements().length > 0) {
-        if (!confirm('현재 데이터가 있습니다. 덮어쓰시겠습니까?')) return;
-      }
-      
-      cy.elements().remove();
-      cy.add(els);
-      runLayout('cose');
-      alert(`✅ ${item.name} 로드 완료! (${els.length}개 요소)`);
-    } catch (err) {
-      alert('파일 로드 실패: ' + err.message);
+
+    const fileName = prompt('저장할 파일 이름을 입력하세요:', 'my_graph');
+    if (!fileName) return;
+
+    const currentData = cy.json().elements;
+    const dataStr = JSON.stringify(currentData, null, 2);
+
+    // 가벼운 사용자용 HTML (TTS, PNG 캡쳐, 레이아웃 변경 등 제거)
+    const viewerHTML = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"><\/script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"><\/script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"><\/script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:#f0f0f0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.2em; text-shadow:1px 1px 0 #000; }
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .left-panel {
+      width:220px;
+      background:#fff;
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid #ddd;
+    }
+    .graph-area {
+      flex:1;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid #ddd;
+      border-radius:8px;
+      background:#fafafa;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+
+    .panel-section {
+      margin-bottom:12px;
+      padding:10px;
+      background:#f9f9f9;
+      border-radius:6px;
+      border:1px solid #e0e0e0;
+    }
+    .panel-section h3 {
+      font-size:0.9em;
+      margin-bottom:6px;
+      color:#667eea;
+      border-bottom:1px solid #667eea;
+      padding-bottom:3px;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:5px;
+      margin:3px 0;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+    }
+    input[readonly] {
+      background:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    textarea {
+      width:100%;
+      padding:5px;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+      resize:vertical;
+      min-height:60px;
+    }
+    button {
+      width:100%;
+      padding:6px;
+      margin:3px 0;
+      border:none;
+      border-radius:3px;
+      font-size:0.8em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+    }
+    button:active { transform:scale(0.97); }
+    .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+    .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
+    .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
+
+    .help-text { font-size:0.7em; color:#888; margin-top:3px; padding:4px; background:#fff; border-radius:3px; }
+    .connection-tools { display:flex; gap:4px; margin-bottom:3px; }
+    .connection-tools button { padding:3px; font-size:0.7em; margin:0; }
+
+    .info-badge {
+      display:block;
+      padding:4px 8px;
+      background:#667eea;
+      color:#fff;
+      border-radius:3px;
+      font-size:0.75em;
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .notes-display {
+      padding:6px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.8em;
+      min-height:40px;
+      white-space:pre-wrap;
+      margin-top:4px;
+    }
+    .file-select-wrapper { display:flex; gap:4px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:4px 8px; margin:0; }
+    .file-select-wrapper input[type="file"] { display:none; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
+    }
+    [data-theme="dark"] .left-panel {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .notes-display {
+      background:#2d2d4e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .cy-wrapper {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+  <\/style>
+</head>
+<body>
+<header>
+  <h1>🌐 세계관 그래프</h1>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="panel-section">
+      <h3>📂 데이터</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택<\/button>
+      <\/div>
+      <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드<\/button>
+    <\/div>
+
+    <div class="panel-section">
+      <h3>➕ 노드</h3>
+      <input type="text" id="newNode" placeholder="노드 이름">
+      <button class="btn-primary" onclick="addNode()">노드 추가<\/button>
+      <div class="help-text">💡 빈 공간 더블클릭<\/div>
+    <\/div>
+
+    <div class="panel-section">
+      <h3>🔗 엣지</h3>
+      <div class="connection-tools">
+        <button class="btn-info" onclick="clearEdgeInputs()">초기화<\/button>
+        <button class="btn-info" onclick="swapEdgeInputs()">교체<\/button>
+      <\/div>
+      <input type="text" id="edgeSrc" placeholder="출발 노드" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="도착 노드" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="라벨">
+      <button class="btn-primary" onclick="addEdge()">엣지 추가<\/button>
+      <div class="help-text">💡 노드 클릭 시 자동 입력<\/div>
+    <\/div>
+
+    <div class="panel-section">
+      <h3>📝 노드 정보</h3>
+      <div class="info-badge" id="nodeInfo">노드를 클릭하세요<\/div>
+      <div class="notes-display" id="nodeNotes">선택한 노드의 메모가 여기에 표시됩니다<\/div>
+      <button class="btn-danger" onclick="deleteSelected()" style="margin-top:4px;">🗑️ 삭제 (Del)<\/button>
+    <\/div>
+  <\/div>
+
+  <div class="graph-area">
+    <div class="cy-wrapper">
+      <div id="cy"><\/div>
+    <\/div>
+  <\/div>
+<\/div>
+
+<script>
+  const initialData = ${dataStr};
+
+  let cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: initialData,
+    style: [
+      { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':28, 'padding':'8px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':13, 'text-outline-width':2, 'text-outline-color':'#000' } },
+      { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':11 } },
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
+      { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true }
+  });
+
+  let selectedId = null;
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+  const nodeInfo = document.getElementById('nodeInfo');
+  const nodeNotes = document.getElementById('nodeNotes');
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    const selected = cy.$(':selected');
+    if (selected.length === 0) { alert('삭제할 요소를 선택하세요.'); return; }
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(selected);
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
     }
   }
 
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = document.activeElement.tagName.toUpperCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        deleteSelected();
+      }
+    }
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const id = node.id();
+    
+    if (edgeSrcInput.value === '') {
+      edgeSrcInput.value = id;
+    } else if (edgeTgtInput.value === '' && edgeSrcInput.value !== id) {
+      edgeTgtInput.value = id;
+    }
+    
+    nodeInfo.textContent = '📌 ' + (node.data('label') || id);
+    nodeNotes.textContent = node.data('notes') || '메모 없음';
+    selectedId = id;
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt('새 노드 이름:');
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+      }
+    }
+  });
+
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        let els = [];
+        if (Array.isArray(data)) els = data;
+        else if (data.nodes || data.edges) els = [...(data.nodes||[]), ...(data.edges||[])];
+        else if (data.elements) els = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        if (els.length) { cy.elements().remove(); cy.add(els); cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run(); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+<\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([viewerHTML], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileName}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert(`✅ ${fileName}.html 파일이 저장되었습니다! (가벼운 사용자용 버전)`);
+  }
+
   // ============================================================
-  // 11. 노드 속성 저장
+  // 노드/엣지 조작
+  // ============================================================
+  let selected = null;
+  let isDragMode = false;
+  let tremorInterval = null;
+  let isTremorOn = true;
+
+  const notesInfo = document.getElementById('notesInfo');
+  const labelInput = document.getElementById('labelInput');
+  const colorControl = document.getElementById('colorControl');
+  const colorInput = document.getElementById('colorInput');
+  const imageInput = document.getElementById('imageInput');
+  const notesTextarea = document.getElementById('notesTextarea');
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+
+  function resetRightPanel() {
+    selected = null;
+    notesInfo.innerText = "노드/엣지를 선택하세요";
+    labelInput.value = ''; notesTextarea.value = ''; imageInput.value = '';
+    labelInput.disabled = true; notesTextarea.disabled = true;
+    colorControl.style.display = 'none';
+  }
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target; const nodeId = node.id();
+    if (!isDragMode) {
+      if (edgeSrcInput.value === '') { edgeSrcInput.value = nodeId; }
+      else if (edgeTgtInput.value === '' && edgeSrcInput.value !== nodeId) { edgeTgtInput.value = nodeId; }
+    }
+    selected = { type:'node', id:nodeId };
+    notesInfo.innerText = "노드: "+nodeId;
+    labelInput.value = node.data('label') || '';
+    notesTextarea.value = node.data('notes') || '';
+    labelInput.disabled = false; notesTextarea.disabled = false;
+    colorControl.style.display = 'block';
+    colorInput.value = node.data('color') || '#667eea';
+    imageInput.value = node.data('image') || '';
+  });
+
+  cy.on('tap', 'edge', function(evt) {
+    const edge = evt.target;
+    selected = { type:'edge', id:edge.id() };
+    notesInfo.innerText = "관계: "+edge.data('source')+" → "+edge.data('target');
+    labelInput.value = edge.data('label') || '';
+    notesTextarea.value = edge.data('notes') || '';
+    labelInput.disabled = false; notesTextarea.disabled = false;
+    colorControl.style.display = 'none';
+  });
+
+  cy.on('tap', function(evt) { if (evt.target === cy) resetRightPanel(); });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt("새 노드 이름:", "새 노드");
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert("이미 존재합니다!"); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        if (isTremorOn) startObsidianTremor();
+      }
+    }
+  });
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    runLayout('cose');
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    runLayout('cose');
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    if (!selected) { alert('삭제할 요소를 선택하세요.'); return; }
+    const el = cy.getElementById(selected.id);
+    if (el.length===0) return;
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(el);
+      resetRightPanel();
+      if (edgeSrcInput.value===selected.id || edgeTgtInput.value===selected.id) clearEdgeInputs();
+      selected = null;
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    const tag = document.activeElement.tagName.toUpperCase();
+    if (tag==='INPUT' || tag==='TEXTAREA') return;
+    if (e.key==='Delete' || e.key==='Backspace') { if (selected) deleteSelected(); }
+  });
+
+  // ============================================================
+  // 레이아웃
+  // ============================================================
+  function runLayout(layoutName) {
+    if (tremorInterval) { clearInterval(tremorInterval); tremorInterval=null; }
+    let opts = layoutName==='cose' ? { name:'cose', animate:true, animationDuration:500, fit:true, padding:10 } :
+               layoutName==='dagre' ? { name:'dagre', rankDir:'TB', padding:10, animate:true } :
+               { name:'dagre', rankDir:'LR', rankSep:200, nodeSep:50, animate:true };
+    const layout = cy.layout(opts);
+    layout.on('layoutstop', updateNodeOverlays);
+    layout.run();
+    if (isTremorOn) setTimeout(startObsidianTremor, 500);
+  }
+
+  function toggleDragMode() {
+    isDragMode = !isDragMode;
+    const btn = document.getElementById('btnDragMode');
+    if (isDragMode) { btn.classList.add('drag-mode-active'); btn.innerText="🖱️ 드래그 ON"; }
+    else { btn.classList.remove('drag-mode-active'); btn.innerText="🖱️ 드래그"; }
+  }
+
+  function toggleTremor() {
+    isTremorOn = !isTremorOn;
+    const btn = document.getElementById('btnTremorMode');
+    if (isTremorOn) { btn.innerText="🌊 숨쉬기 ON"; btn.className='btn-info'; startObsidianTremor(); }
+    else { btn.innerText="🌊 숨쉬기 OFF"; btn.className='btn-secondary'; stopObsidianTremor(); }
+  }
+
+  function startObsidianTremor() {
+    if (!isTremorOn || tremorInterval) return;
+    tremorInterval = setInterval(() => {
+      cy.nodes().forEach(node => {
+        if (node.selected()) return;
+        const deg = node.degree();
+        const strength = 2.0 / (1 + deg);
+        node.position({ x:node.position('x')+(Math.random()-0.5)*strength, y:node.position('y')+(Math.random()-0.5)*strength });
+      });
+    }, 50);
+  }
+  function stopObsidianTremor() { if (tremorInterval) { clearInterval(tremorInterval); tremorInterval=null; } }
+
+  // ============================================================
+  // 저장/불러오기
   // ============================================================
   function saveNotes() {
     if (!selected) { alert('선택된 요소가 없습니다.'); return; }
     const el = cy.getElementById(selected.id);
-    if (el.length===0) { alert('이미 삭제된 요소입니다.'); resetRightPanel(); return; }
+    if (el.length===0) { resetRightPanel(); return; }
     const newLabel = labelInput.value.trim();
     if (!newLabel) { alert('이름은 필수입니다.'); return; }
     el.data('label', newLabel);
@@ -1106,17 +1183,73 @@
       el.data('color', colorInput.value);
       el.data('image', imageInput.value.trim());
     }
-    if (selected.type==='edge') {
-      if (newLabel.toUpperCase()==="TIMELINE" || newLabel.toUpperCase()==="타임라인") el.addClass('timeline');
-      else el.removeClass('timeline');
-    }
     alert('저장되었습니다!');
     updateNodeOverlays();
   }
 
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        const els = extractElements(data);
+        if (els.length) { cy.elements().remove(); cy.add(els); runLayout('cose'); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+  }
+
+  function saveToURL() {
+    try {
+      const data = JSON.stringify(cy.json().elements);
+      const compressed = typeof LZString !== 'undefined' ? LZString.compressToEncodedURIComponent(data) : encodeURIComponent(data);
+      window.location.hash = compressed;
+      alert('URL 저장 완료!');
+    } catch(e) { alert("URL 저장 실패: "+e.message); }
+  }
+
   // ============================================================
-  // 12. 오버레이 (노드 이미지/첨부)
+  // PNG 캡쳐
   // ============================================================
+  function capturePNG(toClipboard = false) {
+    const scale = parseFloat(document.getElementById('resolutionScale').value) || 2;
+    try {
+      const pngData = cy.png({ scale: scale, full: true, bg: '#fafafa', maxWidth: 4096, maxHeight: 4096 });
+      if (toClipboard) {
+        fetch(pngData).then(res => res.blob()).then(blob => {
+          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+            .then(() => alert('✅ 클립보드에 복사되었습니다!'))
+            .catch(() => alert('❌ 복사 실패'));
+        });
+      } else {
+        const link = document.createElement('a');
+        link.download = `graph_${scale}x_${Date.now()}.png`;
+        link.href = pngData;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        alert(`✅ 저장 완료! (${scale}x)`);
+      }
+    } catch(e) { alert('❌ 캡쳐 실패: ' + e.message); }
+  }
+
+  document.getElementById('resolutionScale').addEventListener('input', function() {
+    document.getElementById('resolutionLabel').textContent = this.value + 'x';
+  });
+
+  // ============================================================
+  // 오버레이
+  // ============================================================
+  let layer = document.getElementById('overlays');
+  let openImageNodes = new Set();
+
   function updateNodeOverlays() {
     if (!layer) return;
     const nodes = cy.nodes();
@@ -1150,7 +1283,7 @@
           popup = document.createElement('div');
           popup.id = popupId;
           popup.className = 'node-image-popup';
-          popup.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;"><div style="flex:1;overflow:hidden;"><div class="node-content-text">${raw}</div></div><div class="close-btn" onclick="toggleNodeImage('${nodeId}')">접기</div></div>`;
+          popup.innerHTML = `<div style="padding:5px;max-height:300px;overflow:auto;">${raw}</div><div class="close-btn" onclick="toggleNodeImage('${nodeId}')">접기</div>`;
           layer.appendChild(popup);
         }
         popup.style.display = 'block';
@@ -1178,7 +1311,74 @@
   cy.on('render pan zoom position', updateNodeOverlays);
 
   // ============================================================
-  // 13. TTS 관련 함수 (간소화)
+  // 파일 업로드 (첨부)
+  // ============================================================
+  function handleFileUpload(input) {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('imageInput').value = e.target.result;
+          alert("이미지가 입력되었습니다. '저장' 버튼을 눌러주세요.");
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert("지원하지 않는 파일 형식입니다.");
+        input.value = '';
+      }
+    }
+  }
+
+  // ============================================================
+  // 관리자 모드
+  // ============================================================
+  const ADMIN_PASSWORD = '1234';
+  let isAdminMode = false;
+
+  function toggleMode() {
+    if (isAdminMode) {
+      exitAdminMode();
+    } else {
+      document.getElementById('passwordModal').style.display = 'flex';
+      document.getElementById('adminPassword').value = '';
+      document.getElementById('passwordError').style.display = 'none';
+    }
+  }
+
+  function checkPassword() {
+    const input = document.getElementById('adminPassword').value;
+    if (input === ADMIN_PASSWORD) {
+      document.getElementById('passwordModal').style.display = 'none';
+      enterAdminMode();
+    } else {
+      document.getElementById('passwordError').style.display = 'block';
+      document.getElementById('adminPassword').value = '';
+      document.getElementById('adminPassword').focus();
+    }
+  }
+
+  function closePasswordModal() {
+    document.getElementById('passwordModal').style.display = 'none';
+  }
+
+  function enterAdminMode() {
+    isAdminMode = true;
+    document.getElementById('adminMode').style.display = 'block';
+    document.getElementById('modeToggleBtn').textContent = '👤 일반 모드';
+    document.getElementById('modeToggleBtn').className = 'btn-info';
+    alert('✅ 관리자 모드로 전환되었습니다.');
+  }
+
+  function exitAdminMode() {
+    isAdminMode = false;
+    document.getElementById('adminMode').style.display = 'none';
+    document.getElementById('modeToggleBtn').textContent = '🔧 관리자 모드';
+    document.getElementById('modeToggleBtn').className = 'btn-secondary';
+  }
+
+  // ============================================================
+  // TTS 관련 함수 (축약)
   // ============================================================
   function loadVoices() {
     const sel = document.getElementById('voiceSelect');
@@ -1490,8 +1690,10 @@
   }
 
   // ============================================================
-  // 14. Voice Mapping
+  // Voice Mapping
   // ============================================================
+  let characterVoiceMap = {};
+
   function addVoiceMapping() {
     const name = document.getElementById('mapCharName').value.trim();
     const voice = document.getElementById('mapVoiceSelect').value;
@@ -1527,44 +1729,40 @@
   }
 
   // ============================================================
-  // 15. 파일 업로드
+  // 다크모드
   // ============================================================
-  function handleFileUpload(input) {
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          document.getElementById('imageInput').value = e.target.result;
-          alert("이미지가 입력되었습니다. '저장' 버튼을 눌러주세요.");
-        };
-        reader.readAsDataURL(file);
-      } else if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.json')) {
-        const reader = new FileReader();
-        reader.onload = function(e) { document.getElementById('imageInput').value = e.target.result; alert("텍스트 파일 내용이 입력되었습니다."); };
-        reader.readAsText(file);
-      } else {
-        alert("⚠️ 지원하지 않는 파일 형식입니다.");
-        input.value = '';
-      }
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  function loadTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
     }
   }
 
   // ============================================================
-  // 16. 초기화
+  // 초기화
   // ============================================================
   window.addEventListener('load', function() {
     loadTheme();
     const hash = window.location.hash.substring(1);
     if (hash) {
       try {
-        let decoded;
-        if (typeof LZString !== 'undefined' && LZString.decompressFromEncodedURIComponent) {
-          decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(hash));
-        } else {
-          try { decoded = JSON.parse(decodeURIComponent(hash)); } catch(e) { throw new Error("Invalid hash"); }
+        const decoded = LZString.decompressFromEncodedURIComponent(hash);
+        if (decoded) {
+          const data = JSON.parse(decoded);
+          cy.elements().remove();
+          cy.add(data);
         }
-        if (decoded) { cy.elements().remove(); cy.add(decoded); }
       } catch(e) { console.error("Load from URL failed:", e); }
     }
     runLayout('cose');
@@ -1585,7 +1783,7 @@
   }
 
   // ============================================================
-  // 17. Global functions
+  // Global functions
   // ============================================================
   window.addNode = addNode;
   window.addEdge = addEdge;
@@ -1598,14 +1796,11 @@
   window.saveToURL = saveToURL;
   window.downloadJSON = downloadJSON;
   window.uploadJSON = uploadJSON;
-  window.appendJSON = appendJSON;
   window.loadJSONFromTextarea = loadJSONFromTextarea;
-  window.selectSampleFolder = selectSampleFolder;
-  window.loadSelectedSampleFile = loadSelectedSampleFile;
+  window.saveAsStandaloneHTML = saveAsStandaloneHTML;
   window.saveNotes = saveNotes;
   window.capturePNG = capturePNG;
   window.toggleNodeImage = toggleNodeImage;
-  window.toggleHelp = toggleHelp;
   window.toggleDarkMode = toggleDarkMode;
   window.handleFileUpload = handleFileUpload;
   window.onTtsProviderChange = onTtsProviderChange;
@@ -1615,6 +1810,13 @@
   window.readNotes = readNotes;
   window.stopReading = stopReading;
   window.downloadMp3 = downloadMp3;
+  window.loadFile = loadFile;
+  window.loadSampleById = loadSampleById;
+  window.deleteSample = deleteSample;
+  window.clearAllSamples = clearAllSamples;
+  window.toggleMode = toggleMode;
+  window.checkPassword = checkPassword;
+  window.closePasswordModal = closePasswordModal;
 </script>
 </body>
 </html>
