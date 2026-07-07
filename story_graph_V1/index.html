@@ -4,12 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>소설 관계도 분석기 - 수동 복사 + 비평 + 효과</title>
-<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/style.css?v=2" />
 
 <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
 <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
 <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
 <script src="https://unpkg.com/soundfont-player@0.12.0/dist/soundfont-player.js"></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body class="dark-theme">
   <!-- 상단 네비게이션 -->
@@ -223,7 +224,8 @@
         <div class="split-divider" id="splitDivider"></div>
         <div class="split-pane" id="splitPaneRef">
           <div style="padding:4px 10px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;flex-shrink:0;">
-            <span>📖 참고 문서</span>
+            <button id="splitRefToggleBtn" onclick="window.modules.toggleSplitRefMode()" style="font-size:10px;padding:2px 8px;">📎 참고 문서</button>
+            <button id="splitRefLockBtn" onclick="window.modules.toggleSplitRefLock()" style="font-size:10px;padding:2px 8px;">🔒</button>
             <select id="splitRefFileSelect" onchange="window.editor.loadSplitRefFile(this.value)" style="font-size:10px;padding:2px 4px;width:auto;">
               <option value="">참고 파일 선택</option>
             </select>
@@ -394,11 +396,30 @@
               <button onclick="document.getElementById('critiquePasteArea').value=''; document.getElementById('critiqueResult').classList.remove('show');" style="font-size:11px;padding:4px 12px;border-color:#ff6b6b;color:#ff6b6b;">🗑️ 지우기</button>
             </div>
           </div>
-          <div id="critiqueResult" class="critique-result"></div>
-          <div style="font-size:10px;color:var(--muted);padding:8px;line-height:1.5;background:var(--panel2);border-radius:6px;border:1px solid var(--border);">
-            💡 <b>비평 프롬프트</b>는 웹소설 장르 문법과 독자 친절함을 기준으로<br>
-            문장·묘사·전개·캐릭터·가독성을 100점 만점으로 평가합니다.
+          <div class="tool-card" style="flex-shrink:0;">
+            <div class="tool-card-title">③ 결과 저장</div>
+            <div class="tool-card-desc">비평 결과를 이미지(PNG)로 저장합니다 (마스킹 옵션 적용)</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+              <span style="font-size:10px;color:var(--muted);white-space:nowrap;">해상도</span>
+              <input type="range" id="critiquePngScale" min="1" max="4" step="0.5" value="2" style="width:60px;height:3px;" oninput="document.getElementById('critiquePngScaleLabel').textContent=this.value+'x'">
+              <span id="critiquePngScaleLabel" style="font-size:10px;color:var(--muted);min-width:20px;">2x</span>
+            </div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button onclick="window.modules.exportCritiqueAsImage()" class="primary" style="font-size:11px;padding:4px 12px;flex:1;">PNG 이미지 저장</button>
+              <button onclick="window.modules.exportCritiqueAsImage(true)" style="font-size:11px;padding:4px 12px;border-color:#facc15;color:#facc15;">클립보드 복사</button>
+            </div>
           </div>
+          <div class="tool-card" style="flex-shrink:0;">
+            <div class="tool-card-title">④ 텍스트 마스킹</div>
+            <div class="tool-card-desc">표시된 비평 결과에서 특정 글자를 하이라이트/마스킹합니다</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+              <label style="font-size:10px;color:var(--muted);white-space:nowrap;">마스킹할 글자 (쉼표 구분):</label>
+              <input type="text" id="critiqueMaskText" placeholder="예: 스포일러,반전" style="flex:1;font-size:10px;padding:2px 6px;min-width:120px;">
+              <button onclick="maskSelectedText()" style="font-size:10px;padding:2px 8px;border-color:#f97316;color:#f97316;">선택 텍스트 마스킹</button>
+            </div>
+            <div class="mask-word-chips" id="maskWordChips"></div>
+          </div>
+          <div id="critiqueResult" class="critique-result"></div>
         </div>
       </div>
     </div>
@@ -450,7 +471,7 @@
     </div>
   </div>
   <div class="mobile-preview-overlay" id="mobilePreviewOverlay">
-    <div class="mobile-preview-box">
+    <div class="mobile-preview-box" id="mobilePreviewBox">
       <div class="header">
         <h3>📱 모바일 프리뷰</h3>
         <select id="mobilePreviewTheme" onchange="window.editor.updateMobilePreview()">
@@ -557,6 +578,6 @@
   </div>
 
   <!-- 메인 JS -->
-  <script src="js/all.js"></script>
+  <script src="js/all.js?v=2"></script>
 </body>
 </html>
