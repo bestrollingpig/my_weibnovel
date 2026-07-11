@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이야기 TTS 제작기 v3 - Supertonic 2</title>
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "@huggingface/transformers": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@latest"
+        }
+    }
+    </script>
+    <style>
+        /* ===== 전체 CSS ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Malgun Gothic', 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #0f172a;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h1 small {
+            font-size: 14px;
+            font-weight: 400;
+            color: #94a3b8;
+            margin-left: auto;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .panel {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid #e9edf2;
+        }
+        .panel h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #d1d9e6;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            background: #ffffff;
+            transition: border 0.2s;
+            line-height: 1.6;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+        textarea#storyInput {
+            height: 180px;
+        }
+        textarea#aiResult {
+            height: 160px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff5f6d, #ffc371);
+        }
+        .btn-info {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f6d365, #fda085);
+        }
+        .btn-secondary {
+            background: #94a3b8;
+        }
+        .btn-outline {
+            background: transparent;
+            color: #475569;
+            border: 1.5px solid #d1d9e6;
+        }
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+        #statusBar {
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        #statusBar.loading {
+            display: block;
+            background: #eef2ff;
+            color: #4338ca;
+            border: 1px solid #c7d2fe;
+        }
+        #statusBar.success {
+            display: block;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        #statusBar.error {
+            display: block;
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        #statusBar.info {
+            display: block;
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        .sentence-list {
+            max-height: 460px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .sentence-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sentence-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .sentence-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e9edf2;
+            transition: all 0.15s;
+        }
+        .sentence-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+        }
+        .sentence-item .idx {
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 32px;
+        }
+        .sentence-item .text {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #1e293b;
+        }
+        .dropdown-wrap {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-btn {
+            padding: 4px 12px 4px 10px;
+            border: 1px solid #d1d9e6;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #1e293b;
+        }
+        .dropdown-btn:hover {
+            border-color: #667eea;
+            background: #f8fafc;
+        }
+        .dropdown-btn .arrow {
+            font-size: 10px;
+            opacity: 0.6;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            background: #fff;
+            border: 1px solid #d1d9e6;
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            min-width: 120px;
+            z-index: 100;
+            padding: 4px 0;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+        .dropdown-menu.open {
+            display: block;
+        }
+        .dropdown-item {
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .dropdown-item:hover {
+            background: #f1f5f9;
+        }
+        .dropdown-item.active {
+            background: #eef2ff;
+            color: #4338ca;
+            font-weight: 600;
+        }
+        .dropdown-divider {
+            height: 1px;
+            background: #e9edf2;
+            margin: 4px 10px;
+        }
+        .dropdown-item.add-new {
+            color: #667eea;
+            font-weight: 600;
+        }
+        .mapping-list {
+            margin: 8px 0;
+        }
+        .mapping-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .mapping-item .name {
+            font-weight: 600;
+            min-width: 80px;
+            font-size: 13px;
+        }
+        .mapping-item select {
+            flex: 1;
+            padding: 4px 8px;
+            border: 1px solid #d1d9e6;
+            border-radius: 6px;
+            font-size: 12px;
+            background: #fff;
+        }
+        .mapping-item .hint {
+            font-size: 11px;
+            color: #667eea;
+            font-weight: 500;
+        }
+        .mapping-item .del-btn {
+            color: #ef4444;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0 4px;
+        }
+        .mapping-item .del-btn:hover {
+            color: #dc2626;
+        }
+        #progressArea {
+            margin: 12px 0 8px;
+            display: none;
+        }
+        #progressArea .info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+        #progressArea .track {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #progressArea .track .bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        #resultArea {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            background: #f0f7ff;
+            border-radius: 12px;
+            border: 2px dashed #667eea;
+        }
+        #resultArea h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        #resultArea .hint {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        #jsonEditorArea {
+            display: none;
+            margin-top: 12px;
+        }
+        #jsonEditorArea .editor-header {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        #jsonEditorArea .editor-header span {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        #jsonEditorArea .validate-status {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        #jsonEditorArea .validate-status.valid {
+            color: #22c55e;
+        }
+        #jsonEditorArea .validate-status.invalid {
+            color: #ef4444;
+        }
+        #jsonEditor {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d9e6;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            background: #0f172a;
+            color: #e2e8f0;
+            resize: vertical;
+            min-height: 200px;
+        }
+        #voiceModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        #voiceModal.show {
+            display: flex;
+        }
+        #voiceModal .modal-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        #voiceModal h3 {
+            margin-bottom: 16px;
+            color: #0f172a;
+        }
+        #voiceModal label {
+            font-weight: 600;
+            font-size: 13px;
+            display: block;
+            margin-top: 12px;
+        }
+        #voiceModal input[type="text"],
+        #voiceModal select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d9e6;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        #voiceModal input[type="range"] {
+            width: 100%;
+            margin-top: 4px;
+        }
+        #voiceModal .range-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .voice-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+        }
+        .voice-item .badge {
+            font-size: 11px;
+            padding: 1px 8px;
+            border-radius: 10px;
+            background: #e9edf2;
+            color: #475569;
+        }
+        .voice-item .badge.custom {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+        .voice-item .badge.ai-suggested {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .voice-item .del-btn {
+            color: #ef4444;
+            cursor: pointer;
+            font-weight: 700;
+            padding: 0 4px;
+        }
+        .voice-item .del-btn:hover {
+            color: #dc2626;
+        }
+        @media (max-width: 900px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 16px;
+            }
+            .sentence-item {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .sentence-item .text {
+                flex-basis: 100%;
+                margin-left: 32px;
+            }
+        }
+        .flex {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .flex-center {
+            align-items: center;
+        }
+        .text-muted {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        .help-box {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #475569;
+        }
+        .help-box strong {
+            color: #1e293b;
+        }
+        .help-box ul {
+            margin: 4px 0 4px 18px;
+        }
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 6px;
+        }
+        .speed-control input[type="range"] {
+            flex: 1;
+        }
+        .gpu-status {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            🎙️ 이야기 TTS 제작기 v3
+            <small>Supertonic 2</small>
+        </h1>
+
+        <div id="statusBar"></div>
+
+        <div class="grid-2">
+
+            <!-- 좌측 패널 -->
+            <div class="panel">
+                <h3>📝 이야기 입력</h3>
+                <textarea id="storyInput" placeholder="이야기를 자유롭게 입력하세요...&#10;&#10;예:&#10;어느 날 작은 마을에 한 소녀가 살았습니다.&#10;&#34;엄마, 나 무지개 보고 싶어요!&#34;&#10;&#34;그래, 다음에 비 오면 같이 보러 가자.&#34;"></textarea>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="analyzeStory()">🔍 분석하기</button>
+                    <button class="btn btn-outline" onclick="clearAll()">🗑️ 초기화</button>
+                </div>
+
+                <div id="resultArea">
+                    <h4>🤖 AI 분석 결과 붙여넣기</h4>
+                    <textarea id="aiResult" placeholder="Gemini / Claude / ChatGPT가 반환한 JSON을 그대로 붙여넣으세요."></textarea>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="parseAIResult()">📥 결과 적용</button>
+                        <button class="btn btn-outline" onclick="hideResultArea()">취소</button>
+                    </div>
+                    <div class="hint">💡 마크다운 코드 블록(```json ... ```)이 포함되어도 자동 추출합니다.</div>
+
+                    <div id="jsonEditorArea">
+                        <div class="editor-header">
+                            <span>📝 JSON 편집기</span>
+                            <button class="btn btn-warning btn-sm" onclick="autoFixJSON()">🔧 자동 교정</button>
+                            <button class="btn btn-info btn-sm" onclick="formatJSON()">✨ 예쁘게 정리</button>
+                            <button class="btn btn-success btn-sm" onclick="applyEditedJSON()">✅ 적용</button>
+                            <span class="validate-status" id="jsonValidateStatus">✓ 유효함</span>
+                        </div>
+                        <textarea id="jsonEditor" rows="10"></textarea>
+                    </div>
+                </div>
+
+                <h3 style="margin-top:18px;">🎤 캐릭터 · 목소리 매핑</h3>
+                <div id="mappingContainer" class="mapping-list">
+                    <div class="text-muted" style="padding:8px 0;">캐릭터가 없습니다</div>
+                </div>
+                <div class="flex" style="margin-top:6px;">
+                    <input type="text" id="newCharacterName" placeholder="새 캐릭터명" style="flex:1; padding:6px 12px; border:1px solid #d1d9e6; border-radius:6px; font-size:13px;">
+                    <button class="btn btn-success btn-sm" onclick="addCharacter()">➕ 추가</button>
+                </div>
+
+                <h3 style="margin-top:18px;">🎵 목소리 관리</h3>
+                <div id="voiceListContainer"></div>
+                <div class="btn-group" style="margin-top:6px;">
+                    <button class="btn btn-primary btn-sm" onclick="openVoiceCreator()">🎨 변형 목소리</button>
+                    <button class="btn btn-info btn-sm" onclick="uploadVoiceFile()">📂 Voice Builder</button>
+                </div>
+
+                <h3 style="margin-top:18px;">⚙️ TTS 설정</h3>
+                <div class="speed-control">
+                    <label style="font-size:13px; font-weight:500; min-width:50px;">속도</label>
+                    <input type="range" id="speedControl" min="0.5" max="2.0" step="0.1" value="0.9" oninput="document.getElementById('speedLabel').textContent=this.value">
+                    <span id="speedLabel" style="font-size:14px; font-weight:600; min-width:40px;">0.9</span>
+                </div>
+
+                <div class="flex flex-center" style="margin-top:6px; gap:10px;">
+                    <label style="font-size:13px; font-weight:500;">⚡ 처리 장치:</label>
+                    <select id="deviceSelect" class="device-select" style="padding:4px 10px; border:1px solid #d1d9e6; border-radius:6px; font-size:13px;">
+                        <option value="wasm">💻 CPU (WASM)</option>
+                        <option value="webgpu">🚀 GPU (WebGPU)</option>
+                    </select>
+                </div>
+                <div class="gpu-status" id="gpuStatus">🔍 WebGPU 지원 확인 중...</div>
+
+                <div class="help-box">
+                    <strong>📖 사용 방법</strong>
+                    <ul>
+                        <li>이야기 입력 → <strong>분석하기</strong> → AI 프롬프트 복사</li>
+                        <li>AI 결과를 <strong>붙여넣기</strong> → 적용</li>
+                        <li>캐릭터별 <strong>목소리 매핑</strong> 설정</li>
+                        <li><strong>MP3 + 자막 저장</strong>으로 내보내기</li>
+                    </ul>
+                    <strong>⚠️ 참고</strong>
+                    <ul>
+                        <li>Supertonic 2는 <strong>감정(Emotion) 설정을 지원하지 않습니다</strong>.</li>
+                        <li>최초 실행 시 모델을 다운로드합니다 (약 300MB).</li>
+                        <li>목소리는 F1~M5 중 선택 가능합니다.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 우측 패널 -->
+            <div class="panel">
+                <h3>
+                    📄 분석 결과
+                    <span id="sentenceCount" style="font-size:12px; font-weight:400; color:#94a3b8; margin-left:auto;"></span>
+                </h3>
+
+                <div id="sentenceList" class="sentence-list">
+                    <div class="text-muted" style="text-align:center; padding:40px 0;">
+                        이야기를 입력하고 <strong>'분석하기'</strong>를 클릭하세요
+                    </div>
+                </div>
+
+                <div id="progressArea">
+                    <div class="info">
+                        <span id="progressText">처리 중...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="track">
+                        <div class="bar" id="progressBar"></div>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="margin-top:12px;">
+                    <button class="btn btn-info" onclick="previewStory()">▶️ 미리듣기</button>
+                    <button class="btn btn-warning" onclick="stopPreview()">⏹️ 정지</button>
+                    <button class="btn btn-success" onclick="exportStory()">💾 MP3 + 자막 저장</button>
+                </div>
+                <div class="text-muted" style="margin-top:6px;">
+                    💡 각 문장의 <strong>역할</strong>을 드롭다운으로 직접 수정할 수 있습니다.<br>
+                    Supertonic 2는 <strong>감정(Emotion) 설정을 지원하지 않습니다</strong>.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 목소리 생성 모달 ===== -->
+    <div id="voiceModal">
+        <div class="modal-content">
+            <h3>🎨 새 목소리 만들기</h3>
+            <label>목소리 이름</label>
+            <input type="text" id="newVoiceName" placeholder="예: 따뜻한 엄마">
+            <label>기반 목소리</label>
+            <select id="baseVoiceSelect">
+                <option value="F1">아이 여</option>
+                <option value="F2" selected>나래이터</option>
+                <option value="F3">여성 실무</option>
+                <option value="F4">성인 여</option>
+                <option value="F5">노인 여</option>
+                <option value="M1">성인 남</option>
+                <option value="M2">노인 남</option>
+                <option value="M3">아이 남</option>
+                <option value="M4">성인 남2</option>
+                <option value="M5">남성 거친</option>
+            </select>
+            <label>음 높이 (피치)</label>
+            <div class="range-label">
+                <span>낮게</span>
+                <span id="pitchValue">1.0</span>
+                <span>높게</span>
+            </div>
+            <input type="range" id="pitchControl" min="0.5" max="1.5" step="0.1" value="1.0" oninput="document.getElementById('pitchValue').textContent=this.value">
+            <label>말하는 속도</label>
+            <div class="range-label">
+                <span>느리게</span>
+                <span id="voiceSpeedValue">1.0</span>
+                <span>빠르게</span>
+            </div>
+            <input type="range" id="voiceSpeedControl" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('voiceSpeedValue').textContent=this.value">
+            <div class="btn-group" style="margin-top:16px;">
+                <button class="btn btn-info" onclick="previewCustomVoice()" style="flex:1;">🎧 미리듣기</button>
+            </div>
+            <div class="btn-group" style="margin-top:8px;">
+                <button class="btn btn-success" onclick="saveCustomVoice()" style="flex:1;">💾 저장</button>
+                <button class="btn btn-outline" onclick="closeVoiceCreator()" style="flex:1;">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. 데이터
+        // ============================================================
+        const DEFAULT_VOICES = [
+            { id: 'F1', name: '아이 여' },
+            { id: 'F2', name: '나래이터' },
+            { id: 'F3', name: '여성 실무' },
+            { id: 'F4', name: '성인 여' },
+            { id: 'F5', name: '노인 여' },
+            { id: 'M1', name: '성인 남' },
+            { id: 'M2', name: '노인 남' },
+            { id: 'M3', name: '아이 남' },
+            { id: 'M4', name: '성인 남2' },
+            { id: 'M5', name: '남성 거친' }
+        ];
+
+        const EMOTIONS = [
+            { value: 'neutral', label: '😐 중립' },
+            { value: 'happy', label: '😊 기쁨' },
+            { value: 'sad', label: '😢 슬픔' },
+            { value: 'angry', label: '😡 화남' },
+            { value: 'surprised', label: '😱 놀람' },
+            { value: 'fearful', label: '😨 두려움' },
+            { value: 'disgusted', label: '🤢 혐오' }
+        ];
+
+        const ROLE_EMOJI = {
+            '나래이터': '📖',
+            '소녀': '👧',
+            '여자아이': '👧',
+            '남자아이': '👦',
+            '엄마': '👩',
+            '아빠': '👨',
+            '할머니': '👵',
+            '할아버지': '👴',
+            '선생님': '👩‍🏫',
+            '친구': '👫'
+        };
+
+        let segments = [];
+        let characters = {};
+        let voiceList = [];
+        let characterAliasMap = {};
+        let isPlaying = false;
+        let ttsPipeline = null;
+        let isModelLoading = false;
+        let audioContext = null;
+        let currentSource = null;
+        let lastGeneratedAudioBlob = null;
+        let lastGeneratedSrtBlob = null;
+        let voiceEmbeddingsCache = {};
+
+        // ============================================================
+        // 2. 초기화
+        // ============================================================
+        function init() {
+            voiceList = [...DEFAULT_VOICES];
+            loadFromStorage();
+            updateMappingUI();
+            updateVoiceListUI();
+            checkGPU();
+            populateSelects();
+            loadDevicePreference();
+        }
+
+        function populateSelects() {
+            const base = document.getElementById('baseVoiceSelect');
+            base.innerHTML = DEFAULT_VOICES.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+        }
+
+        function loadDevicePreference() {
+            const saved = localStorage.getItem('ttsDevice') || 'wasm';
+            const select = document.getElementById('deviceSelect');
+            if (select) select.value = saved;
+        }
+
+        async function checkGPU() {
+            try {
+                const adapter = await navigator.gpu?.requestAdapter();
+                document.getElementById('gpuStatus').textContent = adapter ?
+                    '✅ WebGPU 지원됨' :
+                    '❌ WebGPU 미지원 → CPU(WASM) 모드로 동작합니다';
+                if (!adapter) {
+                    const sel = document.getElementById('deviceSelect');
+                    sel.querySelector('option[value="webgpu"]').disabled = true;
+                    if (sel.value === 'webgpu') {
+                        sel.value = 'wasm';
+                        localStorage.setItem('ttsDevice', 'wasm');
+                    }
+                }
+            } catch (e) {
+                document.getElementById('gpuStatus').textContent = '⚠️ WebGPU 확인 실패, CPU 모드로 동작합니다';
+            }
+        }
+
+        // ============================================================
+        // 3. Supertonic 2 TTS 엔진
+        // ============================================================
+        async function getTTS() {
+            if (ttsPipeline) return ttsPipeline;
+            if (isModelLoading) {
+                await new Promise(resolve => {
+                    const check = () => { if (ttsPipeline) resolve();
+                        else setTimeout(check, 100); };
+                    check();
+                });
+                return ttsPipeline;
+            }
+
+            isModelLoading = true;
+            const device = localStorage.getItem('ttsDevice') || 'wasm';
+
+            showStatus('⏳ Supertonic 2 모델 로딩 중... (' + device.toUpperCase() + ')', 'loading');
+
+            try {
+                const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@latest');
+                env.allowLocalModels = false;
+                env.remoteHost = 'https://huggingface.co';
+
+                ttsPipeline = await pipeline('text-to-speech', 'onnx-community/Supertonic-TTS-2-ONNX', {
+                    device: device,
+                    progress_callback: (p) => {
+                        if (p.status === 'download') {
+                            const pct = Math.round(p.progress * 100);
+                            showStatus('⏳ 다운로드 중... ' + pct + '%', 'loading');
+                        }
+                    }
+                });
+
+                isModelLoading = false;
+                showStatus('✅ Supertonic 2 모델 로딩 완료!', 'success');
+                return ttsPipeline;
+
+            } catch (e) {
+                console.error('TTS 로딩 실패:', e);
+                isModelLoading = false;
+                showStatus('❌ TTS 로딩 실패: ' + e.message, 'error');
+                return null;
+            }
+        }
+
+        // ============================================================
+        // 4. 목소리 임베딩 로드
+        // ============================================================
+        async function loadVoiceEmbedding(voiceId) {
+            if (voiceEmbeddingsCache[voiceId]) {
+                return voiceEmbeddingsCache[voiceId];
+            }
+
+            try {
+                // Supertonic 2 임베딩 파일 경로 (세계관 그래프 편집기와 동일)
+                const embedUrl =
+                    `https://huggingface.co/onnx-community/Supertonic-TTS-2-ONNX/resolve/main/voices/${voiceId}.bin`;
+                const response = await fetch(embedUrl);
+                if (!response.ok) throw new Error('목소리 파일 없음');
+                const embedBuffer = await response.arrayBuffer();
+                const embedArray = new Float32Array(embedBuffer);
+                voiceEmbeddingsCache[voiceId] = embedArray;
+                return embedArray;
+            } catch (e) {
+                console.warn('목소리 임베딩 로드 실패:', voiceId, e);
+                return null;
+            }
+        }
+
+        // ============================================================
+        // 5. TTS 합성 (Supertonic 2 - 감정 없음)
+        // ============================================================
+        async function synthesizeTTS(text, voiceId, speed) {
+            const pipe = await getTTS();
+            if (!pipe) throw new Error('TTS 엔진을 사용할 수 없습니다.');
+
+            const embedArray = await loadVoiceEmbedding(voiceId || 'F2');
+            if (!embedArray) throw new Error('목소리 임베딩을 가져올 수 없습니다.');
+
+            // Supertonic 2는 감정(emotion) 파라미터를 지원하지 않음
+            const output = await pipe(`<ko>${text}</ko>`, {
+                speaker_embeddings: embedArray,
+                num_inference_steps: 5,
+                speed: speed || 0.9
+            });
+
+            return output;
+        }
+
+        // ============================================================
+        // 6. 분석하기
+        // ============================================================
+        function analyzeStory() {
+            const text = document.getElementById('storyInput').value;
+            if (!text.trim()) {
+                showStatus('⚠️ 이야기를 입력해주세요.', 'error');
+                return;
+            }
+
+            const prompt = generatePrompt(text);
+
+            navigator.clipboard.writeText(prompt).then(() => {
+                showStatus('✅ 프롬프트가 클립보드에 복사되었습니다!', 'success');
+                showResultArea();
+            }).catch(() => {
+                showManualCopyDialog(prompt);
+            });
+        }
+
+        function generatePrompt(text) {
+            return `다음 이야기를 분석해서 각 문장의 역할(화자)과 감정을 추천해주세요.
+
+        [분석 규칙]
+        1. "이름: 대사" 형식 → 이름이 화자
+        2. 따옴표로 감싸진 대사 → 직전에 언급된 인물이 화자
+        3. 서술문 → "나래이터"가 화자
+
+        [감정 분류 - 참고용]
+        - happy: 기쁨, 즐거움, 신남
+        - sad: 슬픔, 우울, 그리움
+        - angry: 화남, 분노, 짜증
+        - surprised: 놀람, 충격, 당황
+        - fearful: 두려움, 걱정, 불안
+        - disgusted: 혐오, 역겨움
+        - neutral: 중립, 서술
+
+        [목소리 추천]
+        - F1: 아이 여 (여자아이)
+        - F2: 나래이터 (차분한 내레이션)
+        - F3: 여성 실무 (20-30대 여성)
+        - F4: 성인 여 (30-40대 여성, 엄마)
+        - F5: 노인 여 (할머니)
+        - M1: 성인 남 (20-30대 남성)
+        - M2: 노인 남 (할아버지)
+        - M3: 아이 남 (남자아이)
+        - M4: 성인 남2 (30-40대 남성, 아빠)
+        - M5: 남성 거친 (악당)
+
+        [출력 형식 - JSON]
+        {
+          "segments": [
+            {"text": "문장", "role": "화자명", "emotion": "neutral/happy/sad/angry/surprised/fearful/disgusted"}
+          ],
+          "characters": [
+            {"name": "캐릭터명", "suggested_voice": "F1~M5", "reason": "추천 이유", "aliases": ["별칭"]}
+          ]
+        }
+
+        ⚠️ 참고: Supertonic 2는 감정(emotion)을 실제로 지원하지 않습니다.
+        감정은 참고용으로만 사용하세요.
+
+        [분석할 이야기]
+        ---
+        ${text}
+        ---
+
+        JSON 형식으로만 응답해주세요.`;
+        }
+
+        // ============================================================
+        // 7. AI 결과 파싱
+        // ============================================================
+        function parseAIResult() {
+            const raw = document.getElementById('aiResult').value.trim();
+            if (!raw) {
+                showStatus('⚠️ 결과를 입력해주세요.', 'error');
+                return;
+            }
+
+            try {
+                let jsonStr = raw;
+                const block = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (block) jsonStr = block[1];
+                const start = jsonStr.indexOf('{');
+                const end = jsonStr.lastIndexOf('}') + 1;
+                if (start === -1 || end === 0) throw new Error('JSON 객체를 찾을 수 없습니다.');
+                jsonStr = jsonStr.substring(start, end);
+
+                let data;
+                try {
+                    data = JSON.parse(jsonStr);
+                } catch (e) {
+                    const editorArea = document.getElementById('jsonEditorArea');
+                    const editor = document.getElementById('jsonEditor');
+                    editor.value = jsonStr;
+                    editorArea.style.display = 'block';
+                    document.getElementById('jsonValidateStatus').textContent = '파싱 오류 - "자동 교정" 버튼을 눌러보세요';
+                    document.getElementById('jsonValidateStatus').className = 'validate-status invalid';
+                    showStatus('JSON 형식 오류: ' + e.message, 'error');
+                    return;
+                }
+
+                if (!data.segments || !Array.isArray(data.segments)) throw new Error('segments 배열이 없습니다.');
+
+                const editorArea = document.getElementById('jsonEditorArea');
+                const editor = document.getElementById('jsonEditor');
+                editor.value = JSON.stringify(data, null, 2);
+                editorArea.style.display = 'block';
+                document.getElementById('jsonValidateStatus').textContent = '유효함';
+                document.getElementById('jsonValidateStatus').className = 'validate-status valid';
+
+                characters = {};
+                characterAliasMap = {};
+
+                if (data.characters) {
+                    data.characters.forEach(char => {
+                        if (char.name && char.name.trim()) {
+                            const name = char.name.trim();
+                            characters[name] = {
+                                voice: char.suggested_voice || 'F2',
+                                emotion: 'neutral',
+                                suggested: char.suggested_voice || 'F2',
+                                reason: char.reason || '',
+                                aliases: char.aliases || []
+                            };
+                            if (char.aliases) char.aliases.forEach(a => { characterAliasMap[a] = name; });
+                        }
+                    });
+                }
+
+                segments = data.segments.map((seg, idx) => {
+                    let role = seg.role || '나래이터';
+                    if (characterAliasMap[role]) role = characterAliasMap[role];
+                    if (!characters[role] && role !== '나래이터') characters[role] = {
+                        voice: 'F2',
+                        emotion: 'neutral',
+                        suggested: 'F2',
+                        reason: '',
+                        aliases: []
+                    };
+                    return {
+                        index: idx,
+                        original: seg.text,
+                        text: seg.text.replace(/["']/g, ''),
+                        role: role,
+                        emotion: seg.emotion || 'neutral',
+                        voice: characters[role]?.voice || 'F2'
+                    };
+                });
+
+                if (!characters['나래이터']) characters['나래이터'] = {
+                    voice: 'F2',
+                    emotion: 'neutral',
+                    suggested: 'F2',
+                    reason: '내레이션',
+                    aliases: []
+                };
+
+                renderSentences();
+                updateMappingUI();
+                updateVoiceListUI();
+                saveToStorage();
+                showStatus('✅ 분석 완료! ' + segments.length + '개 문장', 'success');
+            } catch (e) {
+                showStatus('❌ 파싱 오류: ' + e.message, 'error');
+                console.error(e);
+            }
+        }
+
+        // ============================================================
+        // 8. JSON 자동 교정
+        // ============================================================
+        function autoFixJSON() {
+            const editor = document.getElementById('jsonEditor');
+            let text = editor.value;
+            let fixed = text;
+            let fixes = [];
+
+            try { JSON.parse(text);
+                formatJSON();
+                showStatus('✅ 이미 유효한 JSON입니다.', 'success'); return; } catch (e) {}
+
+            if (fixed.includes("'")) { fixed = fixed.replace(/'/g, '"');
+                fixes.push('작은따옴표 변환'); }
+            fixed = fixed.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
+            fixed = fixed.replace(/(\{|\,)\s*([a-zA-Z0-9_]+)\s*:/g, '$1 "$2":');
+            fixed = fixed.replace(/:\s*([a-zA-Z가-힣]+)(\s*[,}\]])/g, ': "$1"$2');
+            fixed = fixed.replace(/,\s*,/g, ',');
+
+            const blockMatch = fixed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (blockMatch) { fixed = blockMatch[1];
+                fixes.push('코드 블록 제거'); }
+            const start = fixed.indexOf('{');
+            const end = fixed.lastIndexOf('}') + 1;
+            if (start !== -1 && end > start) { fixed = fixed.substring(start, end);
+                fixes.push('외부 텍스트 제거'); }
+
+            try {
+                const parsed = JSON.parse(fixed);
+                editor.value = JSON.stringify(parsed, null, 2);
+                document.getElementById('jsonValidateStatus').textContent = '교정 완료! ' + fixes.join(', ');
+                document.getElementById('jsonValidateStatus').className = 'validate-status valid';
+                showStatus('🔧 ' + fixes.join(' | '), 'success');
+                return parsed;
+            } catch (e) {
+                document.getElementById('jsonValidateStatus').textContent = '교정 실패: ' + e.message;
+                document.getElementById('jsonValidateStatus').className = 'validate-status invalid';
+                showStatus('❌ JSON 교정 실패', 'error');
+                return null;
+            }
+        }
+
+        function formatJSON() {
+            const editor = document.getElementById('jsonEditor');
+            try {
+                const parsed = JSON.parse(editor.value);
+                editor.value = JSON.stringify(parsed, null, 2);
+                document.getElementById('jsonValidateStatus').textContent = '✅ 유효함';
+                document.getElementById('jsonValidateStatus').className = 'validate-status valid';
+            } catch (e) {
+                document.getElementById('jsonValidateStatus').textContent = '❌ ' + e.message;
+                document.getElementById('jsonValidateStatus').className = 'validate-status invalid';
+            }
+        }
+
+        function applyEditedJSON() {
+            const editor = document.getElementById('jsonEditor');
+            try {
+                const data = JSON.parse(editor.value);
+                if (!data.segments || !Array.isArray(data.segments)) throw new Error('segments 배열이 없습니다.');
+                characters = {};
+                characterAliasMap = {};
+                if (data.characters) {
+                    data.characters.forEach(char => {
+                        if (char.name && char.name.trim()) {
+                            const name = char.name.trim();
+                            characters[name] = {
+                                voice: char.suggested_voice || 'F2',
+                                emotion: 'neutral',
+                                suggested: char.suggested_voice || 'F2',
+                                reason: char.reason || '',
+                                aliases: char.aliases || []
+                            };
+                            if (char.aliases) char.aliases.forEach(a => { characterAliasMap[a] = name; });
+                        }
+                    });
+                }
+                segments = data.segments.map((seg, idx) => {
+                    let role = seg.role || '나래이터';
+                    if (characterAliasMap[role]) role = characterAliasMap[role];
+                    if (!characters[role] && role !== '나래이터') characters[role] = {
+                        voice: 'F2',
+                        emotion: 'neutral',
+                        suggested: 'F2',
+                        reason: '',
+                        aliases: []
+                    };
+                    return {
+                        index: idx,
+                        original: seg.text,
+                        text: seg.text.replace(/["']/g, ''),
+                        role: role,
+                        emotion: seg.emotion || 'neutral',
+                        voice: characters[role]?.voice || 'F2'
+                    };
+                });
+                if (!characters['나래이터']) characters['나래이터'] = {
+                    voice: 'F2',
+                    emotion: 'neutral',
+                    suggested: 'F2',
+                    reason: '내레이션',
+                    aliases: []
+                };
+                renderSentences();
+                updateMappingUI();
+                updateVoiceListUI();
+                saveToStorage();
+                document.getElementById('jsonEditorArea').style.display = 'none';
+                showStatus('✅ 수정된 JSON 적용 완료! (' + segments.length + '개 문장)', 'success');
+            } catch (e) { showStatus('❌ JSON 오류: ' + e.message, 'error'); }
+        }
+
+        // ============================================================
+        // 9. 렌더링
+        // ============================================================
+        function renderSentences() {
+            const container = document.getElementById('sentenceList');
+            document.getElementById('sentenceCount').textContent = segments.length ? '(' + segments.length + '개)' : '';
+            if (!segments.length) {
+                container.innerHTML =
+                    '<div class="text-muted" style="text-align:center;padding:40px 0;">분석된 문장이 없습니다</div>';
+                return;
+            }
+
+            container.innerHTML = segments.map((seg, idx) => {
+                const roleEmoji = getRoleEmoji(seg.role);
+                const emLabel = EMOTIONS.find(e => e.value === seg.emotion);
+                const emoji = emLabel ? emLabel.label : '';
+                return '<div class="sentence-item" data-index="' + idx + '">' +
+                    '<span class="idx">#' + (idx + 1) + '</span>' +
+                    '<div class="dropdown-wrap"><button class="dropdown-btn" onclick="toggleDropdown(\'role\',' +
+                    idx + ')">' + roleEmoji + ' ' + seg.role + ' <span class="arrow">▼</span></button>' +
+                    '<div class="dropdown-menu" id="roleDropdown_' + idx + '">' + getRoleOptions(idx, seg.role) +
+                    '</div></div>' +
+                    '<span class="text">' + escapeHtml(seg.text) + '</span></div>';
+            }).join('');
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown-wrap')) document.querySelectorAll('.dropdown-menu').forEach(el => el
+                    .classList.remove('open'));
+            });
+        }
+
+        function toggleDropdown(type, index) {
+            const id = type === 'role' ? 'roleDropdown_' + index : 'emotionDropdown_' + index;
+            const prefix = type === 'role' ? 'roleDropdown_' : 'emotionDropdown_';
+            document.querySelectorAll('[id^="' + prefix + '"]').forEach(el => { if (el.id !== id) el.classList.remove(
+                    'open'); });
+            const menu = document.getElementById(id);
+            if (menu) menu.classList.toggle('open');
+        }
+
+        function getRoleOptions(index, selected) {
+            const allRoles = new Set();
+            segments.forEach(s => allRoles.add(s.role));
+            Object.keys(characters).forEach(n => allRoles.add(n));
+            const sorted = Array.from(allRoles).sort((a, b) => { if (a === '나래이터') return -1; if (b === '나래이터')
+                    return 1; return a.localeCompare(b); });
+            let html = sorted.map(role => '<div class="dropdown-item ' + (role === selected ? 'active' : '') +
+                '" onclick="changeRole(' + index + ',\'' + role.replace(/'/g, "\\'") + '\')">' + getRoleEmoji(role) +
+                ' ' + role + '</div>').join('');
+            html += '<div class="dropdown-divider"></div><div class="dropdown-item add-new" onclick="addNewCharacterFromDropdown(' +
+                index + ')">➕ 새 캐릭터</div>';
+            return html;
+        }
+
+        function changeRole(index, newRole) {
+            segments[index].role = newRole;
+            if (!characters[newRole] && newRole !== '나래이터') characters[newRole] = {
+                voice: 'F2',
+                emotion: 'neutral',
+                suggested: 'F2',
+                reason: '',
+                aliases: []
+            };
+            renderSentences();
+            updateMappingUI();
+            saveToStorage();
+            closeAllDropdowns();
+        }
+
+        function addNewCharacterFromDropdown(index) {
+            const name = prompt('새 캐릭터 이름을 입력하세요:');
+            if (!name || !name.trim()) return;
+            const trimmed = name.trim();
+            if (characters[trimmed]) { showStatus('⚠️ \'' + trimmed + '\'은(는) 이미 존재합니다.', 'error'); return; }
+            characters[trimmed] = {
+                voice: 'F2',
+                emotion: 'neutral',
+                suggested: 'F2',
+                reason: '',
+                aliases: []
+            };
+            segments[index].role = trimmed;
+            renderSentences();
+            updateMappingUI();
+            saveToStorage();
+            closeAllDropdowns();
+            showStatus('✅ \'' + trimmed + '\' 캐릭터 추가됨', 'success');
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.remove('open'));
+        }
+
+        // ============================================================
+        // 10. 캐릭터 관리
+        // ============================================================
+        function updateMappingUI() {
+            const container = document.getElementById('mappingContainer');
+            const keys = Object.keys(characters);
+            if (!keys.length) {
+                container.innerHTML = '<div class="text-muted" style="padding:8px 0;">캐릭터가 없습니다</div>';
+                return;
+            }
+
+            container.innerHTML = keys.map(name => {
+                const char = characters[name];
+                const voiceOpts = voiceList.map(v => '<option value="' + v.id + '"' + (char.voice === v.id ?
+                    ' selected' : '') + '>' + v.name + '</option>').join('');
+                const isNarrator = name === '나래이터';
+                const isSuggested = char.suggested && char.suggested === char.voice;
+                const aliases = char.aliases?.length ? ' (별칭: ' + char.aliases.join(', ') + ')' : '';
+                return '<div class="mapping-item">' +
+                    '<span class="name">' + getRoleEmoji(name) + ' ' + name + '</span>' +
+                    (aliases ? '<span class="text-muted" style="font-size:11px;">' + aliases + '</span>' : '') +
+                    '<select onchange="updateVoice(\'' + name.replace(/'/g, "\\'") + '\',this.value)">' +
+                    voiceOpts + '</select>' +
+                    (isSuggested ? '<span class="hint">⭐ AI 추천: ' + (char.reason || '') + '</span>' : '') +
+                    (!isNarrator ? '<span class="del-btn" onclick="removeCharacter(\'' + name.replace(/'/g, "\\'") +
+                        '\')">✕</span>' : '') + '</div>';
+            }).join('');
+        }
+
+        function updateVoice(name, voiceId) {
+            if (characters[name]) {
+                characters[name].voice = voiceId;
+                segments.forEach(s => { if (s.role === name) s.voice = voiceId; });
+                saveToStorage();
+                updateMappingUI();
+            }
+        }
+
+        function addCharacter() {
+            const input = document.getElementById('newCharacterName');
+            const name = input.value.trim();
+            if (!name) { showStatus('⚠️ 이름을 입력하세요.', 'error'); return; }
+            if (characters[name]) { showStatus('⚠️ 이미 존재합니다.', 'error'); return; }
+            characters[name] = {
+                voice: 'F2',
+                emotion: 'neutral',
+                suggested: 'F2',
+                reason: '',
+                aliases: []
+            };
+            input.value = '';
+            updateMappingUI();
+            renderSentences();
+            saveToStorage();
+            showStatus('✅ \'' + name + '\' 추가됨', 'success');
+        }
+
+        function removeCharacter(name) {
+            if (name === '나래이터') { showStatus('⚠️ 나래이터는 삭제할 수 없습니다.', 'error'); return; }
+            if (!confirm('\'' + name + '\'을(를) 삭제하시겠습니까?')) return;
+            delete characters[name];
+            segments.forEach(s => { if (s.role === name) s.role = '나래이터'; });
+            updateMappingUI();
+            renderSentences();
+            saveToStorage();
+            showStatus('🗑️ \'' + name + '\' 삭제됨', 'info');
+        }
+
+        // ============================================================
+        // 11. 목소리 관리
+        // ============================================================
+        function updateVoiceListUI() {
+            const container = document.getElementById('voiceListContainer');
+            if (!container) return;
+            const suggestedVoices = new Set();
+            Object.values(characters).forEach(c => { if (c.suggested) suggestedVoices.add(c.suggested); });
+            container.innerHTML = voiceList.map(v => {
+                const isCustom = v.isCustom || false;
+                const isSuggested = suggestedVoices.has(v.id);
+                let badgeText = '기본';
+                if (isCustom) badgeText = '⭐ 커스텀';
+                else if (isSuggested) badgeText = '🤖 AI 추천';
+                return '<div class="voice-item">' +
+                    '<span class="badge' + (isCustom ? ' custom' : '') + (isSuggested ? ' ai-suggested' : '') +
+                    '">' + badgeText + '</span>' +
+                    '<span>' + v.id + ': ' + v.name + '</span>' +
+                    (isCustom ? '<span class="del-btn" onclick="deleteVoice(\'' + v.id + '\')">✕</span>' : '') +
+                    '</div>';
+            }).join('');
+        }
+
+        function openVoiceCreator() {
+            document.getElementById('voiceModal').classList.add('show');
+            document.getElementById('newVoiceName').value = '';
+            document.getElementById('pitchControl').value = '1.0';
+            document.getElementById('voiceSpeedControl').value = '1.0';
+            document.getElementById('pitchValue').textContent = '1.0';
+            document.getElementById('voiceSpeedValue').textContent = '1.0';
+        }
+
+        function closeVoiceCreator() { document.getElementById('voiceModal').classList.remove('show'); }
+
+        function saveCustomVoice() {
+            const name = document.getElementById('newVoiceName').value.trim();
+            if (!name) {
+                showStatus('⚠️ 목소리 이름을 입력하세요.', 'error');
+                return;
+            }
+            const customId = 'custom_' + Date.now();
+            voiceList.push({
+                id: customId,
+                name: name,
+                isCustom: true,
+                baseVoice: document.getElementById('baseVoiceSelect').value,
+                params: {
+                    pitch: parseFloat(document.getElementById('pitchControl').value),
+                    speed: parseFloat(document.getElementById('voiceSpeedControl').value)
+                }
+            });
+            if (!characters[name]) characters[name] = {
+                voice: customId,
+                emotion: 'neutral',
+                suggested: customId,
+                reason: '커스텀 목소리',
+                aliases: []
+            };
+            updateVoiceListUI();
+            updateMappingUI();
+            saveToStorage();
+            closeVoiceCreator();
+            showStatus('✅ \'' + name + '\' 목소리 추가 완료!', 'success');
+        }
+
+        function deleteVoice(voiceId) {
+            if (!confirm('이 목소리를 삭제하시겠습니까?')) return;
+            voiceList = voiceList.filter(v => v.id !== voiceId);
+            Object.keys(characters).forEach(name => {
+                if (characters[name].voice === voiceId) characters[name].voice = 'F2';
+            });
+            updateVoiceListUI();
+            updateMappingUI();
+            saveToStorage();
+            showStatus('🗑️ 목소리 삭제됨', 'info');
+        }
+
+        function uploadVoiceFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.bin';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const vid = 'uploaded_' + Date.now();
+                    voiceList.push({
+                        id: vid,
+                        name: file.name.replace('.bin', ''),
+                        isCustom: true,
+                        isUploaded: true,
+                        data: ev.target.result
+                    });
+                    updateVoiceListUI();
+                    updateMappingUI();
+                    saveToStorage();
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            input.click();
+        }
+
+        function previewCustomVoice() {
+            const text = '이렇게 읽는 목소리가 맞는지 확인해보세요.';
+            const speed = parseFloat(document.getElementById('voiceSpeedControl').value);
+            if ('speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance(text);
+                u.rate = speed;
+                u.lang = 'ko-KR';
+                speechSynthesis.speak(u);
+            }
+        }
+
+        // ============================================================
+        // 12. 헬퍼
+        // ============================================================
+        function getRoleEmoji(role) {
+            for (const [key, emoji] of Object.entries(ROLE_EMOJI)) {
+                if (role.includes(key)) return emoji;
+            }
+            return '🎭';
+        }
+
+        function escapeHtml(text) {
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+
+        function showResultArea() {
+            document.getElementById('resultArea').style.display = 'block';
+            document.getElementById('aiResult').focus();
+        }
+
+        function hideResultArea() {
+            document.getElementById('resultArea').style.display = 'none';
+            document.getElementById('jsonEditorArea').style.display = 'none';
+        }
+
+        function showManualCopyDialog(prompt) {
+            const overlay = document.createElement('div');
+            overlay.id = 'manualCopyOverlay';
+            overlay.style.cssText =
+                'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:999;display:flex;align-items:center;justify-content:center;';
+            overlay.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">' +
+                '<h3 style="margin-bottom:8px;">📋 프롬프트 복사</h3>' +
+                '<p style="color:#64748b;font-size:14px;margin-bottom:12px;">아래 프롬프트를 복사해서 AI에 붙여넣으세요.</p>' +
+                '<textarea style="width:100%;height:200px;padding:12px;border:1px solid #d1d9e6;border-radius:8px;font-size:13px;font-family:monospace;resize:vertical;">' +
+                escapeHtml(prompt) + '</textarea>' +
+                '<div style="margin-top:12px;display:flex;gap:10px;">' +
+                '<button class="btn btn-primary" onclick="copyManualPrompt()">📋 복사</button>' +
+                '<button class="btn btn-outline" onclick="closeManualDialog()">닫기</button></div></div>';
+            document.body.appendChild(overlay);
+        }
+
+        function copyManualPrompt() {
+            const ta = document.querySelector('#manualCopyOverlay textarea');
+            if (!ta) return;
+            navigator.clipboard.writeText(ta.value).then(() => showStatus('✅ 복사 완료!', 'success')).catch(() => { ta
+                    .select();
+                document.execCommand('copy');
+                showStatus('✅ 복사 완료!', 'success'); });
+        }
+
+        function closeManualDialog() {
+            const el = document.getElementById('manualCopyOverlay');
+            if (el) { el.remove();
+                showResultArea(); }
+        }
+
+        // ============================================================
+        // 13. 내보내기 (MP3 + SRT)
+        // ============================================================
+        async function exportStory() {
+            if (!segments.length) {
+                showStatus('⚠️ 분석된 문장이 없습니다.', 'error');
+                return;
+            }
+
+            const pipe = await getTTS();
+            if (!pipe) {
+                showStatus('⚠️ TTS 엔진을 사용할 수 없습니다.', 'error');
+                return;
+            }
+
+            const speed = parseFloat(document.getElementById('speedControl').value);
+
+            showStatus('🎵 TTS 생성 중...', 'loading');
+            document.getElementById('progressArea').style.display = 'block';
+            updateProgress(0, segments.length);
+
+            const results = [];
+            let sampleRate = 16000;
+
+            for (let i = 0; i < segments.length; i++) {
+                const seg = segments[i];
+                const text = seg.text.trim();
+                if (!text) { updateProgress(i + 1, segments.length); continue; }
+
+                try {
+                    const voiceId = characters[seg.role]?.voice || seg.voice || 'F2';
+                    const embedArray = await loadVoiceEmbedding(voiceId);
+                    if (!embedArray) {
+                        console.warn('목소리 없음, F2로 대체');
+                        const fallback = await loadVoiceEmbedding('F2');
+                        if (!fallback) continue;
+                        const output = await pipe(`<ko>${text}</ko>`, {
+                            speaker_embeddings: fallback,
+                            num_inference_steps: 5,
+                            speed: speed
+                        });
+                        if (output && output.audio) {
+                            sampleRate = output.sampling_rate || sampleRate;
+                            results.push({ audio: output.audio, text: seg.text, role: seg.role });
+                        }
+                        continue;
+                    }
+
+                    // Supertonic 2 - 감정 없음
+                    const output = await pipe(`<ko>${text}</ko>`, {
+                        speaker_embeddings: embedArray,
+                        num_inference_steps: 5,
+                        speed: speed
+                    });
+
+                    if (output && output.audio) {
+                        sampleRate = output.sampling_rate || sampleRate;
+                        results.push({ audio: output.audio, text: seg.text, role: seg.role });
+                    }
+                } catch (e) {
+                    console.warn('문장 ' + (i + 1) + ' 오류:', e);
+                }
+
+                updateProgress(i + 1, segments.length);
+            }
+
+            if (!results.length) {
+                showStatus('❌ 생성된 오디오가 없습니다.', 'error');
+                document.getElementById('progressArea').style.display = 'none';
+                return;
+            }
+
+            const totalLen = results.reduce((sum, r) => sum + r.audio.length, 0);
+            const finalAudio = new Float32Array(totalLen);
+            let offset = 0;
+            const subtitleData = [];
+            let time = 0;
+
+            for (const r of results) {
+                finalAudio.set(r.audio, offset);
+                offset += r.audio.length;
+                subtitleData.push({
+                    start: time,
+                    end: time + (r.audio.length / sampleRate),
+                    text: '[' + r.role + '] ' + r.text
+                });
+                time += r.audio.length / sampleRate;
+                time += 0.3;
+            }
+
+            const mp3Blob = await pcmToMp3(finalAudio, sampleRate);
+            const srtBlob = generateSRT(subtitleData);
+
+            downloadFile(mp3Blob, 'story_' + Date.now() + '.mp3');
+            setTimeout(() => downloadFile(srtBlob, 'story_' + Date.now() + '.srt'), 300);
+
+            document.getElementById('progressArea').style.display = 'none';
+            showStatus('✅ MP3 + 자막 저장 완료! (' + results.length + '개 문장)', 'success');
+        }
+
+        // ============================================================
+        // 14. 미리듣기 (Supertonic 2)
+        // ============================================================
+        async function previewStory() {
+            if (!segments.length) { showStatus('⚠️ 분석된 문장이 없습니다.', 'error'); return; }
+            if (isPlaying) { stopPreview(); return; }
+
+            const pipe = await getTTS();
+            if (!pipe) {
+                showStatus('⚠️ TTS 엔진을 사용할 수 없습니다.', 'error');
+                return;
+            }
+
+            isPlaying = true;
+            const speed = parseFloat(document.getElementById('speedControl').value);
+            let idx = 0;
+
+            async function playNext() {
+                if (!isPlaying || idx >= segments.length) {
+                    isPlaying = false;
+                    showStatus('✅ 미리듣기 완료', 'success');
+                    return;
+                }
+
+                const seg = segments[idx];
+                const text = seg.text.trim();
+                if (!text) { idx++;
+                    setTimeout(playNext, 100); return; }
+
+                try {
+                    const voiceId = characters[seg.role]?.voice || seg.voice || 'F2';
+                    const embedArray = await loadVoiceEmbedding(voiceId);
+                    if (!embedArray) {
+                        idx++;
+                        setTimeout(playNext, 100);
+                        return;
+                    }
+
+                    const output = await pipe(`<ko>${text}</ko>`, {
+                        speaker_embeddings: embedArray,
+                        num_inference_steps: 5,
+                        speed: speed
+                    });
+
+                    if (output && output.audio) {
+                        if (!audioContext) {
+                            audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                        }
+
+                        const buffer = audioContext.createBuffer(1, output.audio.length, output.sampling_rate ||
+                            16000);
+                        buffer.getChannelData(0).set(output.audio);
+
+                        if (currentSource) { try { currentSource.stop(); } catch (e) {} }
+                        currentSource = audioContext.createBufferSource();
+                        currentSource.buffer = buffer;
+                        currentSource.connect(audioContext.destination);
+                        currentSource.start();
+
+                        showStatus('🎧 듣는 중... (' + (idx + 1) + '/' + segments.length + ')', 'info');
+
+                        currentSource.onended = () => {
+                            idx++;
+                            setTimeout(playNext, 300);
+                        };
+                    } else {
+                        idx++;
+                        setTimeout(playNext, 100);
+                    }
+                } catch (e) {
+                    console.warn('미리듣기 오류:', e);
+                    idx++;
+                    setTimeout(playNext, 100);
+                }
+            }
+
+            playNext();
+        }
+
+        function stopPreview() {
+            isPlaying = false;
+            if (currentSource) { try { currentSource.stop(); } catch (e) {} currentSource = null; }
+            showStatus('⏹️ 정지됨', 'info');
+        }
+
+        // ============================================================
+        // 15. PCM → MP3 변환
+        // ============================================================
+        function pcmToMp3(audioData, sampleRate) {
+            return new Promise((resolve) => {
+                const pcm = new Int16Array(audioData.length);
+                for (let i = 0; i < audioData.length; i++) {
+                    let s = Math.max(-1, Math.min(1, audioData[i]));
+                    pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                }
+
+                const encoder = new lamejs.Mp3Encoder(1, sampleRate, 128);
+                const mp3Data = [];
+                const block = 1152;
+
+                for (let i = 0; i < pcm.length; i += block) {
+                    const chunk = pcm.subarray(i, i + block);
+                    const buf = encoder.encodeBuffer(chunk);
+                    if (buf.length) mp3Data.push(buf);
+                }
+                const flush = encoder.flush();
+                if (flush.length) mp3Data.push(flush);
+
+                resolve(new Blob(mp3Data, { type: 'audio/mp3' }));
+            });
+        }
+
+        function generateSRT(subtitleData) {
+            let srt = '';
+            subtitleData.forEach((sub, idx) => {
+                srt += (idx + 1) + '\n';
+                srt += formatTime(sub.start) + ' --> ' + formatTime(sub.end) + '\n';
+                srt += sub.text + '\n\n';
+            });
+            return new Blob([srt], { type: 'text/plain' });
+        }
+
+        function formatTime(sec) {
+            const d = new Date(0);
+            d.setSeconds(sec);
+            const ms = Math.floor((sec % 1) * 1000);
+            return d.toISOString().substr(11, 8) + ',' + String(ms).padStart(3, '0');
+        }
+
+        function downloadFile(blob, name) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }
+
+        // ============================================================
+        // 16. 진행 상태
+        // ============================================================
+        function updateProgress(current, total) {
+            const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('progressPercent').textContent = pct + '%';
+            document.getElementById('progressText').textContent = current + '/' + total + ' 문장 완료';
+        }
+
+        // ============================================================
+        // 17. 저장/불러오기
+        // ============================================================
+        function saveToStorage() {
+            try {
+                localStorage.setItem('storyTTSData', JSON.stringify({
+                    segments,
+                    characters,
+                    voiceList: voiceList.filter(v => v.isCustom)
+                }));
+            } catch (e) {}
+        }
+
+        function loadFromStorage() {
+            try {
+                const raw = localStorage.getItem('storyTTSData');
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    if (data.segments) segments = data.segments;
+                    if (data.characters) characters = data.characters;
+                    if (data.voiceList) {
+                        data.voiceList.forEach(v => {
+                            if (!voiceList.find(ex => ex.id === v.id)) {
+                                voiceList.push(v);
+                            }
+                        });
+                    }
+                    if (segments.length) {
+                        renderSentences();
+                        updateMappingUI();
+                        updateVoiceListUI();
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // ============================================================
+        // 18. 상태 표시
+        // ============================================================
+        function showStatus(msg, type) {
+            const bar = document.getElementById('statusBar');
+            bar.textContent = msg || '';
+            bar.className = type || '';
+            bar.style.display = msg ? 'block' : 'none';
+        }
+
+        function clearAll() {
+            if (!segments.length && !Object.keys(characters).length) return;
+            if (!confirm('모든 데이터를 초기화하시겠습니까?')) return;
+            segments = [];
+            characters = {};
+            characterAliasMap = {};
+            document.getElementById('storyInput').value = '';
+            renderSentences();
+            updateMappingUI();
+            hideResultArea();
+            localStorage.removeItem('storyTTSData');
+            showStatus('🗑️ 초기화 완료', 'info');
+        }
+
+        // ============================================================
+        // 19. 실행
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
