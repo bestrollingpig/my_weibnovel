@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:#f0f0f0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.2em; text-shadow:1px 1px 0 #000; }
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .left-panel {
+      width:220px;
+      background:#fff;
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid #ddd;
+    }
+    .graph-area {
+      flex:1;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid #ddd;
+      border-radius:8px;
+      background:#fafafa;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+
+    .panel-section {
+      margin-bottom:12px;
+      padding:10px;
+      background:#f9f9f9;
+      border-radius:6px;
+      border:1px solid #e0e0e0;
+    }
+    .panel-section h3 {
+      font-size:0.9em;
+      margin-bottom:6px;
+      color:#667eea;
+      border-bottom:1px solid #667eea;
+      padding-bottom:3px;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:5px;
+      margin:3px 0;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+    }
+    input[readonly] {
+      background:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    textarea {
+      width:100%;
+      padding:5px;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+      resize:vertical;
+      min-height:60px;
+    }
+    button {
+      width:100%;
+      padding:6px;
+      margin:3px 0;
+      border:none;
+      border-radius:3px;
+      font-size:0.8em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+    }
+    button:active { transform:scale(0.97); }
+    .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+    .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
+    .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
+
+    .help-text { font-size:0.7em; color:#888; margin-top:3px; padding:4px; background:#fff; border-radius:3px; }
+    .connection-tools { display:flex; gap:4px; margin-bottom:3px; }
+    .connection-tools button { padding:3px; font-size:0.7em; margin:0; }
+
+    .info-badge {
+      display:block;
+      padding:4px 8px;
+      background:#667eea;
+      color:#fff;
+      border-radius:3px;
+      font-size:0.75em;
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .notes-display {
+      padding:6px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.8em;
+      min-height:40px;
+      white-space:pre-wrap;
+      margin-top:4px;
+    }
+    .file-select-wrapper { display:flex; gap:4px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:4px 8px; margin:0; }
+    .file-select-wrapper input[type="file"] { display:none; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
+    }
+    [data-theme="dark"] .left-panel {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .notes-display {
+      background:#2d2d4e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .cy-wrapper {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🌐 세계관 그래프</h1>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="panel-section">
+      <h3>📂 데이터</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
+      </div>
+      <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드</button>
+    </div>
+
+    <div class="panel-section">
+      <h3>➕ 노드</h3>
+      <input type="text" id="newNode" placeholder="노드 이름">
+      <button class="btn-primary" onclick="addNode()">노드 추가</button>
+      <div class="help-text">💡 빈 공간 더블클릭</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>🔗 엣지</h3>
+      <div class="connection-tools">
+        <button class="btn-info" onclick="clearEdgeInputs()">초기화</button>
+        <button class="btn-info" onclick="swapEdgeInputs()">교체</button>
+      </div>
+      <input type="text" id="edgeSrc" placeholder="출발 노드" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="도착 노드" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="라벨">
+      <button class="btn-primary" onclick="addEdge()">엣지 추가</button>
+      <div class="help-text">💡 노드 클릭 시 자동 입력</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>📝 노드 정보</h3>
+      <div class="info-badge" id="nodeInfo">노드를 클릭하세요</div>
+      <div class="notes-display" id="nodeNotes">선택한 노드의 메모가 여기에 표시됩니다</div>
+      <button class="btn-danger" onclick="deleteSelected()" style="margin-top:4px;">🗑️ 삭제 (Del)</button>
+    </div>
+  </div>
+
+  <div class="graph-area">
+    <div class="cy-wrapper">
+      <div id="cy"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const initialData = {
+  "nodes": [
+    {
+      "data": {
+        "id": "GENRE_XIANXIA",
+        "label": "선협 (仙俠)",
+        "color": "#6A1B9A",
+        "notes": "도교 선인 개념을 기반으로, 인간이 수련을 통해 신선이 되는 과정을 그린 장르. 범인수선전(소설)과 귀곡팔황(게임)이 각각 서사와 상호작용 측면에서 대표적 구현을 보여줌."
+      },
+      "position": {
+        "x": 165.03413958521222,
+        "y": 1055.2192324267749
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CORE_CULTIVATION",
+        "label": "수련 (修行)",
+        "color": "#FFD93D",
+        "notes": "선협의 근간. 영력(靈力)을 흡수하고 축적하며 경지를 높이는 과정. 범인수선전은 엄격한 단계론(연기→결단→금단→원영→화신→대승→도합→진선)을 따르고, 귀곡팔황은 공법과 스킬 조합으로 다양화함."
+      },
+      "position": {
+        "x": 235.33473384816537,
+        "y": 877.9828290327448
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CORE_REALM",
+        "label": "경지 (境界)",
+        "color": "#FFD93D",
+        "notes": "수선자의 위계를 나누는 핵심 척도. 범인수선전은 '연기기→결단기→금단기→원영기→화신기→대승기→도합기→대성기→진선'의 9단계. 귀곡팔황은 '기정→주기→결단→금단→원영→화신→대승→도합→등선'으로 유사하나 게임 밸런스에 맞게 조정됨."
+      },
+      "position": {
+        "x": 128.46137465983503,
+        "y": 837.3171640434301
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CORE_SPIRIT_ROOT",
+        "label": "영근 (靈根)",
+        "color": "#FFD93D",
+        "notes": "수선자의 타고난 재능. 범인수선전의 한립은 잡영근(최하위)으로 시작. 귀곡팔황에서는 게임 시작 시 플레이어가 속성(풍/뢰/화/빙/토 등)과 품질을 선택할 수 있어 자유도가 높음."
+      },
+      "position": {
+        "x": 264.63074579836007,
+        "y": 693.2313784456474
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CORE_SPIRIT_STONE",
+        "label": "영석 (靈石)",
+        "color": "#FFD93D",
+        "notes": "선계의 화폐이자 수련 자원. 범인수선전에서는 한립이 경제적으로도 철저히 관리함. 귀곡팔황에서는 거래, 공법 구매, 아이템 강화 등 게임 내 모든 경제 활동의 기본 통화."
+      },
+      "position": {
+        "x": 515.8142617594842,
+        "y": 1169.951411451806
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_WEAK_TO_STRONG",
+        "label": "약육강생",
+        "color": "#FFB347",
+        "notes": "최하위에서 시작해 정상에 오르는 성장 서사. 범인수선전의 한립(잡영근)이 대표적. 귀곡팔황에서도 초반에 잡몹에게도 죽을 수 있는 극악 난이도로 시작해 점진적 성장을 체험함."
+      },
+      "position": {
+        "x": 302.1394327699702,
+        "y": 523.977029063311
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_CHEAT_ITEM",
+        "label": "역천 기연 / 장원주패",
+        "color": "#FFB347",
+        "notes": "주인공만의 특별한 도구. 범인수선전의 '장원주패'는 시간 가속 + 영초 재배 능력을 가진 전설적 보물. 귀곡팔황에서는 '기연' 이벤트로 다양한 형태로 등장하며, 플레이어 선택에 따라 획득 여부가 달라짐."
+      },
+      "position": {
+        "x": 232.75401773491527,
+        "y": 339.2806410783858
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_ALCHEMY",
+        "label": "연단술 / 단약",
+        "color": "#FFB347",
+        "notes": "영초를 가공해 수련을 가속하는 기술. 범인수선전의 한립은 연단의 대가로 성장. 귀곡팔황에서는 플레이어가 직접 단약을 제조하거나 NPC로부터 구매 가능. 연단술 레벨이 결과물의 품질을 결정함."
+      },
+      "position": {
+        "x": 120.54226905376146,
+        "y": 174.70945369170892
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_ARTIFACT",
+        "label": "법보 / 영기",
+        "color": "#FFB347",
+        "notes": "강력한 능력을 가진 도구. 범인수선전에서는 비검, 갑주, 수납환 등이 등장. 귀곡팔황에서는 무기, 방어구, 수호령 등으로 구현되며, 품질(하급→중급→상급→전설)과 강화 시스템이 존재."
+      },
+      "position": {
+        "x": 698.4128124525563,
+        "y": 1200.7843624488594
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_SECT",
+        "label": "종파 / 문파",
+        "color": "#FFB347",
+        "notes": "수선자들의 조직. 범인수선전에서는 정파(천검문, 청운종)와 사파(마교, 귀종)가 대립. 귀곡팔황에서는 플레이어가 특정 종파에 가입하거나 독립적으로 수련 가능. 종파 내 기여도와 직위 체계가 존재함."
+      },
+      "position": {
+        "x": 757.8365022743569,
+        "y": 226.6414565651944
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_SECRET_REALM",
+        "label": "비경 / 수련장",
+        "color": "#FFB347",
+        "notes": "고대 선인의 유적이나 특수 공간. 범인수선전에서는 기연과 위험이 공존하는 장소. 귀곡팔황에서는 던전 형태로 구현되며, 클리어 시 희귀 재료나 공법을 획득할 수 있음."
+      },
+      "position": {
+        "x": 954.6144678106223,
+        "y": 127.82040496375164
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_SPIRIT_BEAST",
+        "label": "영수 / 반려수",
+        "color": "#FFB347",
+        "notes": "수련한 동물. 범인수선전의 한립은 원후(猿猴)와 계약. 귀곡팔황에서는 전투 시 함께 싸우는 반려수 시스템으로 구현되며, 포획, 육성, 진화가 가능함."
+      },
+      "position": {
+        "x": -51.49433218808477,
+        "y": 1178.6785042728256
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_TRIBULATION",
+        "label": "천겁 / 뇌겁",
+        "color": "#FFB347",
+        "notes": "경지 상승 시 하늘이 내리는 시험. 범인수선전에서는 한립이 여러 번 극복. 귀곡팔황에서는 특정 경지 돌파 시 미니게임 형태로 구현되며, 실패 시 경지 하락이나 사망 위험이 있음."
+      },
+      "position": {
+        "x": 42.4765964550203,
+        "y": 678.3835624491647
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_IMMORTALITY",
+        "label": "장생불사 / 진선",
+        "color": "#FFB347",
+        "notes": "선협의 궁극적 목표. 범인수선전의 한립은 수천 년 수련 끝에 진선 도달. 귀곡팔황의 엔딩 중 하나로 등선(登仙)이 존재하며, 이후의 세계(선계)까지 구현된 확장팩이 있음."
+      },
+      "position": {
+        "x": 390.73542900734174,
+        "y": 856.280860418316
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_SURVIVAL",
+        "label": "생존 / 도피",
+        "color": "#FFB347",
+        "notes": "범인수선전의 독보적 특징. 한립은 자신보다 강한 적과 절대 싸우지 않고, 위험을 극도로 회피함. 귀곡팔황에서도 '보통' 난이도에서도 쉽게 죽을 수 있으며, 도망과 회피가 중요한 전략이 됨."
+      },
+      "position": {
+        "x": 400.62065863985544,
+        "y": 655.4649294966582
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_SPIRIT_ENERGY",
+        "label": "영력 / 진기",
+        "color": "#4ECDC4",
+        "notes": "수선자가 흡수하고 축적하는 에너지. 범인수선전에서는 인계→영계→선계로 갈수록 영기 농도가 압도적으로 증가. 귀곡팔황에서는 지역별 영기 농도가 수련 속도에 영향을 미침."
+      },
+      "position": {
+        "x": 274.8238132384075,
+        "y": 1049.6927885105913
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_DAN",
+        "label": "내단 / 원영",
+        "color": "#4ECDC4",
+        "notes": "수선자의 핵심. 결단기에서 금단기로 갈 때 내단 형성, 이후 원영기에서 원영으로 진화. 범인수선전에서는 내단 손상이 생명과 직결됨. 귀곡팔황에서는 경지 돌파 시 내단의 품질(천/지/현/황)이 결정됨."
+      },
+      "position": {
+        "x": 757.6722792667144,
+        "y": 1185.2900752106973
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_SPIRIT_HERB",
+        "label": "영초 / 천재지보",
+        "color": "#4ECDC4",
+        "notes": "수천 년 자란 약초. 단약의 재료. 범인수선전에서 한립은 장원주패로 대량 재배함. 귀곡팔황에서는 지역별로 희귀 영초가 분포하며, 채집 숙련도에 따라 획득 품질이 달라짐."
+      },
+      "position": {
+        "x": 301.2443158546052,
+        "y": 58.050135109725595
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_ARRAY",
+        "label": "진법 / 배열",
+        "color": "#4ECDC4",
+        "notes": "영력을 이용한 마법진. 공격, 방어, 함정, 영기 집중 등 다양한 용도. 범인수선전에서는 배열사가 전문 직업으로 등장. 귀곡팔황에서는 던전 내 함정이나 보호막으로 구현됨."
+      },
+      "position": {
+        "x": 1047.4227759022579,
+        "y": 43.685312810235565
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_DIVINE_SENSE",
+        "label": "신식 / 정신력",
+        "color": "#4ECDC4",
+        "notes": "수선자의 정신적 감각. 주변 탐지, 상대 경지 파악, 원거리 인식. 범인수선전에서는 경지가 오를수록 신식 범위가 광역화됨. 귀곡팔황에서는 플레이어의 시야 범위와 적 탐지 능력으로 구현됨."
+      },
+      "position": {
+        "x": 385.3709819790125,
+        "y": 1207.7772777709336
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_FLIGHT",
+        "label": "비행 / 어공",
+        "color": "#4ECDC4",
+        "notes": "하늘을 나는 능력. 결단기 이후 가능. 범인수선전에서는 비검이나 비행선을 활용. 귀곡팔황에서는 경지에 따라 이동 속도와 비행 고도가 증가하며, 지형을 무시한 이동이 가능해짐."
+      },
+      "position": {
+        "x": 599.8536015991718,
+        "y": 1173.0356815626728
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_LIFESPAN",
+        "label": "수명 / 장수",
+        "color": "#4ECDC4",
+        "notes": "경지 상승에 따라 기하급수적으로 증가하는 수명. 범인수선전에서 한립은 수천 년을 살며 동시대 인물들이 모두 죽는 것을 목격함. 귀곡팔황에서는 수명이 게임 내 시간 제약(예: 특정 년도까지 목표 달성)으로 작용하기도 함."
+      },
+      "position": {
+        "x": 22.37796800168201,
+        "y": 954.2591612302305
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_HAN_LI",
+        "label": "한립 (범인수선전)",
+        "color": "#FF6B6B",
+        "notes": "범인수선전의 주인공. 잡영근으로 시작해 장원주패를 기연으로 얻고 수천 년에 걸쳐 진선 도달. 극도로 신중하고 계산적이며, 감정보다 생존과 이익을 우선시함. 절대 불필요한 위험을 감수하지 않는 '생존형' 수선자의 표본."
+      },
+      "position": {
+        "x": 511.9805998239812,
+        "y": 569.6859025095816
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_PLAYER",
+        "label": "플레이어 (귀곡팔황)",
+        "color": "#FF6B6B",
+        "notes": "귀곡팔황의 주인공. 게임 시작 시 영근 속성(풍/뢰/화/빙/토 등)과 품질을 선택 가능. 자유로운 공법 조합과 선택적 기연 획득이 가능하며, 선/악 성향에 따라 게임의 전개가 달라짐."
+      },
+      "position": {
+        "x": 406.22944332513254,
+        "y": 205.97569421755276
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_SECT_MASTER",
+        "label": "종파 장문인",
+        "color": "#FF6B6B",
+        "notes": "종파의 최고 권력자. 최소 화신기 이상. 범인수선전에서는 한립이 권력 다툼 속에서도 살아남기 위해 전략적으로 접근함. 귀곡팔황에서는 플레이어가 종파에 가입하거나 장문인이 될 수도 있음."
+      },
+      "position": {
+        "x": 705.8773619145213,
+        "y": 49.58835149266548
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_ELDER",
+        "label": "장로 / 노괴",
+        "color": "#FF6B6B",
+        "notes": "수백 년을 살아온 고수. 범인수선전에서는 종파 내 실권자로 등장. 귀곡팔황에서는 플레이어의 스승 역할을 하거나, 퀘스트를 주는 핵심 NPC로 기능."
+      },
+      "position": {
+        "x": 866.4659416251911,
+        "y": 345.6674997077721
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_DAUGHTER",
+        "label": "자녀 / 후계자",
+        "color": "#FF6B6B",
+        "notes": "범인수선전에서 한립은 여러 명의 자녀와 후계자를 둠. 귀곡팔황에서는 도우(道侶) 시스템과 후계자 육성 시스템이 존재하며, 플레이어가 직접 후계자를 키울 수 있음."
+      },
+      "position": {
+        "x": 138.6810524168113,
+        "y": 1186.2585164581683
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_DEMON_CULTIVATOR",
+        "label": "마도 수선자",
+        "color": "#FF6B6B",
+        "notes": "마도의 길을 선택한 자들. 범인수선전에서는 한립과 대립하거나 협력하기도 함. 귀곡팔황에서는 플레이어가 마도 공법을 선택할 수 있으며, 이에 따라 정파와의 관계 및 게임 엔딩이 변화함."
+      },
+      "position": {
+        "x": 400.1507348731972,
+        "y": 437.067759603768
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "COMPARE_SOUL",
+        "label": "비교: 소설 vs 게임",
+        "color": "#E91E63",
+        "notes": "범인수선전(소설)은 장대한 서사와 철학적 깊이, 생존의 본질을 탐구. 귀곡팔황(게임)은 자유로운 육성과 선택의 재미, 상호작용적 세계관을 제공. 두 작품은 같은 장르를 서로 다른 매체의 강점으로 구현한 대표적 사례."
+      },
+      "position": {
+        "x": 564.8466156579941,
+        "y": 351.7884706949168
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "COMPARE_LONGEVITY",
+        "label": "비교: 장생의 무게",
+        "color": "#E91E63",
+        "notes": "범인수선전은 장생의 외로움과 세대 교체를 깊이 있게 다룸. 귀곡팔황은 장생을 게임의 궁극적 목표로 제시하지만, 그 과정에서의 인간관계와 선택의 무게를 강조함."
+      },
+      "position": {
+        "x": 230.0359332197812,
+        "y": 1235.2822743481145
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "COMPARE_SURVIVAL",
+        "label": "비교: 생존 방식",
+        "color": "#E91E63",
+        "notes": "범인수선전의 한립은 '회피와 준비'로 생존함. 귀곡팔황의 플레이어는 '선택과 육성'으로 생존함. 전자가 수동적/전략적이라면, 후자는 능동적/실험적."
+      },
+      "position": {
+        "x": 407.367646587548,
+        "y": 1094.901234711811
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "COMPARE_WORLDVIEW",
+        "label": "비교: 세계관 구조",
+        "color": "#E91E63",
+        "notes": "범인수선전은 인계→영계→선계의 선형적 상승 구조. 귀곡팔황은 4대 주(州)를 중심으로 한 개방형 구조에 비경이 산재함. 전자는 수직적 확장, 후자는 수평적 확장이 특징."
+      },
+      "position": {
+        "x": 607.0776900473097,
+        "y": 125.03571215895506
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "GENRE_XIANXIA",
+        "target": "CORE_CULTIVATION",
+        "label": "핵심",
+        "id": "f8266f6b-c8be-4752-a2e4-752fb0b026e9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_CULTIVATION",
+        "target": "CORE_REALM",
+        "label": "단계",
+        "id": "558ccbf0-3f29-4d1e-93ee-940e452fb9ce"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_CULTIVATION",
+        "target": "CORE_SPIRIT_ROOT",
+        "label": "재능",
+        "id": "d77fd40e-be6a-4097-a13c-578b0ca25f18"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_CULTIVATION",
+        "target": "ELEMENT_SPIRIT_ENERGY",
+        "label": "흡수",
+        "id": "59bb1413-211b-4449-8101-266ecbe53138"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_REALM",
+        "target": "ELEMENT_LIFESPAN",
+        "label": "연장",
+        "id": "fe5de0e7-c34e-4f1e-8cd5-cb50f879f19d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_REALM",
+        "target": "TROPE_TRIBULATION",
+        "label": "시험",
+        "id": "95b72a78-abfa-47ba-ac75-941b36f88e9f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_SPIRIT_ROOT",
+        "target": "TROPE_WEAK_TO_STRONG",
+        "label": "출발",
+        "id": "1d8b2334-3d33-4c54-a367-8b465112e83a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_WEAK_TO_STRONG",
+        "target": "TROPE_CHEAT_ITEM",
+        "label": "보완",
+        "id": "079c67c8-21e4-4c1e-a613-f97bdd9b7366"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_WEAK_TO_STRONG",
+        "target": "TROPE_SURVIVAL",
+        "label": "전략",
+        "id": "684995aa-4089-46f5-9ac9-cd78a0dbaf5c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_CHEAT_ITEM",
+        "target": "TROPE_ALCHEMY",
+        "label": "활용",
+        "id": "94c355fd-2ca7-458b-acc2-ef6f0d014b59"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_CHEAT_ITEM",
+        "target": "ELEMENT_SPIRIT_HERB",
+        "label": "재배",
+        "id": "ec3dc0ab-ca59-41a3-a826-8a4f0b74e622"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_ALCHEMY",
+        "target": "ELEMENT_SPIRIT_HERB",
+        "label": "재료",
+        "id": "d354f100-4ebf-4898-bd04-774c88ec4265"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_SECT",
+        "target": "CHARACTER_SECT_MASTER",
+        "label": "수장",
+        "id": "be1fd503-bc62-4c2a-aa34-a72399c02dfb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_SECT",
+        "target": "CHARACTER_ELDER",
+        "label": "간부",
+        "id": "0a63bf1c-a8c6-407c-9313-01a70a580564"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_SECRET_REALM",
+        "target": "ELEMENT_ARRAY",
+        "label": "보호",
+        "id": "5ed12fb2-f02e-463a-ac91-72444e200dfc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_SPIRIT_BEAST",
+        "target": "CHARACTER_DAUGHTER",
+        "label": "계약",
+        "id": "62893815-a267-494e-a4c8-b65be125472c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_IMMORTALITY",
+        "target": "TROPE_SURVIVAL",
+        "label": "도달",
+        "id": "cdee1502-dd1f-47bc-95ce-a1fad065492c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_HAN_LI",
+        "target": "TROPE_SURVIVAL",
+        "label": "대표",
+        "id": "ad655158-73a4-4722-bd11-24a204e03d89"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_HAN_LI",
+        "target": "CHARACTER_DEMON_CULTIVATOR",
+        "label": "대립/협력",
+        "id": "dadc99ad-2235-4763-8774-026a145443e7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_PLAYER",
+        "target": "TROPE_CHEAT_ITEM",
+        "label": "선택",
+        "id": "31d345b8-23e0-40e4-bbcb-dc4753375671"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_PLAYER",
+        "target": "CHARACTER_DEMON_CULTIVATOR",
+        "label": "선택 가능",
+        "id": "9e1fbc64-1b99-4625-847f-28c610f0f12e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "COMPARE_SOUL",
+        "target": "CHARACTER_HAN_LI",
+        "label": "소설",
+        "id": "7b852d1f-b358-462c-9eb8-53900f39e13f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "COMPARE_SOUL",
+        "target": "CHARACTER_PLAYER",
+        "label": "게임",
+        "id": "f8eb77b2-9a27-450a-8f23-f835c9e39715"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "COMPARE_SOUL",
+        "target": "COMPARE_WORLDVIEW",
+        "label": "구조",
+        "id": "955d6a22-2f95-4193-abd1-9d701771f5fc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  let cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: initialData,
+    style: [
+      { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':28, 'padding':'8px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':13, 'text-outline-width':2, 'text-outline-color':'#000' } },
+      { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':11 } },
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
+      { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true }
+  });
+
+  let selectedId = null;
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+  const nodeInfo = document.getElementById('nodeInfo');
+  const nodeNotes = document.getElementById('nodeNotes');
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    const selected = cy.$(':selected');
+    if (selected.length === 0) { alert('삭제할 요소를 선택하세요.'); return; }
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(selected);
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = document.activeElement.tagName.toUpperCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        deleteSelected();
+      }
+    }
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const id = node.id();
+    
+    if (edgeSrcInput.value === '') {
+      edgeSrcInput.value = id;
+    } else if (edgeTgtInput.value === '' && edgeSrcInput.value !== id) {
+      edgeTgtInput.value = id;
+    }
+    
+    nodeInfo.textContent = '📌 ' + (node.data('label') || id);
+    nodeNotes.textContent = node.data('notes') || '메모 없음';
+    selectedId = id;
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt('새 노드 이름:');
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+      }
+    }
+  });
+
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        let els = [];
+        if (Array.isArray(data)) els = data;
+        else if (data.nodes || data.edges) els = [...(data.nodes||[]), ...(data.edges||[])];
+        else if (data.elements) els = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        if (els.length) { cy.elements().remove(); cy.add(els); cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run(); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>

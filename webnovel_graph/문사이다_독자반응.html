@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:#f0f0f0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.2em; text-shadow:1px 1px 0 #000; }
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .left-panel {
+      width:220px;
+      background:#fff;
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid #ddd;
+    }
+    .graph-area {
+      flex:1;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid #ddd;
+      border-radius:8px;
+      background:#fafafa;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+
+    .panel-section {
+      margin-bottom:12px;
+      padding:10px;
+      background:#f9f9f9;
+      border-radius:6px;
+      border:1px solid #e0e0e0;
+    }
+    .panel-section h3 {
+      font-size:0.9em;
+      margin-bottom:6px;
+      color:#667eea;
+      border-bottom:1px solid #667eea;
+      padding-bottom:3px;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:5px;
+      margin:3px 0;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+    }
+    input[readonly] {
+      background:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    textarea {
+      width:100%;
+      padding:5px;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+      resize:vertical;
+      min-height:60px;
+    }
+    button {
+      width:100%;
+      padding:6px;
+      margin:3px 0;
+      border:none;
+      border-radius:3px;
+      font-size:0.8em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+    }
+    button:active { transform:scale(0.97); }
+    .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+    .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
+    .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
+
+    .help-text { font-size:0.7em; color:#888; margin-top:3px; padding:4px; background:#fff; border-radius:3px; }
+    .connection-tools { display:flex; gap:4px; margin-bottom:3px; }
+    .connection-tools button { padding:3px; font-size:0.7em; margin:0; }
+
+    .info-badge {
+      display:block;
+      padding:4px 8px;
+      background:#667eea;
+      color:#fff;
+      border-radius:3px;
+      font-size:0.75em;
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .notes-display {
+      padding:6px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.8em;
+      min-height:40px;
+      white-space:pre-wrap;
+      margin-top:4px;
+    }
+    .file-select-wrapper { display:flex; gap:4px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:4px 8px; margin:0; }
+    .file-select-wrapper input[type="file"] { display:none; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
+    }
+    [data-theme="dark"] .left-panel {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .notes-display {
+      background:#2d2d4e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .cy-wrapper {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🌐 세계관 그래프</h1>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="panel-section">
+      <h3>📂 데이터</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
+      </div>
+      <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드</button>
+    </div>
+
+    <div class="panel-section">
+      <h3>➕ 노드</h3>
+      <input type="text" id="newNode" placeholder="노드 이름">
+      <button class="btn-primary" onclick="addNode()">노드 추가</button>
+      <div class="help-text">💡 빈 공간 더블클릭</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>🔗 엣지</h3>
+      <div class="connection-tools">
+        <button class="btn-info" onclick="clearEdgeInputs()">초기화</button>
+        <button class="btn-info" onclick="swapEdgeInputs()">교체</button>
+      </div>
+      <input type="text" id="edgeSrc" placeholder="출발 노드" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="도착 노드" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="라벨">
+      <button class="btn-primary" onclick="addEdge()">엣지 추가</button>
+      <div class="help-text">💡 노드 클릭 시 자동 입력</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>📝 노드 정보</h3>
+      <div class="info-badge" id="nodeInfo">노드를 클릭하세요</div>
+      <div class="notes-display" id="nodeNotes">선택한 노드의 메모가 여기에 표시됩니다</div>
+      <button class="btn-danger" onclick="deleteSelected()" style="margin-top:4px;">🗑️ 삭제 (Del)</button>
+    </div>
+  </div>
+
+  <div class="graph-area">
+    <div class="cy-wrapper">
+      <div id="cy"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const initialData = {
+  "nodes": [
+    {
+      "data": {
+        "id": "EPISODE_REGRESSOR_REVENGE",
+        "label": "회귀자의 복수",
+        "color": "#FF0000",
+        "notes": "과거에 자신을 배신한 자들이 다시 나타나고, 주인공이 미래 정보를 이용해 그들을 완벽하게 무너뜨리는 에피소드.",
+        "example": "재벌집 막내아들 - 진성준이 이복형 진영준이 자신을 죽이려 한다는 걸 알면서도 일부러 방관. 그리고 결정적 순간에 역으로 몰아붙여 형을 파산시키고 감옥에 보냄.",
+        "analysis": "독자는 이미 과거를 알고 있음 → 복수가 성공할 걸 알면서도 '언제 터지나' 기대하며 읽음 → 드디어 터지는 순간 극적 쾌감. 전지적 시점의 카타르시스."
+      },
+      "position": {
+        "x": 351.5541120725287,
+        "y": 580.6742938094587
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_ARROGANT_CRUSH",
+        "label": "거만한 천재의 굴욕",
+        "color": "#FF0000",
+        "notes": "주인공을 '하등생물'로 무시하던 천재가, 어느 순간 역전당해 무릎 꿇는 에피소드.",
+        "example": "나 혼자만 레벨업 - E급이던 성진우가 S급 헌터 황동수의 도발에 맞서 결투. 모두가 성진우의 패배를 예상했지만, 성진우가 압도적으로 승리. 황동수는 바닥에 쓰러져 '이게 말이 돼?!'라고 절규.",
+        "analysis": "독자는 주인공이 이길 걸 알지만, '어떻게 이길까' 궁금증으로 읽음 → 천재의 표정이 점점 굳어지는 묘사에 쾌감 → 마지막 대사('이게 말이 돼?')에서 폭소와 통쾌함 동시에 터짐."
+      },
+      "position": {
+        "x": 510.67305996857067,
+        "y": 605.3699187431097
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_HIDDEN_POWER",
+        "label": "숨겨진 힘의 공개",
+        "color": "#FF0000",
+        "notes": "주인공이 평소에 숨기던 압도적 힘을 결정적 순간에 드러내는 에피소드.",
+        "example": "화산귀환 - 청명이 마교와의 전투에서 절체절명의 위기에 처하자, 그동안 숨겨왔던 절대검법을 공개. 순식간에 마교 고수들을 쓸어버리고, 주변 인물들은 '이...이게... 화산의 망나니가?!'라며 경악.",
+        "analysis": "독자는 청명이 강하다는 걸 알지만 '어디까지 숨겼을까' 궁금증 → 갑자기 폭발하는 힘에 놀라움과 쾌감 → 주변 인물들의 경악 반응이 포인트 → '이게 바로 먼치킨!'이라는 독자 반응 유도."
+      },
+      "position": {
+        "x": 340.3929918253793,
+        "y": 196.13456703775827
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_LEVEL_UP",
+        "label": "경지/레벨 돌파",
+        "color": "#FF6B00",
+        "notes": "오랜 수련 끝에 드디어 다음 단계로 돌파하는 순간.",
+        "example": "회귀수선전 - 주인공이 수련실에서 수개월을 갈아넣고 드디어 금단기에서 원영기로 돌파. 주변에선 영력 폭풍이 일고, 장로들이 놀라 달려옴. '저게... 원영기 돌파라니...'",
+        "analysis": "독자는 주인공이 힘들게 수련하는 과정을 지켜봄 → '언제 터지나' 기대감 → 드디어 터지는 순간 쾌감 → 주변의 놀라는 반응이 성취감을 배가 → '이 맛에 본다'는 독자 반응."
+      },
+      "position": {
+        "x": -8.148693754098879,
+        "y": 241.39215894258987
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_CHEAT_SKILL",
+        "label": "전설 스킬/공법 습득",
+        "color": "#FF6B00",
+        "notes": "주인공만 얻을 수 있는 전설적 능력을 획득하는 에피소드.",
+        "example": "전지적 독자 시점 - 김독자가 시나리오 속 숨겨진 조건을 만족시켜 전설적 스킬 '독해'를 획득. 시스템 메시지가 뜨고, 동료들은 '이게 뭐야?!'라며 경악. 김독자는 의미심장한 미소를 지음.",
+        "analysis": "독자는 '이 스킬 뭐지?' 궁금증 → 설명을 읽으며 '와! 대박' 감탄 → 주인공이 이걸 어떻게 쓸지 기대감 → 희귀함에 대한 소유욕 자극 → '나도 갖고 싶어'라는 반응."
+      },
+      "position": {
+        "x": 126.75242558893869,
+        "y": 69.06252217113429
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_SYSTEM_BUG",
+        "label": "시스템 버그/치트 발견",
+        "color": "#FF6B00",
+        "notes": "주인공이 시스템의 허점이나 숨겨진 루트를 발견하는 에피소드.",
+        "example": "버그란 이런 것이다 - 주인공이 퀘스트 완료 조건에 '허점'이 있음을 발견. 의도치 않게 같은 퀘스트를 무한 반복 수행해 경험치를 폭발적으로 획득. 시스템이 오류를 감지하지만 주인공은 이미 이득을 봄.",
+        "analysis": "독자는 '이거 되나?' 궁금증 → 실제로 되는 걸 보고 '개꿀!' → 주인공의 지능적 플레이에 감탄 → '이게 바로 지능형 먼치킨'이라는 반응."
+      },
+      "position": {
+        "x": 191.39526847604088,
+        "y": 632.8755133198321
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_REGRESSION_KNOWLEDGE",
+        "label": "미래 정보 활용",
+        "color": "#FF6B00",
+        "notes": "회귀 전 알게 된 정보를 활용해 누구보다 먼저 기회를 잡는 에피소드.",
+        "example": "재벌집 막내아들 - 진성준이 미래의 주가 정보를 활용해 위기 속에서도 막대한 수익을 냄. 모두가 패닉에 빠진 순간, 그는 침착하게 차분히 움직이고, 결과적으로 회사 전체를 구함.",
+        "analysis": "독자는 '이 상황에서 무슨 수를?' 궁금증 → 주인공의 침착함에 의문 → 알고 보니 미래를 알고 있었다는 복선 회수 → '한 수 위네' 감탄 → '나도 저런 정보 알면 좋겠다' 대리 만족."
+      },
+      "position": {
+        "x": 227.8151615748302,
+        "y": 267.18389231874505
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GOOD_PEOPLE",
+        "label": "선한 인물 챙기기",
+        "color": "#FF6B00",
+        "notes": "회귀 후, 과거 자신에게 잘해준 사람을 먼저 찾아가 도와주는 에피소드.",
+        "example": "화산귀환 - 청명이 회귀 후 가장 먼저 자신을 따르던 후배들을 찾아가 구해냄. 후배들은 '도대체 어떻게...'라며 감동하고, 청명은 '내가 지키겠다'고 다짐.",
+        "analysis": "독자는 과거 그 후배들이 청명에게 잘해줬던 장면을 기억 → 이제 청명이 갚는 모습에 감동 → '이게 바로 회귀물의 맛' → 훈훈함과 함께 앞으로 이들이 어떤 역할을 할지 기대감."
+      },
+      "position": {
+        "x": -22.443056917250434,
+        "y": 462.2304890320667
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_UPPER_WORLD",
+        "label": "상위 차원 개방",
+        "color": "#0066FF",
+        "notes": "독자가 '이 정도면 끝?' 싶을 때 갑자기 더 높은 차원이 드러나는 에피소드.",
+        "example": "전지적 독자 시점 - 독자들이 '이제 다 끝났나?' 싶을 때, 성좌들이 등장하며 시나리오가 차원을 넘어 확장됨. 주인공은 '이제 진짜 시작이다'라고 말하며 새로운 목표를 설정.",
+        "analysis": "독자는 '이만하면 끝났지?' 생각 → 갑자기 더 큰 세계가 펼쳐짐 → '와! 스케일 미쳤다!' → 주인공의 목표가 한 단계 업그레이드 → 앞으로의 전개에 대한 기대감 폭증."
+      },
+      "position": {
+        "x": 798.4492186370416,
+        "y": 507.9178606257014
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_SECRET_REALM",
+        "label": "비경 탐험",
+        "color": "#0066FF",
+        "notes": "주인공이 고대 유적이나 비밀 공간을 발견하고 탐험하는 에피소드.",
+        "example": "완미세계 - 주인공이 우연히 고대 선인이 남긴 비경의 입구를 발견. 내부에는 전설적 영초와 희귀한 유물이 가득했고, 곳곳에 함정과 수호자가 도사리고 있었음. 주인공은 머리와 힘을 써서 유적을 탐험함.",
+        "analysis": "독자는 '또 나왔다 비경!' 반가움 → 하나씩 아이템이 해금될 때 수집욕 충족 → 주인공의 머리 쓰는 모습에 감탄 → '나도 저런 모험 하고 싶다'는 대리 모험 만족."
+      },
+      "position": {
+        "x": 806.9524362504741,
+        "y": 4.033493345297968
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GENERATION_GAP",
+        "label": "세대 교체",
+        "color": "#9C27B0",
+        "notes": "주인공이 살아있는 동안 동시대 인물들이 모두 수명을 다해 떠나는 에피소드.",
+        "example": "회귀수선전 - 주인공이 수련에서 깨어나니 수백 년이 지나 있었고, 자신을 따르던 동료들은 모두 백발이 되어 세상을 떠났음. 주인공은 그들의 무덤 앞에 서서 '편히 쉬게나'라고 중얼거림.",
+        "analysis": "독자는 그동안 주인공과 함께해온 동료들을 기억 → 그들이 모두 떠난 현실에 허전함 → '이게 장생의 대가구나' 생각 → 주인공의 고독에 공감하며 깊은 여운이 남음."
+      },
+      "position": {
+        "x": 474.6263381470196,
+        "y": 801.2713400284985
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_FORESHADOW",
+        "label": "떡밥 회수",
+        "color": "#FF9800",
+        "notes": "수백 화 전에 심어둔 떡밥이 드디어 회수되는 에피소드.",
+        "example": "전지적 독자 시점 - 초반에 '이상한 책'으로 등장했던 것이 사실은 세계관 전체의 핵심 열쇠였다는 사실이 후반에 밝혀짐. 독자들은 '아! 그때 그거였구나!'라며 소름이 돋음.",
+        "analysis": "독자는 초반에 그 책을 대수롭지 않게 생각 → 후반에 그게 중요한 복선이었다는 걸 알고 충격 → '작가 천재!' 감탄 → 다시 초반으로 돌아가 읽으며 새롭게 발견하는 재미."
+      },
+      "position": {
+        "x": 352.34115180728935,
+        "y": 785.2332364456959
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_POLITICS",
+        "label": "권모술수",
+        "color": "#FF9800",
+        "notes": "힘이 아닌 정치적 계산과 전략으로 적을 무너뜨리는 에피소드.",
+        "example": "재벌집 막내아들 - 진성준이 적대 세력의 내부에 자신의 사람을 심어두고, 결정적 순간에 배신자들을 폭로해 적을 몰락시킴. 직접 나서지 않고도 적이 자멸하는 모습을 지켜봄.",
+        "analysis": "독자는 '이번엔 어떻게 이길까?' 궁금증 → 진성준의 계획이 하나씩 드러날 때 '아!' 감탄 → 직접 나서지 않고 적을 무너뜨리는 전략에 '이게 진짜 고수지!' → 지적 만족감."
+      },
+      "position": {
+        "x": 319.6001384579048,
+        "y": 1269.1577833656804
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_SURVIVAL",
+        "label": "생존 본능",
+        "color": "#4CAF50",
+        "notes": "주인공이 자신보다 강한 적을 만나면 과감히 도망치는 현실적 선택을 하는 에피소드.",
+        "example": "회귀수선전 - 주인공이 자신보다 두 경지 높은 적과 마주침. 독자들은 '이번엔 어떻게 이기지?' 기대했지만, 주인공은 즉시 도망침. 적은 '겁쟁이!'라며 비웃지만, 주인공은 수백 년 후 다시 찾아가 복수함.",
+        "analysis": "초반엔 '도망만 하네?' 실망할 수 있음 → 하지만 이게 주인공의 생존 철학임을 이해 → 나중에 복수 성공했을 때 '드디어!' 더 큰 쾌감 → '죽을 짓 하지 않는 게 진짜 지혜'라는 공감."
+      },
+      "position": {
+        "x": 26.852909169541633,
+        "y": 818.8767926543389
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_ECONOMY",
+        "label": "자원 관리",
+        "color": "#4CAF50",
+        "notes": "주인공이 자금, 재료, 자원을 철저히 계산하고 관리하는 에피소드.",
+        "example": "재벌집 막내아들 - 진성준이 위기 상황에서도 자신의 자산을 정확히 파악하고, 최적의 투자 타이밍을 계산해 이익을 극대화. 주변 인물들은 '도대체 어떻게 계산한 거야?'라며 놀람.",
+        "analysis": "독자는 '와, 저걸 계산하다니?' 감탄 → 경제적 성공에 대리 만족 → '주인공이 머리 좋네' 지적 만족감 → 현실에서도 써먹을 수 있을 것 같은 현실감."
+      },
+      "position": {
+        "x": 238.89101708999075,
+        "y": 788.8575470049176
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_ONE_VS_MANY",
+        "label": "일대다 압도적 전투",
+        "color": "#FF6B6B",
+        "notes": "주인공 혼자 수많은 적을 쓸어버리는 액션 에피소드.",
+        "example": "나 혼자만 레벨업 - 성진우가 수천 마리의 몬스터가 우글거리는 던전에 혼자 진입. 모두가 '미쳤다'고 생각했지만, 그는 순식간에 몬스터들을 쓸어버리고 홀로 보스 앞에 섬.",
+        "analysis": "독자는 '혼자? 말이 돼?' 의문 → 전투씬이 시작되고 하나둘 쓰러지는 적 → 속도감 있는 액션에 쾌감 → 보스 앞에 서는 마지막 컷에서 '이게 바로 먼치킨!' 환호."
+      },
+      "position": {
+        "x": 1189.4258976547362,
+        "y": 98.67080130069041
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_SECT_WAR",
+        "label": "대규모 전쟁",
+        "color": "#FF6B6B",
+        "notes": "수많은 인물이 참여하는 대규모 전투 에피소드.",
+        "example": "화산귀환 - 정파 연합과 마교 사이의 대규모 전투. 수천 명의 고수가 충돌하고, 청명은 그 한복판에서 단 한 명의 적을 향해 돌진. 전체 전황을 뒤집는 결정적 한 방을 날림.",
+        "analysis": "독자는 대규모 스케일에 압도됨 → 속도감 있는 전투씬에 몰입 → 주인공이 등장하자 '드디어!' → 전체 전황을 뒤집는 한 방에 쾌감 → '이게 바로 종파전이지!'"
+      },
+      "position": {
+        "x": 1017.8359188617835,
+        "y": 41.346148294462516
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_BOSS_RAID",
+        "label": "보스전",
+        "color": "#FF6B6B",
+        "notes": "던전이나 비경의 최종 보스를 상대하는 에피소드.",
+        "example": "나 혼자만 레벨업 - 성진우가 지하 던전의 최종 보스 '아이언'과 대결. 보스의 압도적 위압감에 독자들은 긴장, 하지만 성진우는 치밀한 전략과 타이밍으로 보스를 쓰러뜨림. 시스템 메시지: '[보스 처치 완료]'",
+        "analysis": "독자는 보스의 위압감에 긴장 → 주인공의 전략이 하나씩 드러날 때 감탄 → 마지막 일격에 쾌감 → '드디어!' 성취감 → 다음 던전이 기대됨."
+      },
+      "position": {
+        "x": 1120.9981431712697,
+        "y": 471.59391136054603
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_BETRAYAL_REVEAL",
+        "label": "배신자 폭로",
+        "color": "#FF0000",
+        "notes": "주인공이 오랫동안 자신을 속인 배신자의 정체를 공개하는 에피소드.",
+        "example": "화산귀환 - 청명이 자신의 과거를 배신한 장로의 진짜 의도를 폭로. 모두가 '설마...' 하며 경악하고, 배신자는 처단당함. 청명은 '이게 네 최후다'라며 냉소.",
+        "analysis": "독자는 배신자를 의심해왔음 → 확실한 증거가 공개될 때 '드디어!' → 배신자의 당황한 모습에 쾌감 → 청명의 냉소에 통쾌함 → 미스터리가 해소되는 지적 만족감."
+      },
+      "position": {
+        "x": 262.68195775722137,
+        "y": 442.20403578526543
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_UNEXPECTED_COMEBACK",
+        "label": "예상치 못한 역전",
+        "color": "#FF0000",
+        "notes": "모두가 패배를 확신한 순간, 주인공이 예상 밖의 방법으로 역전하는 에피소드.",
+        "example": "SSS급 헌터 - 김독자가 '이번엔 진짜 죽었다'고 생각한 순간, 자신이 미리 준비한 전설급 아이템이 발동. 적은 '뭐야 이게?!' 하며 당황하고, 김독자는 역전승을 거둠.",
+        "analysis": "독자는 '이제 끝인가...' 긴장 → 갑자기 터지는 반전에 '대박!' → 적의 당황한 표정에 통쾌함 → 어떻게 그걸 준비했을지 궁금증 → 다음 전개에 더 큰 기대감."
+      },
+      "position": {
+        "x": 450.35627203485717,
+        "y": 72.70875111992868
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_TIME",
+        "label": "분석: 시간의 재미",
+        "color": "#00BCD4",
+        "notes": "회귀물에서 '기다림'이 어떻게 재미로 전환되는지 분석.",
+        "explanation": "회귀물 독자는 이미 결말을 안다. 하지만 '주인공이 이걸 어떻게 바꿀까'가 궁금증이다. 복수는 언제든 할 수 있지만, 작가는 최대한 질질 끌며 긴장감을 조성한다. 독자는 '언제 터지나' 기대하며 읽고, 드디어 터지는 순간 카타르시스가 폭발한다. 즉, '기다림의 쾌감'이 회귀물의 핵심 재미다."
+      },
+      "position": {
+        "x": 712.8715939782248,
+        "y": 264.08233706832596
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_ESCALATION",
+        "label": "분석: 스케일 점진적 확장",
+        "color": "#00BCD4",
+        "notes": "스케일이 어떻게 점진적으로 확장되는지 분석.",
+        "explanation": "웹소설은 처음엔 작은 마을/동네/종파 하나에서 시작해, 점차 국가→대륙→차원→우주로 확장된다. 독자는 이 확장 과정에서 '와, 아직도 더 있네?'라는 놀라움과 함께 계속 읽게 된다. 한 번에 큰 스케일을 보여주면 적응하지만, 점진적 확장은 계속된 신선함을 준다."
+      },
+      "position": {
+        "x": 591.9941943882521,
+        "y": 87.28001816384942
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_INSERTION",
+        "label": "분석: 독자의 주인공 이입",
+        "color": "#00BCD4",
+        "notes": "독자가 어떻게 주인공에 이입하는지 분석.",
+        "explanation": "웹소설 독자는 주인공의 성장을 자신의 성장처럼 느낀다. 특히 '약자 출발'은 독자가 자신을 투영하기 쉬운 장치다. 주인공이 성장할수록 독자의 대리 만족도 커지고, 주인공이 복수할수록 독자의 분노도 해소된다. 즉, 웹소설은 독자의 '자아'를 대리해주는 장치다."
+      },
+      "position": {
+        "x": 819.9124229601031,
+        "y": 606.6090020298652
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_EMOTION_CYCLE",
+        "label": "분석: 감정적 순환 구조",
+        "color": "#00BCD4",
+        "notes": "웹소설의 감정적 흐름 패턴 분석.",
+        "explanation": "웹소설은 '긴장 → 이완 → 긴장 → 폭발'의 리듬을 반복한다. 수련/준비 에피소드에서 긴장을 쌓고, 전투/복수 에피소드에서 폭발시킨다. 중간에 코믹/로맨스/일상으로 긴장을 풀어주고, 다시 쌓는 과정을 반복한다. 이 리듬이 독자를 계속 읽게 만드는 핵심이다."
+      },
+      "position": {
+        "x": 670.5534372680438,
+        "y": 687.1608358816669
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_SODA",
+        "label": "【사이다 에피소드 그룹】",
+        "color": "#FF0000",
+        "notes": "회귀복수, 천재굴욕, 숨은힘공개, 예상치못한역전, 배신자폭로"
+      },
+      "position": {
+        "x": 431.0622559091186,
+        "y": 338.6956593928064
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_GROWTH",
+        "label": "【성장 에피소드 그룹】",
+        "color": "#FF6B00",
+        "notes": "경지돌파, 전설스킬습득, 시스템버그, 미래정보활용, 선한인물챙기기"
+      },
+      "position": {
+        "x": 125.93404290078638,
+        "y": 367.7674873858234
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_WORLD",
+        "label": "【세계관 에피소드 그룹】",
+        "color": "#0066FF",
+        "notes": "상위차원개방, 비경탐험"
+      },
+      "position": {
+        "x": 852.6108484745523,
+        "y": 203.69301146864893
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_EMOTION",
+        "label": "【감정 에피소드 그룹】",
+        "color": "#9C27B0",
+        "notes": "세대교체"
+      },
+      "position": {
+        "x": 566.6088042565241,
+        "y": 829.4727921299259
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_INTELLECT",
+        "label": "【지적 에피소드 그룹】",
+        "color": "#FF9800",
+        "notes": "떡밥회수, 권모술수"
+      },
+      "position": {
+        "x": 341.55712245479447,
+        "y": 1037.4035506716968
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_EMPATHY",
+        "label": "【공감 에피소드 그룹】",
+        "color": "#4CAF50",
+        "notes": "생존본능, 자원관리"
+      },
+      "position": {
+        "x": 131.11985742119427,
+        "y": 966.9198182692531
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_ACTION",
+        "label": "【액션 에피소드 그룹】",
+        "color": "#FF6B6B",
+        "notes": "일대다전투, 대규모전쟁, 보스전"
+      },
+      "position": {
+        "x": 1028.8759728166385,
+        "y": 295.1676723234792
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_GROUP",
+        "label": "【분석 그룹】",
+        "color": "#00BCD4",
+        "notes": "시간의 재미, 스케일 확장, 이입, 감정순환"
+      },
+      "position": {
+        "x": 596.3944303042322,
+        "y": 359.9766081663034
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_REGRESSOR_REVENGE",
+        "label": "포함",
+        "id": "3c24d3ea-0d06-4935-ba1a-a060447201e7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_ARROGANT_CRUSH",
+        "label": "포함",
+        "id": "26ab22c6-0a32-4fd2-8f4d-b20265113eec"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_HIDDEN_POWER",
+        "label": "포함",
+        "id": "da498ca3-1a94-4e05-8680-b83f53c917e1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_BETRAYAL_REVEAL",
+        "label": "포함",
+        "id": "8b34cbd3-f5cd-44f0-b1a2-237de2314cc2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_UNEXPECTED_COMEBACK",
+        "label": "포함",
+        "id": "bcb70ebd-1282-4677-8761-733dbce5081c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_LEVEL_UP",
+        "label": "포함",
+        "id": "ec5c8b3c-ded1-43db-bfed-2c2f21416c41"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_CHEAT_SKILL",
+        "label": "포함",
+        "id": "4312fa60-e509-4559-9eec-96f1a75a0dee"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_SYSTEM_BUG",
+        "label": "포함",
+        "id": "df786e32-1cd1-4419-a5b6-429890367463"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_REGRESSION_KNOWLEDGE",
+        "label": "포함",
+        "id": "db2ba0eb-1bae-4588-96f9-e03d3fb22a0f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_GOOD_PEOPLE",
+        "label": "포함",
+        "id": "e20243c9-850f-43db-beda-f325fe153bad"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_WORLD",
+        "target": "EPISODE_UPPER_WORLD",
+        "label": "포함",
+        "id": "f1f59bbc-c53f-472e-8145-d8953b0a82c3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_WORLD",
+        "target": "EPISODE_SECRET_REALM",
+        "label": "포함",
+        "id": "d82291f0-aaea-4275-92e2-94d8a4372d4e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_EMOTION",
+        "target": "EPISODE_GENERATION_GAP",
+        "label": "포함",
+        "id": "a58c493d-dd22-4f05-b064-a84309614124"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_INTELLECT",
+        "target": "EPISODE_FORESHADOW",
+        "label": "포함",
+        "id": "46b14fea-84d2-45e8-9c72-5fffca628231"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_INTELLECT",
+        "target": "EPISODE_POLITICS",
+        "label": "포함",
+        "id": "4c847ee3-1fc2-4d9a-9a41-fbc5556b98e9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_EMPATHY",
+        "target": "EPISODE_SURVIVAL",
+        "label": "포함",
+        "id": "e634d9e8-caff-4623-96d0-a4a61533b9c1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_EMPATHY",
+        "target": "EPISODE_ECONOMY",
+        "label": "포함",
+        "id": "e377edf6-3332-452c-b07b-973a07c59141"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_ACTION",
+        "target": "EPISODE_ONE_VS_MANY",
+        "label": "포함",
+        "id": "49cf0b71-c603-4aba-ba8d-eca313be90ee"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_ACTION",
+        "target": "EPISODE_SECT_WAR",
+        "label": "포함",
+        "id": "00d1226b-83d8-4a3e-9ee0-d4608b392ec6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_ACTION",
+        "target": "EPISODE_BOSS_RAID",
+        "label": "포함",
+        "id": "24dc4534-b113-4ce0-85db-e592ec379032"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ANALYSIS_GROUP",
+        "target": "ANALYSIS_TIME",
+        "label": "포함",
+        "id": "bf78f082-a483-4f64-b2e2-84281472c6fe"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ANALYSIS_GROUP",
+        "target": "ANALYSIS_ESCALATION",
+        "label": "포함",
+        "id": "10691985-cc5e-419f-8c25-46f62d0639a2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ANALYSIS_GROUP",
+        "target": "ANALYSIS_INSERTION",
+        "label": "포함",
+        "id": "f88645c7-3753-4f92-80df-333a147bddad"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ANALYSIS_GROUP",
+        "target": "ANALYSIS_EMOTION_CYCLE",
+        "label": "포함",
+        "id": "3fda34fb-28b9-4792-a95d-74a42a675044"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  let cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: initialData,
+    style: [
+      { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':28, 'padding':'8px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':13, 'text-outline-width':2, 'text-outline-color':'#000' } },
+      { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':11 } },
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
+      { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true }
+  });
+
+  let selectedId = null;
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+  const nodeInfo = document.getElementById('nodeInfo');
+  const nodeNotes = document.getElementById('nodeNotes');
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    const selected = cy.$(':selected');
+    if (selected.length === 0) { alert('삭제할 요소를 선택하세요.'); return; }
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(selected);
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = document.activeElement.tagName.toUpperCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        deleteSelected();
+      }
+    }
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const id = node.id();
+    
+    if (edgeSrcInput.value === '') {
+      edgeSrcInput.value = id;
+    } else if (edgeTgtInput.value === '' && edgeSrcInput.value !== id) {
+      edgeTgtInput.value = id;
+    }
+    
+    nodeInfo.textContent = '📌 ' + (node.data('label') || id);
+    nodeNotes.textContent = node.data('notes') || '메모 없음';
+    selectedId = id;
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt('새 노드 이름:');
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+      }
+    }
+  });
+
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        let els = [];
+        if (Array.isArray(data)) els = data;
+        else if (data.nodes || data.edges) els = [...(data.nodes||[]), ...(data.edges||[])];
+        else if (data.elements) els = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        if (els.length) { cy.elements().remove(); cy.add(els); cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run(); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>

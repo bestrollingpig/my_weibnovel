@@ -1,0 +1,3062 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:#f0f0f0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.2em; text-shadow:1px 1px 0 #000; }
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .left-panel {
+      width:220px;
+      background:#fff;
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid #ddd;
+    }
+    .graph-area {
+      flex:1;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid #ddd;
+      border-radius:8px;
+      background:#fafafa;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+
+    .panel-section {
+      margin-bottom:12px;
+      padding:10px;
+      background:#f9f9f9;
+      border-radius:6px;
+      border:1px solid #e0e0e0;
+    }
+    .panel-section h3 {
+      font-size:0.9em;
+      margin-bottom:6px;
+      color:#667eea;
+      border-bottom:1px solid #667eea;
+      padding-bottom:3px;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:5px;
+      margin:3px 0;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+    }
+    input[readonly] {
+      background:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    textarea {
+      width:100%;
+      padding:5px;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+      resize:vertical;
+      min-height:60px;
+    }
+    button {
+      width:100%;
+      padding:6px;
+      margin:3px 0;
+      border:none;
+      border-radius:3px;
+      font-size:0.8em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+    }
+    button:active { transform:scale(0.97); }
+    .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+    .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
+    .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
+
+    .help-text { font-size:0.7em; color:#888; margin-top:3px; padding:4px; background:#fff; border-radius:3px; }
+    .connection-tools { display:flex; gap:4px; margin-bottom:3px; }
+    .connection-tools button { padding:3px; font-size:0.7em; margin:0; }
+
+    .info-badge {
+      display:block;
+      padding:4px 8px;
+      background:#667eea;
+      color:#fff;
+      border-radius:3px;
+      font-size:0.75em;
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .notes-display {
+      padding:6px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.8em;
+      min-height:40px;
+      white-space:pre-wrap;
+      margin-top:4px;
+    }
+    .file-select-wrapper { display:flex; gap:4px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:4px 8px; margin:0; }
+    .file-select-wrapper input[type="file"] { display:none; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
+    }
+    [data-theme="dark"] .left-panel {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .notes-display {
+      background:#2d2d4e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .cy-wrapper {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🌐 세계관 그래프</h1>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="panel-section">
+      <h3>📂 데이터</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
+      </div>
+      <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드</button>
+    </div>
+
+    <div class="panel-section">
+      <h3>➕ 노드</h3>
+      <input type="text" id="newNode" placeholder="노드 이름">
+      <button class="btn-primary" onclick="addNode()">노드 추가</button>
+      <div class="help-text">💡 빈 공간 더블클릭</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>🔗 엣지</h3>
+      <div class="connection-tools">
+        <button class="btn-info" onclick="clearEdgeInputs()">초기화</button>
+        <button class="btn-info" onclick="swapEdgeInputs()">교체</button>
+      </div>
+      <input type="text" id="edgeSrc" placeholder="출발 노드" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="도착 노드" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="라벨">
+      <button class="btn-primary" onclick="addEdge()">엣지 추가</button>
+      <div class="help-text">💡 노드 클릭 시 자동 입력</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>📝 노드 정보</h3>
+      <div class="info-badge" id="nodeInfo">노드를 클릭하세요</div>
+      <div class="notes-display" id="nodeNotes">선택한 노드의 메모가 여기에 표시됩니다</div>
+      <button class="btn-danger" onclick="deleteSelected()" style="margin-top:4px;">🗑️ 삭제 (Del)</button>
+    </div>
+  </div>
+
+  <div class="graph-area">
+    <div class="cy-wrapper">
+      <div id="cy"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const initialData = {
+  "nodes": [
+    {
+      "data": {
+        "id": "META_TITLE",
+        "label": "웹소설 사이다 통합 분석",
+        "color": "#1a237e",
+        "notes": "진화심리학, 매슬로우, 라캉, 독자 현실을 통합한 웹소설 사이다 분석"
+      },
+      "position": {
+        "x": 512.8445371363125,
+        "y": 733.2842174047368
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "META_VERSION",
+        "label": "버전 4.0",
+        "color": "#1a237e",
+        "notes": "2026-07-11 작성"
+      },
+      "position": {
+        "x": 1116.7874278604233,
+        "y": 35.5097153607996
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_SURFACE",
+        "label": "표면적 클리셰",
+        "color": "#d32f2f",
+        "notes": "독자가 열광하는 대표적 사이다 장면들"
+      },
+      "position": {
+        "x": 714.6308621474894,
+        "y": 989.5323682928049
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_REGRESSOR_REVENGE",
+        "label": "회귀자의 압도적 복수",
+        "color": "#d32f2f",
+        "notes": "과거 자신을 배신한 자들을 완벽히 무너뜨림. 독자 반응: '드디어! 이거지! 쾌하다!'"
+      },
+      "position": {
+        "x": 821.168672277253,
+        "y": 746.9227338511677
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_ARROGANT_CRUSH",
+        "label": "거만한 천재의 굴욕",
+        "color": "#d32f2f",
+        "notes": "주인공을 무시하던 천재가 무릎 꿇는 장면. 독자 반응: '꼴 좋다! 쾌하다!'"
+      },
+      "position": {
+        "x": 661.6646755588337,
+        "y": 1226.862730460553
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_HIDDEN_POWER",
+        "label": "숨겨진 힘의 공개",
+        "color": "#d32f2f",
+        "notes": "평소 숨기던 압도적 힘을 결정적 순간에 공개. 독자 반응: '오! 이게 바로 먼치킨!'"
+      },
+      "position": {
+        "x": 926.0323099101198,
+        "y": 951.3391187221555
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_LEVEL_UP",
+        "label": "경지/레벨 돌파",
+        "color": "#d32f2f",
+        "notes": "오랜 수련 끝에 드디어 다음 단계로 돌파. 독자 반응: '드디어! 레벨업! 이 맛에 본다!'"
+      },
+      "position": {
+        "x": 879.9646698466901,
+        "y": 1164.713155813998
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_COMEBACK_WIN",
+        "label": "절체절명의 역전승",
+        "color": "#d32f2f",
+        "notes": "모두가 패배를 확신한 순간 극적 역전. 독자 반응: '대박! 소름 돋아!'"
+      },
+      "position": {
+        "x": 772.3591946364616,
+        "y": 1295.9708936536201
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_ONE_VS_MANY",
+        "label": "일대다 압도적 전투",
+        "color": "#d32f2f",
+        "notes": "혼자 수많은 적을 쓸어버림. 독자 반응: '이게 바로 먼치킨! 레전드!'"
+      },
+      "position": {
+        "x": 714.1788543821634,
+        "y": 830.4182948251625
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_BETRAYAL_REVEAL",
+        "label": "배신자 폭로",
+        "color": "#d32f2f",
+        "notes": "오랫동안 속인 배신자의 정체를 공개. 독자 반응: '드디어! 통쾌하다!'"
+      },
+      "position": {
+        "x": 772.6577927211093,
+        "y": 1078.4661638244854
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_REGRESSION_KNOWLEDGE",
+        "label": "미래 정보 활용",
+        "color": "#d32f2f",
+        "notes": "회귀 전 알게 된 정보로 기회를 잡음. 독자 반응: '한 수 위네!'"
+      },
+      "position": {
+        "x": 817.5267482633801,
+        "y": 931.0469589667039
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_PSYCHOLOGY",
+        "label": "심리학적 원리",
+        "color": "#00838f",
+        "notes": "매슬로우, 니체, 칙센트미하이로 보는 재미의 심리"
+      },
+      "position": {
+        "x": 336.21843922914366,
+        "y": 928.1728266714501
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PSY_MASLOW",
+        "label": "역매슬로우",
+        "color": "#00838f",
+        "notes": "웹소설은 하위 욕구(생존, 안전)를 위협하고 해결하며 쾌감을 제공"
+      },
+      "position": {
+        "x": 236.06246146362912,
+        "y": 1163.4565601049906
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PSY_MASLOW_1",
+        "label": "생리적 욕구",
+        "color": "#00838f",
+        "notes": "굶주림, 갈증, 피로 → 생존물, 아포칼립스"
+      },
+      "position": {
+        "x": 133.21632530846077,
+        "y": 1261.8314113894767
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PSY_MASLOW_2",
+        "label": "안전의 욕구",
+        "color": "#00838f",
+        "notes": "죽음, 배신, 감금 → 회귀자의 복수, 생존 본능"
+      },
+      "position": {
+        "x": 344.5229691495476,
+        "y": 1298.1472428862883
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PSY_MASLOW_3",
+        "label": "소속과 사랑",
+        "color": "#00838f",
+        "notes": "고아, 외톨이, 버림받음 → 선한 인물 챙기기"
+      },
+      "position": {
+        "x": 128.2937768169271,
+        "y": 1088.5385301476124
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PSY_MASLOW_4",
+        "label": "존경의 욕구",
+        "color": "#00838f",
+        "notes": "무시, 모욕, 천대 → 천재 굴욕, 숨겨진 힘 공개"
+      },
+      "position": {
+        "x": 236.58637782344397,
+        "y": 984.6867181672671
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PSY_MASLOW_5",
+        "label": "자아실현 욕구",
+        "color": "#00838f",
+        "notes": "자신의 운명 개척 → 경지 돌파, 상위 차원 개방"
+      },
+      "position": {
+        "x": 236.47130920192583,
+        "y": 1358.9777239283278
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PSY_NIETZSCHE",
+        "label": "권력 의지",
+        "color": "#00838f",
+        "notes": "인간은 자신의 힘을 발휘하고 타인을 지배하려는 본능이 있음"
+      },
+      "position": {
+        "x": 441.9691962053754,
+        "y": 868.8700712273277
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PSY_FLOW",
+        "label": "몰입 이론",
+        "color": "#00838f",
+        "notes": "명확한 목표, 즉각적 피드백, 능력과 도전의 균형이 쾌감을 만듦"
+      },
+      "position": {
+        "x": 242.17736150642608,
+        "y": 818.7695935932846
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_EVOLUTION",
+        "label": "진화론적 근거",
+        "color": "#2e7d32",
+        "notes": "쾌감은 생존과 번식을 위한 보상 회로"
+      },
+      "position": {
+        "x": 722.983077401478,
+        "y": 595.1163178101825
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVO_CORE",
+        "label": "보상 회로",
+        "color": "#2e7d32",
+        "notes": "인간의 뇌는 생존과 번식에 유리한 행동에 쾌감을 주도록 진화함"
+      },
+      "position": {
+        "x": 896.3555845316524,
+        "y": 524.4540850671779
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVO_THREAT",
+        "label": "위협 회피 본능",
+        "color": "#2e7d32",
+        "notes": "복수, 배신자 처단 = 위협 제거로 생존 확보"
+      },
+      "position": {
+        "x": 920.8069190884236,
+        "y": 712.1900969347886
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVO_COMPETITION",
+        "label": "경쟁 우위 본능",
+        "color": "#2e7d32",
+        "notes": "천재 굴욕, 지위 상승 = 경쟁 승리로 번식 우위"
+      },
+      "position": {
+        "x": 923.299674175058,
+        "y": 330.94019372945803
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVO_RESOURCE",
+        "label": "자원 축적 본능",
+        "color": "#2e7d32",
+        "notes": "레벨업, 아이템 획득 = 자원 축적으로 생존 도구 확보"
+      },
+      "position": {
+        "x": 819.3119011636956,
+        "y": 343.64188685604955
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVO_RISK",
+        "label": "위험 회피 본능",
+        "color": "#2e7d32",
+        "notes": "절체절명 역전승 = 위험 회피 성공으로 생존 확인"
+      },
+      "position": {
+        "x": 1029.066504235486,
+        "y": 402.2741629949298
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVO_BOND",
+        "label": "사회적 결속 본능",
+        "color": "#2e7d32",
+        "notes": "동료 구하기, 가족 지키기 = 집단 결속으로 집단 생존"
+      },
+      "position": {
+        "x": 1027.8172414118546,
+        "y": 638.0726020495955
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_LACAN",
+        "label": "욕망의 구조 (라캉)",
+        "color": "#6a1b9a",
+        "notes": "'인간은 타인의 욕망을 욕망한다'"
+      },
+      "position": {
+        "x": 495.8353313104048,
+        "y": 1078.4195548674875
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "LACAN_CORE",
+        "label": "타인의 욕망",
+        "color": "#6a1b9a",
+        "notes": "인간은 타인이 욕망하는 것을 보고 자신의 욕망을 배움"
+      },
+      "position": {
+        "x": 517.4256540160291,
+        "y": 1349.3055448546602
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "LACAN_PROTAGONIST",
+        "label": "주인공의 욕망",
+        "color": "#6a1b9a",
+        "notes": "진짜 원하는 것은 타인의 인정"
+      },
+      "position": {
+        "x": 413.4449543893078,
+        "y": 1482.3652641027895
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "LACAN_VILLAIN",
+        "label": "빌런의 역할",
+        "color": "#6a1b9a",
+        "notes": "주인공이 욕망하는 대상을 먼저 차지하는 자"
+      },
+      "position": {
+        "x": 518.8627817280278,
+        "y": 1535.3782328799193
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "LACAN_CLIMAX",
+        "label": "사이다의 구조",
+        "color": "#6a1b9a",
+        "notes": "주인공이 빌런을 제압하고 욕망의 대상을 획득 → 타인의 인정 획득"
+      },
+      "position": {
+        "x": 620.0426045530953,
+        "y": 1462.9031027679828
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_TRANSCENDENCE",
+        "label": "초월 본능",
+        "color": "#bf360c",
+        "notes": "생명을 버리면서까지 진리를 추구하는 인간의 특성"
+      },
+      "position": {
+        "x": 335.88141431868223,
+        "y": 786.9659111947279
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRA_CORE",
+        "label": "초월의 정의",
+        "color": "#bf360c",
+        "notes": "생존과 번식의 틀을 깨는 행동. 진화론으로 설명 불가"
+      },
+      "position": {
+        "x": 127.98090027386698,
+        "y": 832.9717799415499
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRA_EXAMPLE",
+        "label": "초월의 예",
+        "color": "#bf360c",
+        "notes": "소크라테스, 갈릴레오, 예술가, 과학자들의 희생"
+      },
+      "position": {
+        "x": 31.609418812503016,
+        "y": 923.2715330087458
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TRA_WEBNOVEL",
+        "label": "웹소설 속 초월",
+        "color": "#bf360c",
+        "notes": "회귀(죽음 초월), 경지 돌파(한계 초월), 상위 차원 개방(현실 초월)"
+      },
+      "position": {
+        "x": 15.709613434446082,
+        "y": 736.61712155391
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_REALITY",
+        "label": "독자의 현실",
+        "color": "#e65100",
+        "notes": "독자는 피곤한 상태에서 읽는다"
+      },
+      "position": {
+        "x": 499.11136300554676,
+        "y": 989.7631371034241
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_CONDITION",
+        "label": "독자 상태",
+        "color": "#e65100",
+        "notes": "지하철, 버스, 침대에서 피곤하고 산만하게 읽음"
+      },
+      "position": {
+        "x": 395.42843986972036,
+        "y": 1035.4486505756008
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_EXPECTATION",
+        "label": "독자 기대",
+        "color": "#e65100",
+        "notes": "깊은 사유보다 '읽는 느낌' 자체를 원함"
+      },
+      "position": {
+        "x": 349.7274102022449,
+        "y": 1106.9524883714441
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_INSIGHT_1",
+        "label": "인사이트 1",
+        "color": "#e65100",
+        "notes": "독자는 '읽는 느낌'을 원한다. 진지하게 읽으려는 게 아니다."
+      },
+      "position": {
+        "x": 610.4865252558355,
+        "y": 1062.962982524269
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_INSIGHT_2",
+        "label": "인사이트 2",
+        "color": "#e65100",
+        "notes": "독자는 복잡한 설명보다 상태창으로 떠먹여주길 원한다."
+      },
+      "position": {
+        "x": 560.8470704526992,
+        "y": 1209.5930320439531
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_INSIGHT_3",
+        "label": "인사이트 3",
+        "color": "#e65100",
+        "notes": "독자는 이미 고인물이다. 1레벨부터 키우는 건 지루하다."
+      },
+      "position": {
+        "x": 611.4143873754219,
+        "y": 896.8539499046326
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_INSIGHT_4",
+        "label": "인사이트 4",
+        "color": "#e65100",
+        "notes": "독자가 원하는 것은 '내가 쉽게 해내는' 대리만족이다."
+      },
+      "position": {
+        "x": 441.0011945863298,
+        "y": 1201.2259807535572
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_INSIGHT_5",
+        "label": "인사이트 5",
+        "color": "#e65100",
+        "notes": "독자는 주변 인물들의 '오오!' 반응을 보며 쾌감을 느낀다."
+      },
+      "position": {
+        "x": 615.5526728329585,
+        "y": 979.0919866251643
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_FORMAT",
+        "label": "웹소설 형식 장치",
+        "color": "#00695c",
+        "notes": "상태창, 회빙환, 주변인 반응"
+      },
+      "position": {
+        "x": 398.5063681493251,
+        "y": 478.57063229746456
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FORMAT_STATUS",
+        "label": "상태창",
+        "color": "#00695c",
+        "notes": "독자에게 최소한의 기억력만 요구하며 모든 것을 떠먹여줌"
+      },
+      "position": {
+        "x": 408.97305133852296,
+        "y": 693.2775911387682
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FORMAT_QUEST",
+        "label": "퀘스트창",
+        "color": "#00695c",
+        "notes": "현재 해야 할 일을 명확히 알려줌. '지금 뭐 하는 거지?'를 방지"
+      },
+      "position": {
+        "x": 397.257456077266,
+        "y": 336.7694019957965
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FORMAT_REGRESSION",
+        "label": "회빙환",
+        "color": "#00695c",
+        "notes": "독자는 이미 만렙 경험이 있음. 부캐 키우는 맛으로 쉽고 빠른 성장을 제공"
+      },
+      "position": {
+        "x": 499.6203991091162,
+        "y": 429.0201270202835
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FORMAT_SODA_ESSENCE",
+        "label": "사이다의 본질",
+        "color": "#00695c",
+        "notes": "주변 인물들의 '오오!' 반응 자체가 사이다"
+      },
+      "position": {
+        "x": 405.45185128603293,
+        "y": 197.5538558658533
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_INSTINCTS",
+        "label": "인간의 5대 본능",
+        "color": "#4a148c",
+        "notes": "웹소설이 자극하는 인간의 5가지 근본 본능"
+      },
+      "position": {
+        "x": 297.0216512093628,
+        "y": 589.1240124643191
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "INST_SURVIVAL",
+        "label": "생존 본능",
+        "color": "#4a148c",
+        "notes": "살아남고자 하는 본능 → 죽을 위기, 생존 전투"
+      },
+      "position": {
+        "x": 401.62026026597255,
+        "y": 617.887241512319
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "INST_REPRODUCTION",
+        "label": "번식 본능",
+        "color": "#4a148c",
+        "notes": "유전자를 남기고자 하는 본능 → 로맨스, 가족, 후계자"
+      },
+      "position": {
+        "x": 191.69167169742292,
+        "y": 676.1963757228579
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "INST_DOMINANCE",
+        "label": "지배 본능",
+        "color": "#4a148c",
+        "notes": "타인을 압도하고자 하는 본능 → 복수, 압도적 승리"
+      },
+      "position": {
+        "x": 91.92806696106743,
+        "y": 549.9788845620549
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "INST_MEANING",
+        "label": "의미 추구 본능",
+        "color": "#4a148c",
+        "notes": "자신의 존재 이유를 찾고자 하는 본능 → 떡밥 회수, 권모술수"
+      },
+      "position": {
+        "x": 297.26831405215887,
+        "y": 366.1633213888295
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "INST_TRANSCENDENCE",
+        "label": "초월 본능",
+        "color": "#4a148c",
+        "notes": "자신의 한계를 넘어서고자 하는 본능 → 경지 돌파, 신격화"
+      },
+      "position": {
+        "x": 206.05603202881562,
+        "y": 520.5830152143915
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "INST_DRAMA",
+        "label": "드라마의 원리",
+        "color": "#4a148c",
+        "notes": "5대 본능이 충돌할 때 가장 드라마틱해진다"
+      },
+      "position": {
+        "x": 181.75715050495998,
+        "y": 340.24517781780384
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_GUIDE",
+        "label": "작가 실전 가이드",
+        "color": "#0d47a1",
+        "notes": "분석 결과를 바탕으로 한 실제 집필 팁"
+      },
+      "position": {
+        "x": 607.1674632362269,
+        "y": 335.0254843173372
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GUIDE_PRINCIPLE",
+        "label": "핵심 원칙",
+        "color": "#0d47a1",
+        "notes": "'친절함' - 올바름과 친절함 중 친절함을 선택하라 (영화 원더)"
+      },
+      "position": {
+        "x": 713.9631667339424,
+        "y": 425.97187026394624
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GUIDE_ANGER",
+        "label": "분노 축적",
+        "color": "#0d47a1",
+        "notes": "억울함은 3단계로 쌓아라. 작은 무시→모욕→배신 순으로"
+      },
+      "position": {
+        "x": 610.5456129819453,
+        "y": 180.4559617089801
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GUIDE_REACTION",
+        "label": "주변인 반응",
+        "color": "#0d47a1",
+        "notes": "주인공 활약 후 최소 3명 이상의 반응을 보여줘라"
+      },
+      "position": {
+        "x": 602.5983052807678,
+        "y": 481.4153380667853
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GUIDE_HIDE",
+        "label": "복수 도구 은폐",
+        "color": "#0d47a1",
+        "notes": "복수 방법은 미리 보여주지 마라. '어떻게?' 궁금증이 쾌감을 키운다."
+      },
+      "position": {
+        "x": 499.6589487474926,
+        "y": 60.73063122204987
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GUIDE_ENDING",
+        "label": "마무리 한 마디",
+        "color": "#0d47a1",
+        "notes": "사이다 에피소드는 주인공의 냉소적 한 마디로 끝내라"
+      },
+      "position": {
+        "x": 508.4283698572757,
+        "y": 255.13306149715177
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GUIDE_PAIN",
+        "label": "성장은 고통과 함께",
+        "color": "#0d47a1",
+        "notes": "레벨업은 고통을 동반해야 한다. 너무 쉽면 감동이 없다."
+      },
+      "position": {
+        "x": 714.3747890789396,
+        "y": 261.629976891766
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GUIDE_START",
+        "label": "약자의 출발",
+        "color": "#0d47a1",
+        "notes": "주인공은 반드시 약자로 시작하라. 독자는 약자에 투영한다."
+      },
+      "position": {
+        "x": 613.5224941082471,
+        "y": 65.13608712248052
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GUIDE_FORMULA",
+        "label": "사이다 공식",
+        "color": "#0d47a1",
+        "notes": "분노 축적(60%) + 준비 과정(20%) + 역전 폭발(10%) + 여운(10%) = 사이다"
+      },
+      "position": {
+        "x": 715.0034317439257,
+        "y": 87.0198890614979
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_FINAL",
+        "label": "최종 결론",
+        "color": "#1a237e",
+        "notes": "웹소설 사이다의 완전한 이해"
+      },
+      "position": {
+        "x": 615.0497887942438,
+        "y": 566.8673588235837
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FINAL_ANSWER",
+        "label": "궁극적 답",
+        "color": "#1a237e",
+        "notes": "인간은 생존과 번식에 유리한 행동에 쾌감을 느끼도록 진화했고, 그 욕망은 타인을 통해 형성되며, 자신의 한계를 초월하려는 본능까지 가지고 있다. 웹소설은 이 모든 본능을 안전하게 대리 체험할 수 있는 장치다."
+      },
+      "position": {
+        "x": 510.31219857769037,
+        "y": 565.1496802411759
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FINAL_QUESTION",
+        "label": "마지막 질문",
+        "color": "#1a237e",
+        "notes": "독자는 사이다를 원해서 읽는가? 아니면 사이다를 받았다는 이전 기억의 느낌이 좋아서 읽고 있다는 행위 자체를 느끼고 싶은 것인가? → 후자다. 독자는 '읽는 느낌'을 원한다."
+      },
+      "position": {
+        "x": 613.5752538042213,
+        "y": 709.0483821062236
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "CAT_SURFACE",
+        "target": "CLICHE_REGRESSOR_REVENGE",
+        "label": "포함",
+        "id": "ea81b81c-62c0-4b1d-b456-9b54746e3927"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SURFACE",
+        "target": "CLICHE_ARROGANT_CRUSH",
+        "label": "포함",
+        "id": "7383a4cf-57e3-4bbb-903e-d251d6efd324"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SURFACE",
+        "target": "CLICHE_HIDDEN_POWER",
+        "label": "포함",
+        "id": "eb98017e-6d40-443a-9e28-7633d03bb18c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SURFACE",
+        "target": "CLICHE_LEVEL_UP",
+        "label": "포함",
+        "id": "7d904d03-49b1-4e28-a319-4c7e0ff4e475"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SURFACE",
+        "target": "CLICHE_COMEBACK_WIN",
+        "label": "포함",
+        "id": "ec4e8491-e25f-4089-8a5c-b0d0f607283b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SURFACE",
+        "target": "CLICHE_ONE_VS_MANY",
+        "label": "포함",
+        "id": "baf3bf44-b2f5-4552-b01f-30a20b27678e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SURFACE",
+        "target": "CLICHE_BETRAYAL_REVEAL",
+        "label": "포함",
+        "id": "2cf81209-f612-4f61-bba0-89463865034d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SURFACE",
+        "target": "CLICHE_REGRESSION_KNOWLEDGE",
+        "label": "포함",
+        "id": "0065678d-0ef8-42f9-a006-25aa4ec7fa9c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_PSYCHOLOGY",
+        "target": "PSY_MASLOW",
+        "label": "이론",
+        "id": "e51dbccc-e895-45b0-98ec-6a3552ae379b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PSY_MASLOW",
+        "target": "PSY_MASLOW_1",
+        "label": "단계",
+        "id": "80da46a0-c5f6-46a9-a8ee-97c885ab3617"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PSY_MASLOW",
+        "target": "PSY_MASLOW_2",
+        "label": "단계",
+        "id": "12d8f095-04d9-4064-95a8-d9daa3391b36"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PSY_MASLOW",
+        "target": "PSY_MASLOW_3",
+        "label": "단계",
+        "id": "591016e1-3e51-42f1-988b-5e847adc4134"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PSY_MASLOW",
+        "target": "PSY_MASLOW_4",
+        "label": "단계",
+        "id": "317311a4-5630-4a25-9532-f3e3df7b5c39"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PSY_MASLOW",
+        "target": "PSY_MASLOW_5",
+        "label": "단계",
+        "id": "61e7973b-7f5d-4871-a53e-4fbaa8971df5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_PSYCHOLOGY",
+        "target": "PSY_NIETZSCHE",
+        "label": "이론",
+        "id": "14626e7a-6538-4392-a31f-854a10f9e7e8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_PSYCHOLOGY",
+        "target": "PSY_FLOW",
+        "label": "이론",
+        "id": "22fa7074-2cb6-40f8-a5a3-2fc3cdd974cb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_EVOLUTION",
+        "target": "EVO_CORE",
+        "label": "핵심",
+        "id": "fe27a295-6b20-4cf4-9ff5-0e2c089c23ce"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EVO_CORE",
+        "target": "EVO_THREAT",
+        "label": "본능",
+        "id": "b6103650-b08f-47cd-9003-95f0cb14c695"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EVO_CORE",
+        "target": "EVO_COMPETITION",
+        "label": "본능",
+        "id": "bac94e02-061e-4471-b45f-7073e5dca475"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EVO_CORE",
+        "target": "EVO_RESOURCE",
+        "label": "본능",
+        "id": "962fe7f3-38ba-425c-af8b-39103ec5d573"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EVO_CORE",
+        "target": "EVO_RISK",
+        "label": "본능",
+        "id": "57ae2217-ad6e-4ae4-bb64-669914f7142a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EVO_CORE",
+        "target": "EVO_BOND",
+        "label": "본능",
+        "id": "29723e02-9e62-4a4e-ba99-1104e3bdc0a8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_LACAN",
+        "target": "LACAN_CORE",
+        "label": "핵심",
+        "id": "b1114932-16ea-41d9-a077-c72541984684"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "LACAN_CORE",
+        "target": "LACAN_PROTAGONIST",
+        "label": "적용",
+        "id": "0b871602-9bed-4a2a-9785-18415bad25b0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "LACAN_CORE",
+        "target": "LACAN_VILLAIN",
+        "label": "적용",
+        "id": "758c6811-e569-4988-8cc2-7f16e69dddc9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "LACAN_CORE",
+        "target": "LACAN_CLIMAX",
+        "label": "결론",
+        "id": "486acb21-0fb5-4b21-ab67-d1eede00f7eb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_TRANSCENDENCE",
+        "target": "TRA_CORE",
+        "label": "핵심",
+        "id": "bf15d159-ee39-4558-af97-574363ac5b17"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TRA_CORE",
+        "target": "TRA_EXAMPLE",
+        "label": "예시",
+        "id": "7de4394c-45bd-46ff-8c75-f00228989bd9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TRA_CORE",
+        "target": "TRA_WEBNOVEL",
+        "label": "웹소설",
+        "id": "073a3a0b-e29b-4b3f-9ccb-169aee4fe72d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REALITY",
+        "target": "REAL_CONDITION",
+        "label": "상태",
+        "id": "b8cf4f80-6b5c-4fca-87c9-861a71ffe786"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REALITY",
+        "target": "REAL_EXPECTATION",
+        "label": "기대",
+        "id": "190a1363-9183-4cf3-8512-8b7377df3681"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REALITY",
+        "target": "REAL_INSIGHT_1",
+        "label": "인사이트",
+        "id": "be098409-7377-402a-8782-440d34568c56"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REALITY",
+        "target": "REAL_INSIGHT_2",
+        "label": "인사이트",
+        "id": "34cc541c-e9b6-475d-b4a0-6d420e6c1bf9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REALITY",
+        "target": "REAL_INSIGHT_3",
+        "label": "인사이트",
+        "id": "6329d07f-c356-441d-a273-c115d3508d86"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REALITY",
+        "target": "REAL_INSIGHT_4",
+        "label": "인사이트",
+        "id": "75319602-1b76-460c-ab4e-3074c59af963"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REALITY",
+        "target": "REAL_INSIGHT_5",
+        "label": "인사이트",
+        "id": "7ed9d932-9694-4b63-bb6c-e200e942b1e4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_FORMAT",
+        "target": "FORMAT_STATUS",
+        "label": "장치",
+        "id": "b57e2fc5-66f6-4081-af78-f611b6c6cffb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_FORMAT",
+        "target": "FORMAT_QUEST",
+        "label": "장치",
+        "id": "120c4fca-88d8-4ae5-9ee1-3dc1a70643bf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_FORMAT",
+        "target": "FORMAT_REGRESSION",
+        "label": "장치",
+        "id": "598e9415-32fa-4e0d-9137-3bae5154ecbf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_FORMAT",
+        "target": "FORMAT_SODA_ESSENCE",
+        "label": "본질",
+        "id": "9f02a6d8-773f-4789-ac39-71e6309853e3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INSTINCTS",
+        "target": "INST_SURVIVAL",
+        "label": "본능",
+        "id": "63fabe7f-53b1-40c0-9f97-be26a24c7ec5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INSTINCTS",
+        "target": "INST_REPRODUCTION",
+        "label": "본능",
+        "id": "b4c31700-3d87-4fa6-acf2-34dc0b76084b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INSTINCTS",
+        "target": "INST_DOMINANCE",
+        "label": "본능",
+        "id": "5f845128-12b4-4fe7-a85f-eb9578820c39"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INSTINCTS",
+        "target": "INST_MEANING",
+        "label": "본능",
+        "id": "b6c81c24-5984-45fb-ba90-cf9065e69808"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INSTINCTS",
+        "target": "INST_TRANSCENDENCE",
+        "label": "본능",
+        "id": "15e24d5c-1e5d-4031-bb32-0fcc9a83842a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INSTINCTS",
+        "target": "INST_DRAMA",
+        "label": "원리",
+        "id": "82d379c8-b871-4980-afb9-5118cf2704bd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GUIDE",
+        "target": "GUIDE_PRINCIPLE",
+        "label": "핵심",
+        "id": "ffe2e0f3-f051-4d06-ab2a-2a6757a9c43a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GUIDE",
+        "target": "GUIDE_ANGER",
+        "label": "팁",
+        "id": "23e44a26-73d1-464f-88a0-3904ef7c3ffa"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GUIDE",
+        "target": "GUIDE_REACTION",
+        "label": "팁",
+        "id": "535c245b-1daa-4ffc-82c0-f21b90286bbe"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GUIDE",
+        "target": "GUIDE_HIDE",
+        "label": "팁",
+        "id": "0fe5fb91-9202-41b2-80d7-371feb0d5209"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GUIDE",
+        "target": "GUIDE_ENDING",
+        "label": "팁",
+        "id": "2e7d1efe-e109-42d4-86fd-ef703b2beee4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GUIDE",
+        "target": "GUIDE_PAIN",
+        "label": "팁",
+        "id": "5dc6b28c-a1e9-4357-8f14-579bdedcdbd3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GUIDE",
+        "target": "GUIDE_START",
+        "label": "팁",
+        "id": "cb8d7dcb-5ac6-4fb1-9713-848b19303fe9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GUIDE",
+        "target": "GUIDE_FORMULA",
+        "label": "공식",
+        "id": "872fa920-4455-4437-84a8-6e92ff8f7aad"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_SURFACE",
+        "label": "포함",
+        "id": "2389b3cd-4775-4539-8ab7-5c8fe1706f5d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_PSYCHOLOGY",
+        "label": "포함",
+        "id": "123ce32b-3b23-4b4b-ab08-ee6187f6b42f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_EVOLUTION",
+        "label": "포함",
+        "id": "bafd46e0-8bc1-4cba-b782-647505a22328"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_LACAN",
+        "label": "포함",
+        "id": "52638794-c9b8-47fa-a993-7c47aa0b0571"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_TRANSCENDENCE",
+        "label": "포함",
+        "id": "e1ed71f3-8c58-4219-8d35-93249f382daa"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_REALITY",
+        "label": "포함",
+        "id": "dfd93d58-be82-4b19-b55a-6f6266754c7b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_FORMAT",
+        "label": "포함",
+        "id": "61fc6f31-8163-43b9-8c46-f3c0617e498d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_INSTINCTS",
+        "label": "포함",
+        "id": "4790a255-7bc4-4f78-8128-f27b912e93d6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_GUIDE",
+        "label": "포함",
+        "id": "ab5bcde5-7052-44f8-bbc9-fa0860bc3530"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "META_TITLE",
+        "target": "CAT_FINAL",
+        "label": "포함",
+        "id": "e70b8db8-e1c5-4c04-bf10-741d13fdf34b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_FINAL",
+        "target": "FINAL_ANSWER",
+        "label": "결론",
+        "id": "94ff468e-9163-4fd8-8474-49006ecee9c6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_FINAL",
+        "target": "FINAL_QUESTION",
+        "label": "질문",
+        "id": "8dc0014a-72b0-4d5f-90df-b8419886021d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  let cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: initialData,
+    style: [
+      { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':28, 'padding':'8px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':13, 'text-outline-width':2, 'text-outline-color':'#000' } },
+      { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':11 } },
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
+      { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true }
+  });
+
+  let selectedId = null;
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+  const nodeInfo = document.getElementById('nodeInfo');
+  const nodeNotes = document.getElementById('nodeNotes');
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    const selected = cy.$(':selected');
+    if (selected.length === 0) { alert('삭제할 요소를 선택하세요.'); return; }
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(selected);
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = document.activeElement.tagName.toUpperCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        deleteSelected();
+      }
+    }
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const id = node.id();
+    
+    if (edgeSrcInput.value === '') {
+      edgeSrcInput.value = id;
+    } else if (edgeTgtInput.value === '' && edgeSrcInput.value !== id) {
+      edgeTgtInput.value = id;
+    }
+    
+    nodeInfo.textContent = '📌 ' + (node.data('label') || id);
+    nodeNotes.textContent = node.data('notes') || '메모 없음';
+    selectedId = id;
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt('새 노드 이름:');
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+      }
+    }
+  });
+
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        let els = [];
+        if (Array.isArray(data)) els = data;
+        else if (data.nodes || data.edges) els = [...(data.nodes||[]), ...(data.edges||[])];
+        else if (data.elements) els = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        if (els.length) { cy.elements().remove(); cy.add(els); cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run(); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>
