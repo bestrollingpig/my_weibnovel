@@ -1,0 +1,3962 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:#f0f0f0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.2em; text-shadow:1px 1px 0 #000; }
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .left-panel {
+      width:220px;
+      background:#fff;
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid #ddd;
+    }
+    .graph-area {
+      flex:1;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid #ddd;
+      border-radius:8px;
+      background:#fafafa;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+
+    .panel-section {
+      margin-bottom:12px;
+      padding:10px;
+      background:#f9f9f9;
+      border-radius:6px;
+      border:1px solid #e0e0e0;
+    }
+    .panel-section h3 {
+      font-size:0.9em;
+      margin-bottom:6px;
+      color:#667eea;
+      border-bottom:1px solid #667eea;
+      padding-bottom:3px;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:5px;
+      margin:3px 0;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+    }
+    input[readonly] {
+      background:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    textarea {
+      width:100%;
+      padding:5px;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+      resize:vertical;
+      min-height:60px;
+    }
+    button {
+      width:100%;
+      padding:6px;
+      margin:3px 0;
+      border:none;
+      border-radius:3px;
+      font-size:0.8em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+    }
+    button:active { transform:scale(0.97); }
+    .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+    .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
+    .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
+
+    .help-text { font-size:0.7em; color:#888; margin-top:3px; padding:4px; background:#fff; border-radius:3px; }
+    .connection-tools { display:flex; gap:4px; margin-bottom:3px; }
+    .connection-tools button { padding:3px; font-size:0.7em; margin:0; }
+
+    .info-badge {
+      display:block;
+      padding:4px 8px;
+      background:#667eea;
+      color:#fff;
+      border-radius:3px;
+      font-size:0.75em;
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .notes-display {
+      padding:6px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.8em;
+      min-height:40px;
+      white-space:pre-wrap;
+      margin-top:4px;
+    }
+    .file-select-wrapper { display:flex; gap:4px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:4px 8px; margin:0; }
+    .file-select-wrapper input[type="file"] { display:none; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
+    }
+    [data-theme="dark"] .left-panel {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .notes-display {
+      background:#2d2d4e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .cy-wrapper {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🌐 세계관 그래프</h1>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="panel-section">
+      <h3>📂 데이터</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
+      </div>
+      <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드</button>
+    </div>
+
+    <div class="panel-section">
+      <h3>➕ 노드</h3>
+      <input type="text" id="newNode" placeholder="노드 이름">
+      <button class="btn-primary" onclick="addNode()">노드 추가</button>
+      <div class="help-text">💡 빈 공간 더블클릭</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>🔗 엣지</h3>
+      <div class="connection-tools">
+        <button class="btn-info" onclick="clearEdgeInputs()">초기화</button>
+        <button class="btn-info" onclick="swapEdgeInputs()">교체</button>
+      </div>
+      <input type="text" id="edgeSrc" placeholder="출발 노드" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="도착 노드" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="라벨">
+      <button class="btn-primary" onclick="addEdge()">엣지 추가</button>
+      <div class="help-text">💡 노드 클릭 시 자동 입력</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>📝 노드 정보</h3>
+      <div class="info-badge" id="nodeInfo">노드를 클릭하세요</div>
+      <div class="notes-display" id="nodeNotes">선택한 노드의 메모가 여기에 표시됩니다</div>
+      <button class="btn-danger" onclick="deleteSelected()" style="margin-top:4px;">🗑️ 삭제 (Del)</button>
+    </div>
+  </div>
+
+  <div class="graph-area">
+    <div class="cy-wrapper">
+      <div id="cy"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const initialData = {
+  "nodes": [
+    {
+      "data": {
+        "id": "EPISODE_REGRESSOR_REVENGE",
+        "label": "회귀자의 복수",
+        "color": "#FF0000",
+        "notes": "★★★★★\n과거에 자신을 배신하고 죽인 자들이 다시 나타나고, 주인공이 미래 정보를 이용해 그들을 완벽하게 무너뜨리는 에피소드.\n\n[대표 예시]\n- 재벌집 막내아들: 진성준이 이복형 진영준이 자신을 죽이려 한다는 걸 알면서도 일부러 방관. 결정적 순간에 역으로 몰아붙여 형을 파산시키고 감옥에 보냄.\n- 화산귀환: 청명이 과거 자신을 배신한 장문인과 장로들을 응징.\n- 회귀수선전: 주인공이 과거 자신을 죽인 원수들을 차례로 제거.\n\n[독자 반응]\n'드디어!' '이거지!' '쾌하다!'\n\n[심층 분석]\n독자는 이미 과거를 알고 있음 → 복수가 성공할 걸 알면서도 '언제 터지나' 기대하며 읽음 → 드디어 터지는 순간 극적 쾌감. 전지적 시점의 카타르시스가 핵심이다. 작가는 최대한 질질 끌며 긴장감을 조성하고, 터지는 순간 독자의 분노가 해소되며 대리 만족감이 폭발한다. '기다림의 쾌감'이 회귀물 복수 클리셰의 가장 큰 재미다."
+      },
+      "position": {
+        "x": 1211.0536659805898,
+        "y": 2300.3769204013483
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_ARROGANT_CRUSH",
+        "label": "거만한 천재의 굴욕",
+        "color": "#FF0000",
+        "notes": "★★★★★\n주인공을 '하등생물'로 무시하던 천재나 명문가 후계자가, 어느 순간 역전당해 무릎 꿇는 에피소드.\n\n[대표 예시]\n- 나 혼자만 레벨업: E급이던 성진우가 S급 헌터 황동수의 도발에 맞서 결투. 모두가 성진우의 패배를 예상했지만, 성진우가 압도적으로 승리. 황동수는 바닥에 쓰러져 '이게 말이 돼?!'라고 절규.\n- 화산귀환: 청명을 '망나니'라 부르던 천재들이 제압당함.\n- 재벌집 막내아들: 진성준을 무시하던 이복형제들이 몰락.\n\n[독자 반응]\n'꼴 좋다!' '쾌하다!' '이게 바로 사이다!'\n\n[심층 분석]\n독자는 주인공이 이길 걸 알지만 '어떻게 이길까' 궁금증으로 읽음 → 천재의 표정이 점점 굴욕으로 굳어지는 묘사에 쾌감 → 마지막 대사('이게 말이 돼?')에서 폭소와 통쾌함 동시에 터짐. 이 클리셰는 '갑질'에 대한 독자의 일상적 분노를 해소해주는 역할을 한다. 특히 천재가 가지고 있던 '혈통', '명문', '재능'이라는 프리미엄이 주인공 앞에서 무너지는 순간이 가장 통쾌하다."
+      },
+      "position": {
+        "x": 1336.1456889848735,
+        "y": 1844.9165161489657
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_HIDDEN_POWER",
+        "label": "숨겨진 힘의 공개",
+        "color": "#FF0000",
+        "notes": "★★★★★\n주인공이 평소에 숨기던 압도적 힘을 결정적 순간에 드러내는 에피소드.\n\n[대표 예시]\n- 화산귀환: 청명이 마교와의 전투에서 절체절명의 위기에 처하자, 그동안 숨겨왔던 절대검법을 공개. 순식간에 마교 고수들을 쓸어버리고, 주변 인물들은 '이...이게... 화산의 망나니가?!'라며 경악.\n- 나 혼자만 레벨업: 성진우가 S급 던전을 솔로 클리어하며 숨겨진 힘 공개.\n- SSS급 헌터: 김독자가 숨겨둔 전설급 스킬 공개.\n\n[독자 반응]\n'오!' '이게 바로 먼치킨!' '간지 폭발!'\n\n[심층 분석]\n독자는 주인공이 강하다는 걸 알지만 '어디까지 숨겼을까' 궁금증 → 갑자기 폭발하는 힘에 놀라움과 쾌감 → 주변 인물들의 경악 반응이 포인트. 이 클리셰의 핵심은 '예상치 못한 폭발력'과 '주변의 반응'이다. 평소에 겸손하거나 무시당하던 주인공이 갑자기 압도적인 힘을 보여줄 때, 독자는 그동안 쌓였던 답답함이 한꺼번에 해소되는 느낌을 받는다. 특히 절체절명의 순간에 공개될수록 그 효과는 배가된다."
+      },
+      "position": {
+        "x": 1224.9334206500696,
+        "y": 1778.4720773183446
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_LEVEL_UP",
+        "label": "경지/레벨 돌파",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n오랜 수련 끝에 드디어 다음 단계로 돌파하는 순간.\n\n[대표 예시]\n- 회귀수선전: 주인공이 수련실에서 수개월을 갈아넣고 드디어 금단기에서 원영기로 돌파. 주변에선 영력 폭풍이 일고, 장로들이 놀라 달려옴. '저게... 원영기 돌파라니...'\n- 나 혼자만 레벨업: 성진우가 레벨업하고 새로운 스킬 획득.\n- 화산귀환: 청명이 무공의 경지를 넘어섬.\n\n[독자 반응]\n'드디어!' '레벨업!' '이 맛에 본다!'\n\n[심층 분석]\n독자는 주인공이 힘들게 수련하는 과정을 지켜봄 → '언제 터지나' 기대감 → 드디어 터지는 순간 쾌감 → 주변의 놀라는 반응이 성취감을 배가. 이 클리셰는 독자가 주인공의 성장을 자신의 성장처럼 느끼게 하는 핵심 장치다. 특히 '고통과 인내'의 과정이 길수록 돌파 순간의 쾌감은 커진다. 주변 인물들이 경악하는 장면은 성취감을 더욱 배가시키는 장치다."
+      },
+      "position": {
+        "x": 1792.295034559775,
+        "y": 307.4848768712459
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_CHEAT_SKILL",
+        "label": "전설 스킬/공법 습득",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n주인공만 얻을 수 있는 전설적 능력을 획득하는 에피소드.\n\n[대표 예시]\n- 전지적 독자 시점: 김독자가 시나리오 속 숨겨진 조건을 만족시켜 전설적 스킬 '독해'를 획득. 시스템 메시지가 뜨고, 동료들은 '이게 뭐야?!'라며 경악. 김독자는 의미심장한 미소를 지음.\n- 화산귀환: 청명이 전설적 절대검법 습득.\n- 나 혼자만 레벨업: 성진우가 희귀 스킬 획득.\n\n[독자 반응]\n'와! 대박!' '개사기!' '부럽다!'\n\n[심층 분석]\n독자는 '이 스킬 뭐지?' 궁금증 → 설명을 읽으며 '와! 대박' 감탄 → 주인공이 이걸 어떻게 쓸지 기대감 → 희귀함에 대한 소유욕 자극. 이 클리셰는 RPG 게임에서 전설 아이템을 획득하는 쾌감과 동일하다. 독자는 주인공이 '오직 나만' 가질 수 있는 특별함에 대리 만족하며, 앞으로 이 스킬이 어떻게 활약할지 기대하게 된다."
+      },
+      "position": {
+        "x": 1767.259909920937,
+        "y": 557.0952727858731
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_SYSTEM_BUG",
+        "label": "시스템 버그/치트 발견",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n주인공이 시스템의 허점이나 숨겨진 루트를 발견하는 에피소드.\n\n[대표 예시]\n- 버그란 이런 것이다: 주인공이 퀘스트 완료 조건에 '허점'이 있음을 발견. 의도치 않게 같은 퀘스트를 무한 반복 수행해 경험치를 폭발적으로 획득. 시스템이 오류를 감지하지만 주인공은 이미 이득을 봄.\n- SSS급 헌터: 숨겨진 퀘스트 발견.\n- 나 혼자만 레벨업: '플레이어' 특권 발견.\n\n[독자 반응]\n'이게 바로 지능형 플레이!' '개꿀!'\n\n[심층 분석]\n독자는 '이거 되나?' 궁금증 → 실제로 되는 걸 보고 '개꿀!' → 주인공의 지능적 플레이에 감탄. 이 클리셰는 '머리를 쓰는 먼치킨'의 매력을 극대화한다. 단순히 힘이 센 것이 아니라, 시스템의 허점을 찾아내는 지적 플레이는 독자에게 '나도 저런 생각을 했는데!'라는 대리 만족감을 준다. 특히 '버그를 악용하지만 시스템이 못 막는' 장면은 독자에게 통쾌함을 선사한다."
+      },
+      "position": {
+        "x": 1602.3928380052316,
+        "y": 79.77650353909834
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_REGRESSION_KNOWLEDGE",
+        "label": "미래 정보 활용",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n회귀 전 알게 된 정보를 활용해 누구보다 먼저 기회를 잡는 에피소드.\n\n[대표 예시]\n- 재벌집 막내아들: 진성준이 미래의 주가 정보를 활용해 위기 속에서도 막대한 수익을 냄. 모두가 패닉에 빠진 순간, 그는 침착하게 차분히 움직이고, 결과적으로 회사 전체를 구함.\n- 화산귀환: 청명이 과거의 전투 경험을 활용해 적의 약점을 꿰뚫음.\n- 회귀수선전: 주인공이 과거 알게 된 전설적 비급을 먼저 획득.\n\n[독자 반응]\n'한 수 위네!' '이게 바로 회귀자지!'\n\n[심층 분석]\n독자는 '이 상황에서 무슨 수를?' 궁금증 → 주인공의 침착함에 의문 → 알고 보니 미래를 알고 있었다는 복선 회수 → '한 수 위네' 감탄. 이 클리셰는 '정보의 불평등'을 이용한 대리 만족이다. 독자는 주인공이 다른 인물들보다 우월한 정보를 가지고 있을 때, 자신도 그 정보를 알고 있는 듯한 착각을 하며 쾌감을 느낀다. 특히 모두가 혼란스러울 때 홀로 침착한 주인공의 모습은 카리스마까지 더해진다."
+      },
+      "position": {
+        "x": 1639.0964928461872,
+        "y": 551.8755069787508
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GOOD_PEOPLE",
+        "label": "선한 인물 챙기기",
+        "color": "#FF6B00",
+        "notes": "★★★★☆\n회귀 후, 과거 자신에게 잘해준 사람을 먼저 찾아가 도와주는 에피소드.\n\n[대표 예시]\n- 화산귀환: 청명이 회귀 후 가장 먼저 자신을 따르던 후배들을 찾아가 구해냄. 후배들은 '도대체 어떻게...'라며 감동하고, 청명은 '내가 지키겠다'고 다짐.\n- 재벌집 막내아들: 진성준이 자신을 따르던 비서를 먼저 챙김.\n- SSS급 헌터: 김독자가 과거 자신을 도와준 사람들을 먼저 챙김.\n\n[독자 반응]\n'이게 바로 회귀물의 맛!' '훈훈하다'\n\n[심층 분석]\n독자는 과거 그 후배들이 청명에게 잘해줬던 장면을 기억 → 이제 청명이 갚는 모습에 감동 → 훈훈함과 함께 앞으로 이들이 어떤 역할을 할지 기대감. 이 클리셰는 복수만 있는 회귀물에 '온정'을 더해 감정적 깊이를 준다. 독자는 주인공이 은혜를 잊지 않는 모습에好感을 느끼고, 앞으로 이 인물들이 주인공에게 어떤 식으로 보답할지 기대하게 된다. 또한 이 캐릭터들은 이후 전개에서 주인공의 든든한 조력자가 되는 경우가 많아, 세계관 확장에도 기여한다."
+      },
+      "position": {
+        "x": 1732.123829978835,
+        "y": 83.02006936491796
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_UPPER_WORLD",
+        "label": "상위 차원 개방",
+        "color": "#0066FF",
+        "notes": "★★★★★\n독자가 '이 정도면 끝?' 싶을 때 갑자기 더 높은 차원이 드러나는 에피소드.\n\n[대표 예시]\n- 전지적 독자 시점: 독자들이 '이제 다 끝났나?' 싶을 때, 성좌들이 등장하며 시나리오가 차원을 넘어 확장됨. 주인공은 '이제 진짜 시작이다'라고 말하며 새로운 목표를 설정.\n- 완미세계: 하계→중계→상계→신계로 차원 확장.\n- 회귀수선전: 인계→영계→선계로 세계 확장.\n\n[독자 반응]\n'와! 스케일 미쳤다!' '대박!'\n\n[심층 분석]\n독자는 '이만하면 끝났지?' 생각 → 갑자기 더 큰 세계가 펼쳐짐 → '와! 스케일 미쳤다!' → 주인공의 목표가 한 단계 업그레이드 → 앞으로의 전개에 대한 기대감 폭증. 이 클리셰는 작품의 수명을 연장하고 독자의 호기심을 지속시키는 핵심 장치다. 한 번에 큰 스케일을 보여주면 독자가 금방 적응하지만, 점진적 확장은 계속된 신선함을 준다. 또한 상위 차원이 등장할 때마다 기존의 상식이 깨지고 새로운 법칙이 도입되어 세계관의 깊이가 더해진다."
+      },
+      "position": {
+        "x": 24.762920665385845,
+        "y": 2448.68921383298
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_SECRET_REALM",
+        "label": "비경 탐험",
+        "color": "#0066FF",
+        "notes": "★★★★★\n주인공이 고대 유적이나 비밀 공간을 발견하고 탐험하는 에피소드.\n\n[대표 예시]\n- 완미세계: 주인공이 우연히 고대 선인이 남긴 비경의 입구를 발견. 내부에는 전설적 영초와 희귀한 유물이 가득했고, 곳곳에 함정과 수호자가 도사리고 있었음. 주인공은 머리와 힘을 써서 유적을 탐험함.\n- 회귀수선전: 고대 선인의 유적 탐험.\n- 화산귀환: 강호의 비밀 장소 탐험.\n\n[독자 반응]\n'또 나왔다 비경!' '재밌다!'\n\n[심층 분석]\n독자는 '또 나왔다 비경!' 반가움 → 하나씩 아이템이 해금될 때 수집욕 충족 → 주인공의 머리 쓰는 모습에 감탄. 이 클리셰는 RPG 게임의 던전 탐험과 동일한 재미를 제공한다. 독자는 주인공과 함께 미지의 공간을 탐험하며, 새로운 아이템과 적, 그리고 비밀을 발견하는 쾌감을 느낀다. 특히 '위험하지만 보상이 큰' 구조는 독자의 모험심을 자극한다."
+      },
+      "position": {
+        "x": 77.42695257450374,
+        "y": 2770.1312123518865
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GENERATION_GAP",
+        "label": "세대 교체",
+        "color": "#9C27B0",
+        "notes": "★★★★★\n주인공이 살아있는 동안 동시대 인물들이 모두 수명을 다해 떠나는 에피소드.\n\n[대표 예시]\n- 회귀수선전: 주인공이 수련에서 깨어나니 수백 년이 지나 있었고, 자신을 따르던 동료들은 모두 백발이 되어 세상을 떠났음. 주인공은 그들의 무덤 앞에 서서 '편히 쉬게나'라고 중얼거림.\n- 도왕: 수백 년 수련하며 모든 동료를 떠나보냄.\n- 완미세계: 고향과 가족을 떠나보냄.\n\n[독자 반응]\n'허전하다...' '이게 장생의 대가구나'\n\n[심층 분석]\n독자는 그동안 주인공과 함께해온 동료들을 기억 → 그들이 모두 떠난 현실에 허전함 → '이게 장생의 대가구나' 생각 → 주인공의 고독에 공감하며 깊은 여운이 남음. 이 클리셰는 단순한 성장물에 깊이를 더하는 장치다. 독자가 그동안 정을 붙였던 캐릭터들이 떠나면서, 주인공의 장생(長生)이 축복이 아닌 저주일 수도 있다는 생각을 하게 된다. 이로 인해 작품은 단순한 오락을 넘어 삶과 죽음에 대한 철학적 질문을 던지게 된다."
+      },
+      "position": {
+        "x": 351.6298661149236,
+        "y": 2438.5093887498524
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_FORESHADOW",
+        "label": "떡밥 회수",
+        "color": "#FF9800",
+        "notes": "★★★★★\n수백 화 전에 심어둔 떡밥이 드디어 회수되는 에피소드.\n\n[대표 예시]\n- 전지적 독자 시점: 초반에 '이상한 책'으로 등장했던 것이 사실은 세계관 전체의 핵심 열쇠였다는 사실이 후반에 밝혀짐. 독자들은 '아! 그때 그거였구나!'라며 소름이 돋음.\n- 재벌집 막내아들: 초반 설정이 후반에 모두 연결.\n- 회귀수선전: 회귀 전 정보가 후반에 연결.\n\n[독자 반응]\n'작가 천재!' '아! 그때 그거였구나!'\n\n[심층 분석]\n독자는 초반에 그 책을 대수롭지 않게 생각 → 후반에 그게 중요한 복선이었다는 걸 알고 충격 → '작가 천재!' 감탄 → 다시 초반으로 돌아가 읽으며 새롭게 발견하는 재미. 이 클리셰는 작가의 필력을 가장 극명하게 보여주는 장치다. 독자는 떡밥이 회수되는 순간 '아하!' 모먼트를 경험하며, 그동안의 의문이 한꺼번에 해소되는 지적 쾌감을 느낀다. 또한 이로 인해 작품을 다시 읽게 되는 재독(再讀) 유도 효과도 있다."
+      },
+      "position": {
+        "x": 1905.546983178435,
+        "y": 1761.562952142048
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_POLITICS",
+        "label": "권모술수",
+        "color": "#FF9800",
+        "notes": "★★★★☆\n힘이 아닌 정치적 계산과 전략으로 적을 무너뜨리는 에피소드.\n\n[대표 예시]\n- 재벌집 막내아들: 진성준이 적대 세력의 내부에 자신의 사람을 심어두고, 결정적 순간에 배신자들을 폭로해 적을 몰락시킴. 직접 나서지 않고도 적이 자멸하는 모습을 지켜봄.\n- 화산귀환: 청명이 강호의 정치적 관계를 활용해 적을 무너뜨림.\n- 회귀수선전: 종파 내부의 권력 다툼 속에서 생존.\n\n[독자 반응]\n'이게 진짜 고수지!' '한 수 위네'\n\n[심층 분석]\n독자는 '이번엔 어떻게 이길까?' 궁금증 → 진성준의 계획이 하나씩 드러날 때 '아!' 감탄 → 직접 나서지 않고 적을 무너뜨리는 전략에 지적 만족감. 이 클리셰는 단순한 힘의 싸움이 아닌 '두뇌 싸움'의 재미를 제공한다. 독자는 주인공이 적의 내부를 교란하고, 정보를 이용하며, 타이밍을 계산하는 모습에서 체스 게임과 같은 지적 쾌감을 느낀다. 특히 '내가 한 것도 없는데 적이 알아서 무너졌다'는 전개는 주인공의 카리스마를 더욱 극대화한다."
+      },
+      "position": {
+        "x": 1817.0079624501755,
+        "y": 2184.565499932797
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_SURVIVAL",
+        "label": "생존 본능",
+        "color": "#4CAF50",
+        "notes": "★★★★★\n주인공이 자신보다 강한 적을 만나면 과감히 도망치는 현실적 선택을 하는 에피소드.\n\n[대표 예시]\n- 회귀수선전: 주인공이 자신보다 두 경지 높은 적과 마주침. 독자들은 '이번엔 어떻게 이기지?' 기대했지만, 주인공은 즉시 도망침. 적은 '겁쟁이!'라며 비웃지만, 주인공은 수백 년 후 다시 찾아가 복수함.\n- 화산귀환: 청명이 전략적 후퇴를 선택.\n- SSS급 헌터: 김독자가 전략적 후퇴.\n\n[독자 반응]\n'맞아, 죽을 짓 하지 마' '현실적이야'\n\n[심층 분석]\n초반엔 '도망만 하네?' 실망할 수 있음 → 하지만 이게 주인공의 생존 철학임을 이해 → 나중에 복수 성공했을 때 '드디어!' 더 큰 쾌감. 이 클리셰는 다른 먼치킨물과 차별화되는 현실적 전략이다. 독자는 무턱대고 싸우는 무모함보다, 때를 기다리는 인내와 전략을 더 높이 평가한다. 특히 '지금 도망치는 것이 미래의 승리를 위한 것'이라는 점을 독자가 이해할 때, 주인공에 대한 신뢰와 공감이 더 깊어진다."
+      },
+      "position": {
+        "x": 260.4367626899054,
+        "y": 2432.392823548663
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_ECONOMY",
+        "label": "자원 관리",
+        "color": "#4CAF50",
+        "notes": "★★★★☆\n주인공이 자금, 재료, 자원을 철저히 계산하고 관리하는 에피소드.\n\n[대표 예시]\n- 재벌집 막내아들: 진성준이 위기 상황에서도 자신의 자산을 정확히 파악하고, 최적의 투자 타이밍을 계산해 이익을 극대화. 주변 인물들은 '도대체 어떻게 계산한 거야?'라며 놀람.\n- 회귀수선전: 영석/재료의 철저한 관리.\n- 나 혼자만 레벨업: 성진우의 아이템/골드 관리.\n\n[독자 반응]\n'와, 저걸 계산하다니?' '경제 관념 있다'\n\n[심층 분석]\n독자는 '와, 저걸 계산하다니?' 감탄 → 경제적 성공에 대리 만족 → 현실에서도 써먹을 수 있을 것 같은 현실감. 이 클리셰는 독자가 현실에서 경험하는 '자산 관리'의 성공을 대리 체험하게 한다. 주인공이 자원을 어떻게 효율적으로 운용하는지 보여주는 과정은 독자에게 실용적인 통찰을 주기도 하며, 단순한 전투물보다 지적 깊이를 더한다."
+      },
+      "position": {
+        "x": 223.075147096116,
+        "y": 2854.7799336066764
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_ONE_VS_MANY",
+        "label": "일대다 압도적 전투",
+        "color": "#FF6B6B",
+        "notes": "★★★★★\n주인공 혼자 수많은 적을 쓸어버리는 액션 에피소드.\n\n[대표 예시]\n- 나 혼자만 레벨업: 성진우가 수천 마리의 몬스터가 우글거리는 던전에 혼자 진입. 모두가 '미쳤다'고 생각했지만, 그는 순식간에 몬스터들을 쓸어버리고 홀로 보스 앞에 섬.\n- 화산귀환: 청명이 수많은 고수들을 혼자 상대.\n- 완미세계: 주인공이 수백 명의 적을 일격에 제압.\n\n[독자 반응]\n'이게 바로 먼치킨!' '레전드!'\n\n[심층 분석]\n독자는 '혼자? 말이 돼?' 의문 → 전투씬이 시작되고 하나둘 쓰러지는 적 → 속도감 있는 액션에 쾌감 → 보스 앞에 서는 마지막 컷에서 환호. 이 클리셰는 액션물의 가장 기본이자 핵심이다. 독자는 주인공이 압도적인 힘으로 수많은 적을 쓰러뜨리는 모습에서 단순하지만 강력한 쾌감을 느낀다. 특히 전투 장면의 속도감과 연출이 중요하며, 마지막에 남는 고독한 주인공의 모습은 카리스마를 더한다."
+      },
+      "position": {
+        "x": 1724.7283131872841,
+        "y": 1949.1222932818919
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_SECT_WAR",
+        "label": "대규모 전쟁",
+        "color": "#FF6B6B",
+        "notes": "★★★★★\n수많은 인물이 참여하는 대규모 전투 에피소드.\n\n[대표 예시]\n- 화산귀환: 정파 연합과 마교 사이의 대규모 전투. 수천 명의 고수가 충돌하고, 청명은 그 한복판에서 단 한 명의 적을 향해 돌진. 전체 전황을 뒤집는 결정적 한 방을 날림.\n- 나 혼자만 레벨업: 길드 간의 대규모 레이드 전쟁.\n- 재벌집 막내아들: 기업 간의 인수합병 전쟁.\n\n[독자 반응]\n'와! 스케일 크다!' '박진감 넘친다'\n\n[심층 분석]\n독자는 대규모 스케일에 압도됨 → 속도감 있는 전투씬에 몰입 → 주인공이 등장하자 '드디어!' → 전체 전황을 뒤집는 한 방에 쾌감. 이 클리셰는 전투의 스케일을 극대화해 독자에게 전쟁 영화 같은 몰입감을 제공한다. 개인의 힘보다는 집단의 움직임, 전술, 그리고 그 속에서 빛나는 주인공의 활약이 포인트다. 특히 전체 전황이 불리할 때 주인공이 한 방에 뒤집는 장면은 극적 카타르시스를 선사한다."
+      },
+      "position": {
+        "x": 1622.6041143513469,
+        "y": 1777.5414436997364
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_BOSS_RAID",
+        "label": "보스전",
+        "color": "#FF6B6B",
+        "notes": "★★★★★\n던전이나 비경의 최종 보스를 상대하는 에피소드.\n\n[대표 예시]\n- 나 혼자만 레벨업: 성진우가 지하 던전의 최종 보스 '아이언'과 대결. 보스의 압도적 위압감에 독자들은 긴장, 하지만 성진우는 치밀한 전략과 타이밍으로 보스를 쓰러뜨림. 시스템 메시지: '[보스 처치 완료]'\n- SSS급 헌터: 레이드 보스전.\n- 완미세계: 각종 괴수/마왕전.\n\n[독자 반응]\n'드디어 보스!' '이게 바로 레이드지!'\n\n[심층 분석]\n독자는 보스의 위압감에 긴장 → 주인공의 전략이 하나씩 드러날 때 감탄 → 마지막 일격에 쾌감 → '드디어!' 성취감. 이 클리셰는 RPG 게임의 보스 레이드와 가장 유사한 구조로, 독자에게 게임 같은 몰입감을 제공한다. 보스의 패턴, 약점, 그리고 주인공의 전략이 맞물리는 과정은 독자에게 '함께 푸는 퍼즐' 같은 재미를 준다. 보스 처치 후의 보상과 성취감은 다음 전개에 대한 기대감으로 이어진다."
+      },
+      "position": {
+        "x": 1724.8191000425443,
+        "y": 2146.972127979908
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_BETRAYAL_REVEAL",
+        "label": "배신자 폭로",
+        "color": "#FF0000",
+        "notes": "★★★★★\n주인공이 오랫동안 자신을 속인 배신자의 정체를 공개하는 에피소드.\n\n[대표 예시]\n- 화산귀환: 청명이 자신의 과거를 배신한 장로의 진짜 의도를 폭로. 모두가 '설마...' 하며 경악하고, 배신자는 처단당함. 청명은 '이게 네 최후다'라며 냉소.\n- 재벌집 막내아들: 내부의 배신자를 적절한 타이밍에 폭로.\n- SSS급 헌터: 오랫동안 숨겨진 배신자의 정체가 드러남.\n\n[독자 반응]\n'드디어!' '통쾌하다!'\n\n[심층 분석]\n독자는 배신자를 의심해왔음 → 확실한 증거가 공개될 때 '드디어!' → 배신자의 당황한 모습에 쾌감 → 청명의 냉소에 통쾌함 → 미스터리가 해소되는 지적 만족감. 이 클리셰는 복수 클리셰와 맞닿아 있지만, '배신'이라는 요소가 더해져 감정적 타격이 더 크다. 독자는 배신자가 처벌받는 순간, 그동안 쌓였던 의문과 분노가 한꺼번에 해소되는 극적 쾌감을 느낀다."
+      },
+      "position": {
+        "x": 1329.6184917592966,
+        "y": 2068.4471156362947
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_UNEXPECTED_COMEBACK",
+        "label": "예상치 못한 역전",
+        "color": "#FF0000",
+        "notes": "★★★★★\n모두가 패배를 확신한 순간, 주인공이 예상 밖의 방법으로 역전하는 에피소드.\n\n[대표 예시]\n- SSS급 헌터: 김독자가 '이번엔 진짜 죽었다'고 생각한 순간, 자신이 미리 준비한 전설급 아이템이 발동. 적은 '뭐야 이게?!' 하며 당황하고, 김독자는 역전승을 거둠.\n- 나 혼자만 레벨업: 성진우가 안타레스와 최종전에서 역전.\n- 전지적 독자 시점: 김독자가 시나리오를 역이용해 역전.\n\n[독자 반응]\n'대박!' '주인공 레전드!'\n\n[심층 분석]\n독자는 '이제 끝인가...' 긴장 → 갑자기 터지는 반전에 '대박!' → 적의 당황한 표정에 통쾌함 → 어떻게 그걸 준비했을지 궁금증. 이 클리셰는 '절망 속에서 피어나는 희망'의 극적 구조를 가진다. 독자가 주인공의 패배를 확신하는 순간에 터지는 역전은 가장 강력한 카타르시스를 선사한다. 특히 '미리 준비한 수단'이 발동하는 장면은 작가의 복선 회수와 맞물려 더 큰 감동을 준다."
+      },
+      "position": {
+        "x": 1318.7119149808022,
+        "y": 2288.2753122088743
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_TIME",
+        "label": "분석: 시간의 재미",
+        "color": "#00BCD4",
+        "notes": "★★★★★\n회귀물에서 '기다림'이 어떻게 재미로 전환되는지 분석.\n\n[핵심 개념]\n- 회귀물 독자는 이미 결말을 안다.\n- 하지만 '주인공이 이걸 어떻게 바꿀까'가 궁금증이다.\n- 복수는 언제든 할 수 있지만, 작가는 최대한 질질 끌며 긴장감을 조성한다.\n- 독자는 '언제 터지나' 기대하며 읽고, 드디어 터지는 순간 카타르시스가 폭발한다.\n- 즉, '기다림의 쾌감'이 회귀물의 핵심 재미다.\n\n[적용 예시]\n- 재벌집 막내아들: 진성준이 복수를 실행에 옮기기까지 수십 화를 기다림.\n- 화산귀환: 청명이 배신자들을 응징하기까지 오랜 시간이 걸림.\n- 회귀수선전: 주인공이 원수를 갚기까지 수백 년을 기다림."
+      },
+      "position": {
+        "x": 1307.0309908480585,
+        "y": 340.9006368030165
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_ESCALATION",
+        "label": "분석: 스케일 점진적 확장",
+        "color": "#00BCD4",
+        "notes": "★★★★★\n스케일이 어떻게 점진적으로 확장되는지 분석.\n\n[핵심 개념]\n- 웹소설은 처음엔 작은 마을/동네/종파 하나에서 시작해, 점차 국가→대륙→차원→우주로 확장된다.\n- 독자는 이 확장 과정에서 '와, 아직도 더 있네?'라는 놀라움과 함께 계속 읽게 된다.\n- 한 번에 큰 스케일을 보여주면 적응하지만, 점진적 확장은 계속된 신선함을 준다.\n- 각 단계마다 새로운 법칙, 새로운 적, 새로운 목표가 등장해 독자의 호기심을 유지한다.\n\n[적용 예시]\n- 전지적 독자 시점: 지구 시나리오 → 차원 시나리오 → 성좌 전쟁\n- 완미세계: 하계 → 중계 → 상계 → 신계\n- 회귀수선전: 인계 → 영계 → 선계"
+      },
+      "position": {
+        "x": 1512.1838254181282,
+        "y": 326.07968464243885
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_INSERTION",
+        "label": "분석: 독자의 주인공 이입",
+        "color": "#00BCD4",
+        "notes": "★★★★★\n독자가 어떻게 주인공에 이입하는지 분석.\n\n[핵심 개념]\n- 웹소설 독자는 주인공의 성장을 자신의 성장처럼 느낀다.\n- 특히 '약자 출발'은 독자가 자신을 투영하기 쉬운 장치다.\n- 주인공이 성장할수록 독자의 대리 만족도 커지고, 주인공이 복수할수록 독자의 분노도 해소된다.\n- 즉, 웹소설은 독자의 '자아'를 대리해주는 장치다.\n- 독자는 주인공의 고통을 함께 느끼고, 승리를 함께 만끽하며, 성장을 함께 기뻐한다.\n\n[적용 예시]\n- E급에서 S급이 되는 성진우: 독자는 자신의 열등감을 성진우를 통해 해소\n- 추방자에서 구원자가 되는 청명: 독자는 자신의 억울함을 청명을 통해 풀어냄\n- 말단에서 회장이 되는 진성준: 독자는 자신의 야망을 진성준을 통해 대리 체험"
+      },
+      "position": {
+        "x": 1398.4550715048365,
+        "y": 85.49150146329123
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_EMOTION_CYCLE",
+        "label": "분석: 감정적 순환 구조",
+        "color": "#00BCD4",
+        "notes": "★★★★★\n웹소설의 감정적 흐름 패턴 분석.\n\n[핵심 개념]\n- 웹소설은 '긴장 → 이완 → 긴장 → 폭발'의 리듬을 반복한다.\n- 수련/준비 에피소드에서 긴장을 쌓고, 전투/복수 에피소드에서 폭발시킨다.\n- 중간에 코믹/로맨스/일상으로 긴장을 풀어주고, 다시 쌓는 과정을 반복한다.\n- 이 리듬이 독자를 계속 읽게 만드는 핵심이다.\n- 긴장이 너무 길면 지치고, 너무 짧으면 재미가 반감되므로 적절한 타이밍이 중요하다.\n\n[순환 패턴]\n1. 긴장 국면: 적 등장, 위기, 수련, 준비\n2. 이완 국면: 일상, 코미디, 로맨스, 휴식\n3. 긴장 국면: 전투, 대결, 복수의 기회\n4. 폭발 국면: 승리, 복수 성공, 경지 돌파, 보스 처치\n5. 다시 1번으로 돌아가 새로운 긴장 시작"
+      },
+      "position": {
+        "x": 1408.2746589695973,
+        "y": 570.798680128681
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_SODA",
+        "label": "사이다 에피소드 그룹",
+        "color": "#FF0000",
+        "notes": "★★★★★\n독자가 가장 열광하는 통쾌한 순간들.\n\n[포함 에피소드]\n- 회귀자의 복수 (EPISODE_REGRESSOR_REVENGE)\n- 거만한 천재의 굴욕 (EPISODE_ARROGANT_CRUSH)\n- 숨겨진 힘의 공개 (EPISODE_HIDDEN_POWER)\n- 배신자 폭로 (EPISODE_BETRAYAL_REVEAL)\n- 예상치 못한 역전 (EPISODE_UNEXPECTED_COMEBACK)\n\n[공통 특징]\n- 복수/응징/역전의 쾌감이 핵심\n- 독자의 분노와 억울함을 해소\n- 극적 카타르시스를 선사\n- '드디어!' '통쾌하다!' 반응 유도"
+      },
+      "position": {
+        "x": 1231.4443544427752,
+        "y": 2052.043452717509
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_GROWTH",
+        "label": "성장 에피소드 그룹",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n주인공의 성장과 발전을 다루는 에피소드들.\n\n[포함 에피소드]\n- 경지/레벨 돌파 (EPISODE_LEVEL_UP)\n- 전설 스킬/공법 습득 (EPISODE_CHEAT_SKILL)\n- 시스템 버그/치트 발견 (EPISODE_SYSTEM_BUG)\n- 미래 정보 활용 (EPISODE_REGRESSION_KNOWLEDGE)\n- 선한 인물 챙기기 (EPISODE_GOOD_PEOPLE)\n\n[공통 특징]\n- 성장과 발전의 쾌감이 핵심\n- 독자의 대리 성취감을 자극\n- '드디어!' '대박!' 반응 유도\n- 수련과 준비 과정의 인내가 성과로 연결됨"
+      },
+      "position": {
+        "x": 1682.3744994290446,
+        "y": 321.00038732165945
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_WORLD",
+        "label": "세계관 에피소드 그룹",
+        "color": "#0066FF",
+        "notes": "★★★★★\n세계가 확장되는 재미를 주는 에피소드들.\n\n[포함 에피소드]\n- 상위 차원 개방 (EPISODE_UPPER_WORLD)\n- 비경 탐험 (EPISODE_SECRET_REALM)\n\n[공통 특징]\n- 세계관의 확장과 신비감이 핵심\n- '와! 스케일 미쳤다!' 반응 유도\n- 새로운 법칙과 존재의 등장으로 호기심 자극\n- 작품의 수명을 연장하는 장치"
+      },
+      "position": {
+        "x": 130.86134302489958,
+        "y": 2545.519257962098
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_EMOTION",
+        "label": "감정 에피소드 그룹",
+        "color": "#9C27B0",
+        "notes": "★★★★☆\n감성을 자극하는 에피소드들.\n\n[포함 에피소드]\n- 세대 교체 (EPISODE_GENERATION_GAP)\n\n[공통 특징]\n- 감동과 여운이 핵심\n- '허전하다' '이게 장생의 대가구나' 반응 유도\n- 주인공의 고독과 인간 관계에 대한 깊은 성찰\n- 작품에 깊이를 더하는 장치"
+      },
+      "position": {
+        "x": 459.4384171378165,
+        "y": 2462.86819987556
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_INTELLECT",
+        "label": "지적 에피소드 그룹",
+        "color": "#FF9800",
+        "notes": "★★★★☆\n머리를 쓰게 하는 에피소드들.\n\n[포함 에피소드]\n- 떡밥 회수 (EPISODE_FORESHADOW)\n- 권모술수 (EPISODE_POLITICS)\n\n[공통 특징]\n- 지적 만족감이 핵심\n- '작가 천재!' '한 수 위네' 반응 유도\n- 복선과 전략의 정교함이 돋보임\n- 단순한 힘의 싸움을 넘어선 깊이"
+      },
+      "position": {
+        "x": 1860.8374831137348,
+        "y": 1980.3628769593445
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_EMPATHY",
+        "label": "공감 에피소드 그룹",
+        "color": "#4CAF50",
+        "notes": "★★★★☆\n독자가 공감하는 현실적 에피소드들.\n\n[포함 에피소드]\n- 생존 본능 (EPISODE_SURVIVAL)\n- 자원 관리 (EPISODE_ECONOMY)\n\n[공통 특징]\n- 현실감과 공감이 핵심\n- '맞아, 죽을 짓 하지 마' '현실적이야' 반응 유도\n- 주인공의 지혜와 전략이 돋보임\n- 독자가 실제로도 적용 가능한 교훈을 줌"
+      },
+      "position": {
+        "x": 238.26396991583502,
+        "y": 2640.59808797423
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EPISODE_GROUP_ACTION",
+        "label": "액션 에피소드 그룹",
+        "color": "#FF6B6B",
+        "notes": "★★★★★\n전투의 박진감을 주는 에피소드들.\n\n[포함 에피소드]\n- 일대다 압도적 전투 (EPISODE_ONE_VS_MANY)\n- 대규모 전쟁 (EPISODE_SECT_WAR)\n- 보스전 (EPISODE_BOSS_RAID)\n\n[공통 특징]\n- 액션과 박진감이 핵심\n- '이게 바로 먼치킨!' '레전드!' 반응 유도\n- 속도감 있는 전투씬과 스케일\n- 주인공의 카리스마가 극대화되는 순간"
+      },
+      "position": {
+        "x": 1618.6947603901297,
+        "y": 1999.2416333283304
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ANALYSIS_GROUP",
+        "label": "분석 그룹",
+        "color": "#00BCD4",
+        "notes": "★★★★★\n웹소설 클리셰에 대한 심층 분석.\n\n[포함 분석]\n- 시간의 재미 (ANALYSIS_TIME)\n- 스케일 점진적 확장 (ANALYSIS_ESCALATION)\n- 독자의 주인공 이입 (ANALYSIS_INSERTION)\n- 감정적 순환 구조 (ANALYSIS_EMOTION_CYCLE)\n\n[공통 특징]\n- 웹소설의 구조와 심리를 분석\n- 독자가 왜 재미있게 읽는지 설명\n- 작가에게 실용적인 통찰 제공"
+      },
+      "position": {
+        "x": 1407.847514599597,
+        "y": 329.85268198537227
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_REGRESSOR_REVENGE",
+        "label": "회귀자의 압도적 복수",
+        "color": "#FF0000",
+        "notes": "★★★★★\n과거에 자신을 배신하고 죽인 자들을, 미래 정보를 가진 주인공이 하나씩 처단.\n\n[대표 작품]\n- 재벌집 막내아들: 진성준이 과거 자신을 버린 가족들에게 복수\n- 화산귀환: 청명이 화산을 배신한 장문인과 장로들을 응징\n- 회귀수선전: 주인공이 과거 자신을 죽인 원수들을 차례로 제거\n- SSS급 헌터: 과거의 적들을 하나씩 처단\n\n[독자 반응]\n'드디어!' '이거지!' '쾌하다!'\n\n[클리셰 포인트]\n- 과거의 억울함이 해소되는 순간\n- 미래 정보를 이용한 완벽한 복수\n- 적의 당황하는 모습이 포인트\n- '이제 시작이다'는 대사로 다음 전개 예고"
+      },
+      "position": {
+        "x": 468.7808949996737,
+        "y": 1171.4537010899128
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_SYSTEM_MUNCHKIN",
+        "label": "시스템 먼치킨",
+        "color": "#FF0000",
+        "notes": "★★★★★\n게임 시스템, 헌터 시스템, 버그 등을 활용해 타인보다 압도적으로 성장.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우가 유일한 시스템 보유자로 압도적 성장\n- 버그란 이런 것이다: 시스템 버그를 발견해 무한 성장\n- 전지적 독자 시점: 김독자가 시나리오를 독해하며 성장\n- SSS급 헌터: 숨겨진 시스템을 활용해 성장\n\n[독자 반응]\n'이게 바로 개사기!' '주인공 최고!'\n\n[클리셰 포인트]\n- 타인과 차별화된 시스템 보유\n- 시스템을 활용한 전략적 성장\n- '나만 가능한' 특권 의식 자극\n- 게임 같은 성장 시스템에 대한 친숙함"
+      },
+      "position": {
+        "x": 500.68308337081623,
+        "y": 931.1202480598466
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_ARROGANT_CRUSH",
+        "label": "거만한 천재의 굴욕",
+        "color": "#FF0000",
+        "notes": "★★★★★\n주인공을 무시하던 천재나 명문가 후계자가 나중에 주인공 앞에 무릎 꿇는 장면.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우(E급)가 S급 헌터 황동수를 관광보냄\n- 화산귀환: 청명을 '망나니'라 부르던 천재들이 제압당함\n- 재벌집 막내아들: 진성준을 무시하던 이복형제들이 몰락\n- SSS급 헌터: 주인공을 무시하던 상위 랭커들이 굴욕\n\n[독자 반응]\n'꼴 좋다!' '쾌하다!'\n\n[클리셰 포인트]\n- 천재의 오만함이 무너지는 순간\n- '이게 말이 돼?'라는 대사가 포인트\n- 혈통/명문/재능의 프리미엄이 깨짐\n- '갑질'에 대한 일상적 분노 해소"
+      },
+      "position": {
+        "x": 360.61476784091275,
+        "y": 1208.538653380963
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_HIDDEN_POWER",
+        "label": "숨겨진 힘의 공개",
+        "color": "#FF0000",
+        "notes": "★★★★★\n평소에 숨기던 압도적 힘을 갑자기 공개. 주변인들의 경악이 포인트.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우가 S급 던전을 솔로 클리어\n- 화산귀환: 청명이 평소 숨긴 절대검법 공개\n- SSS급 헌터: 김독자가 숨겨둔 전설급 스킬 공개\n- 완미세계: 주인공이 숨겨온 진정한 힘을 공개\n\n[독자 반응]\n'오!' '이게 바로 먼치킨!'\n\n[클리셰 포인트]\n- 절체절명의 순간에 공개될수록 효과 ↑\n- 주변 인물들의 경악 반응이 포인트\n- 그동안의 답답함이 해소되는 순간\n- '역시 주인공!'이라는 환호 유도"
+      },
+      "position": {
+        "x": 315.604432159246,
+        "y": 751.4577323698247
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_COMEBACK_WIN",
+        "label": "절체절명의 역전승",
+        "color": "#FF0000",
+        "notes": "★★★★★\n모두가 '끝'이라 생각한 순간 극적 역전.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우가 안타레스와 최종전에서 역전\n- 전지적 독자 시점: 김독자가 시나리오를 역이용해 역전\n- 재벌집 막내아들: 진성준이 절체절명의 순간에 역전\n- SSS급 헌터: 죽을 위기에서 극적 역전\n\n[독자 반응]\n'대박!' '주인공 레전드!' '소름 돋아'\n\n[클리셰 포인트]\n- 절망 속에서 피어나는 희망의 구조\n- '미리 준비한 수단'이 발동하는 순간\n- 적의 당황한 표정이 포인트\n- 작가의 복선 회수와 맞물려 감동 ↑"
+      },
+      "position": {
+        "x": 256.43209534430144,
+        "y": 1119.0057462739712
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_UNDERDOG_VICTORY",
+        "label": "최약체의 압도적 승리",
+        "color": "#FF0000",
+        "notes": "★★★★★\nF급, 추방자, 폐인 등 최하위에서 시작한 주인공이 최강자들을 제압.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우(E급)가 전 세계 최강이 됨\n- 화산귀환: 청명(추방자)이 화산의 구원자가 됨\n- 회귀수선전: 폐인이었던 주인공이 최강자가 됨\n- SSS급 헌터: 최하위에서 시작해 최고가 됨\n\n[독자 반응]\n'이게 바로 역전 드라마!' '사이다!'\n\n[클리셰 포인트]\n- '약자 출발'은 독자의 이입을 극대화\n- 성장 과정이 클수록 최종 승리의 쾌감 ↑\n- '누구나 시작은 약했다'는 메시지\n- 독자의 열등감 해소와 자신감 고취"
+      },
+      "position": {
+        "x": 423.88346979536794,
+        "y": 720.4814022090261
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_REGRESSION_KNOWLEDGE",
+        "label": "미래 지식 활용",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n회귀 전 알게 된 기연, 보물, 사건, 인재 정보를 활용해 이득을 봄.\n\n[대표 작품]\n- 재벌집 막내아들: 진성준이 미래의 주가 정보를 활용\n- 화산귀환: 청명이 과거의 전투 경험을 활용\n- 회귀수선전: 주인공이 과거 알게 된 전설적 비급을 먼저 획득\n- SSS급 헌터: 미래 정보를 활용해 위기 회피\n\n[독자 반응]\n'이 시기에 이 비경이 열린다!' '이 자가 나중에 천재가 된다.'\n\n[클리셰 포인트]\n- '정보의 불평등'을 이용한 대리 만족\n- 모두가 혼란스러울 때 홀로 침착한 카리스마\n- 독자도 정보를 알고 있는 듯한 착각\n- '한 수 위네' 감탄 유도"
+      },
+      "position": {
+        "x": 571.443203936251,
+        "y": 1428.4719298281873
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_REGRESSION_GOOD_PEOPLE",
+        "label": "선한 인물 챙기기",
+        "color": "#FF6B00",
+        "notes": "★★★★☆\n회귀 전 자신에게 잘해준 사람을 먼저 찾아가 챙겨주는 장면.\n\n[대표 작품]\n- 재벌집 막내아들: 진성준이 자신을 따르던 비서를 먼저 챙김\n- 화산귀환: 청명이 과거 자신을 따르던 동료들을 먼저 구함\n- SSS급 헌터: 김독자가 과거 자신을 도와준 사람들을 먼저 챙김\n- 회귀수선전: 자신을 지지했던 사람들을 먼저 구함\n\n[독자 반응]\n'이게 바로 회귀물의 맛!' '훈훈하다'\n\n[클리셰 포인트]\n- 복수만 있는 회귀물에 온정을 더함\n- 은혜를 잊지 않는 주인공의 모습에好感\n- 이 캐릭터들이 이후 조력자로 활약\n- 감정적 깊이와 따뜻함을 제공"
+      },
+      "position": {
+        "x": 468.9902823956282,
+        "y": 1623.6183253747386
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_REGRESSION_PAST_FIGURE",
+        "label": "과거 인물 재등장",
+        "color": "#FF6B00",
+        "notes": "★★★★☆\n회귀 전에 적대했던 인물이 다시 등장해, 과거와 현재의 주인공을 비교.\n\n[대표 작품]\n- 화산귀환: 청명이 과거 자신을 추방했던 장로들과 재회\n- 재벌집 막내아들: 진성준이 과거 자신을 무시하던 이들과 재회\n- 회귀수선전: 과거 주인공을 배신했던 동문이 다시 나타남\n- SSS급 헌터: 과거의 적이 다시 등장\n\n[독자 반응]\n'이 녀석, 전생엔 날 무시했었는데...'\n\n[클리셰 포인트]\n- 과거와 현재의 대비가 포인트\n- 주인공의 성장을 가장 극명하게 보여줌\n- 적의 당혹감이 쾌감을 더함\n- '넌 그대로지만 난 변했다'는 메시지"
+      },
+      "position": {
+        "x": 365.5388885111043,
+        "y": 1464.6467128839108
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_LEVEL_UP",
+        "label": "레벨/경지 돌파",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n오랜 노력 끝에 드디어 다음 단계에 도달.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우가 레벨업하고 새로운 스킬 획득\n- 회귀수선전: 주인공이 경지 돌파\n- 화산귀환: 청명이 무공의 경지를 넘어섬\n- 완미세계: 수련 끝에 다음 경지에 도달\n\n[독자 반응]\n'드디어!' '레벨업!' '이 맛에 본다!'\n\n[클리셰 포인트]\n- 고통과 인내의 과정이 길수록 쾌감 ↑\n- 주변의 놀라는 반응이 성취감 배가\n- RPG 게임의 레벨업과 동일한 쾌감\n- '이제 진짜 시작이다'는 대사로 다음 전개 예고"
+      },
+      "position": {
+        "x": 2051.86402212645,
+        "y": 436.73447784038217
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_SKILL_ACQUIRE",
+        "label": "전설 스킬/공법 획득",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n주인공만 얻을 수 있는 전설적 능력 획득.\n\n[대표 작품]\n- 전지적 독자 시점: 김독자가 전설적 스킬 '독해' 획득\n- 화산귀환: 청명이 전설적 절대검법 습득\n- 나 혼자만 레벨업: 성진우가 희귀 스킬 획득\n- 완미세계: 전설적 공법 습득\n\n[독자 반응]\n'와! 대박' '개사기' '부럽다'\n\n[클리셰 포인트]\n- '오직 나만'의 특별함에 대한 소유욕 자극\n- 스킬 설명에서 '대박' 감탄 유도\n- 앞으로 어떻게 활용할지 기대감\n- RPG 전설 아이템 획득의 쾌감"
+      },
+      "position": {
+        "x": 1897.2095794422435,
+        "y": 62.395471177924314
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_SYSTEM_BUG",
+        "label": "시스템 버그/치트 발견",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n시스템의 허점이나 숨겨진 루트 발견.\n\n[대표 작품]\n- 버그란 이런 것이다: 시스템 버그로 무한 성장\n- SSS급 헌터: 숨겨진 퀘스트 발견\n- 나 혼자만 레벨업: '플레이어' 특권 발견\n- 전지적 독자 시점: 시나리오의 숨겨진 루트 발견\n\n[독자 반응]\n'이게 바로 지능형 플레이!' '개꿀!'\n\n[클리셰 포인트]\n- '머리를 쓰는 먼치킨'의 매력 극대화\n- 시스템이 못 막는 버그 악용의 통쾌함\n- '나도 저런 생각을 했는데!' 대리 만족\n- 지적 플레이에 대한 감탄 유도"
+      },
+      "position": {
+        "x": 1879.2712483670985,
+        "y": 481.9416553766292
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_UPPER_WORLD",
+        "label": "상위 차원/세계 확장",
+        "color": "#0066FF",
+        "notes": "★★★★★\n'이 정도면 끝?' 싶을 때 더 높은 차원이 열림.\n\n[대표 작품]\n- 전지적 독자 시점: 차원을 넘어선 시나리오 확장\n- 완미세계: 하계→중계→상계→신계 확장\n- 회귀수선전: 인계→영계→선계 확장\n- 도왕: 도의 깨달음과 함께 상위 세계 개방\n\n[독자 반응]\n'와! 스케일 미쳤다!' '대박'\n\n[클리셰 포인트]\n- 점진적 확장으로 계속된 신선함 제공\n- 상위 차원마다 새로운 법칙과 적 등장\n- 작품 수명 연장과 독자 호기심 유지\n- '이제 진짜 시작이다' 대사로 기대감 ↑"
+      },
+      "position": {
+        "x": 579.0359026968192,
+        "y": 275.1777818236851
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_SECRET_REALM",
+        "label": "비경/유적 탐험",
+        "color": "#0066FF",
+        "notes": "★★★★★\n고대 유적, 비밀 공간 탐험.\n\n[대표 작품]\n- 완미세계: 수많은 비경과 유적 탐험\n- 회귀수선전: 고대 선인의 유적 탐험\n- 화산귀환: 강호의 비밀 장소 탐험\n- 나 혼자만 레벨업: 던전 탐험\n\n[독자 반응]\n'모험 가고 싶다' '재밌다'\n\n[클리셰 포인트]\n- RPG 던전 탐험과 동일한 재미\n- 하나씩 해금되는 아이템에 수집욕 충족\n- 위험하지만 보상이 큰 구조가 모험심 자극\n- 주인공의 머리 쓰는 모습에 감탄"
+      },
+      "position": {
+        "x": 878.365233532425,
+        "y": 205.4070919903929
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_LEGEND_EXIST",
+        "label": "전설적 존재 등장",
+        "color": "#0066FF",
+        "notes": "★★★★☆\n고대 신선, 전설적 영수, 신격 존재 등장.\n\n[대표 작품]\n- 전지적 독자 시점: 성좌, 별자리 등 신격 존재 등장\n- 완미세계: 고대 신수와 전설적 존재 등장\n- 회귀수선전: 진선, 도조 등 전설적 존재 등장\n- 도왕: 전설적 도인과의 만남\n\n[독자 반응]\n'이야... 대단하다' '진짜 신선이다'\n\n[클리셰 포인트]\n- 세계관의 깊이와 신비감을 더함\n- 전설적 존재와의 만남이 스케일을 확장\n- 주인공의 성장 목표를 상향 조정\n- '이 정도면 끝?'이라는 생각을 깨뜨림"
+      },
+      "position": {
+        "x": 767.7286406066665,
+        "y": 55.199479354762346
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_GENERATION_GAP",
+        "label": "세대 교체의 씁쓸함",
+        "color": "#9C27B0",
+        "notes": "★★★★★\n주인공이 살아있는 동안 동시대 인물들이 모두 떠남.\n\n[대표 작품]\n- 회귀수선전: 주인공이 수백 년 동안 모든 인연을 떠나보냄\n- 도왕: 수백 년 수련하며 모든 동료를 떠나보냄\n- 완미세계: 고향과 가족을 떠나보냄\n- 화산귀환: 세월이 흐르며 동료들이 떠남\n\n[독자 반응]\n'허전하다...' '현실적이네' 깊은 여운\n\n[클리셰 포인트]\n- 장생의 대가를 보여주는 장치\n- 독자가 정든 캐릭터들의 이별로 감동 ↑\n- 주인공의 고독에 공감하며 깊은 여운\n- 작품에 철학적 깊이를 더함"
+      },
+      "position": {
+        "x": 1114.3947600058586,
+        "y": 578.121936050197
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_LONELINESS",
+        "label": "장생의 외로움",
+        "color": "#9C27B0",
+        "notes": "★★★★☆\n수천 년을 살며 모든 인연이 사라진 주인공의 고독.\n\n[대표 작품]\n- 회귀수선전: 주인공의 수천 년 고독\n- 도왕: 진정한 도를 깨달은 자의 외로움\n- 완미세계: 최강자가 된 주인공의 고독\n- 화산귀환: 모든 동료를 떠나보낸 청명의 고독\n\n[독자 반응]\n'마음 아프다' '이게 장생의 대가구나'\n\n[클리셰 포인트]\n- 축복인 듯 보이는 장생의 그림자\n- '혼자 남은 자'의 외로움에 공감\n- 작품의 감정적 깊이를 더함\n- 독자에게 여운을 남기는 장치"
+      },
+      "position": {
+        "x": 1200.6320563857241,
+        "y": 362.4157283273694
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_FORESHADOW",
+        "label": "떡밥 회수/복선",
+        "color": "#FF9800",
+        "notes": "★★★★★\n수백 화 전 떡밥이 드디어 회수.\n\n[대표 작품]\n- 전지적 독자 시점: 초반 떡밥이 후반에 모두 회수\n- 재벌집 막내아들: 초반 설정이 후반에 연결\n- 회귀수선전: 회귀 전 정보가 후반에 연결\n- 화산귀환: 초반 복선이 후반에 회수\n\n[독자 반응]\n'아! 그거였구나!' '작가 천재!'\n\n[클리셰 포인트]\n- '아하!' 모먼트로 지적 쾌감 제공\n- 작가의 필력을 가장 극명하게 보여줌\n- 재독 유도 효과\n- 독자의 의문이 한꺼번에 해소되는 쾌감"
+      },
+      "position": {
+        "x": 108.0765881554751,
+        "y": 732.1641162692982
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_POLITICS",
+        "label": "권모술수/정치적 생존",
+        "color": "#FF9800",
+        "notes": "★★★★☆\n힘만으로 이기는 것이 아니라 조직 내부 정치로 생존.\n\n[대표 작품]\n- 재벌집 막내아들: 진성준의 경영 전략과 권력 투쟁\n- 화산귀환: 청명이 강호의 정치적 관계를 활용\n- 회귀수선전: 종파 내부의 권력 다툼 속 생존\n- SSS급 헌터: 길드 내부 정치에서 생존\n\n[독자 반응]\n'이게 진짜 현실이지' '한 수 위네'\n\n[클리셰 포인트]\n- 체스 게임 같은 지적 쾌감\n- 직접 나서지 않고 적을 무너뜨리는 전략\n- 주인공의 카리스마가 더욱 극대화\n- 현실에서도 적용 가능한 교훈"
+      },
+      "position": {
+        "x": 212.1215965253549,
+        "y": 388.2200741878249
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_PHILOSOPHY",
+        "label": "철학적 깨달음",
+        "color": "#FF9800",
+        "notes": "★★★★☆\n단순한 힘의 성장이 아닌 도(道)에 대한 통찰.\n\n[대표 작품]\n- 도왕: 도(道)를 깨달아가는 과정\n- 회귀수선전: 장생의 의미를 깨달음\n- 완미세계: 자신만의 도를 개척\n- 화산귀환: 무도의 본질을 깨달음\n\n[독자 반응]\n'와... 깊다' '생각하게 되네'\n\n[클리셰 포인트]\n- 단순한 성장물에 깊이를 더함\n- 독자에게 생각할 거리를 제공\n- 주인공의 성장이 내면으로 확장\n- 작품을 오래 기억하게 하는 장치"
+      },
+      "position": {
+        "x": 314.23178759682935,
+        "y": 527.1048266662275
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_SURVIVAL",
+        "label": "생존 본능/위기 회피",
+        "color": "#4CAF50",
+        "notes": "★★★★★\n무턱대고 싸우지 않고 위험을 회피하는 현실적 전략.\n\n[대표 작품]\n- 회귀수선전: 주인공이 위험을 감지하면 즉시 회피\n- 화산귀환: 청명이 전략적 후퇴를 선택\n- SSS급 헌터: 김독자가 전략적 후퇴\n- 나 혼자만 레벨업: 때로는 도망치는 선택\n\n[독자 반응]\n'맞아, 죽을 짓 하지 마' '현실적이야'\n\n[클리셰 포인트]\n- 무모함보다 인내와 전략을 높이 평가\n- '지금 도망치는 것이 미래의 승리'라는 메시지\n- 다른 먼치킨물과 차별화된 현실감\n- 주인공에 대한 신뢰와 공감을 더함"
+      },
+      "position": {
+        "x": 1524.984104547978,
+        "y": 1798.9093864784577
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_ECONOMY",
+        "label": "자원/경제 관리",
+        "color": "#4CAF50",
+        "notes": "★★★★☆\n자금, 재료, 자원을 철저히 계산하고 관리.\n\n[대표 작품]\n- 재벌집 막내아들: 진성준의 경영 전략과 투자\n- 회귀수선전: 영석/재료의 철저한 관리\n- 나 혼자만 레벨업: 성진우의 아이템/골드 관리\n- 완미세계: 자원 관리와 제작\n\n[독자 반응]\n'경제 관념 있다' '현실적이야'\n\n[클리셰 포인트]\n- 현실의 자산 관리 성공을 대리 체험\n- 실용적인 통찰을 제공\n- 단순한 전투물보다 지적 깊이를 더함\n- 주인공의 지혜와 계획성이 돋보임"
+      },
+      "position": {
+        "x": 1527.7788318430103,
+        "y": 2128.0548014429255
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_ONE_VS_MANY",
+        "label": "일대다 압도적 전투",
+        "color": "#FF6B6B",
+        "notes": "★★★★★\n혼자 수백 명의 적을 쓸어버리는 장면.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우가 수만 마리의 몬스터를 혼자 처치\n- 화산귀환: 청명이 수많은 고수들을 혼자 상대\n- 완미세계: 주인공이 수백 명의 적을 일격에 제압\n- SSS급 헌터: 혼자 던전을 클리어\n\n[독자 반응]\n'이게 바로 먼치킨!' '레전드!'\n\n[클리셰 포인트]\n- 액션물의 가장 기본이자 핵심\n- 전투씬의 속도감과 연출이 중요\n- 마지막에 남는 고독한 주인공의 카리스마\n- 단순하지만 강력한 쾌감"
+      },
+      "position": {
+        "x": 319.44438716540486,
+        "y": 1907.8172461303998
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_SECT_WAR",
+        "label": "대규모 종파/길드 전쟁",
+        "color": "#FF6B6B",
+        "notes": "★★★★★\n수많은 수선자/헌터가 참여하는 대규모 전투.\n\n[대표 작품]\n- 나 혼자만 레벨업: 길드 간의 대규모 레이드 전쟁\n- 화산귀환: 정사 대 마도의 대규모 전투\n- 재벌집 막내아들: 기업 간의 인수합병 전쟁\n- 완미세계: 종파 간의 대규모 전쟁\n\n[독자 반응]\n'와! 스케일 크다' '박진감 넘친다'\n\n[클리셰 포인트]\n- 대규모 스케일에 압도감과 몰입감\n- 전체 전황을 뒤집는 주인공의 한 방\n- 전쟁 영화 같은 박진감\n- 개인의 힘보다 집단의 움직임과 전술이 포인트"
+      },
+      "position": {
+        "x": 531.921219935732,
+        "y": 1889.7021495403474
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_SKILL_COMBO",
+        "label": "스킬/공법 연계",
+        "color": "#FF6B6B",
+        "notes": "★★★★☆\n다양한 스킬과 공법을 조합한 화려한 전투.\n\n[대표 작품]\n- 전지적 독자 시점: 김독자의 독해+스킬 연계\n- 나 혼자만 레벨업: 성진우의 스킬 콤보\n- 도왕: 다양한 도법의 조합\n- 완미세계: 공법과 스킬의 연계\n\n[독자 반응]\n'이 조합 대박' '와! 간지'\n\n[클리셰 포인트]\n- 다양한 능력의 조합으로 전략적 깊이를 더함\n- 독자에게 '이렇게도 쓸 수 있구나' 감탄 유도\n- 전투의 화려함과 박진감을 동시에 제공\n- 주인공의 창의성과 지혜가 돋보임"
+      },
+      "position": {
+        "x": 464.15887659126264,
+        "y": 2151.6336856802445
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_BOSS_RAID",
+        "label": "보스전/레이드",
+        "color": "#FF6B6B",
+        "notes": "★★★★★\n던전이나 비경의 최종 보스전.\n\n[대표 작품]\n- 나 혼자만 레벨업: 아이언, 안타레스 등 보스전\n- SSS급 헌터: 레이드 보스전\n- 완미세계: 각종 괴수/마왕전\n- 회귀수선전: 비경의 최종 보스전\n\n[독자 반응]\n'드디어 보스!' '이게 바로 레이드지'\n\n[클리셰 포인트]\n- RPG 게임의 보스 레이드와 유사한 구조\n- 보스의 패턴과 약점, 주인공의 전략이 맞물림\n- 보스 처치 후 보상과 성취감\n- 다음 전개에 대한 기대감으로 이어짐"
+      },
+      "position": {
+        "x": 433.4835617601354,
+        "y": 1776.8577696781003
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_SODA",
+        "label": "사이다 클리셰",
+        "color": "#FF0000",
+        "notes": "★★★★★\n독자가 가장 열광하는 통쾌한 순간들.\n\n[포함 TOP 노드]\n- 회귀자의 압도적 복수 (TOP_REGRESSOR_REVENGE)\n- 시스템 먼치킨 (TOP_SYSTEM_MUNCHKIN)\n- 거만한 천재의 굴욕 (TOP_ARROGANT_CRUSH)\n- 숨겨진 힘의 공개 (TOP_HIDDEN_POWER)\n- 절체절명의 역전승 (TOP_COMEBACK_WIN)\n- 최약체의 압도적 승리 (TOP_UNDERDOG_VICTORY)\n- 예상치 못한 반전 (TOP_PLOT_TWIST)\n\n[핵심 특징]\n- 복수/응징/역전의 쾌감이 핵심\n- 독자의 분노와 억울함을 해소\n- 극적 카타르시스를 선사\n- '드디어!' '통쾌하다!' 반응 유도"
+      },
+      "position": {
+        "x": 363.1890082856744,
+        "y": 971.551086931063
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_REGRESSION",
+        "label": "회귀 클리셰",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n회귀물에서만 볼 수 있는 특수 클리셰.\n\n[포함 TOP 노드]\n- 회귀자의 압도적 복수 (TOP_REGRESSOR_REVENGE)\n- 미래 지식 활용 (TOP_REGRESSION_KNOWLEDGE)\n- 선한 인물 챙기기 (TOP_REGRESSION_GOOD_PEOPLE)\n- 과거 인물 재등장 (TOP_REGRESSION_PAST_FIGURE)\n\n[핵심 특징]\n- '기다림의 쾌감'이 핵심 재미\n- 미래 정보를 활용한 우월함\n- 과거와 현재의 대비\n- '한 수 위'라는 감탄 유도"
+      },
+      "position": {
+        "x": 469.09032619228196,
+        "y": 1413.233002138569
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_GROWTH",
+        "label": "성장 쾌감",
+        "color": "#FF6B00",
+        "notes": "★★★★★\n성장에서 오는 재미.\n\n[포함 TOP 노드]\n- 레벨/경지 돌파 (TOP_LEVEL_UP)\n- 전설 스킬/공법 획득 (TOP_SKILL_ACQUIRE)\n- 시스템 버그/치트 발견 (TOP_SYSTEM_BUG)\n\n[핵심 특징]\n- 성장과 발전의 쾌감이 핵심\n- 독자의 대리 성취감을 자극\n- '드디어!' '대박!' 반응 유도\n- 수련과 준비 과정의 인내가 성과로 연결됨"
+      },
+      "position": {
+        "x": 1959.608296481839,
+        "y": 278.70499412582046
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_WORLD",
+        "label": "세계관 확장",
+        "color": "#0066FF",
+        "notes": "★★★★★\n세계가 확장되는 재미.\n\n[포함 TOP 노드]\n- 상위 차원/세계 확장 (TOP_UPPER_WORLD)\n- 비경/유적 탐험 (TOP_SECRET_REALM)\n- 전설적 존재 등장 (TOP_LEGEND_EXIST)\n- 세계관 법칙/설정 (TOP_WORLD_LAW)\n- 아이템 제작/강화 (TOP_ITEM_CRAFT)\n- 몬스터/수하 포획 (TOP_MONSTER_TAMING)\n\n[핵심 특징]\n- 세계관의 확장과 신비감이 핵심\n- '와! 스케일 미쳤다!' 반응 유도\n- 새로운 법칙과 존재의 등장으로 호기심 자극\n- 작품의 수명을 연장하는 장치"
+      },
+      "position": {
+        "x": 764.8680576734728,
+        "y": 277.94049330092537
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_EMOTION",
+        "label": "감정적 여운",
+        "color": "#9C27B0",
+        "notes": "★★★★☆\n감성을 자극하는 요소.\n\n[포함 TOP 노드]\n- 세대 교체의 씁쓸함 (TOP_GENERATION_GAP)\n- 장생의 외로움 (TOP_LONELINESS)\n- 희생/헌신 (TOP_SACRIFICE)\n- 가족/혈육 관계 (TOP_FAMILY_LOVE)\n- 우정/동료애 (TOP_FRIENDSHIP)\n\n[핵심 특징]\n- 감동과 여운이 핵심\n- '허전하다' '마음 아프다' 반응 유도\n- 주인공의 고독과 인간 관계에 대한 깊은 성찰\n- 작품에 깊이를 더하는 장치"
+      },
+      "position": {
+        "x": 1105.5783472713429,
+        "y": 353.3008052963655
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_INTELLECT",
+        "label": "지적 만족감",
+        "color": "#FF9800",
+        "notes": "★★★★☆\n머리를 쓰게 하는 요소.\n\n[포함 TOP 노드]\n- 떡밥 회수/복선 (TOP_FORESHADOW)\n- 권모술수/정치적 생존 (TOP_POLITICS)\n- 철학적 깨달음 (TOP_PHILOSOPHY)\n- 예상치 못한 반전 (TOP_PLOT_TWIST)\n- 복선/떡밥 연출 (TOP_WRITING_FORESHADOW)\n\n[핵심 특징]\n- 지적 만족감이 핵심\n- '작가 천재!' '한 수 위네' 반응 유도\n- 복선과 전략의 정교함이 돋보임\n- 단순한 힘의 싸움을 넘어선 깊이"
+      },
+      "position": {
+        "x": 210.98517152834637,
+        "y": 635.3061682449198
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_EMPATHY",
+        "label": "공감/현실감",
+        "color": "#4CAF50",
+        "notes": "★★★★☆\n독자가 공감하는 요소.\n\n[포함 TOP 노드]\n- 생존 본능/위기 회피 (TOP_SURVIVAL)\n- 자원/경제 관리 (TOP_ECONOMY)\n- 응원/지지 (TOP_CHEERING)\n\n[핵심 특징]\n- 현실감과 공감이 핵심\n- '맞아, 죽을 짓 하지 마' '현실적이야' 반응 유도\n- 주인공의 지혜와 전략이 돋보임\n- 독자가 실제로도 적용 가능한 교훈"
+      },
+      "position": {
+        "x": 1424.8279000805157,
+        "y": 1969.6503189331222
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_ACTION",
+        "label": "전투 액션",
+        "color": "#FF6B6B",
+        "notes": "★★★★★\n전투의 박진감.\n\n[포함 TOP 노드]\n- 일대다 압도적 전투 (TOP_ONE_VS_MANY)\n- 대규모 종파/길드 전쟁 (TOP_SECT_WAR)\n- 스킬/공법 연계 (TOP_SKILL_COMBO)\n- 보스전/레이드 (TOP_BOSS_RAID)\n- 전술/전략 전투 (TOP_GROUP_BATTLE_STRATEGY)\n\n[핵심 특징]\n- 액션과 박진감이 핵심\n- '이게 바로 먼치킨!' '레전드!' 반응 유도\n- 속도감 있는 전투씬과 스케일\n- 주인공의 카리스마가 극대화되는 순간"
+      },
+      "position": {
+        "x": 427.95562818375305,
+        "y": 1964.1639982712015
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_ROMANCE_CONFESSION",
+        "label": "로맨스 고백/결말",
+        "color": "#E91E63",
+        "notes": "★★★★☆\n주인공의 로맨스가 결실을 맺는 장면.\n\n[대표 작품]\n- 재벌집 막내아들: 진성준과 서민영의 결말\n- 전지적 독자 시점: 김독자와 유상아의 관계\n- 회귀수선전: 주인공과 히로인의 결말\n- 화산귀환: 청명의 로맨스 결말\n\n[독자 반응]\n'드디어!' '기다렸어!' 감동\n\n[클리셰 포인트]\n- 오랜 기다림 끝의 결실\n- 감정적 해소와 여운\n- 주인공의 인간적인 면모를 보여줌\n- 작품의 감정적 완결성 제공"
+      },
+      "position": {
+        "x": 694.6116063939722,
+        "y": 1784.7138108149168
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_ROMANCE_JEALOUSY",
+        "label": "질투 유발",
+        "color": "#E91E63",
+        "notes": "★★★★☆\n다른 캐릭터가 주인공에게 관심을 보일 때, 서브 남주/여주의 질투 반응.\n\n[대표 작품]\n- 로맨스 판타지: 다른 남주가 주인공에게 다가갈 때의 질투\n- BL 장르: 다른 캐릭터의 접근에 대한 질투\n- 회귀물: 주인공에게 관심을 보이는 다른 인물에 대한 질투\n\n[독자 반응]\n'괜히 질투하네 ㅋㅋ'\n\n[클리셰 포인트]\n- 서브 캐릭터의 감정 표현이 포인트\n- 주인공의 인기를 간접적으로 보여줌\n- 독자의 질투심 자극과 재미\n- 로맨스의 긴장감을 더함"
+      },
+      "position": {
+        "x": 621.0855036970493,
+        "y": 2177.7139178025946
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_ROMANCE_REUNION",
+        "label": "운명적 재회",
+        "color": "#E91E63",
+        "notes": "★★★★☆\n과거 인연과의 극적 재회.\n\n[대표 작품]\n- 로맨스 판타지: 전생의 연인과의 재회\n- 회귀물: 과거 자신을 좋아했던 사람과의 재회\n- 전지적 독자 시점: 과거 인연과의 재회\n\n[독자 반응]\n'이게 바로 운명!' '설렌다'\n\n[클리셰 포인트]\n- 운명적 만남의 감동\n- 과거와 현재의 연결\n- 독자의 로맨틱한 기대 충족\n- 감정적 여운을 남김"
+      },
+      "position": {
+        "x": 820.7525686924878,
+        "y": 2180.560902486589
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_COMEDY_MISUNDERSTAND",
+        "label": "오해/엉뚱한 상황",
+        "color": "#FFEB3B",
+        "notes": "★★★★☆\n예상치 못한 개그 상황.\n\n[대표 작품]\n- 화산귀환: 청명의 엉뚱한 행동\n- 전지적 독자 시점: 김독자의 황당한 상황\n- SSS급 헌터: 예상치 못한 개그 상황\n\n[독자 반응]\n'ㅋㅋㅋㅋ' '미친 ㅋㅋ' 폭소\n\n[클리셰 포인트]\n- 예상치 못한 전환으로 웃음 유발\n- 진지한 상황에서 터지는 개그의 반전 효과\n- 캐릭터의 엉뚱한 매력을 부각\n- 긴장감을 풀어주는 이완 장치"
+      },
+      "position": {
+        "x": 190.14141345685735,
+        "y": 2160.599796566209
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_COMEDY_REACTION",
+        "label": "주변인 반응 개그",
+        "color": "#FFEB3B",
+        "notes": "★★★★☆\n주인공의 행동에 주변인들이 경악/당황하는 장면.\n\n[대표 작품]\n- 나 혼자만 레벨업: 다른 헌터들의 성진우에 대한 반응\n- 화산귀환: 청명의 행동에 대한 동료들의 반응\n- 전지적 독자 시점: 주변인들의 당황한 반응\n\n[독자 반응]\n'이게 말이 돼?!' 'ㅋㅋㅋ'\n\n[클리셰 포인트]\n- 주변인의 과장된 반응이 웃음 포인트\n- 주인공의 비범함을 간접적으로 보여줌\n- '이게 말이 돼?' 대사가 클리셰화\n- 캐릭터 간 케미스트리 부각"
+      },
+      "position": {
+        "x": 231.42463221531654,
+        "y": 1783.1043915511711
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_COMEDY_SELF_TALK",
+        "label": "혼잣말/독백 개그",
+        "color": "#FFEB3B",
+        "notes": "★★★☆☆\n주인공의 유쾌한 내면 독백.\n\n[대표 작품]\n- 전지적 독자 시점: 김독자의 독백\n- SSS급 헌터: 김독자의 내면 독백\n- 화산귀환: 청명의 속마음 독백\n\n[독자 반응]\n'ㅋㅋ 속마음 레전드'\n\n[클리셰 포인트]\n- 주인공의 속마음이 독자와 소통\n- 겉과 속이 다른 주인공의 매력\n- 개인적인 유머 감각이 드러남\n- 독자와의 친밀감 형성"
+      },
+      "position": {
+        "x": 23.805853652724842,
+        "y": 1783.4221978660262
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_CHARISMA",
+        "label": "카리스마 폭발",
+        "color": "#3F51B5",
+        "notes": "★★★★★\n주인공의 압도적 존재감.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우의 결전 장면\n- 화산귀환: 청명의 검을 드는 순간\n- 재벌집 막내아들: 진성준의 결정적 순간\n- 완미세계: 주인공의 위엄이 드러나는 순간\n\n[독자 반응]\n'주인공 간지!' '레전드 컷'\n\n[클리셰 포인트]\n- 주인공의 존재감이 극대화되는 순간\n- 독자의 감탄을 유도하는 연출\n- 작품 내 최고의 하이라이트\n- 캐릭터의 매력을 한층 강화"
+      },
+      "position": {
+        "x": 908.8557293477216,
+        "y": 1801.5995475317368
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_COLD_HERO",
+        "label": "냉정/무심 주인공",
+        "color": "#3F51B5",
+        "notes": "★★★★☆\n감정 절제와 이성적 판단.\n\n[대표 작품]\n- 재벌집 막내아들: 진성준의 냉정한 판단\n- 회귀수선전: 주인공의 이성적 판단\n- SSS급 헌터: 김독자의 냉철한 판단\n- 나 혼자만 레벨업: 성진우의 이성적 판단\n\n[독자 반응]\n'주인공 냉철하다' '멋있다'\n\n[클리셰 포인트]\n- 감정에 휘둘리지 않는 카리스마\n- 냉정함이 오히려 매력으로 작용\n- 이성적 판단이 승리를 가져옴\n- 독자가 신뢰하는 캐릭터로 자리매김"
+      },
+      "position": {
+        "x": 1113.7182517488238,
+        "y": 1787.6234605891316
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_CHARMING_VILLAIN",
+        "label": "매력적인 악역",
+        "color": "#3F51B5",
+        "notes": "★★★★☆\n독자가 좋아하는 반전 악역.\n\n[대표 작품]\n- 전지적 독자 시점: 독자적인 매력의 악역\n- 나 혼자만 레벨업: 반전 있는 악역들\n- 화산귀환: 매력적인 적대자\n- 재벌집 막내아들: 입체적인 악역\n\n[독자 반응]\n'이 악역 매력있다' '작가 캐릭터 잘 살렸네'\n\n[클리셰 포인트]\n- 단순한 악이 아닌 입체적 캐릭터\n- 독자가 이해하거나 공감하는 면모\n- 주인공과의 대비로 더욱 빛남\n- 작품의 깊이를 더하는 요소"
+      },
+      "position": {
+        "x": 953.8220606342497,
+        "y": 2112.6239622159806
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_WRITING_FORESHADOW",
+        "label": "복선/떡밥 연출",
+        "color": "#795548",
+        "notes": "★★★★★\n작가의 정교한 복선 심기.\n\n[대표 작품]\n- 전지적 독자 시점: 모든 떡밥이 회수됨\n- 재벌집 막내아들: 초반 설정이 후반에 연결\n- 회귀수선전: 회귀 전 정보가 후반에 연결\n- 화산귀환: 초반 복선이 후반에 회수\n\n[독자 반응]\n'작가 천재!' '대단하다'\n\n[클리셰 포인트]\n- '아하!' 모먼트로 지적 쾌감 제공\n- 작가의 필력을 가장 극명하게 보여줌\n- 재독 유도 효과\n- 독자의 의문이 한꺼번에 해소되는 쾌감"
+      },
+      "position": {
+        "x": 102.3671799044776,
+        "y": 515.9253285001099
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_WRITING_TENSION",
+        "label": "긴장감 조절",
+        "color": "#795548",
+        "notes": "★★★★★\n전개 속도와 긴장감 유지.\n\n[대표 작품]\n- 나 혼자만 레벨업: 레이드 장면의 긴장감\n- 화산귀환: 전투 장면의 속도감\n- 재벌집 막내아들: 권력 투쟁의 긴장감\n- 전지적 독자 시점: 시나리오의 긴장감\n\n[독자 반응]\n'손에 땀을 쥐게 한다' '몰입감 대박'\n\n[클리셰 포인트]\n- 적절한 긴장과 이완의 반복\n- 독자를 계속 읽게 만드는 리듬\n- 긴장감이 너무 길면 지치고, 너무 짧으면 재미 반감\n- 작가의 호흡 조절 능력이 드러남"
+      },
+      "position": {
+        "x": 174.80173604203537,
+        "y": 157.73974198251977
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_WRITING_DIALOGUE",
+        "label": "대사/말투 연출",
+        "color": "#795548",
+        "notes": "★★★★☆\n캐릭터별 개성 있는 대사.\n\n[대표 작품]\n- 화산귀환: 청명의 독특한 말투\n- 전지적 독자 시점: 캐릭터별 개성 있는 대사\n- 재벌집 막내아들: 진성준의 날카로운 대사\n- 나 혼자만 레벨업: 캐릭터별 대사 스타일\n\n[독자 반응]\n'대사 레전드' '캐릭터 살아있다'\n\n[클리셰 포인트]\n- 캐릭터의 개성이 대사에 드러남\n- 기억에 남는 명대사 탄생\n- 캐릭터 간 케미스트리 강화\n- 작품의 완성도를 높이는 요소"
+      },
+      "position": {
+        "x": 20.95046773210631,
+        "y": 56.562866472785814
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_WORLD_LAW",
+        "label": "세계관 법칙/설정",
+        "color": "#009688",
+        "notes": "★★★★☆\n독특한 세계관 규칙.\n\n[대표 작품]\n- 전지적 독자 시점: 독특한 시나리오 시스템\n- 나 혼자만 레벨업: 헌터 시스템\n- 완미세계: 수련과 경지 시스템\n- 회귀수선전: 회귀와 수련 시스템\n\n[독자 반응]\n'이 설정 대박' '창의적이다'\n\n[클리셰 포인트]\n- 독자에게 신선함을 주는 독특한 규칙\n- 세계관에 깊이와 일관성을 부여\n- 주인공의 성장과 전개에 활용됨\n- 작품의 정체성을 형성하는 요소"
+      },
+      "position": {
+        "x": 669.7205653400141,
+        "y": 504.2511346191725
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_ITEM_CRAFT",
+        "label": "아이템 제작/강화",
+        "color": "#009688",
+        "notes": "★★★★☆\n직접 만드는 아이템의 재미.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우의 장비 강화\n- 회귀수선전: 전설적 무기 제작\n- 완미세계: 약초와 아이템 제작\n- 화산귀환: 무기와 장비 제작\n\n[독자 반응]\n'제작 레전드' '이 아이템 대박'\n\n[클리셰 포인트]\n- 직접 만드는 성취감\n- 재료 수집과 제작 과정의 재미\n- 만들어진 아이템의 활용이 기대됨\n- RPG 게임의 제작 시스템과 유사"
+      },
+      "position": {
+        "x": 777.8775478715837,
+        "y": 434.73224134483627
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_MONSTER_TAMING",
+        "label": "몬스터/수하 포획",
+        "color": "#009688",
+        "notes": "★★★★☆\n적을 아군으로 만드는 재미.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우의 그림자 군단\n- 완미세계: 전설적 영수 포획\n- 화산귀환: 아군이 된 과거의 적\n- SSS급 헌터: 포획한 몬스터 활용\n\n[독자 반응]\n'이 몬스터 귀여워' '부럽다'\n\n[클리셰 포인트]\n- 적이 아군이 되는 반전 재미\n- 수집욕을 자극하는 요소\n- 포획한 존재들의 활약이 기대됨\n- 주인공의 군단/세력을 확장"
+      },
+      "position": {
+        "x": 880.0056064955194,
+        "y": 472.00240654636985
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_GROUP_BATTLE_STRATEGY",
+        "label": "전술/전략 전투",
+        "color": "#FF6B6B",
+        "notes": "★★★★★\n팀워크와 전술이 중요한 전투.\n\n[대표 작품]\n- 나 혼자만 레벨업: 레이드 전략\n- 화산귀환: 정파 연합의 전술\n- 완미세계: 종파 간 협력 전투\n- SSS급 헌터: 길드 레이드 전략\n\n[독자 반응]\n'전략 대박' '팀워크 좋다'\n\n[클리셰 포인트]\n- 개인의 힘보다 팀워크와 전술이 중요\n- 독자가 전략을 함께 고민하는 재미\n- 각 캐릭터의 역할과 특성이 드러남\n- 대규모 전투의 박진감"
+      },
+      "position": {
+        "x": 359.7730110113999,
+        "y": 2149.4375462049247
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_SACRIFICE",
+        "label": "희생/헌신",
+        "color": "#4CAF50",
+        "notes": "★★★★☆\n주인공의 희생적 선택.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우의 희생적 선택\n- 전지적 독자 시점: 김독자의 희생\n- 화산귀환: 청명의 희생적 결단\n- 재벌집 막내아들: 진성준의 희생\n\n[독자 반응]\n'눈물 난다' '감동적이다'\n\n[클리셰 포인트]\n- 주인공의 인간적인 면모를 보여줌\n- 독자의 감정 이입을 극대화\n- 희생이 결국 더 큰 승리를 가져옴\n- 작품에 감동적인 깊이를 더함"
+      },
+      "position": {
+        "x": 1176.1540359247558,
+        "y": 182.31345835549084
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_FAMILY_LOVE",
+        "label": "가족/혈육 관계",
+        "color": "#4CAF50",
+        "notes": "★★★★☆\n가족 간의 애정/갈등.\n\n[대표 작품]\n- 재벌집 막내아들: 진성준과 가족 간의 갈등과 화해\n- 회귀수선전: 가족을 지키려는 주인공\n- 화산귀환: 가족 같은 동료애\n- 완미세계: 가족과의 이별과 그리움\n\n[독자 반응]\n'가족 사랑 감동' '이해된다'\n\n[클리셰 포인트]\n- 가족 관계의 복잡성과 현실감\n- 갈등 속에서도 드러나는 애정\n- 주인공의 동기 부여 요소\n- 독자의 공감을 이끌어냄"
+      },
+      "position": {
+        "x": 1002.1250788279613,
+        "y": 419.11517957870274
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_FRIENDSHIP",
+        "label": "우정/동료애",
+        "color": "#4CAF50",
+        "notes": "★★★★☆\n진정한 동료 간의 유대감.\n\n[대표 작품]\n- 나 혼자만 레벨업: 성진우와 동료들\n- 화산귀환: 청명과 동료들\n- 전지적 독자 시점: 김독자와 동료들\n- 완미세계: 동료들과의 여정\n\n[독자 반응]\n'이게 진짜 동료지' '훈훈하다'\n\n[클리셰 포인트]\n- 함께 성장하고 함께 승리하는 동료애\n- 각 캐릭터의 개성과 역할이 돋보임\n- 주인공의 외로움을 달래주는 존재\n- 작품에 따뜻함을 더하는 요소"
+      },
+      "position": {
+        "x": 969.5491402934372,
+        "y": 221.16406826767843
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_CHEERING",
+        "label": "응원/지지",
+        "color": "#4CAF50",
+        "notes": "★★★★☆\n주인공을 응원하는 주변인들.\n\n[대표 작품]\n- 전지적 독자 시점: 독자들의 응원\n- 나 혼자만 레벨업: 동료들의 응원\n- 화산귀환: 후배들의 응원\n- SSS급 헌터: 동료들의 지지\n\n[독자 반응]\n'응원한다!' '힘내!'\n\n[클리셰 포인트]\n- 주인공에게 힘이 되는 응원\n- 독자도 함께 응원하게 됨\n- 긍정적인 에너지를 전달\n- 주인공의 고립감을 해소"
+      },
+      "position": {
+        "x": 1053.7763395795726,
+        "y": 36.88816032698929
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_PLOT_TWIST",
+        "label": "반전/충격적 전개",
+        "color": "#9E9E9E",
+        "notes": "★★★★★\n예상치 못한 전환점.\n\n[대표 작품]\n- 전지적 독자 시점: 모든 떡밥이 회수되는 반전\n- 재벌집 막내아들: 예상치 못한 전개\n- 화산귀환: 충격적 과거가 드러남\n- 나 혼자만 레벨업: 예상치 못한 반전\n\n[독자 반응]\n'대박 반전!' '소름 돋아'\n\n[클리셰 포인트]\n- 독자의 예상을 완전히 뒤엎는 전환\n- 그동안의 의문이 한꺼번에 해소\n- 작품을 다시 읽게 만드는 힘\n- '작가 천재!'라는 감탄 유도"
+      },
+      "position": {
+        "x": 209.08019835761291,
+        "y": 872.6100195913958
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_OPENING",
+        "label": "프롤로그/첫 화",
+        "color": "#9E9E9E",
+        "notes": "★★★★☆\n독자를 사로잡는 첫 장면.\n\n[대표 작품]\n- 나 혼자만 레벨업: 강렬한 첫 화\n- 전지적 독자 시점: 독특한 프롤로그\n- 재벌집 막내아들: 흡입력 있는 시작\n- 화산귀환: 강렬한 오프닝\n\n[독자 반응]\n'첫 화부터 대박' '끌린다'\n\n[클리셰 포인트]\n- 독자의 호기심을 단번에 사로잡음\n- 작품의 정체성과 방향성을 제시\n- 주인공의 매력을 첫 장면에서 각인\n- 계속 읽게 만드는 힘"
+      },
+      "position": {
+        "x": 81.30506509018846,
+        "y": 1251.3645938227583
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TOP_ENDING",
+        "label": "결말/여운",
+        "color": "#9E9E9E",
+        "notes": "★★★★★\n작품의 마무리와 여운.\n\n[대표 작품]\n- 재벌집 막내아들: 완결의 여운\n- 전지적 독자 시점: 시나리오 완결\n- 나 혼자만 레벨업: 여운을 남긴 결말\n- 화산귀환: 완결의 감동\n\n[독자 반응]\n'결말 대박' '여운이 남는다'\n\n[클리셰 포인트]\n- 모든 떡밥이 회수되는 완결성\n- 독자에게 오래 기억되는 여운\n- 주인공의 여정에 대한 감동\n- 시리즈나 후속작에 대한 기대감"
+      },
+      "position": {
+        "x": 26.235265718789762,
+        "y": 928.4325003224303
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_ROMANCE",
+        "label": "로맨스/감정선",
+        "color": "#E91E63",
+        "notes": "★★★★☆\n로맨스, 감정선, 연애 요소.\n\n[포함 TOP 노드]\n- 로맨스 고백/결말 (TOP_ROMANCE_CONFESSION)\n- 질투 유발 (TOP_ROMANCE_JEALOUSY)\n- 운명적 재회 (TOP_ROMANCE_REUNION)\n\n[핵심 특징]\n- 감정적 설렘과 여운이 핵심\n- '드디어!' '설렌다' 반응 유도\n- 주인공의 인간적인 면모를 보여줌\n- 작품에 따뜻함과 깊이를 더함"
+      },
+      "position": {
+        "x": 712.5964802309752,
+        "y": 2009.4163821200052
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_COMEDY",
+        "label": "코미디/개그",
+        "color": "#FFEB3B",
+        "notes": "★★★★☆\n웃음 요소, 개그 상황.\n\n[포함 TOP 노드]\n- 오해/엉뚱한 상황 (TOP_COMEDY_MISUNDERSTAND)\n- 주변인 반응 개그 (TOP_COMEDY_REACTION)\n- 혼잣말/독백 개그 (TOP_COMEDY_SELF_TALK)\n\n[핵심 특징]\n- 웃음과 유쾌함이 핵심\n- 긴장감을 풀어주는 이완 장치\n- 캐릭터의 매력을 돋보이게 함\n- 독자에게 재미와 휴식을 제공"
+      },
+      "position": {
+        "x": 130.62022428401968,
+        "y": 1941.497938703185
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_CHARACTER",
+        "label": "캐릭터성",
+        "color": "#3F51B5",
+        "notes": "★★★★☆\n주인공 및 캐릭터의 매력.\n\n[포함 TOP 노드]\n- 카리스마 폭발 (TOP_CHARISMA)\n- 냉정/무심 주인공 (TOP_COLD_HERO)\n- 매력적인 악역 (TOP_CHARMING_VILLAIN)\n\n[핵심 특징]\n- 캐릭터의 개성과 매력이 핵심\n- 독자가 좋아하는 캐릭터형\n- 작품의 정체성을 형성하는 요소\n- 주인공에 대한 독자의 애정을 강화"
+      },
+      "position": {
+        "x": 1019.1427404040269,
+        "y": 1938.3244028969013
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_WRITING",
+        "label": "작가의 필력/연출",
+        "color": "#795548",
+        "notes": "★★★★★\n전개, 대사, 복선, 연출력.\n\n[포함 TOP 노드]\n- 복선/떡밥 연출 (TOP_WRITING_FORESHADOW)\n- 긴장감 조절 (TOP_WRITING_TENSION)\n- 대사/말투 연출 (TOP_WRITING_DIALOGUE)\n\n[핵심 특징]\n- 작가의 기술력이 드러나는 요소\n- '작가 천재!' 반응 유도\n- 작품의 완성도와 퀄리티를 결정\n- 독자의 몰입감을 좌우하는 핵심"
+      },
+      "position": {
+        "x": 74.94346368382588,
+        "y": 281.78792912190255
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_WORLD_EXTRA",
+        "label": "세계관/설정 추가",
+        "color": "#009688",
+        "notes": "★★★★☆\n세계관 법칙, 아이템, 몬스터.\n\n[포함 TOP 노드]\n- 세계관 법칙/설정 (TOP_WORLD_LAW)\n- 아이템 제작/강화 (TOP_ITEM_CRAFT)\n- 몬스터/수하 포획 (TOP_MONSTER_TAMING)\n\n[핵심 특징]\n- 세계관의 깊이와 신비감이 핵심\n- 독자의 호기심을 자극하는 요소\n- RPG 게임 같은 수집과 제작의 재미\n- 작품의 정체성을 형성하는 설정"
+      },
+      "position": {
+        "x": 777.1392635613428,
+        "y": 672.8492188382129
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_DRAMA",
+        "label": "감동/드라마",
+        "color": "#4CAF50",
+        "notes": "★★★★☆\n희생, 가족, 우정, 응원.\n\n[포함 TOP 노드]\n- 희생/헌신 (TOP_SACRIFICE)\n- 가족/혈육 관계 (TOP_FAMILY_LOVE)\n- 우정/동료애 (TOP_FRIENDSHIP)\n- 응원/지지 (TOP_CHEERING)\n\n[핵심 특징]\n- 감동과 공감이 핵심\n- '눈물 난다' '훈훈하다' 반응 유도\n- 주인공의 인간적인 면모를 보여줌\n- 작품에 따뜻함과 깊이를 더함"
+      },
+      "position": {
+        "x": 1073.4240636272616,
+        "y": 207.5843728316876
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_TWIST",
+        "label": "반전/전개",
+        "color": "#9E9E9E",
+        "notes": "★★★★★\n반전, 오프닝, 결말.\n\n[포함 TOP 노드]\n- 반전/충격적 전개 (TOP_PLOT_TWIST)\n- 프롤로그/첫 화 (TOP_OPENING)\n- 결말/여운 (TOP_ENDING)\n\n[핵심 특징]\n- 예상치 못한 전환과 충격이 핵심\n- '대박 반전!' '소름 돋아' 반응 유도\n- 작품의 완성도를 결정하는 요소\n- 독자에게 오래 기억되는 힘"
+      },
+      "position": {
+        "x": 132.65623233768366,
+        "y": 1056.7777102379973
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_REGRESSOR_REVENGE",
+        "label": "포함",
+        "id": "7ad24498-0004-46c7-bc33-c77311bd5b9e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_ARROGANT_CRUSH",
+        "label": "포함",
+        "id": "65a96628-3d19-46bd-9e85-220e5dfd72c0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_HIDDEN_POWER",
+        "label": "포함",
+        "id": "4e604115-e270-4674-97fc-58929cabe0fe"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_BETRAYAL_REVEAL",
+        "label": "포함",
+        "id": "7b137814-08a0-4460-81f4-36c685c73cb7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_SODA",
+        "target": "EPISODE_UNEXPECTED_COMEBACK",
+        "label": "포함",
+        "id": "55592417-35cb-4c23-b83c-d8809d8e34dd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_LEVEL_UP",
+        "label": "포함",
+        "id": "4576986a-a613-451b-b8b8-92630a44c377"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_CHEAT_SKILL",
+        "label": "포함",
+        "id": "a7f1af68-761c-49c9-ad4f-9296924b5a3d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_SYSTEM_BUG",
+        "label": "포함",
+        "id": "3bb89832-3afa-4380-ad46-a1f9776191b6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_REGRESSION_KNOWLEDGE",
+        "label": "포함",
+        "id": "32c5945b-f298-4e9e-8870-127d25876d22"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_GROWTH",
+        "target": "EPISODE_GOOD_PEOPLE",
+        "label": "포함",
+        "id": "93e3c404-0593-414e-baa2-5a6bd6369a08"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_WORLD",
+        "target": "EPISODE_UPPER_WORLD",
+        "label": "포함",
+        "id": "f1c958d7-8501-4c62-badf-b50575f5c596"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_WORLD",
+        "target": "EPISODE_SECRET_REALM",
+        "label": "포함",
+        "id": "41c75917-0996-458b-99ee-7d348d2650fe"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_EMOTION",
+        "target": "EPISODE_GENERATION_GAP",
+        "label": "포함",
+        "id": "5d60a736-f734-45bb-a32c-95a9dd977bf4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_INTELLECT",
+        "target": "EPISODE_FORESHADOW",
+        "label": "포함",
+        "id": "13b1b878-56c7-4686-bfad-316ee9d95e41"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_INTELLECT",
+        "target": "EPISODE_POLITICS",
+        "label": "포함",
+        "id": "dc27b8ed-481c-4b52-9a48-e178846f9c51"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_EMPATHY",
+        "target": "EPISODE_SURVIVAL",
+        "label": "포함",
+        "id": "2b0395db-8134-4c9a-bb23-2edd8e2de5dd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_EMPATHY",
+        "target": "EPISODE_ECONOMY",
+        "label": "포함",
+        "id": "bead425f-e5f2-4bf1-a23b-2515e2c7c932"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_ACTION",
+        "target": "EPISODE_ONE_VS_MANY",
+        "label": "포함",
+        "id": "bb2addf8-ee66-42c5-ad33-9d46e0f5133a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_ACTION",
+        "target": "EPISODE_SECT_WAR",
+        "label": "포함",
+        "id": "0a893131-7959-4079-aa31-8e36517d00a5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EPISODE_GROUP_ACTION",
+        "target": "EPISODE_BOSS_RAID",
+        "label": "포함",
+        "id": "8382d3a3-1780-4acf-a409-4810c65a3a86"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ANALYSIS_GROUP",
+        "target": "ANALYSIS_TIME",
+        "label": "포함",
+        "id": "61971c74-3115-4e01-aed7-1a28b98741ce"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ANALYSIS_GROUP",
+        "target": "ANALYSIS_ESCALATION",
+        "label": "포함",
+        "id": "a65b81b7-8c19-498f-b26c-d0a337b99bd0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ANALYSIS_GROUP",
+        "target": "ANALYSIS_INSERTION",
+        "label": "포함",
+        "id": "b3628f30-7554-487f-8e38-9e915619159f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ANALYSIS_GROUP",
+        "target": "ANALYSIS_EMOTION_CYCLE",
+        "label": "포함",
+        "id": "ff59ed36-b20a-4c4d-b680-8c86c7a71d7b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SODA",
+        "target": "TOP_REGRESSOR_REVENGE",
+        "label": "포함",
+        "id": "5bdceb9c-3542-491d-9107-3221c0708f04"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SODA",
+        "target": "TOP_SYSTEM_MUNCHKIN",
+        "label": "포함",
+        "id": "d58a1178-6454-4632-be23-9692f6a118fb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SODA",
+        "target": "TOP_ARROGANT_CRUSH",
+        "label": "포함",
+        "id": "8550306a-2216-4ed1-9e89-a2d8fe249bb5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SODA",
+        "target": "TOP_HIDDEN_POWER",
+        "label": "포함",
+        "id": "b92526ae-73b3-488b-b75a-488089ca8e7a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SODA",
+        "target": "TOP_COMEBACK_WIN",
+        "label": "포함",
+        "id": "bfe031fb-acb0-47a7-ac5b-7be9992db8b6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SODA",
+        "target": "TOP_UNDERDOG_VICTORY",
+        "label": "포함",
+        "id": "0b047056-0567-4156-b580-e9585531e2d2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REGRESSION",
+        "target": "TOP_REGRESSOR_REVENGE",
+        "label": "포함",
+        "id": "db564f30-39cd-47f0-a9b8-e096de640005"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REGRESSION",
+        "target": "TOP_REGRESSION_KNOWLEDGE",
+        "label": "포함",
+        "id": "326c55e3-44dd-4b52-b200-5fdadc3d0cc2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REGRESSION",
+        "target": "TOP_REGRESSION_GOOD_PEOPLE",
+        "label": "포함",
+        "id": "3887b8c7-047c-40f1-af45-9fccc6fea657"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_REGRESSION",
+        "target": "TOP_REGRESSION_PAST_FIGURE",
+        "label": "포함",
+        "id": "092e5a0e-8407-4dc0-81af-0cb7f070738a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GROWTH",
+        "target": "TOP_LEVEL_UP",
+        "label": "포함",
+        "id": "28b47be4-f09d-4064-bb49-5adf36987d50"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GROWTH",
+        "target": "TOP_SKILL_ACQUIRE",
+        "label": "포함",
+        "id": "622c6830-713d-455f-a6aa-f35272e5e758"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_GROWTH",
+        "target": "TOP_SYSTEM_BUG",
+        "label": "포함",
+        "id": "3cdab5a1-7e2f-4027-a4d0-2fbf65723bc6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WORLD",
+        "target": "TOP_UPPER_WORLD",
+        "label": "포함",
+        "id": "a549beaf-a037-4d3b-a184-61f6491df561"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WORLD",
+        "target": "TOP_SECRET_REALM",
+        "label": "포함",
+        "id": "f35eabc5-9e7c-4990-9b2f-bf9fbcdac316"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WORLD",
+        "target": "TOP_LEGEND_EXIST",
+        "label": "포함",
+        "id": "8d6d3326-5b9f-40bd-9ba9-7259033fcfd8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_EMOTION",
+        "target": "TOP_GENERATION_GAP",
+        "label": "포함",
+        "id": "e1c50fc2-8bb7-48a2-9a1c-a91e49f44866"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_EMOTION",
+        "target": "TOP_LONELINESS",
+        "label": "포함",
+        "id": "723c825b-3a8e-4f14-9ea2-5083d0696b1d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INTELLECT",
+        "target": "TOP_FORESHADOW",
+        "label": "포함",
+        "id": "5046062d-4f12-457e-8600-194a1878d94f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INTELLECT",
+        "target": "TOP_POLITICS",
+        "label": "포함",
+        "id": "aa4f64a5-b152-4062-af0c-39cb1ca269d6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INTELLECT",
+        "target": "TOP_PHILOSOPHY",
+        "label": "포함",
+        "id": "301ef85f-002f-4c4a-8bee-ebf0ffd36006"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_EMPATHY",
+        "target": "TOP_SURVIVAL",
+        "label": "포함",
+        "id": "aae6bc33-b409-4010-a569-b1a6b94a51c4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_EMPATHY",
+        "target": "TOP_ECONOMY",
+        "label": "포함",
+        "id": "ab86e4c4-6783-4caf-86be-ddfc92371b43"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_ACTION",
+        "target": "TOP_ONE_VS_MANY",
+        "label": "포함",
+        "id": "91491b0d-9075-482b-b38b-9c5e9a1ebf3c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_ACTION",
+        "target": "TOP_SECT_WAR",
+        "label": "포함",
+        "id": "fb4c7637-bb12-4813-88df-7614ad02fbba"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_ACTION",
+        "target": "TOP_SKILL_COMBO",
+        "label": "포함",
+        "id": "94f05815-a7a8-43ec-9594-bd578c9e82c1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_ACTION",
+        "target": "TOP_BOSS_RAID",
+        "label": "포함",
+        "id": "3fdc7b84-fd57-449e-ad30-b805a702d63c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_ROMANCE",
+        "target": "TOP_ROMANCE_CONFESSION",
+        "label": "포함",
+        "id": "a1b9b3bc-3907-4f88-9a03-a1df71d2e13f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_ROMANCE",
+        "target": "TOP_ROMANCE_JEALOUSY",
+        "label": "포함",
+        "id": "19be04d3-0311-4682-98f8-95d23d9f4c5b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_ROMANCE",
+        "target": "TOP_ROMANCE_REUNION",
+        "label": "포함",
+        "id": "103fd9e9-4813-44bb-903c-98cfc9abf76e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_COMEDY",
+        "target": "TOP_COMEDY_MISUNDERSTAND",
+        "label": "포함",
+        "id": "19ca2e72-24f2-4e6b-9605-6cb4d15e420f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_COMEDY",
+        "target": "TOP_COMEDY_REACTION",
+        "label": "포함",
+        "id": "57764909-4aa3-49b3-b7fe-ac519bc58bc3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_COMEDY",
+        "target": "TOP_COMEDY_SELF_TALK",
+        "label": "포함",
+        "id": "b0951c90-2e1e-48f2-ada7-c42bd7d6ef2a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_CHARACTER",
+        "target": "TOP_CHARISMA",
+        "label": "포함",
+        "id": "852bcb17-d810-4e07-9262-5802adc16a5e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_CHARACTER",
+        "target": "TOP_COLD_HERO",
+        "label": "포함",
+        "id": "2ff81400-a9cf-4a58-a901-af695aeb701a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_CHARACTER",
+        "target": "TOP_CHARMING_VILLAIN",
+        "label": "포함",
+        "id": "daec84fe-07d7-4005-a041-d16aacc7719c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WRITING",
+        "target": "TOP_WRITING_FORESHADOW",
+        "label": "포함",
+        "id": "3fec1470-0195-4512-af28-434dc9a791e1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WRITING",
+        "target": "TOP_WRITING_TENSION",
+        "label": "포함",
+        "id": "d283efab-1f63-4b59-a25e-56f9fa08c11c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WRITING",
+        "target": "TOP_WRITING_DIALOGUE",
+        "label": "포함",
+        "id": "4e641b4b-328e-450d-b619-7dd52530c414"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WORLD_EXTRA",
+        "target": "TOP_WORLD_LAW",
+        "label": "포함",
+        "id": "400f0824-9be2-47ca-a6f9-2076a67ce554"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WORLD_EXTRA",
+        "target": "TOP_ITEM_CRAFT",
+        "label": "포함",
+        "id": "5e230411-e244-4252-9cc6-744eb5e52905"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WORLD_EXTRA",
+        "target": "TOP_MONSTER_TAMING",
+        "label": "포함",
+        "id": "b199aca4-2945-4fb2-b389-499d452677db"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_DRAMA",
+        "target": "TOP_SACRIFICE",
+        "label": "포함",
+        "id": "664aa5f4-112d-4767-a720-a7f67bc8923c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_DRAMA",
+        "target": "TOP_FAMILY_LOVE",
+        "label": "포함",
+        "id": "e6b71e18-ee5f-45b2-ada1-459e4e343f6d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_DRAMA",
+        "target": "TOP_FRIENDSHIP",
+        "label": "포함",
+        "id": "2915f911-c150-4ea6-9fd9-626d2109129c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_DRAMA",
+        "target": "TOP_CHEERING",
+        "label": "포함",
+        "id": "3fe6a604-a430-4a17-9b25-99ae04a86da8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_TWIST",
+        "target": "TOP_PLOT_TWIST",
+        "label": "포함",
+        "id": "b9fe7ac8-cfa0-40b0-a79d-868d77085191"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_TWIST",
+        "target": "TOP_OPENING",
+        "label": "포함",
+        "id": "920d8cbb-00be-4434-ac27-4d6a14b41129"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_TWIST",
+        "target": "TOP_ENDING",
+        "label": "포함",
+        "id": "26765df6-b703-4dbb-a0c0-121bb09924a7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_SODA",
+        "target": "TOP_PLOT_TWIST",
+        "label": "포함",
+        "id": "ae6f75c5-0f19-480e-a235-5015ca05ca09"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_EMOTION",
+        "target": "TOP_SACRIFICE",
+        "label": "포함",
+        "id": "0ba26b7d-5c1a-410a-bb3a-db1048575086"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_EMOTION",
+        "target": "TOP_FAMILY_LOVE",
+        "label": "포함",
+        "id": "28e1cfdf-1f7c-49c3-8403-bd715aedd44d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_EMOTION",
+        "target": "TOP_FRIENDSHIP",
+        "label": "포함",
+        "id": "f6dceaff-74b8-417c-bd24-56b2c07bf3e4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WORLD",
+        "target": "TOP_WORLD_LAW",
+        "label": "포함",
+        "id": "71f589b0-c65a-4528-b3fa-52179c4c7a07"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WORLD",
+        "target": "TOP_ITEM_CRAFT",
+        "label": "포함",
+        "id": "b7b6d3d7-aee9-44ae-bd97-a660498f5ccd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_WORLD",
+        "target": "TOP_MONSTER_TAMING",
+        "label": "포함",
+        "id": "d5af2fef-e6f0-4a43-a1e1-24fa6c82ed5a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_ACTION",
+        "target": "TOP_GROUP_BATTLE_STRATEGY",
+        "label": "포함",
+        "id": "63bca9c9-fe65-4be2-8318-79a6989f84dc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INTELLECT",
+        "target": "TOP_PLOT_TWIST",
+        "label": "포함",
+        "id": "15d9c6d0-6c71-4547-901d-3cc26f951658"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_INTELLECT",
+        "target": "TOP_WRITING_FORESHADOW",
+        "label": "포함",
+        "id": "f9b4aa62-80f1-4a70-ba52-45b105648f13"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  let cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: initialData,
+    style: [
+      { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':28, 'padding':'8px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':13, 'text-outline-width':2, 'text-outline-color':'#000' } },
+      { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':11 } },
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
+      { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true }
+  });
+
+  let selectedId = null;
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+  const nodeInfo = document.getElementById('nodeInfo');
+  const nodeNotes = document.getElementById('nodeNotes');
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    const selected = cy.$(':selected');
+    if (selected.length === 0) { alert('삭제할 요소를 선택하세요.'); return; }
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(selected);
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = document.activeElement.tagName.toUpperCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        deleteSelected();
+      }
+    }
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const id = node.id();
+    
+    if (edgeSrcInput.value === '') {
+      edgeSrcInput.value = id;
+    } else if (edgeTgtInput.value === '' && edgeSrcInput.value !== id) {
+      edgeTgtInput.value = id;
+    }
+    
+    nodeInfo.textContent = '📌 ' + (node.data('label') || id);
+    nodeNotes.textContent = node.data('notes') || '메모 없음';
+    selectedId = id;
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt('새 노드 이름:');
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+      }
+    }
+  });
+
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        let els = [];
+        if (Array.isArray(data)) els = data;
+        else if (data.nodes || data.edges) els = [...(data.nodes||[]), ...(data.edges||[])];
+        else if (data.elements) els = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        if (els.length) { cy.elements().remove(); cy.add(els); cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run(); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>
