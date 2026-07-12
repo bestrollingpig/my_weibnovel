@@ -118,6 +118,9 @@ canvas{display:block}
 
 </div>
 
+<!-- ============================================================
+     IMPORT MAP (CDN)
+     ============================================================ -->
 <script type="importmap">
 {
   "imports": {
@@ -136,6 +139,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+
+console.log('✅ Three.js loaded:', THREE);
+console.log('✅ VRM Utils loaded:', VRMUtils);
 
 // ============================================================
 // DOM REFS
@@ -745,10 +751,6 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'k' && !e.target.matches('input')) {
     e.preventDefault();
     addKeyframe();
-  }
-  if (e.key === 'r' && !e.target.matches('input') && e.ctrlKey) {
-    e.preventDefault();
-    resetBtn.click();
   }
 });
 
