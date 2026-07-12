@@ -14,8 +14,6 @@ body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#ccc;height:100v
 #header button:disabled{opacity:.4;cursor:not-allowed}
 #header button.primary{background:#e94560}
 #header button.primary:hover{background:#ff6b81}
-#header button.info{background:#0d47a1}
-#header button.info:hover{background:#1565c0}
 #header .file-info{font-size:11px;color:#888;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #header input[type=file]{display:none}
 #main{display:flex;flex:1;overflow:hidden}
@@ -129,7 +127,7 @@ body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#ccc;height:100v
 </div>
 
 <!-- ============================================================
-     CDN 로드
+     CDN 로드 (순서 중요!)
      ============================================================ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
 </script>
@@ -147,8 +145,9 @@ body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#ccc;height:100v
 const THREE = window.THREE;
 const OrbitControls = window.OrbitControls;
 const GLTFLoader = window.THREE.GLTFLoader;
-const VRM = window.VRM;
-const VRMUtils = window.VRMUtils;
+
+// VRM이 로드되었는지 확인
+console.log('VRM 로드됨?', window.VRM);
 
 // ============================================================
 // 전역
@@ -164,7 +163,6 @@ let keyframes = [];
 let isPlaying = false;
 let currentTime = 0;
 let duration = 5.0;
-let isInitialized = false;
 
 // ============================================================
 // 로그
@@ -215,7 +213,6 @@ function initScene() {
     }
   });
 
-  isInitialized = true;
   animate();
   log('✅ 3D 씬 초기화');
 }
@@ -256,11 +253,16 @@ window.loadVRM = function(e) {
         vrm = null;
       }
 
+      // VRM 라이브러리 확인
+      if (typeof VRM === 'undefined') {
+        throw new Error('VRM 라이브러리가 로드되지 않았습니다. 인터넷 연결을 확인하세요.');
+      }
+
       vrm = await VRM.from(gltf);
       
       // VRMUtils 체크
-      if (VRMUtils && VRMUtils.removeUnnecessaryJoints) {
-        VRMUtils.removeUnnecessaryJoints(vrm.scene);
+      if (window.VRMUtils && window.VRMUtils.removeUnnecessaryJoints) {
+        window.VRMUtils.removeUnnecessaryJoints(vrm.scene);
       }
       
       scene.add(vrm.scene);
@@ -386,7 +388,8 @@ function applyPose(p) {
   if (!p) return;
   for (const [n, q] of Object.entries(p)) {
     if (bones[n]) {
-      const quat = new THREE.Quaternion(q.x, q.y, q.z, q.w).normalize();
+      const quat = new THREE.Quaternion(q.x, q.y, q.z, q.w);
+      quat.normalize();
       bones[n].quaternion.copy(quat);
     }
   }
@@ -437,17 +440,17 @@ function applyPoseById(id) {
 }
 
 // ============================================================
-// 프리셋 (Quaternion 정규화 적용)
+// 프리셋 (Quaternion 정규화 적용 - toJSON 제거)
 // ============================================================
 const PRESETS = {
   'default': null,
   'v-sign': {
-    leftUpperArm: new THREE.Quaternion(0.2, -0.1, -0.3, 0.9).normalize().toJSON(),
-    rightUpperArm: new THREE.Quaternion(-0.2, -0.1, 0.3, 0.9).normalize().toJSON()
+    leftUpperArm: (() => { const q = new THREE.Quaternion(0.2, -0.1, -0.3, 0.9); q.normalize(); return {x:q.x, y:q.y, z:q.z, w:q.w}; })(),
+    rightUpperArm: (() => { const q = new THREE.Quaternion(-0.2, -0.1, 0.3, 0.9); q.normalize(); return {x:q.x, y:q.y, z:q.z, w:q.w}; })()
   },
   'heart': {
-    leftUpperArm: new THREE.Quaternion(-0.5, -0.3, -0.4, 0.6).normalize().toJSON(),
-    rightUpperArm: new THREE.Quaternion(-0.5, 0.3, 0.4, 0.6).normalize().toJSON()
+    leftUpperArm: (() => { const q = new THREE.Quaternion(-0.5, -0.3, -0.4, 0.6); q.normalize(); return {x:q.x, y:q.y, z:q.z, w:q.w}; })(),
+    rightUpperArm: (() => { const q = new THREE.Quaternion(-0.5, 0.3, 0.4, 0.6); q.normalize(); return {x:q.x, y:q.y, z:q.z, w:q.w}; })()
   }
 };
 
@@ -460,12 +463,7 @@ function applyPreset(name) {
   }
   const p = PRESETS[name];
   if (p) { 
-    // JSON 형태를 Quaternion으로 변환
-    const pose = {};
-    for (const [n, q] of Object.entries(p)) {
-      pose[n] = { x: q.x, y: q.y, z: q.z, w: q.w };
-    }
-    applyPose(pose); 
+    applyPose(p); 
     log('📋 프리셋: ' + name); 
   }
 }
@@ -600,7 +598,6 @@ function resetAll() {
   document.getElementById('playBtn').textContent = '▶️ 재생';
   document.getElementById('timeDisplay').textContent = '0.00s / 5.00s';
   
-  // 타임라인 초기화
   const track = document.getElementById('timelineTrack');
   track.querySelectorAll('.keyframe').forEach(el => el.remove());
   document.getElementById('playhead').style.left = '0%';
@@ -640,6 +637,17 @@ document.addEventListener('keydown', (e) => {
 // ============================================================
 initScene();
 log('🎮 VRM Pose Editor 준비 완료');
+
+// 전역 노출
+window.loadVRM = loadVRM;
+window.savePose = savePose;
+window.resetAll = resetAll;
+window.loadPose = loadPose;
+window.applyPreset = applyPreset;
+window.addKeyframe = addKeyframe;
+window.togglePlay = togglePlay;
+window.stopPlay = stopPlay;
+window.onTimelineClick = onTimelineClick;
 </script>
 </body>
 </html>
