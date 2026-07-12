@@ -14,6 +14,8 @@ body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#ccc;height:100v
 #header button:disabled{opacity:.4;cursor:not-allowed}
 #header button.primary{background:#e94560}
 #header button.primary:hover{background:#ff6b81}
+#header button.info{background:#0d47a1}
+#header button.info:hover{background:#1565c0}
 #header .file-info{font-size:11px;color:#888;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #header input[type=file]{display:none}
 #main{display:flex;flex:1;overflow:hidden}
@@ -69,6 +71,10 @@ body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#ccc;height:100v
   <span class="title">🎮 VRM Pose Editor</span>
   <button onclick="document.getElementById('vrmInput').click()">📂 VRM 열기</button>
   <input type="file" id="vrmInput" accept=".vrm">
+  
+  <!-- ✅ 3D 보기 버튼 추가 -->
+  <button onclick="view3D()" id="view3dBtn" class="info" disabled>🎮 3D 보기</button>
+  
   <button onclick="savePose()" id="saveBtn" class="primary" disabled>💾 포즈 저장</button>
   <button onclick="resetAll()" id="resetBtn" disabled>↺ 초기화</button>
   <span class="file-info" id="fileName">파일 없음</span>
@@ -125,32 +131,33 @@ body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#ccc;height:100v
 </div>
 
 <!-- ============================================================
-     ✅ IMPORT MAP 방식 (Live Server에서만 작동)
+     CDN 로드 (file:// 에서도 작동)
      ============================================================ -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
-    "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@0.6.5/lib/three-vrm.module.js"
-  }
-}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js">
+</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js">
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@0.6.5/lib/three-vrm.min.js">
 </script>
 
-<script type="module">
+<script>
 // ============================================================
-// IMPORT 방식 (Live Server 필요)
+// THREE.js 참조 (CDN)
 // ============================================================
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { VRM, VRMUtils } from '@pixiv/three-vrm';
+const THREE = window.THREE;
+const OrbitControls = window.OrbitControls;
+const GLTFLoader = window.THREE.GLTFLoader;
+const VRM = window.VRM;
+const VRMUtils = window.VRMUtils;
 
 // ============================================================
 // 전역
 // ============================================================
 let scene, camera, renderer, controls;
 let vrm = null;
+let vrmData = null;
 let bones = {};
 let boneNames = [];
 let selectedBone = null;
@@ -159,6 +166,8 @@ let keyframes = [];
 let isPlaying = false;
 let currentTime = 0;
 let duration = 5.0;
+let vrmViewerReady = false;
+let lastViewerUrl = null;
 
 // ============================================================
 // 로그
@@ -217,6 +226,7 @@ window.loadVRM = function(e) {
   reader.onload = async (ev) => {
     try {
       const buf = ev.target.result;
+      vrmData = new Uint8Array(buf);
       const loader = new GLTFLoader();
       const gltf = await new Promise((res, rej) => loader.parse(buf, '', res, rej));
       if (vrm) { scene.remove(vrm.scene); vrm.dispose(); }
@@ -226,6 +236,7 @@ window.loadVRM = function(e) {
       document.getElementById('placeholder').style.display = 'none';
       document.getElementById('saveBtn').disabled = false;
       document.getElementById('resetBtn').disabled = false;
+      document.getElementById('view3dBtn').disabled = false;
       extractBones();
       log('✅ VRM 로드 완료!');
     } catch (err) {
@@ -236,6 +247,52 @@ window.loadVRM = function(e) {
   reader.readAsArrayBuffer(file);
   e.target.value = '';
 };
+
+// ============================================================
+// ✅ 3D 보기 (vrm-viewer)
+// ============================================================
+window.view3D = function() {
+  if (!vrmData) {
+    log('❌ VRM 데이터가 없습니다');
+    return;
+  }
+
+  const container = document.getElementById('viewer');
+  const placeholder = document.getElementById('placeholder');
+
+  placeholder.style.display = 'none';
+  container.innerHTML = '';
+
+  if (!vrmViewerReady) {
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://cdn.jsdelivr.net/npm/vrm-viewer@0.0.6/dist/vrm-viewer.min.js';
+    script.onload = () => {
+      vrmViewerReady = true;
+      loadVRMViewer(container);
+    };
+    script.onerror = () => {
+      log('❌ vrm-viewer 로드 실패', 'err');
+      container.innerHTML = '<div class="placeholder" style="height:100%;">❌ 3D 뷰어 로드 실패</div>';
+    };
+    document.head.appendChild(script);
+  } else {
+    loadVRMViewer(container);
+  }
+};
+
+function loadVRMViewer(container) {
+  if (lastViewerUrl) { URL.revokeObjectURL(lastViewerUrl); lastViewerUrl = null; }
+  try {
+    const blob = new Blob([vrmData]);
+    const url = URL.createObjectURL(blob);
+    lastViewerUrl = url;
+    container.innerHTML = `<vrm-viewer camera-controls src="${url}" style="width:100%;height:100%;"></vrm-viewer>`;
+    log('✅ 3D VRM 뷰어 로드 완료', 'ok');
+  } catch (e) {
+    log('❌ 3D 뷰어 로드 실패: ' + e.message, 'err');
+  }
+}
 
 // ============================================================
 // 본 추출
@@ -454,12 +511,18 @@ window.stopPlay = function() {
 window.resetAll = function() {
   if (!confirm('초기화?')) return;
   if (vrm) { scene.remove(vrm.scene); vrm.dispose(); vrm = null; }
+  if (lastViewerUrl) { URL.revokeObjectURL(lastViewerUrl); lastViewerUrl = null; }
+  vrmData = null;
   bones = {}; boneNames = []; selectedBone = null;
   savedPoses = []; keyframes = []; isPlaying = false; currentTime = 0;
   document.getElementById('placeholder').style.display = 'flex';
+  document.getElementById('placeholder').innerHTML = '<span class="big">🦴</span><span>VRM 파일을 열어주세요</span>';
+  document.getElementById('viewer').innerHTML = '';
+  document.getElementById('viewer').appendChild(document.getElementById('placeholder'));
   document.getElementById('fileName').textContent = '파일 없음';
   document.getElementById('saveBtn').disabled = true;
   document.getElementById('resetBtn').disabled = true;
+  document.getElementById('view3dBtn').disabled = true;
   document.getElementById('boneCount').textContent = '🦴 0';
   document.getElementById('poseCount').textContent = '📋 0';
   document.getElementById('boneList').innerHTML = '<div style="color:#555;">VRM을 로드하면 본 목록이 표시됩니다</div>';
@@ -491,6 +554,7 @@ log('🎮 VRM Pose Editor 준비 완료');
 window.loadVRM = loadVRM;
 window.savePose = savePose;
 window.resetAll = resetAll;
+window.view3D = view3D;
 </script>
 </body>
 </html>
