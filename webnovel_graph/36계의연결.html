@@ -1,0 +1,2523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그래프 뷰어</title>
+<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { 
+    background:#fafafa; 
+    height:100vh; 
+    display:flex; 
+    flex-direction:column;
+    font-family:'Malgun Gothic',sans-serif;
+    overflow:hidden;
+  }
+  #cy { 
+    flex:1; 
+    width:100%;
+    background:#fafafa;
+  }
+  #info { 
+    position:fixed; 
+    bottom:20px; 
+    left:50%; 
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.7); 
+    color:#fff; 
+    padding:6px 16px; 
+    border-radius:20px; 
+    font-size:12px; 
+    pointer-events:none; 
+    z-index:100;
+    backdrop-filter:blur(4px);
+  }
+  #info span { font-weight:bold; color:#FFD700; }
+  .header {
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    color:#fff;
+    padding:8px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-shrink:0;
+  }
+  .header h1 { font-size:1em; }
+  .header .hint { font-size:0.7em; opacity:0.8; }
+  .tip { 
+    position:fixed; 
+    top:60px; 
+    left:50%; 
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.5); 
+    color:#fff; 
+    padding:4px 14px; 
+    border-radius:12px; 
+    font-size:11px; 
+    pointer-events:none; 
+    z-index:100;
+    backdrop-filter:blur(4px);
+    transition: opacity 1s;
+  }
+  .tip.hidden { opacity:0; }
+
+  /* ===== 툴팁 ===== */
+  #nodeTooltip {
+    display:none;
+    position:fixed;
+    z-index:1000;
+    pointer-events:none;
+    background:#fff;
+    border-radius:10px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.25);
+    max-width:320px;
+    padding:10px 14px;
+    border:1px solid #ddd;
+    font-family:'Malgun Gothic',sans-serif;
+    font-size:0.85em;
+    line-height:1.5;
+    color:#333;
+  }
+  #nodeTooltip .tt-title {
+    font-weight:bold;
+    color:#667eea;
+    border-bottom:1px solid #eee;
+    padding-bottom:3px;
+    margin-bottom:4px;
+  }
+  #nodeTooltip .tt-notes { white-space:pre-wrap; word-break:break-word; }
+  #nodeTooltip .tt-empty { color:#999; font-style:italic; }
+
+  .dark-toggle {
+    background:rgba(255,255,255,0.15);
+    border:1px solid rgba(255,255,255,0.25);
+    color:#fff;
+    padding:4px 12px;
+    border-radius:16px;
+    cursor:pointer;
+    font-size:0.7em;
+  }
+  .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+  
+  [data-theme="dark"] body { background:#0f0f1a; }
+  [data-theme="dark"] #cy { background:#0f0f1a; }
+  [data-theme="dark"] #nodeTooltip {
+    background:#1a1a2e;
+    border-color:#444466;
+    color:#e0e0e0;
+  }
+  [data-theme="dark"] #nodeTooltip .tt-title {
+    color:#bb86fc;
+    border-color:#444466;
+  }
+  [data-theme="dark"] #nodeTooltip .tt-empty { color:#888; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🌐 그래프 뷰어</h1>
+  <div>
+    <span class="hint">🔍 호버=메모보기 · D키 다크모드</span>
+    <button class="dark-toggle" onclick="toggleDark()">🌙</button>
+  </div>
+</div>
+<div id="cy"></div>
+<div id="info">📊 <span id="nodeCount">0</span> 노드 · <span id="edgeCount">0</span> 엣지</div>
+<div class="tip" id="tip">💡 노드에 마우스를 올리면 메모를 볼 수 있어요</div>
+
+<!-- 툴팁 -->
+<div id="nodeTooltip">
+  <div class="tt-title" id="ttTitle">노드명</div>
+  <div class="tt-notes" id="ttNotes"><span class="tt-empty">메모가 없습니다</span></div>
+</div>
+
+<script>
+  const data = {
+  "nodes": [
+    {
+      "data": {
+        "id": "SET_VICTORY",
+        "label": "승전계 (勝戰計)",
+        "color": "#f093fb",
+        "notes": "아군이 우세한 상황에서 적을 제압하는 6계. 64괘의 초효~삼효(陽)에 해당."
+      },
+      "position": {
+        "x": 446.5969023931627,
+        "y": 812.1049853541847
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SET_OFFENSIVE",
+        "label": "적전계 (敵戰計)",
+        "color": "#4facfe",
+        "notes": "대치 상황에서 적을 교란하고 혼란에 빠뜨리는 6계. 64괘의 4효(陰→陽 전환)에 해당."
+      },
+      "position": {
+        "x": 413.3501327997546,
+        "y": 576.5029293067604
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SET_ATTACK",
+        "label": "공전계 (攻戰計)",
+        "color": "#43e97b",
+        "notes": "공격 상황에서 적을 유인하고 섬멸하는 6계. 64괘의 5효(陽)에 해당."
+      },
+      "position": {
+        "x": 558.4065337479202,
+        "y": 1082.0841953930599
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SET_CHAOS",
+        "label": "혼전계 (混戰計)",
+        "color": "#fa709a",
+        "notes": "혼란을 틈타 적을 공략하는 6계. 64괘의 상효(陰)에 해당."
+      },
+      "position": {
+        "x": 132.67704160906382,
+        "y": 1099.7486248092678
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": true,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SET_CLOSE",
+        "label": "병전계 (並戰計)",
+        "color": "#667eea",
+        "notes": "근접 대치 시 사용하는 6계. 64괘의 2효 재해석(陽→陰 전환)에 해당."
+      },
+      "position": {
+        "x": 335.98309886073383,
+        "y": 1300.7568335839019
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SET_DEFEAT",
+        "label": "패전계 (敗戰計)",
+        "color": "#f093fb",
+        "notes": "불리한 상황에서 탈출하거나 역전하는 6계. 64괘의 3효 재해석(陰)에 해당."
+      },
+      "position": {
+        "x": 428.4722524745545,
+        "y": 215.05973437856832
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S1_1",
+        "label": "만천과해",
+        "color": "#667eea",
+        "notes": "하늘을 속여 바다를 건넌다. 태양·태음의 원리. 종괘: 성동격서"
+      },
+      "position": {
+        "x": 345.1940516557593,
+        "y": 971.7711839924075
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S1_2",
+        "label": "위위구조",
+        "color": "#667eea",
+        "notes": "위나라를 포위하여 조나라를 구한다. 미제괘(未濟卦) 유래. 종괘: 원교근공"
+      },
+      "position": {
+        "x": 290.23490771218417,
+        "y": 846.247696768367
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S1_3",
+        "label": "차도살인",
+        "color": "#667eea",
+        "notes": "남의 칼을 빌려 사람을 해친다. 손괘(損卦) 유래. 종괘: 투량환주"
+      },
+      "position": {
+        "x": 544.3005876219282,
+        "y": 940.3040623108564
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S1_4",
+        "label": "이일대로",
+        "color": "#667eea",
+        "notes": "쉬면서 적을 지치게 한다. 손괘(損卦) 유래. 종괘: 금적금왕"
+      },
+      "position": {
+        "x": 602.0114362190399,
+        "y": 776.9518645922542
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S1_5",
+        "label": "진화타겁",
+        "color": "#667eea",
+        "notes": "남의 집에 불난 틈을 타 도둑질한다. 쾌괘(夬卦) 유래. 종괘: 연환계"
+      },
+      "position": {
+        "x": 518.8837112733828,
+        "y": 581.5352192740659
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S1_6",
+        "label": "성동격서",
+        "color": "#667eea",
+        "notes": "동쪽에서 소리치고 서쪽을 공격한다. 취괘(萃卦) 유래. 종괘: 만천과해"
+      },
+      "position": {
+        "x": 452.64365735518805,
+        "y": 1028.303629421668
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S2_1",
+        "label": "무중생유",
+        "color": "#4facfe",
+        "notes": "무에서 유를 창조한다. 복괘(復卦) 유래. 종괘: 암도진창"
+      },
+      "position": {
+        "x": 195.08302904084067,
+        "y": 645.8259308617484
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S2_2",
+        "label": "암도진창",
+        "color": "#4facfe",
+        "notes": "은밀히 진창으로 진군한다. 진괘(晉卦) 유래. 종괘: 무중생유"
+      },
+      "position": {
+        "x": 264.3196441087539,
+        "y": 428.1586047827552
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S2_3",
+        "label": "격안관화",
+        "color": "#4facfe",
+        "notes": "강 건너 불을 구경한다. 비괘(比卦) 유래. 종괘: 진화타겁"
+      },
+      "position": {
+        "x": 624.2586113636877,
+        "y": 579.3329032120554
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S2_4",
+        "label": "소리장도",
+        "color": "#4facfe",
+        "notes": "웃음 속에 칼을 품다. 대과괘(大過卦) 유래. 종괘: 반간계"
+      },
+      "position": {
+        "x": 530.3820571341245,
+        "y": 443.7744388323702
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S2_5",
+        "label": "이대도강",
+        "color": "#4facfe",
+        "notes": "오얏나무가 복숭아 대신 시든다. 손괘(損卦) 유래. 종괘: 차도살인"
+      },
+      "position": {
+        "x": 514.4632556854534,
+        "y": 747.8704555324493
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S2_6",
+        "label": "순수견양",
+        "color": "#4facfe",
+        "notes": "기회를 틈타 양을 끌고 간다. 관괘(觀卦) 유래. 종괘: 포전인옥"
+      },
+      "position": {
+        "x": 339.4043583809438,
+        "y": 738.0314277616668
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S3_1",
+        "label": "타초경사",
+        "color": "#43e97b",
+        "notes": "풀을 쳐서 뱀을 놀라게 한다. 진괘(震卦) 유래. 종괘: 성동격서"
+      },
+      "position": {
+        "x": 475.6203028746489,
+        "y": 1254.721127557884
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S3_2",
+        "label": "차시환혼",
+        "color": "#43e97b",
+        "notes": "죽은 영혼이 시체를 빌려 부활한다. 혁괘(革卦) 유래. 종괘: 투량환주"
+      },
+      "position": {
+        "x": 576.3058036512818,
+        "y": 1289.2464098022929
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S3_3",
+        "label": "조호이산",
+        "color": "#43e97b",
+        "notes": "호랑이를 산에서 끌어낸다. 이괘(離卦) 유래. 종괘: 금선탈각"
+      },
+      "position": {
+        "x": 370.87690588630676,
+        "y": 1111.3465923420276
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S3_4",
+        "label": "욕금고종",
+        "color": "#43e97b",
+        "notes": "놓쳐도 다시 잡으려 한다. 정괘(井卦) 유래. 종괘: 금적금왕"
+      },
+      "position": {
+        "x": 716.3511484307944,
+        "y": 1073.777775524103
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S3_5",
+        "label": "포전인옥",
+        "color": "#43e97b",
+        "notes": "벽돌을 던져 옥을 얻는다. 몽괘(蒙卦) 유래. 종괘: 순수견양"
+      },
+      "position": {
+        "x": 429.55033176126324,
+        "y": 897.2037021185063
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S3_6",
+        "label": "금적금왕",
+        "color": "#43e97b",
+        "notes": "적을 잡으려면 우두머리부터 잡는다. 곤괘(坤卦) 유래. 종괘: 이일대로"
+      },
+      "position": {
+        "x": 667.8452936663541,
+        "y": 929.6097778046924
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S4_1",
+        "label": "부저추신",
+        "color": "#fa709a",
+        "notes": "가마솥 밑의 장작을 뺀다. 패괘(貝卦) 유래. 종괘: 관문착적"
+      },
+      "position": {
+        "x": -62.81143701119917,
+        "y": 1091.33867338634
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S4_2",
+        "label": "혼수모어",
+        "color": "#fa709a",
+        "notes": "흐린 물에서 고기를 잡는다. 유괘(游卦) 유래. 종괘: 금선탈각"
+      },
+      "position": {
+        "x": 52.14045080349099,
+        "y": 956.9021603299883
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S4_3",
+        "label": "금선탈각",
+        "color": "#fa709a",
+        "notes": "매미가 허물을 벗는다. 복괘(復卦) 유래. 종괘: 조호이산"
+      },
+      "position": {
+        "x": 236.55914962956285,
+        "y": 981.4905995941149
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S4_4",
+        "label": "관문착적",
+        "color": "#fa709a",
+        "notes": "문을 닫고 도적을 잡는다. 대축괘(大畜卦) 유래. 종괘: 부저추신"
+      },
+      "position": {
+        "x": 43.162412360477646,
+        "y": 1220.4951803162223
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S4_5",
+        "label": "원교근공",
+        "color": "#fa709a",
+        "notes": "먼 나라와 사귀고 가까운 나라를 공격한다. 규괘(睽卦) 유래. 종괘: 위위구조"
+      },
+      "position": {
+        "x": 174.63428580509162,
+        "y": 863.5097158266443
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S4_6",
+        "label": "가도벌괵",
+        "color": "#fa709a",
+        "notes": "길을 빌려 괵나라를 친다. 태괘(泰卦) 유래. 종괘: 반객위주"
+      },
+      "position": {
+        "x": 112.9311632669835,
+        "y": 1309.4250288821092
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S5_1",
+        "label": "투량환주",
+        "color": "#667eea",
+        "notes": "대들보를 훔치고 기둥으로 바꾼다. 기제괘(旣濟卦) 유래. 종괘: 차도살인"
+      },
+      "position": {
+        "x": 451.4917158665309,
+        "y": 1164.3454831057757
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S5_2",
+        "label": "지상매괴",
+        "color": "#667eea",
+        "notes": "뽕나무를 가리키며 홰나무를 욕한다. 사괘(師卦) 유래. 종괘: 가치부전"
+      },
+      "position": {
+        "x": 404.2617639960809,
+        "y": 1472.5636996747705
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S5_3",
+        "label": "가치부전",
+        "color": "#667eea",
+        "notes": "어리석은 척하되 미친 척은 하지 않는다. 둔괘(屯卦) 유래. 종괘: 지상매괴"
+      },
+      "position": {
+        "x": 300.1847333312049,
+        "y": 1502.0393322884693
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S5_4",
+        "label": "상옥추제",
+        "color": "#667eea",
+        "notes": "지붕에 올리고 사다리를 치운다. 사괘(師卦) 유래. 종괘: 관문착적"
+      },
+      "position": {
+        "x": 212.41206797881833,
+        "y": 1271.4295429310246
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S5_5",
+        "label": "수상개화",
+        "color": "#667eea",
+        "notes": "나무에 꽃을 피게 한다. 이괘(離卦) 유래. 종괘: 만천과해"
+      },
+      "position": {
+        "x": 263.6598877340976,
+        "y": 1132.7769198255473
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S5_6",
+        "label": "반객위주",
+        "color": "#667eea",
+        "notes": "손님이 도리어 주인이 된다. 점괘(漸卦) 유래. 종괘: 가도벌괵"
+      },
+      "position": {
+        "x": 209.85808013403755,
+        "y": 1413.2067861728049
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S6_1",
+        "label": "미인계",
+        "color": "#f093fb",
+        "notes": "미녀로 적을 유혹한다. 점괘(漸卦) 유래. 종괘: 고육계"
+      },
+      "position": {
+        "x": 478.9312541563412,
+        "y": 33.261804166775505
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S6_2",
+        "label": "공성계",
+        "color": "#f093fb",
+        "notes": "빈 성을 보여준다. 태괘(泰卦) 유래. 종괘: 반간계"
+      },
+      "position": {
+        "x": 630.8799689541863,
+        "y": 173.23850026760886
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S6_3",
+        "label": "반간계",
+        "color": "#f093fb",
+        "notes": "적의 첩자를 역이용한다. 비괘(比卦) 유래. 종괘: 공성계"
+      },
+      "position": {
+        "x": 533.8121177907167,
+        "y": 303.6398190026622
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S6_4",
+        "label": "고육계",
+        "color": "#f093fb",
+        "notes": "자신을 해친다. 몽괘(蒙卦) 유래. 종괘: 미인계"
+      },
+      "position": {
+        "x": 372.9082273930947,
+        "y": 39.22732315503061
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S6_5",
+        "label": "연환계",
+        "color": "#f093fb",
+        "notes": "여러 계책을 연결한다. 사괘(師卦) 유래. 종괘: 주위상"
+      },
+      "position": {
+        "x": 425.67664492010215,
+        "y": 383.55522100414885
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S6_6",
+        "label": "주위상",
+        "color": "#f093fb",
+        "notes": "도망치는 것이 상책이다. 사괘(師卦) 유래. 종괘: 연환계"
+      },
+      "position": {
+        "x": 314.57465064087745,
+        "y": 296.34516460000845
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "SET_VICTORY",
+        "target": "S1_1",
+        "label": "포함",
+        "id": "9011882c-8fde-4d01-9456-a67ed1f0eb6c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_VICTORY",
+        "target": "S1_2",
+        "label": "포함",
+        "id": "5dd845c4-84db-49aa-a527-28baa0d431d5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_VICTORY",
+        "target": "S1_3",
+        "label": "포함",
+        "id": "a65033cd-2a80-4562-87a6-45a6072c2867"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_VICTORY",
+        "target": "S1_4",
+        "label": "포함",
+        "id": "02b65547-4da3-437c-9d52-11faf490771a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_VICTORY",
+        "target": "S1_5",
+        "label": "포함",
+        "id": "43bad2f4-be50-497f-810e-965fbbe43b77"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_VICTORY",
+        "target": "S1_6",
+        "label": "포함",
+        "id": "18694fcf-d8ff-47b7-a6a6-434777380a8e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_OFFENSIVE",
+        "target": "S2_1",
+        "label": "포함",
+        "id": "e80af9dd-5d06-4688-9f89-65b74da93fa9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_OFFENSIVE",
+        "target": "S2_2",
+        "label": "포함",
+        "id": "3eaaa461-3b0c-47f4-88e6-4220d3a44c61"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_OFFENSIVE",
+        "target": "S2_3",
+        "label": "포함",
+        "id": "4b3c045a-9ee9-418a-ae53-59300c626b85"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_OFFENSIVE",
+        "target": "S2_4",
+        "label": "포함",
+        "id": "091dc5f7-cac3-4bc2-b604-3be3b8b66327"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_OFFENSIVE",
+        "target": "S2_5",
+        "label": "포함",
+        "id": "8dc764fe-5999-49e4-91cf-c007aaa77190"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_OFFENSIVE",
+        "target": "S2_6",
+        "label": "포함",
+        "id": "11fa20c8-9886-4638-853e-88cc6b4fd392"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_ATTACK",
+        "target": "S3_1",
+        "label": "포함",
+        "id": "0235c20f-ad52-4c95-86d9-74ad817269bf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_ATTACK",
+        "target": "S3_2",
+        "label": "포함",
+        "id": "dfd4286c-7ec9-41e0-a63a-f8203dce35ad"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_ATTACK",
+        "target": "S3_3",
+        "label": "포함",
+        "id": "2f6713df-e63a-49ab-9f02-876081bb8aeb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_ATTACK",
+        "target": "S3_4",
+        "label": "포함",
+        "id": "d97f69f5-a9d9-4221-aff4-7ae5eb43be6d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_ATTACK",
+        "target": "S3_5",
+        "label": "포함",
+        "id": "59ff374a-39d2-4bee-8040-b6b0e250c96d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_ATTACK",
+        "target": "S3_6",
+        "label": "포함",
+        "id": "d51748c2-d410-49f2-9828-e5a10337a7b7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CHAOS",
+        "target": "S4_1",
+        "label": "포함",
+        "id": "69d9fd9f-11b3-441b-9247-78ef74464512"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CHAOS",
+        "target": "S4_2",
+        "label": "포함",
+        "id": "431159c8-b5d1-4fbc-9832-e645a16adfc8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CHAOS",
+        "target": "S4_3",
+        "label": "포함",
+        "id": "3f9ef2b5-90c2-4dc3-a069-dc8c95d212b8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CHAOS",
+        "target": "S4_4",
+        "label": "포함",
+        "id": "d6693bd3-936a-4685-992e-a7af0f748f4f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CHAOS",
+        "target": "S4_5",
+        "label": "포함",
+        "id": "b8c6bb20-afe5-483f-b796-6c075c019962"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CHAOS",
+        "target": "S4_6",
+        "label": "포함",
+        "id": "d50d2fb7-f867-4dc0-9a55-6a6a1ba3dd4f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CLOSE",
+        "target": "S5_1",
+        "label": "포함",
+        "id": "d0dbb89e-07e8-453c-a17a-3729aafd5140"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CLOSE",
+        "target": "S5_2",
+        "label": "포함",
+        "id": "41e4fc70-022b-4659-b7e0-b03a74c9decb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CLOSE",
+        "target": "S5_3",
+        "label": "포함",
+        "id": "e48efb0a-d970-4aed-b462-539f2d643fc7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CLOSE",
+        "target": "S5_4",
+        "label": "포함",
+        "id": "c164a76e-193d-4d1a-bf1b-61e960749b3f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CLOSE",
+        "target": "S5_5",
+        "label": "포함",
+        "id": "5f391eb2-8d1e-4db4-b7aa-9abd343fcdc8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_CLOSE",
+        "target": "S5_6",
+        "label": "포함",
+        "id": "28031825-946d-43d1-ab62-e240c5722bc5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_DEFEAT",
+        "target": "S6_1",
+        "label": "포함",
+        "id": "491a9473-c9f1-4187-9ca8-a9db659d4a8d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_DEFEAT",
+        "target": "S6_2",
+        "label": "포함",
+        "id": "4119aa37-97d5-47b4-aac2-2cb6d2a27fe8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_DEFEAT",
+        "target": "S6_3",
+        "label": "포함",
+        "id": "785eb560-bfe9-47de-b466-46c38cde462a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_DEFEAT",
+        "target": "S6_4",
+        "label": "포함",
+        "id": "c38decc0-dd22-4af8-bd05-05af9f0a4142"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_DEFEAT",
+        "target": "S6_5",
+        "label": "포함",
+        "id": "c6ce26d6-4ffa-4275-bfdc-117f38404077"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SET_DEFEAT",
+        "target": "S6_6",
+        "label": "포함",
+        "id": "3da588f6-4367-46e7-af02-9d8e50b27721"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S1_1",
+        "target": "S1_6",
+        "label": "종괘(반전)",
+        "id": "3fc00796-e250-485d-9cab-4a1a0b8b1915"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S1_2",
+        "target": "S4_5",
+        "label": "종괘(반전)",
+        "id": "ae988f98-f1b1-4a1b-98fc-347d6af847b8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S1_3",
+        "target": "S5_1",
+        "label": "종괘(반전)",
+        "id": "e2a7d332-d441-4b4e-94e5-f2599fadb39b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S1_4",
+        "target": "S3_6",
+        "label": "종괘(반전)",
+        "id": "f1e94278-5341-4aa3-ac65-fd9832f6a4d8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S1_5",
+        "target": "S6_5",
+        "label": "종괘(반전)",
+        "id": "2e4d0d92-8cd8-42a1-9271-51b7a451d2f2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S1_6",
+        "target": "S1_1",
+        "label": "종괘(반전)",
+        "id": "fefb3c01-fbdc-4c0c-88c1-7f8ddfa5ff49"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S2_1",
+        "target": "S2_2",
+        "label": "종괘(반전)",
+        "id": "fc8fff51-88c6-455a-b768-92539d25d983"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S2_2",
+        "target": "S2_1",
+        "label": "종괘(반전)",
+        "id": "a86bf6a7-ce9d-4e08-9cad-2814b37c7807"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S2_3",
+        "target": "S1_5",
+        "label": "종괘(반전)",
+        "id": "608d9fd8-b815-4699-9da5-b8994ea64581"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S2_4",
+        "target": "S6_3",
+        "label": "종괘(반전)",
+        "id": "b7212c86-f2ed-4abc-ad8e-e12bfbc46645"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S2_5",
+        "target": "S1_3",
+        "label": "종괘(반전)",
+        "id": "9ba3a8a4-db68-42f5-9c92-3e7d3f5ff339"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S2_6",
+        "target": "S3_5",
+        "label": "종괘(반전)",
+        "id": "4a6cfbf3-0322-4b59-a359-c8ce8ca21170"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S3_1",
+        "target": "S1_6",
+        "label": "종괘(반전)",
+        "id": "47ce6729-8cb7-4f65-baf0-43c1a3efed15"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S3_2",
+        "target": "S5_1",
+        "label": "종괘(반전)",
+        "id": "5f311dfb-c9ba-4fee-9107-caa7b2a83725"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S3_3",
+        "target": "S4_3",
+        "label": "종괘(반전)",
+        "id": "64b38bc6-eb98-4f5a-a123-abb3040ba24e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S3_4",
+        "target": "S3_6",
+        "label": "종괘(반전)",
+        "id": "f9c1768a-800e-4b8f-a51c-1c1a9d61a9b7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S3_5",
+        "target": "S2_6",
+        "label": "종괘(반전)",
+        "id": "9111715a-5267-4b66-aee6-cf5ee3dbd596"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S3_6",
+        "target": "S1_4",
+        "label": "종괘(반전)",
+        "id": "7ca75974-072e-45eb-8804-fb43ac18d542"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S4_1",
+        "target": "S4_4",
+        "label": "종괘(반전)",
+        "id": "d6ec648b-9b87-49f7-8430-e9feaf288c41"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S4_2",
+        "target": "S4_3",
+        "label": "종괘(반전)",
+        "id": "21125163-6332-4842-849b-8d7ed56b2f8d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S4_3",
+        "target": "S3_3",
+        "label": "종괘(반전)",
+        "id": "81162a1a-ceec-487c-9fe4-215125687010"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S4_4",
+        "target": "S4_1",
+        "label": "종괘(반전)",
+        "id": "bce3b886-8509-458e-bc4a-b70d791ae928"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S4_5",
+        "target": "S1_2",
+        "label": "종괘(반전)",
+        "id": "fb181341-5e03-44b1-b69d-5dfa7fcacfc2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S4_6",
+        "target": "S5_6",
+        "label": "종괘(반전)",
+        "id": "bdc16790-8eb3-4ac9-a415-fcb61c9c6f1e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S5_1",
+        "target": "S1_3",
+        "label": "종괘(반전)",
+        "id": "fc4c7957-4586-476a-9e94-92532462835d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S5_2",
+        "target": "S5_3",
+        "label": "종괘(반전)",
+        "id": "5b9b866b-85ae-4493-96c0-db07cce61516"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S5_3",
+        "target": "S5_2",
+        "label": "종괘(반전)",
+        "id": "bce40903-bb0a-41eb-8a2d-1017c4f139c7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S5_4",
+        "target": "S4_4",
+        "label": "종괘(반전)",
+        "id": "a433d070-2006-4438-b0c8-ebed0cfb9c21"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S5_5",
+        "target": "S1_1",
+        "label": "종괘(반전)",
+        "id": "be6238a7-101f-4518-9c8d-3f6a950da62e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S5_6",
+        "target": "S4_6",
+        "label": "종괘(반전)",
+        "id": "a05d408d-47fc-478f-9b9b-e0cbb5c198fe"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S6_1",
+        "target": "S6_4",
+        "label": "종괘(반전)",
+        "id": "3feb95a3-2485-4dc8-bc75-6fdd902877dc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S6_2",
+        "target": "S6_3",
+        "label": "종괘(반전)",
+        "id": "04e961f0-a7f5-45ad-8ac1-66ebaa03907a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S6_3",
+        "target": "S6_2",
+        "label": "종괘(반전)",
+        "id": "441537da-cb87-4402-ba30-46a25c8fd9d7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S6_4",
+        "target": "S6_1",
+        "label": "종괘(반전)",
+        "id": "156e7a9f-9d56-4a96-be58-b118214dbae5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S6_5",
+        "target": "S6_6",
+        "label": "종괘(반전)",
+        "id": "43b78444-8975-4147-9f45-a4ee126c0c70"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S6_6",
+        "target": "S6_5",
+        "label": "종괘(반전)",
+        "id": "881a62e1-6ee5-4e06-8c1e-3c058e624d0c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  const cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: data,
+    style: [
+      { selector: 'node', style: { 
+        'label':'data(label)', 
+        'background-color':'data(color)',
+        'shape':'round-rectangle',
+        'width':'label', 'height':30, 'padding':'10px',
+        'border-width':2, 'border-color':'#333',
+        'text-valign':'center', 'text-halign':'center',
+        'color':'#fff', 'font-weight':'bold', 'font-size':14,
+        'text-outline-width':2, 'text-outline-color':'#000'
+      }},
+      { selector: 'edge', style: {
+        'label':'data(label)',
+        'curve-style':'bezier',
+        'line-color':'data(color)',
+        'width':2,
+        'target-arrow-shape':'triangle',
+        'target-arrow-color':'data(color)',
+        'font-size':11
+      }},
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true, fit: true, padding: 30 }
+  });
+
+  // ===== 툴팁 =====
+  const tooltip = document.getElementById('nodeTooltip');
+  const ttTitle = document.getElementById('ttTitle');
+  const ttNotes = document.getElementById('ttNotes');
+
+  function showTooltip(node) {
+    if (!node || node.length === 0) return;
+    const label = node.data('label') || node.id();
+    const notes = node.data('notes') || '';
+    ttTitle.textContent = label;
+    ttNotes.innerHTML = notes || '<span class="tt-empty">메모가 없습니다</span>';
+    const pos = node.renderedPosition();
+    const rect = cy.container().getBoundingClientRect();
+    let x = rect.left + pos.x - tooltip.offsetWidth / 2;
+    let y = rect.top + pos.y - 50 - tooltip.offsetHeight;
+    if (x < 10) x = 10;
+    if (y < 10) y = rect.top + pos.y + 20;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+    tooltip.style.display = 'block';
+  }
+
+  function hideTooltip() { tooltip.style.display = 'none'; }
+
+  cy.on('mouseover', 'node', function(evt) {
+    showTooltip(evt.target);
+    evt.target.style('border-width', '4px');
+    evt.target.style('border-color', '#4facfe');
+  });
+
+  cy.on('mouseout', 'node', function(evt) {
+    hideTooltip();
+    if (!evt.target.selected()) {
+      evt.target.style('border-width', '2px');
+      evt.target.style('border-color', '#333');
+    }
+  });
+
+  document.getElementById('nodeCount').textContent = cy.nodes().length;
+  document.getElementById('edgeCount').textContent = cy.edges().length;
+
+  setTimeout(() => {
+    document.getElementById('tip').classList.add('hidden');
+  }, 3000);
+
+  function toggleDark() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('viewerTheme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('viewerTheme', 'dark');
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if ((e.key === 'd' || e.key === 'D') && !e.ctrlKey && !e.metaKey) {
+      toggleDark();
+    }
+    if (e.key === 'Escape') hideTooltip();
+  });
+
+  const savedTheme = localStorage.getItem('viewerTheme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+
+  window.addEventListener('resize', function() { cy.fit(30); });
+</script>
+</body>
+</html>
