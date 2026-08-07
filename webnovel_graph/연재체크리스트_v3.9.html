@@ -166,6 +166,15 @@
     .section-title:first-child {
       margin-top: 0;
     }
+    .section-title .range-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #4f46e5;
+      background: #eef2ff;
+      padding: 0 10px;
+      border-radius: 20px;
+      margin-left: 6px;
+    }
 
     .check-item {
       display: flex;
@@ -279,6 +288,10 @@
       color: #e0e0e0;
       border-bottom-color: #333355;
     }
+    [data-theme="dark"] .section-title .range-badge {
+      background: #2a2a55;
+      color: #a78bfa;
+    }
     [data-theme="dark"] .check-item {
       border-bottom-color: #2a2a44;
       color: #e0e0e0;
@@ -384,11 +397,12 @@
       'use strict';
 
       // ============================================================
-      // 1. 체크리스트 데이터 (간소화)
+      // 1. 체크리스트 데이터 (range 포함)
       // ============================================================
       const STAGES = {
         1: {
           label: '① 일상의 파편',
+          range: '1~3화',
           checks: [
             { id: 's1_1', text: '평범한 일상 생생 묘사' },
             { id: 's1_2', text: '감정 이입 가능한가' },
@@ -399,6 +413,7 @@
         },
         2: {
           label: '② 균열',
+          range: '1~3화',
           checks: [
             { id: 's2_1', text: '"방해 요소" 등장' },
             { id: 's2_2', text: '"계기적 사건" 발생' },
@@ -409,6 +424,7 @@
         },
         3: {
           label: '③ 확장의 나선',
+          range: '4~10화',
           checks: [
             { id: 's3_1', text: '주제가 내면/관계로 확장' },
             { id: 's3_2', text: '치명적 결함 드러내기' },
@@ -419,6 +435,7 @@
         },
         4: {
           label: '④ 절정의 킬링파트',
+          range: '4~10화',
           checks: [
             { id: 's4_1', text: '모든 긴장 폭발' },
             { id: 's4_2', text: '"아!" 하고 외칠 통찰' },
@@ -429,6 +446,7 @@
         },
         5: {
           label: '⑤ 수렴의 관',
+          range: '11~30화',
           checks: [
             { id: 's5_1', text: '모든 서브플롯이 주제로 모임' },
             { id: 's5_2', text: '작품 전체 메시지 명확' },
@@ -439,6 +457,7 @@
         },
         6: {
           label: '⑥ 여운의 메아리',
+          range: '31~50화',
           checks: [
             { id: 's6_1', text: '주인공의 확실한 변화' },
             { id: 's6_2', text: '다시 떠올리게 하는 장치' },
@@ -449,6 +468,7 @@
         },
         7: {
           label: '⑦ 열린 문',
+          range: '50화+',
           checks: [
             { id: 's7_1', text: '마지막 장면이 질문 던지기' },
             { id: 's7_2', text: '독자의 상상력 자극' },
@@ -497,7 +517,7 @@
       ];
 
       // ============================================================
-      // 2. 모든 체크 항목을 평면 리스트로
+      // 2. 모든 체크 항목 (평면 리스트)
       // ============================================================
       const CHECK_ITEMS = [];
 
@@ -509,7 +529,8 @@
             id: c.id,
             label: c.text,
             section: 'stage_' + s,
-            sectionLabel: stage.label
+            sectionLabel: stage.label,
+            sectionRange: stage.range
           });
         });
       }
@@ -519,7 +540,8 @@
           id: c.id,
           label: c.text,
           section: 'daily',
-          sectionLabel: '📌 매화 공통'
+          sectionLabel: '📌 매화 공통',
+          sectionRange: '모든 화'
         });
       });
 
@@ -528,7 +550,8 @@
           id: c.id,
           label: c.text,
           section: 'sentence',
-          sectionLabel: '✍️ 문장 퇴고'
+          sectionLabel: '✍️ 문장 퇴고',
+          sectionRange: '모든 화'
         });
       });
 
@@ -537,7 +560,8 @@
           id: c.id,
           label: c.text,
           section: 'genre',
-          sectionLabel: '🎭 장르 특화'
+          sectionLabel: '🎭 장르 특화',
+          sectionRange: '모든 화'
         });
       });
 
@@ -545,14 +569,14 @@
       // 3. 상태
       // ============================================================
       let checkStates = {};
-      const STORAGE_KEY = 'checklist_sync_final_v2';
+      const STORAGE_KEY = 'checklist_sync_final_v3';
 
       CHECK_ITEMS.forEach(item => {
         checkStates[item.id] = false;
       });
 
       // ============================================================
-      // 4. 그래프 데이터 (계층 구조)
+      // 4. 그래프 데이터 (계층 구조 + 엣지 설명 포함)
       // ============================================================
       const CAT_IDS = ['STAGE_1', 'STAGE_2', 'STAGE_3', 'STAGE_4', 'STAGE_5', 'STAGE_6', 'STAGE_7', 'DAILY', 'SENTENCE',
         'GENRE'
@@ -568,6 +592,19 @@
         'DAILY': '📌 매화',
         'SENTENCE': '✍️ 문장',
         'GENRE': '🎭 장르'
+      };
+      // 각 카테고리별 range 정보 (엣지 설명에 사용)
+      const CAT_RANGE = {
+        'STAGE_1': '1~3화',
+        'STAGE_2': '1~3화',
+        'STAGE_3': '4~10화',
+        'STAGE_4': '4~10화',
+        'STAGE_5': '11~30화',
+        'STAGE_6': '31~50화',
+        'STAGE_7': '50화+',
+        'DAILY': '모든 화',
+        'SENTENCE': '모든 화',
+        'GENRE': '모든 화'
       };
 
       function buildGraphData() {
@@ -602,7 +639,7 @@
               source: 'ROOT_CHECKLIST',
               target: id,
               label: '카테고리',
-              desc: `"${CAT_LABELS[id] || id}"는 체크리스트 루트에 속한 카테고리입니다.`
+              desc: `"${CAT_LABELS[id] || id}" 카테고리 (${CAT_RANGE[id] || ''})`
             }
           });
         });
@@ -631,13 +668,16 @@
             classes: 'node-unchecked'
           });
 
+          // 엣지 설명: 카테고리명 + 항목명 + range
+          const catLabel = CAT_LABELS[parentId] || parentId;
+          const range = CAT_RANGE[parentId] || '';
           edges.push({
             data: {
               id: 'edge_' + parentId + '_' + item.id,
               source: parentId,
               target: item.id,
               label: '항목',
-              desc: `"${CAT_LABELS[parentId] || parentId}" 카테고리의 체크 항목입니다: ${item.label}`
+              desc: `"${catLabel}" (${range})의 체크 항목: ${item.label}`
             }
           });
         });
@@ -649,7 +689,6 @@
       // 5. 핵심: 체크 상태 변경 (리스트 ↔ 그래프 동기화)
       // ============================================================
       function setCheckState(id, isChecked) {
-        console.log('setCheckState:', id, isChecked);
         checkStates[id] = isChecked;
 
         // 리스트 UI 업데이트
@@ -660,7 +699,7 @@
           listItem.classList.toggle('done', isChecked);
         }
 
-        // 그래프 노드 색상 업데이트 (클래스 토글 방식 - 인라인 style() 바이패스보다 렌더 반영이 확실함)
+        // 그래프 노드 색상 업데이트
         if (cy) {
           const node = cy.getElementById(id);
           if (node.length) {
@@ -668,9 +707,6 @@
             node.addClass(isChecked ? 'node-checked' : 'node-unchecked');
             const base = node.data('baseLabel') || node.data('label');
             node.data('label', isChecked ? '✅ ' + base : base);
-            console.log('노드 색상 변경:', id, isChecked ? '초록' : '회색');
-          } else {
-            console.log('노드 없음:', id);
           }
         }
 
@@ -679,7 +715,7 @@
       }
 
       // ============================================================
-      // 6. 리스트 렌더링
+      // 6. 리스트 렌더링 (섹션 타이틀에 range 표시)
       // ============================================================
       function renderChecklist() {
         const container = document.getElementById('checklistContainer');
@@ -702,13 +738,24 @@
           'genre': '🎭 장르 특화'
         };
 
+        // range 정보는 CHECK_ITEMS의 sectionRange를 활용 (첫 항목의 range 사용)
+        const sectionRangeMap = {};
+        CHECK_ITEMS.forEach(item => {
+          if (!sectionRangeMap[item.section]) {
+            sectionRangeMap[item.section] = item.sectionRange || '';
+          }
+        });
+
         let html = '';
 
         sectionOrder.forEach(sectionKey => {
           const items = CHECK_ITEMS.filter(item => item.section === sectionKey);
           if (items.length === 0) return;
 
-          html += `<div class="section-title">${sectionLabels[sectionKey] || sectionKey}</div>`;
+          const range = sectionRangeMap[sectionKey] || '';
+          const rangeHtml = range ? `<span class="range-badge">${range}</span>` : '';
+
+          html += `<div class="section-title">${sectionLabels[sectionKey] || sectionKey} ${rangeHtml}</div>`;
 
           items.forEach(item => {
             const checked = checkStates[item.id] || false;
@@ -734,7 +781,6 @@
         });
 
         updateProgress();
-        // 그래프가 초기화된 후 색상 적용을 위해 약간 지연
         setTimeout(() => {
           if (cy) updateAllNodeColors();
         }, 300);
@@ -745,7 +791,6 @@
       // ============================================================
       function updateAllNodeColors() {
         if (!cy) return;
-        console.log('updateAllNodeColors 실행');
         CHECK_ITEMS.forEach(item => {
           const node = cy.getElementById(item.id);
           if (node.length) {
@@ -779,7 +824,6 @@
       let cy = null;
 
       function initGraph() {
-        console.log('initGraph 실행');
         if (cy) {
           cy.resize();
           cy.fit();
@@ -788,7 +832,7 @@
         }
 
         if (typeof cytoscape === 'undefined' || window.__cytoscapeLoadFailed) {
-          console.error('cytoscape 라이브러리 로드 실패 (CDN 차단 가능성)');
+          console.error('cytoscape 라이브러리 로드 실패');
           const cyEl = document.getElementById('cy');
           if (cyEl) {
             cyEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:20px;text-align:center;color:#ef4444;font-size:0.85rem;">⚠️ 그래프 라이브러리(cytoscape)를 불러오지 못했습니다.<br>인터넷 연결 또는 광고 차단 프로그램을 확인한 뒤 새로고침 해주세요.<br>(unpkg.com 접속이 차단되어 있으면 그래프와 노드 색상 변경이 동작하지 않습니다)</div>';
@@ -799,165 +843,147 @@
 
         try {
           const graphData = buildGraphData();
-        console.log('그래프 데이터 노드 수:', graphData.nodes.length);
+          cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: graphData,
+            style: [{
+              selector: 'node',
+              style: {
+                'label': 'data(label)',
+                'background-color': 'data(color)',
+                'shape': 'round-rectangle',
+                'width': 'label',
+                'height': 26,
+                'padding': '6px',
+                'border-width': 2,
+                'border-color': '#666',
+                'text-valign': 'center',
+                'text-halign': 'center',
+                'color': '#fff',
+                'font-weight': 'bold',
+                'font-size': 10,
+                'text-outline-width': 2,
+                'text-outline-color': '#000',
+                'transition-property': 'background-color, border-color',
+                'transition-duration': '0.3s'
+              }
+            }, {
+              selector: 'node.node-checked',
+              style: { 'background-color': '#22c55e', 'border-color': '#22c55e' }
+            }, {
+              selector: 'node.node-unchecked',
+              style: { 'background-color': '#999', 'border-color': '#666' }
+            }, {
+              selector: 'node.node-cat',
+              style: { 'background-color': '#888', 'border-color': '#666' }
+            }, {
+              selector: 'node.node-hover',
+              style: { 'border-width': 3, 'border-color': '#4facfe' }
+            }, {
+              selector: 'node:selected',
+              style: { 'border-width': 3, 'border-color': '#FFD700' }
+            }, {
+              selector: 'edge',
+              style: {
+                'width': 1.5,
+                'line-color': '#888',
+                'target-arrow-shape': 'none',
+                'curve-style': 'bezier',
+                'opacity': 0.4,
+                'label': 'data(label)',
+                'font-size': 7,
+                'color': '#94a3b8',
+                'text-opacity': 0.85,
+                'text-rotation': 'autorotate',
+                'text-margin-y': -6
+              }
+            }, {
+              selector: 'edge:selected',
+              style: { 'opacity': 1, 'line-color': '#aaa' }
+            }, {
+              selector: 'edge.hover-highlight',
+              style: { 'opacity': 1, 'width': 2.5, 'line-color': '#4facfe', 'color': '#4facfe', 'font-weight': 'bold' }
+            }],
+            layout: { name: 'cose', animate: true, fit: true, padding: 40 }
+          });
 
-        cy = cytoscape({
-          container: document.getElementById('cy'),
-          elements: graphData,
-          style: [{
-            selector: 'node',
-            style: {
-              'label': 'data(label)',
-              'background-color': 'data(color)',
-              'shape': 'round-rectangle',
-              'width': 'label',
-              'height': 26,
-              'padding': '6px',
-              'border-width': 2,
-              'border-color': '#666',
-              'text-valign': 'center',
-              'text-halign': 'center',
-              'color': '#fff',
-              'font-weight': 'bold',
-              'font-size': 10,
-              'text-outline-width': 2,
-              'text-outline-color': '#000',
-              'transition-property': 'background-color, border-color',
-              'transition-duration': '0.3s'
-            }
-          }, {
-            selector: 'node.node-checked',
-            style: { 'background-color': '#22c55e', 'border-color': '#22c55e' }
-          }, {
-            selector: 'node.node-unchecked',
-            style: { 'background-color': '#999', 'border-color': '#666' }
-          }, {
-            selector: 'node.node-cat',
-            style: { 'background-color': '#888', 'border-color': '#666' }
-          }, {
-            selector: 'node.node-hover',
-            style: { 'border-width': 3, 'border-color': '#4facfe' }
-          }, {
-            selector: 'node:selected',
-            style: { 'border-width': 3, 'border-color': '#FFD700' }
-          }, {
-            selector: 'edge',
-            style: {
-              'width': 1.5,
-              'line-color': '#888',
-              'target-arrow-shape': 'none',
-              'curve-style': 'bezier',
-              'opacity': 0.4,
-              'label': 'data(label)',
-              'font-size': 7,
-              'color': '#94a3b8',
-              'text-opacity': 0.85,
-              'text-rotation': 'autorotate',
-              'text-margin-y': -6
-            }
-          }, {
-            selector: 'edge:selected',
-            style: { 'opacity': 1, 'line-color': '#aaa' }
-          }, {
-            selector: 'edge.hover-highlight',
-            style: { 'opacity': 1, 'width': 2.5, 'line-color': '#4facfe', 'color': '#4facfe', 'font-weight': 'bold' }
-          }],
-          layout: { name: 'cose', animate: true, fit: true, padding: 40 }
-        });
+          // 그래프 노드 클릭 이벤트 (항목 노드만)
+          cy.on('click', 'node', function(evt) {
+            const node = evt.target;
+            const id = node.id();
+            const isItem = CHECK_ITEMS.some(item => item.id === id);
+            if (!isItem) return;
+            const current = checkStates[id] || false;
+            setCheckState(id, !current);
+          });
 
-        console.log('cytoscape 초기화 완료');
+          // 툴팁 (노드 + 엣지)
+          const tooltip = document.getElementById('nodeTooltip');
+          const ttTitle = document.getElementById('ttTitle');
+          const ttNotes = document.getElementById('ttNotes');
 
-        // 그래프 노드 클릭 이벤트 (항목 노드만)
-        cy.on('click', 'node', function(evt) {
-          const node = evt.target;
-          const id = node.id();
-          console.log('그래프 노드 클릭:', id);
+          cy.on('mouseover', 'node', function(evt) {
+            const node = evt.target;
+            const label = node.data('label') || node.id();
+            const notes = node.data('notes') || '';
+            ttTitle.textContent = label;
+            ttNotes.innerHTML = notes || '<span class="tt-empty">메모 없음</span>';
+            const pos = node.renderedPosition();
+            const rect = cy.container().getBoundingClientRect();
+            let x = rect.left + pos.x - tooltip.offsetWidth / 2;
+            let y = rect.top + pos.y - 50 - tooltip.offsetHeight;
+            if (x < 10) x = 10;
+            if (y < 10) y = rect.top + pos.y + 20;
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+            tooltip.style.display = 'block';
+            node.addClass('node-hover');
+          });
 
-          // 루트나 카테고리는 제외 (항목만)
-          const isItem = CHECK_ITEMS.some(item => item.id === id);
-          if (!isItem) {
-            console.log('루트/카테고리 노드, 무시');
-            return;
-          }
+          cy.on('mouseout', 'node', function(evt) {
+            tooltip.style.display = 'none';
+            evt.target.removeClass('node-hover');
+          });
 
-          const current = checkStates[id] || false;
-          console.log('현재 상태:', current, '→', !current);
-          setCheckState(id, !current);
-        });
+          cy.on('mouseover', 'edge', function(evt) {
+            const edge = evt.target;
+            const srcLabel = edge.source().data('label') || edge.source().id();
+            const tgtLabel = edge.target().data('label') || edge.target().id();
+            const desc = edge.data('desc') || '';
+            ttTitle.textContent = srcLabel + ' → ' + tgtLabel;
+            ttNotes.innerHTML = desc || '<span class="tt-empty">관계 설명 없음</span>';
+            const rect = cy.container().getBoundingClientRect();
+            let x = evt.originalEvent.clientX - tooltip.offsetWidth / 2;
+            let y = evt.originalEvent.clientY - 20 - tooltip.offsetHeight;
+            if (x < 10) x = 10;
+            if (y < 10) y = evt.originalEvent.clientY + 20;
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+            tooltip.style.display = 'block';
+            edge.addClass('hover-highlight');
+          });
 
-        // 툴팁
-        const tooltip = document.getElementById('nodeTooltip');
-        const ttTitle = document.getElementById('ttTitle');
-        const ttNotes = document.getElementById('ttNotes');
+          cy.on('mouseout', 'edge', function(evt) {
+            tooltip.style.display = 'none';
+            evt.target.removeClass('hover-highlight');
+          });
 
-        cy.on('mouseover', 'node', function(evt) {
-          const node = evt.target;
-          const label = node.data('label') || node.id();
-          const notes = node.data('notes') || '';
-          ttTitle.textContent = label;
-          ttNotes.innerHTML = notes || '<span class="tt-empty">메모 없음</span>';
-          const pos = node.renderedPosition();
-          const rect = cy.container().getBoundingClientRect();
-          let x = rect.left + pos.x - tooltip.offsetWidth / 2;
-          let y = rect.top + pos.y - 50 - tooltip.offsetHeight;
-          if (x < 10) x = 10;
-          if (y < 10) y = rect.top + pos.y + 20;
-          tooltip.style.left = x + 'px';
-          tooltip.style.top = y + 'px';
-          tooltip.style.display = 'block';
-          node.addClass('node-hover');
-        });
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') tooltip.style.display = 'none';
+          });
 
-        cy.on('mouseout', 'node', function(evt) {
-          tooltip.style.display = 'none';
-          evt.target.removeClass('node-hover');
-        });
+          window.addEventListener('resize', function() {
+            if (cy) cy.resize();
+          });
 
-        // 관계선(엣지) 설명 툴팁
-        cy.on('mouseover', 'edge', function(evt) {
-          const edge = evt.target;
-          const srcLabel = edge.source().data('label') || edge.source().id();
-          const tgtLabel = edge.target().data('label') || edge.target().id();
-          const desc = edge.data('desc') || '';
-          ttTitle.textContent = srcLabel + ' → ' + tgtLabel;
-          ttNotes.innerHTML = desc || '<span class="tt-empty">관계 설명 없음</span>';
-
-          // 마우스 커서 근처에 표시 (엣지는 노드 좌표가 없으므로 renderedPosition 사용 불가)
-          const rect = cy.container().getBoundingClientRect();
-          let x = evt.originalEvent.clientX - tooltip.offsetWidth / 2;
-          let y = evt.originalEvent.clientY - 20 - tooltip.offsetHeight;
-          if (x < 10) x = 10;
-          if (y < 10) y = evt.originalEvent.clientY + 20;
-          tooltip.style.left = x + 'px';
-          tooltip.style.top = y + 'px';
-          tooltip.style.display = 'block';
-
-          edge.addClass('hover-highlight');
-        });
-
-        cy.on('mouseout', 'edge', function(evt) {
-          tooltip.style.display = 'none';
-          evt.target.removeClass('hover-highlight');
-        });
-
-        document.addEventListener('keydown', function(e) {
-          if (e.key === 'Escape') tooltip.style.display = 'none';
-        });
-
-        window.addEventListener('resize', function() {
-          if (cy) cy.resize();
-        });
-
-        // 초기 색상 적용
-        setTimeout(() => {
-          updateAllNodeColors();
-          console.log('초기 색상 적용 완료');
-        }, 200);
+          setTimeout(() => {
+            updateAllNodeColors();
+          }, 200);
         } catch (err) {
           console.error('initGraph 오류:', err);
           const cyEl = document.getElementById('cy');
           if (cyEl) {
-            cyEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:20px;text-align:center;color:#ef4444;font-size:0.85rem;">⚠️ 그래프 초기화 중 오류가 발생했습니다: ' + (err && err.message ? err.message : err) + '</div>';
+            cyEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:20px;text-align:center;color:#ef4444;font-size:0.85rem;">⚠️ 그래프 초기화 중 오류가 발생했습니다</div>';
           }
           showToast('⚠️ 그래프 초기화 오류');
         }
@@ -1064,23 +1090,16 @@
       if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 
       // ============================================================
-      // 14. 다운로드
+      // 14. 다운로드 (자기 자신)
       // ============================================================
       function downloadSelf() {
         const clone = document.documentElement.cloneNode(true);
         const downloadBtn = clone.querySelector('#downloadBtn');
         if (downloadBtn) downloadBtn.remove();
-
-        // Cytoscape가 런타임에 #cy 안에 삽입한 canvas 레이어를 제거
-        // (저장 당시 화면 크기로 고정된 캔버스가 그대로 딸려가면, 파일을 다시 열었을 때
-        //  새로 초기화되는 cytoscape 인스턴스와 충돌해 그래프가 잘려 보이는 원인이 됨)
         const cyClone = clone.querySelector('#cy');
         if (cyClone) cyClone.innerHTML = '';
-
-        // 툴팁도 열려있던 상태 그대로 굳어서 저장되지 않도록 초기화
         const tooltipClone = clone.querySelector('#nodeTooltip');
         if (tooltipClone) tooltipClone.style.display = 'none';
-
         const html = '<!DOCTYPE html>\n' + clone.outerHTML;
         const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -1098,8 +1117,6 @@
       // 15. 초기화
       // ============================================================
       function init() {
-        console.log('init 시작');
-
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
           if (saved) {
@@ -1113,10 +1130,7 @@
         } catch (e) {}
 
         renderChecklist();
-
-        // 그래프는 DOM이 완전히 렌더링된 후 초기화
         setTimeout(function() {
-          console.log('그래프 초기화 시작');
           initGraph();
         }, 300);
 
