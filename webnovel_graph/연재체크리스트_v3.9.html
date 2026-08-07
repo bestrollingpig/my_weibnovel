@@ -1,2090 +1,1135 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>연재 체크리스트 v3.9</title>
-<style>
-/* ===== 수동 버전과 동일한 CSS ===== */
-:root {
-  --bg: #f4f6fa;
-  --card: #ffffff;
-  --border: #e2e8f0;
-  --text: #1e293b;
-  --text-dim: #64748b;
-  --primary: #4f46e5;
-  --success: #22c55e;
-  --danger: #ef4444;
-  --warn: #f59e0b;
-  --radius: 10px;
-  --shadow: 0 2px 8px rgba(0,0,0,.06);
-  --font: 'Segoe UI', 'Malgun Gothic', sans-serif;
-}
-[data-theme=dark] {
-  --bg: #0f172a;
-  --card: #1e293b;
-  --border: #334155;
-  --text: #f1f5f9;
-  --text-dim: #94a3b8;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  padding: 12px;
-  min-height: 100vh;
-  transition: background .3s, color .3s;
-}
-.container { max-width: 900px; margin:0 auto; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 창작 통합 도구</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js" onerror="window.__cytoscapeLoadFailed = true;">
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      height: 100%;
+      background: #f6f8fc;
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      color: #1e293b;
+      overflow: hidden;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-/* ===== 헤더 (수동과 동일) ===== */
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--border);
-  margin-bottom: 12px;
-  gap: 6px;
-}
-.header h1 {
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.header h1 small { font-size: .65rem; color: var(--text-dim); font-weight:400; }
-.header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-}
-.header-actions button, .header-actions select, .header-actions input {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 3px 10px;
-  border-radius: 30px;
-  font-size: .75rem;
-  color: var(--text);
-  cursor: pointer;
-  font-family: var(--font);
-  transition: .2s;
-}
-.header-actions button:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
-.header-actions select { cursor: pointer; padding-right: 24px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
-.header-actions input[type=number] { width: 48px; text-align:center; cursor:text; }
-.badge-streak { background:#fef3c7; color:#92400e; padding:2px 10px; border-radius:30px; font-size:.65rem; font-weight:600; white-space:nowrap; }
-[data-theme=dark] .badge-streak { background:#78350f; color:#fde68a; }
-.badge-stage { background:var(--primary); color:#fff; padding:2px 12px; border-radius:30px; font-size:.65rem; font-weight:600; white-space:nowrap; }
-.file-status { font-size:.65rem; color:var(--text-dim); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
-.file-status:hover { color:var(--primary); }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 6px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 30px;
+      padding: 3px 14px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.2s;
+      font-family: inherit;
+      backdrop-filter: blur(4px);
+    }
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .btn-primary {
+      background: #4f46e5;
+      border-color: #4f46e5;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #4338ca;
+    }
+    .btn-danger {
+      color: #fca5a5;
+      border-color: #ef4444;
+    }
+    .btn-danger:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+    .dark-toggle {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: 3px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 0.7rem;
+    }
+    .dark-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
 
-/* ===== 탭 ===== */
-.tabs {
-  display: flex;
-  gap: 3px;
-  margin-bottom: 12px;
-  border-bottom: 2px solid var(--border);
-  padding-bottom: 3px;
-  flex-wrap: wrap;
-}
-.tabs button {
-  background: transparent;
-  border: none;
-  padding: 5px 12px;
-  font-size: .82rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  cursor: pointer;
-  border-radius: 30px;
-  transition: .2s;
-  font-family: var(--font);
-}
-.tabs button:hover { background: var(--border); color: var(--text); }
-.tabs button.active { background: var(--primary); color: #fff; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+    .main-split {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    .left-panel {
+      width: 45%;
+      overflow-y: auto;
+      background: #f6f8fc;
+      padding: 12px 16px;
+      border-right: 2px solid #e2e8f0;
+    }
+    .right-panel {
+      width: 55%;
+      background: #fafafa;
+      position: relative;
+    }
+    #cy {
+      width: 100%;
+      height: 100%;
+      background: #fafafa;
+    }
 
-/* ===== 진행률 ===== */
-.progress-wrap {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 5px 12px;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid var(--border);
-  flex-wrap: wrap;
-  font-size: .78rem;
-}
-.progress-bar { flex:1; min-width:60px; height:5px; background:var(--border); border-radius:20px; overflow:hidden; }
-.progress-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--primary),#7c3aed); transition:width .3s; }
+    .checklist-wrap {
+      max-width: 100%;
+    }
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8faff;
+      border-radius: 10px;
+      padding: 4px 14px;
+      margin-bottom: 12px;
+      border: 1px solid #e9edf4;
+    }
+    .progress-bar {
+      flex: 1;
+      height: 5px;
+      background: #e2e8f0;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      transition: width 0.25s;
+    }
+    .progress-text {
+      font-size: 0.8rem;
+      font-weight: 600;
+      min-width: 40px;
+      text-align: right;
+    }
+    .progress-count {
+      font-size: 0.65rem;
+      color: #64748b;
+    }
 
-/* ===== 단계 네비게이션 ===== */
-.stage-nav {
-  display: grid;
-  grid-template-columns: repeat(7,1fr);
-  gap: 4px;
-  margin-bottom: 10px;
-}
-.stage-nav button {
-  background: var(--bg);
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 2px;
-  font-size: .6rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  cursor: pointer;
-  transition: .2s;
-  font-family: var(--font);
-  text-align: center;
-}
-.stage-nav button .num { display:block; font-size:.75rem; }
-.stage-nav button.active { border-color: var(--primary); background: var(--primary); color: #fff; }
-.stage-nav button.recommended { border-color: var(--warn); border-style: dashed; }
-.stage-nav button:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1e293b;
+      padding: 6px 0 2px 0;
+      border-bottom: 2px solid #eef2f7;
+      margin-top: 4px;
+    }
+    .section-title:first-child {
+      margin-top: 0;
+    }
 
-/* ===== 작업장 ===== */
-.workbench { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 800px) { .workbench { grid-template-columns: 1fr; } }
-.work-panel {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-.work-panel h3 {
-  font-size: .85rem;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.work-panel textarea {
-  width: 100%;
-  min-height: 120px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: .85rem;
-  line-height: 1.6;
-  color: var(--text);
-  font-family: var(--font);
-  resize: vertical;
-}
-.work-panel textarea:focus { outline:2px solid var(--primary); border-color:transparent; }
-.memo-box { min-height: 50px; margin-top: 4px; }
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-  font-size: .7rem;
-  color: var(--text-dim);
-  align-items: center;
-}
-.toolbar .cond-btn {
-  cursor: pointer;
-  padding: 0 4px;
-  border-radius: 4px;
-  transition: .15s;
-}
-.toolbar .cond-btn.active { background: var(--primary); color: #fff; font-weight:700; }
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 4px 0 4px 16px;
+      border-bottom: 1px solid #f1f4fa;
+      cursor: pointer;
+    }
+    .check-item:last-child {
+      border-bottom: none;
+    }
+    .check-item input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      margin-top: 2px;
+      accent-color: #22c55e;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .check-item .label-text {
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+    .check-item .hint {
+      display: block;
+      font-size: 0.6rem;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+    .check-item.done {
+      opacity: 0.7;
+    }
+    .check-item.done .label-text {
+      text-decoration: line-through;
+    }
 
-/* ===== 체크리스트 ===== */
-.checklist { display: flex; flex-direction: column; gap: 4px; margin: 4px 0; max-height: 400px; overflow-y: auto; padding-right: 4px; }
-.check-item {
-  background: var(--bg);
-  border-radius: 6px;
-  padding: 6px 10px;
-  border-left: 3px solid var(--border);
-  transition: .2s;
-}
-.check-item .row-top { display: flex; align-items: flex-start; gap: 6px; }
-.check-item input[type=checkbox] { width: 14px; height: 14px; margin-top: 2px; accent-color: var(--primary); cursor: pointer; flex-shrink:0; }
-.check-item .label-text { font-size: .8rem; line-height: 1.4; cursor:pointer; }
-.check-item .hint { display:block; font-size:.65rem; color:var(--text-dim); font-weight:400; }
-.check-item .tag {
-  font-size: .55rem;
-  padding: 0 6px;
-  border-radius: 20px;
-  background: rgba(79,70,229,.12);
-  color: var(--primary);
-  font-weight: 600;
-  margin-left: 3px;
-  white-space: nowrap;
-}
-.check-item .tag.project { background: rgba(34,197,94,.15); color: #166534; }
-.check-item .tag.chapter { background: rgba(245,158,11,.15); color: #92400e; }
-.check-item .tag.daily { background: rgba(6,182,212,.15); color: #0e7490; }
-.check-item .tag.sentence { background: rgba(139,92,246,.15); color: #6d28d9; }
-.check-item .tag.genre { background: rgba(236,72,153,.15); color: #9d174d; }
-.check-item.done { border-left-color: var(--success); opacity: .85; }
+    .toolbar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 8px 0 4px;
+      padding-top: 8px;
+      border-top: 1px solid #e9edf4;
+    }
+    .save-status {
+      font-size: 0.65rem;
+      color: #64748b;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .save-status .ok {
+      color: #22c55e;
+    }
+    #fileInput {
+      display: none;
+    }
 
-.btn-group { display:flex; flex-wrap:wrap; gap:4px; margin:4px 0; }
-.btn-group button {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  padding: 3px 10px;
-  border-radius: 30px;
-  font-size: .7rem;
-  font-weight: 500;
-  color: var(--text);
-  cursor: pointer;
-  font-family: var(--font);
-  transition: .2s;
-}
-.btn-group button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-.btn-group button:hover { background: var(--border); }
-.btn-group button.primary:hover { background: #4338ca; }
-.btn-group button.danger { color: var(--danger); border-color: var(--danger); }
-.btn-group button.danger:hover { background: var(--danger); color: #fff; }
+    #nodeTooltip {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      pointer-events: none;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      max-width: 280px;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      font-family: 'Malgun Gothic', sans-serif;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      color: #333;
+    }
+    #nodeTooltip .tt-title {
+      font-weight: bold;
+      color: #667eea;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 2px;
+      margin-bottom: 2px;
+    }
+    #nodeTooltip .tt-notes {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.7rem;
+    }
+    #nodeTooltip .tt-empty {
+      color: #999;
+      font-style: italic;
+    }
 
-.save-status { font-size:.65rem; color:var(--text-dim); margin-top:4px; display:flex; align-items:center; gap:6px; }
-.save-status .ok { color: var(--success); }
+    [data-theme="dark"] body {
+      background: #0f0f1a;
+    }
+    [data-theme="dark"] .left-panel {
+      background: #0f0f1a;
+      border-right-color: #333355;
+    }
+    [data-theme="dark"] .right-panel {
+      background: #0f0f1a;
+    }
+    [data-theme="dark"] #cy {
+      background: #0f0f1a;
+    }
+    [data-theme="dark"] .checklist-wrap {
+      background: transparent;
+    }
+    [data-theme="dark"] .section-title {
+      color: #e0e0e0;
+      border-bottom-color: #333355;
+    }
+    [data-theme="dark"] .check-item {
+      border-bottom-color: #2a2a44;
+      color: #e0e0e0;
+    }
+    [data-theme="dark"] .progress-wrap {
+      background: #1a1a2e;
+      border-color: #333355;
+    }
+    [data-theme="dark"] #nodeTooltip {
+      background: #1a1a2e;
+      border-color: #444466;
+      color: #e0e0e0;
+    }
+    [data-theme="dark"] #nodeTooltip .tt-title {
+      color: #bb86fc;
+      border-color: #444466;
+    }
+    [data-theme="dark"] #nodeTooltip .tt-empty {
+      color: #888;
+    }
 
-/* ===== 기록 ===== */
-.record-list { display:flex; flex-direction:column; gap:12px; }
-.record-group { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
-.record-group .group-header {
-  background:var(--bg);
-  padding:6px 14px;
-  font-weight:600;
-  font-size:.85rem;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  cursor:pointer;
-}
-.record-group .group-header .badge { font-weight:400; font-size:.7rem; color:var(--text-dim); }
-.record-group .group-body { padding:4px 8px; }
-.record-item {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:6px 8px;
-  border-bottom:1px solid var(--border);
-  font-size:.8rem;
-  flex-wrap:wrap;
-  gap:4px;
-}
-.record-item:last-child { border-bottom:none; }
-.record-item .ri-left { display:flex; align-items:center; gap:8px; flex:1; min-width:120px; }
-.record-item .ri-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.record-item .ri-title { font-weight:600; }
-.record-item .ri-meta { font-size:.68rem; color:var(--text-dim); }
-.record-item .ri-actions { display:flex; gap:4px; }
-.record-item .ri-actions button {
-  background:transparent;
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:0 8px;
-  font-size:.65rem;
-  cursor:pointer;
-  color:var(--text);
-  font-family:var(--font);
-  transition:.15s;
-}
-.record-item .ri-actions button:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
-.record-item .ri-actions button.danger:hover { background:var(--danger); border-color:var(--danger); }
-.record-empty { padding:30px 10px; text-align:center; color:var(--text-dim); font-size:.85rem; }
-.record-detail { margin-top:12px; padding:12px 14px; background:var(--bg); border-radius:var(--radius); border:1px solid var(--border); }
-.record-detail h4 { font-size:.85rem; margin-bottom:4px; }
-.record-detail textarea { width:100%; min-height:60px; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:6px 8px; font-size:.78rem; color:var(--text); font-family:var(--font); resize:vertical; }
-.record-detail textarea:read-only { opacity:.7; }
-
-/* ===== 목표/떡밥 ===== */
-.goal-box { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px; margin-bottom:10px; }
-.goal-box h3 { font-size:.85rem; margin-bottom:4px; }
-.goal-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:4px; font-size:.78rem; }
-.goal-row label { color:var(--text-dim); min-width:60px; }
-.goal-row input { width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); font-family:var(--font); text-align:center; }
-.goal-bar-wrap { flex:1; min-width:60px; height:5px; background:var(--border); border-radius:20px; overflow:hidden; }
-.goal-bar-fill { height:100%; border-radius:20px; background:linear-gradient(90deg,var(--primary),#7c3aed); transition:width .3s; }
-.goal-pct { font-weight:700; min-width:32px; text-align:right; font-size:.7rem; }
-.cal-actions { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
-.cal-actions button {
-  padding:2px 10px;
-  border-radius:30px;
-  border:1px solid var(--border);
-  background:var(--bg);
-  color:var(--text);
-  font-weight:600;
-  font-size:.68rem;
-  cursor:pointer;
-  transition:.2s;
-  font-family:var(--font);
-}
-.cal-actions button:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
-.cal-actions button.primary { background:var(--primary); color:#fff; border-color:var(--primary); }
-.cal-actions button.danger { border-color:var(--danger); color:var(--danger); }
-.cal-actions button.danger:hover { background:var(--danger); color:#fff; }
-
-/* ===== 떡밥 ===== */
-.foreshadow-item {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 8px;
-  margin-bottom: 4px;
-}
-.foreshadow-item .fs-top { display:flex; flex-wrap:wrap; gap:3px; align-items:center; }
-.foreshadow-item input, .foreshadow-item select {
-  padding:2px 5px;
-  border:1px solid var(--border);
-  border-radius:4px;
-  background:var(--card);
-  color:var(--text);
-  font-family:var(--font);
-  font-size:.7rem;
-}
-.foreshadow-item input[type=text] { flex:1; min-width:80px; }
-.fs-status-open { color:#b45309; }
-.fs-status-done { color:#166534; }
-.fs-status-drop { color:var(--text-dim); }
-
-/* ===== 메모 ===== */
-.notes-search { width:100%; padding:4px 10px; border:1px solid var(--border); border-radius:30px; background:var(--bg); color:var(--text); font-family:var(--font); font-size:.78rem; margin-bottom:6px; }
-.notes-search:focus { outline:2px solid var(--primary); border-color:transparent; }
-.note-item { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:6px 8px; margin-bottom:4px; }
-.note-item .note-tags { display:flex; flex-wrap:wrap; gap:3px; margin:3px 0; }
-.note-item .tag { background:rgba(79,70,229,.12); color:var(--primary); padding:0 6px; border-radius:20px; font-size:.6rem; font-weight:600; }
-.note-item .note-body { font-size:.78rem; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
-.note-item .note-meta { font-size:.6rem; color:var(--text-dim); margin-top:3px; }
-.note-form textarea { width:100%; min-height:45px; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:.78rem; color:var(--text); font-family:var(--font); resize:vertical; }
-.note-form input { width:100%; padding:3px 8px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); font-family:var(--font); font-size:.7rem; margin-top:3px; }
-
-/* ===== 도움말 ===== */
-.help-section {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  margin-bottom: 12px;
-  box-shadow: var(--shadow);
-}
-.help-section h2 {
-  font-size: 1.05rem;
-  margin-bottom: 6px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.help-section h3 {
-  font-size: .9rem;
-  margin: 10px 0 4px 0;
-  color: var(--primary);
-}
-.help-section p {
-  font-size: .82rem;
-  line-height: 1.6;
-  margin-bottom: 4px;
-  color: var(--text);
-}
-.help-section ul, .help-section ol {
-  padding-left: 18px;
-  font-size: .8rem;
-  line-height: 1.7;
-  margin-bottom: 6px;
-}
-.help-section li { margin-bottom: 1px; }
-.help-section .badge-example {
-  display: inline-block;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 0 8px;
-  font-size: .7rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  margin: 0 2px;
-}
-.help-section .key-point {
-  background: rgba(79,70,229,.06);
-  border-left: 3px solid var(--primary);
-  padding: 6px 12px;
-  border-radius: 4px;
-  margin: 4px 0;
-  font-size: .8rem;
-}
-.help-section .key-point strong { color: var(--primary); }
-.help-section .step-box {
-  background: var(--bg);
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin: 4px 0;
-  border: 1px solid var(--border);
-}
-.help-section .step-box .step-num {
-  display: inline-block;
-  background: var(--primary);
-  color: #fff;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  text-align: center;
-  line-height: 20px;
-  font-size: .65rem;
-  font-weight: 700;
-  margin-right: 6px;
-}
-
-/* ===== 공통 ===== */
-.footer { margin-top:20px; text-align:center; font-size:.65rem; color:var(--text-dim); border-top:1px solid var(--border); padding-top:8px; }
-.empty-state { color:var(--text-dim); text-align:center; padding:16px 10px; font-size:.8rem; }
-.streak-box {
-  background: linear-gradient(135deg,#fef3c7,#fde68a);
-  border-radius: 10px;
-  padding: 8px 12px;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-[data-theme=dark] .streak-box { background:linear-gradient(135deg,#78350f,#92400e); }
-.streak-box .fire { font-size:1.4rem; }
-.streak-box .streak-num { font-size:1.2rem; font-weight:800; color:#92400e; }
-[data-theme=dark] .streak-box .streak-num { color:#fde68a; }
-.streak-box .streak-lbl { font-size:.7rem; color:#78350f; }
-[data-theme=dark] .streak-box .streak-lbl { color:#fde68a; }
-.toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 8px 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,.12);
-  z-index: 1000;
-  font-size: .78rem;
-  max-width: 320px;
-  transform: translateY(20px);
-  opacity: 0;
-  transition: .3s;
-}
-.toast.show { opacity: 1; transform: translateY(0); }
-.toast .toast-title { font-weight: 600; }
-.toast .toast-detail { color: var(--text-dim); font-size: .7rem; margin-top: 2px; }
-
-/* ===== 반응형 ===== */
-@media (max-width: 600px) {
-  .header h1 { font-size: 1rem; }
-  .header-actions select, .header-actions input { font-size: .6rem; padding: 2px 6px; }
-  .work-panel { padding: 8px 10px; }
-  .work-panel textarea { min-height: 80px; }
-  .stage-nav button { font-size: .5rem; padding: 4px 2px; }
-  .stage-nav button .num { font-size: .6rem; }
-  .record-item { font-size:.72rem; }
-  .help-section { padding: 10px 12px; }
-}
-</style>
+    @media (max-width: 700px) {
+      .main-split {
+        flex-direction: column;
+      }
+      .left-panel {
+        width: 100%;
+        height: 45%;
+        border-right: none;
+        border-bottom: 2px solid #e2e8f0;
+      }
+      .right-panel {
+        width: 100%;
+        height: 55%;
+      }
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 6px 20px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transition: 0.3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-
-<!-- ===== 헤더 ===== -->
-<header class="header">
-  <h1>📚 연재 체크리스트 <small>v3.9</small></h1>
-  <div class="header-actions">
-    <span class="badge-streak" id="streakBadge">🔥 0일</span>
-    <select id="projectSelect"></select>
-    <input type="number" id="chapterInput" min="1" value="1" style="width:44px;">
-    <span class="badge-stage" id="stageBadge">1단계</span>
-    <span class="file-status" id="fileStatus" title="클릭하면 설정 모달">📁 파일 없음</span>
-    <button id="themeToggle">🌙</button>
-    <button id="resetBtn" style="color:var(--danger);border-color:var(--danger);padding:2px 8px;font-size:.65rem;">초기화</button>
-  </div>
-</header>
-
-<!-- ===== 탭 ===== -->
-<div class="tabs">
-  <button class="active" data-tab="workbench">📝 작업장</button>
-  <button data-tab="records">📋 기록</button>
-  <button data-tab="goals">🎯 목표·떡밥</button>
-  <button data-tab="notes">📝 메모</button>
-  <button data-tab="help">❓ 도움말</button>
-</div>
-
-<!-- ===== 진행률 ===== -->
-<div class="progress-wrap">
-  <span>📊 진행률</span>
-  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-  <span id="progressText">0%</span>
-  <span style="font-size:.65rem;color:var(--text-dim)" id="checkCount"></span>
-</div>
-
-<!-- ===== 작업장 탭 ===== -->
-<div class="tab-content active" id="tab-workbench">
-  <div class="stage-nav" id="stageNav">
-    <button data-stage="1" class="active"><span class="num">①</span> 파편</button>
-    <button data-stage="2"><span class="num">②</span> 균열</button>
-    <button data-stage="3"><span class="num">③</span> 확장</button>
-    <button data-stage="4"><span class="num">④</span> 킬링</button>
-    <button data-stage="5"><span class="num">⑤</span> 수렴</button>
-    <button data-stage="6"><span class="num">⑥</span> 여운</button>
-    <button data-stage="7"><span class="num">⑦</span> 열린 문</button>
-  </div>
-
-  <div class="workbench">
-    <div class="work-panel">
-      <h3>✍️ 원문</h3>
-      <textarea id="textInput" placeholder="원문을 작성하세요..."></textarea>
-      <div class="toolbar">
-        <span>글자: <strong id="charCount">0</strong></span>
-        <span>|</span>
-        <span>⏱️ <span id="timerDisplay">00:00</span></span>
-        <button id="timerToggle" style="padding:0 6px;border-radius:20px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:.6rem;">▶</button>
-        <button id="timerReset" style="padding:0 6px;border-radius:20px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:.6rem;">↺</button>
-        <span style="margin-left:auto;">컨디션:
-          <span class="cond-btn" data-cond="1">1</span>
-          <span class="cond-btn" data-cond="2">2</span>
-          <span class="cond-btn" data-cond="3">3</span>
-          <span class="cond-btn" data-cond="4">4</span>
-          <span class="cond-btn" data-cond="5">5</span>
-          <span id="condLabel" style="font-size:.6rem;">-</span>
-        </span>
+  <div id="app">
+    <header class="header">
+      <h1>📚 창작 통합 도구</h1>
+      <div class="header-actions">
+        <button class="dark-toggle" onclick="toggleDarkMode()">🌙</button>
+        <span style="font-size:0.65rem;opacity:0.7;">D키 토글</span>
+        <button class="btn" id="downloadBtn" style="background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.4);">⬇️ 다운로드</button>
       </div>
-      <h3 style="margin-top:6px;">📌 메모</h3>
-      <textarea class="memo-box" id="memoInput" placeholder="이 회차에 대한 메모..."></textarea>
-    </div>
+    </header>
 
-    <div class="work-panel">
-      <h3>📋 체크리스트 <span id="stageLabel" style="font-size:.6rem;font-weight:400;color:var(--text-dim);"></span></h3>
-      <label style="display:flex;align-items:center;gap:4px;font-size:.68rem;color:var(--text-dim);margin-bottom:4px;cursor:pointer;">
-        <input type="checkbox" id="genreCheckToggle" style="width:12px;height:12px;cursor:pointer;" checked>
-        🎭 회빙환/사극 개연성 체크 포함
-      </label>
-      <div class="checklist" id="checklistContainer"></div>
-      <div class="btn-group">
-        <button class="primary" id="selectAllBtn">전체 체크</button>
-        <button id="deselectAllBtn">전체 해제</button>
-        <button id="addCheckBtn">➕ 항목 추가</button>
-      </div>
-
-      <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">
-        <button class="primary" id="saveBtn">💾 오늘 저장</button>
-        <button id="loadBtn">📂 불러오기</button>
-        <button class="danger" id="clearBtn">🗑️ 지우기</button>
-        <button id="settingsBtn" style="border-color:var(--primary);color:var(--primary);">⚙️ 설정</button>
-      </div>
-      <div class="save-status" id="saveStatus">
-        <span>⏳ 자동 저장 중</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 기록 탭 ===== -->
-<div class="tab-content" id="tab-records">
-  <div class="streak-box">
-    <div class="fire">🔥</div>
-    <div>
-      <div class="streak-num" id="streakNum">0</div>
-      <div class="streak-lbl">일 연속 · 이번 달 <span id="monthCount">0</span>일 · <span id="monthSlots">0</span>개</div>
-    </div>
-  </div>
-  <div class="record-list" id="recordList"></div>
-  <div id="recordDetail" class="record-detail" style="display:none;"></div>
-</div>
-
-<!-- ===== 목표/떡밥 탭 ===== -->
-<div class="tab-content" id="tab-goals">
-  <div class="goal-box">
-    <h3>🎯 연재 목표</h3>
-    <div class="goal-row">
-      <label>주간 목표</label>
-      <input type="number" id="goalWeekDays" min="1" max="7" value="5">
-      <span style="color:var(--text-dim);font-size:.7rem;">일</span>
-      <div class="goal-bar-wrap"><div class="goal-bar-fill" id="goalWeekBar" style="width:0%"></div></div>
-      <span class="goal-pct" id="goalWeekPct">0/5</span>
-    </div>
-    <div class="goal-row">
-      <label>월간 목표</label>
-      <input type="number" id="goalMonthCh" min="1" value="20">
-      <span style="color:var(--text-dim);font-size:.7rem;">슬롯</span>
-      <div class="goal-bar-wrap"><div class="goal-bar-fill" id="goalMonthBar" style="width:0%"></div></div>
-      <span class="goal-pct" id="goalMonthPct">0/20</span>
-    </div>
-    <div class="goal-row">
-      <label>월간 글자</label>
-      <input type="number" id="goalMonthChars" min="0" step="1000" value="100000">
-      <span style="color:var(--text-dim);font-size:.7rem;">자</span>
-      <div class="goal-bar-wrap"><div class="goal-bar-fill" id="goalCharsBar" style="width:0%"></div></div>
-      <span class="goal-pct" id="goalCharsPct">0</span>
-    </div>
-    <div class="goal-row">
-      <label>회차당 목표</label>
-      <input type="number" id="goalChapterChars" min="500" step="500" value="5000">
-      <span style="color:var(--text-dim);font-size:.7rem;">자 (공백 포함)</span>
-      <div class="goal-bar-wrap"><div class="goal-bar-fill" id="goalChapterBar" style="width:0%"></div></div>
-      <span class="goal-pct" id="goalChapterPct">0</span>
-    </div>
-    <div class="cal-actions"><button class="primary" id="saveGoalsBtn">💾 목표 저장</button></div>
-  </div>
-
-  <div class="goal-box">
-    <h3>🎣 복선/떡밥/맥거핀/설정 관리</h3>
-    <p style="font-size:.7rem;color:var(--text-dim);margin-bottom:4px;">
-      <span style="color:var(--primary);">복선</span>: 반드시 회수 · 
-      <span style="color:var(--warn);">떡밥</span>: 추리용 힌트 · 
-      <span style="color:var(--text-dim);">맥거핀</span>: 중요해 보이지만 핵심 아님 · 
-      <span style="color:var(--success);">설정</span>: 세계관/규칙/관계
-    </p>
-    <div id="foreshadowList"></div>
-    <div class="cal-actions">
-      <button class="primary" id="addForeshadowBtn">➕ 항목 추가</button>
-      <button id="addSettingBtn" style="border-color:var(--success);color:var(--success);">⚙️ 설정 변경 기록</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 메모 탭 ===== -->
-<div class="tab-content" id="tab-notes">
-  <div class="goal-box">
-    <h3>📝 전역 메모 · 태그</h3>
-    <input type="search" class="notes-search" id="notesSearch" placeholder="검색 (내용 또는 #태그)"/>
-    <div class="note-form" style="margin-bottom:8px;">
-      <textarea id="newNoteBody" placeholder="메모 내용..."></textarea>
-      <input type="text" id="newNoteTags" placeholder="태그 (쉼표 또는 공백 구분)"/>
-      <div class="cal-actions"><button class="primary" id="addNoteBtn">➕ 메모 추가</button></div>
-    </div>
-    <div id="notesList"></div>
-  </div>
-</div>
-
-<!-- ===== 도움말 탭 ===== -->
-<div class="tab-content" id="tab-help">
-  <div class="help-section">
-    <h2>📖 사용 설명서</h2>
-    <p style="font-size:.9rem;font-weight:500;color:var(--primary);">
-      소설 연재를 위한 <strong>체크리스트 · 복선 관리 · 기록 · 목표 관리</strong> 도구입니다.
-    </p>
-  </div>
-
-  <div class="help-section">
-    <h2>① 시작하기</h2>
-    <div class="step-box">
-      <div><span class="step-num">1</span> 상단 <span class="badge-example">📖 프로젝트 선택</span>에서 작품 선택.</div>
-      <div style="margin-top:3px;"><span class="step-num">2</span> <span class="badge-example">✏️ 회차</span> 입력.</div>
-      <div style="margin-top:3px;"><span class="step-num">3</span> 단계 자동 추천.</div>
-    </div>
-  </div>
-
-  <div class="help-section">
-    <h2>② 작업장 사용법</h2>
-    <ul>
-      <li><strong>✍️ 원문</strong>: 소설 내용 작성.</li>
-      <li><strong>📋 체크리스트</strong>: 태그로 출처 확인 — <span class="badge-example">기본</span>, <span class="badge-example">매화</span>, <span class="badge-example">문장</span>, <span class="badge-example">장르</span>, <span class="badge-example">프로젝트</span>, <span class="badge-example">이 회차</span></li>
-    </ul>
-  </div>
-
-  <div class="help-section" style="border-left:3px solid var(--primary);">
-    <h2>③ 저장 (★중요★)</h2>
-    <div class="key-point">
-      <strong>💾 오늘 저장</strong> 버튼이 <strong>유일한 영구 저장</strong> 방법입니다.
-    </div>
-  </div>
-
-  <div class="help-section" style="border-left:3px solid var(--warn);">
-    <h2>④ 💾 로컬 파일 저장 (백업)</h2>
-    <div class="step-box">
-      <div><span class="step-num">1</span> <span class="badge-example" style="border-color:var(--primary);color:var(--primary);">⚙️ 설정</span> → <strong>💾 저장위치</strong> 클릭.</div>
-      <div style="margin-top:3px;"><span class="step-num">2</span> 내 컴퓨터에 저장할 폴더와 파일명 지정.</div>
-    </div>
-  </div>
-
-  <div class="help-section">
-    <h2>⑤ 📋 기록</h2>
-    <ul>
-      <li>날짜별 슬롯 확인, 📂 불러오기, 🗑️ 삭제</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <h2>⑥ 백업</h2>
-    <ul>
-      <li><strong>📤 JSON 내보내기</strong>: 모든 데이터(프로젝트·기록·목표·떡밥·메모·체크리스트)를 JSON 파일로 저장</li>
-      <li><strong>📄 텍스트 내보내기</strong>: 기록을 읽기 쉬운 텍스트 파일로 저장</li>
-      <li><strong>📥 JSON 가져오기</strong>: 내보낸 JSON 파일을 불러와 복원 (현재 데이터는 덮어씀)</li>
-      <li><strong>⚠️ 초기화</strong>: 헤더의 초기화 버튼으로 모든 데이터 삭제 (되돌릴 수 없음)</li>
-    </ul>
-    <div class="cal-actions">
-      <button class="primary" id="exportJsonBtn">📤 JSON 내보내기</button>
-      <button id="exportTextBtn">📄 텍스트 내보내기</button>
-      <button id="importJsonBtn">📥 JSON 가져오기</button>
-      <input type="file" id="importFileInput" accept="application/json" style="display:none;">
-    </div>
-  </div>
-
-  <!-- ===== 다운로드 버튼 (프로그램 파일 자기 자신) ===== -->
-  <div class="help-section" style="border-left:3px solid var(--primary); background:rgba(79,70,229,.04);">
-    <h2>📥 프로그램 파일 다운로드</h2>
-    <p style="font-size:.85rem; margin-bottom:8px;">
-      지금 열려 있는 이 도구를 <strong>빈 상태의 단일 HTML 파일</strong>로 내려받습니다. 다른 컴퓨터에 옮기거나 백업용 사본을 만들 때 사용하세요. (작성 중인 데이터는 포함되지 않습니다 — 데이터는 <strong>📤 JSON 내보내기</strong>를 이용하세요.)
-    </p>
-    <button id="downloadBtn" style="padding:10px 24px; border-radius:30px; border:2px solid var(--primary); background:var(--primary); color:#fff; cursor:pointer; font-weight:600; font-size:.9rem; font-family:var(--font);">
-      ⬇️ 프로그램 파일 다운로드
-    </button>
-  </div>
-
-  <div style="text-align:right;font-size:.7rem;color:var(--text-dim);padding:4px 0;">
-    ⚡ v3.9
-  </div>
-</div>
-
-<footer class="footer">⚡ v3.9 · 작업장 · 기록 · 목표</footer>
-</div>
-
-<!-- ===== 토스트 ===== -->
-<div class="toast" id="toast">
-  <div class="toast-title" id="toastTitle">✅ 완료</div>
-  <div class="toast-detail" id="toastDetail"></div>
-</div>
-
-<!-- ===== 설정 모달 ===== -->
-<div id="settingsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:1001;justify-content:center;align-items:center;">
-  <div style="background:var(--card);border-radius:var(--radius);padding:20px 24px;max-width:400px;width:90%;border:1px solid var(--border);box-shadow:0 8px 40px rgba(0,0,0,.2);">
-    <h3 style="margin-bottom:12px;">⚙️ 설정</h3>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <button id="modalOpenFile" style="padding:8px;border-radius:30px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-family:var(--font);">📂 로컬 파일 열기</button>
-      <button id="modalSaveFile" style="padding:8px;border-radius:30px;border:1px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer;font-family:var(--font);">💾 저장위치 지정</button>
-      <div style="font-size:.75rem;color:var(--text-dim);text-align:center;border-top:1px solid var(--border);padding-top:8px;">
-        현재 파일: <span id="modalFileStatus">없음</span>
-      </div>
-    </div>
-    <div style="margin-top:12px;text-align:right;">
-      <button id="modalCloseBtn" style="padding:4px 16px;border-radius:30px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-family:var(--font);">닫기</button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ============================================================
-// v3.9
-// ============================================================
-(function(){
-'use strict';
-
-// ============================================================
-// 1. 원본 체크리스트 (7단계) - 수동과 동일
-// ============================================================
-const STAGES = {
-  1: {
-    label: '① 일상의 파편 (The Shard)',
-    sub: 'LAYER 0 · 철학 + LAYER 2 · 인물',
-    desc: '독자와 친숙한 평범한 출발점.',
-    chapterRange: '1~3화',
-    checks: [
-      { id: 's1_1', text: '주인공의 평범한 일상이 생생하게 묘사되었는가?', hint: '아침 루틴, 직장, 취미 등' },
-      { id: 's1_2', text: '독자가 주인공에게 감정 이입(공감·동정)할 수 있는가?', hint: '소소한 고민이나 꿈' },
-      { id: 's1_3', text: '아직 갈등은 없지만 불안한 전조(징후)를 심었는가?', hint: '미묘한 불편함' },
-      { id: 's1_4', text: '"설명보다 보여주기"를 적용했는가?', hint: '행동과 대사로' },
-      { id: 's1_5', text: '독자가 "재미있다"고 느낄 요소를 넣었는가?', hint: '클리셰라도 좋음, 지루함이 죄' }
-    ]
-  },
-  2: {
-    label: '② 균열 (The Crack)',
-    sub: 'LAYER 1 · 플롯 + 복선',
-    desc: '평범함에 금이 가는 의문의 시작.',
-    chapterRange: '1~3화',
-    checks: [
-      { id: 's2_1', text: '주인공의 일상을 깨는 "방해 요소"가 등장했는가?', hint: '예상치 못한 전화, 편지' },
-      { id: 's2_2', text: '"계기적 사건"(갈등의 불씨)이 발생했는가?', hint: '첫 번째 위기' },
-      { id: 's2_3', text: '독자에게 "왜?"라는 강한 의문을 심었는가?', hint: '호기심 유발' },
-      { id: 's2_4', text: '주인공의 명확한 "목표"가 드러났는가?', hint: '원하는 것과 방해하는 것' },
-      { id: 's2_5', text: '최소 하나의 떡밥(복선)을 심었는가?', hint: '회수 가능한 것만' }
-    ]
-  },
-  3: {
-    label: '③ 확장의 나선 (The Spiral)',
-    sub: 'LAYER 2 · 인물 + LAYER 3 · 장면',
-    desc: '주제가 심리·관계·세계관으로 확장.',
-    chapterRange: '4~10화',
-    checks: [
-      { id: 's3_1', text: '주제가 인물의 내면/관계로 확장되었는가?', hint: '심리, 과거사' },
-      { id: 's3_2', text: '주인공의 치명적 결함이 드러났는가?', hint: '성장 가능성' },
-      { id: 's3_3', text: '조연/빌런이 주인공을 돋보이게 하는가?', hint: '비중 뺏지 않게' },
-      { id: 's3_4', text: '독자의 호기심을 계속 자극하는가?', hint: '새로운 질문' },
-      { id: 's3_5', text: '"심리 묘사"가 "행동 묘사"보다 앞서는가?', hint: '왜 그렇게 했는가' }
-    ]
-  },
-  4: {
-    label: '④ 절정의 킬링파트 (The Climax)',
-    sub: 'LAYER 3 · 장면 + 절단신공',
-    desc: '독자의 뇌리에 각인될 통찰의 폭발.',
-    chapterRange: '4~10화',
-    checks: [
-      { id: 's4_1', text: '모든 긴장이 폭발하는 장면인가?', hint: '음악의 드롭처럼' },
-      { id: 's4_2', text: '독자가 "아!" 하고 외칠 만한 통찰이 있는가?', hint: '반전, 깨달음' },
-      { id: 's4_3', text: '"절단신공"(마지막 문장 훅)을 적용했는가?', hint: '궁금증 유발' },
-      { id: 's4_4', text: '대화로 플롯을 밀어붙였는가?', hint: '대화는 보여주기' },
-      { id: 's4_5', text: '사건 한가운데로 즉시 진입했는가?', hint: '배경설명 금지' }
-    ]
-  },
-  5: {
-    label: '⑤ 수렴의 관 (The Convergence)',
-    sub: 'LAYER 4 · 문장 + 통일성',
-    desc: '모든 흐름이 하나의 원리로 모임.',
-    chapterRange: '11~30화',
-    checks: [
-      { id: 's5_1', text: '모든 서브플롯이 하나의 주제로 모이는가?', hint: '통일성' },
-      { id: 's5_2', text: '작품 전체를 관통하는 메시지가 명확한가?', hint: '근본 갈등' },
-      { id: 's5_3', text: '오감을 활용해 생생하게 묘사했는가?', hint: '시청후미촉' },
-      { id: 's5_4', text: '강하고 역동적인 동사를 사용했는가?', hint: '"이다/있다" 피하라' },
-      { id: 's5_5', text: '비유로 감정을 전달했는가?', hint: '직유·은유·의인법' }
-    ]
-  },
-  6: {
-    label: '⑥ 여운의 메아리 (The Echo)',
-    sub: 'LAYER 5 · 퇴고 + 여운',
-    desc: '완결된 듯하면서도 완결되지 않은 느낌.',
-    chapterRange: '31~50화',
-    checks: [
-      { id: 's6_1', text: '주인공의 확실한 변화가 오래 남는가?', hint: '캐릭터 아크' },
-      { id: 's6_2', text: '독자가 다시 떠올리게 하는 장치가 있는가?', hint: '상징, 대사' },
-      { id: 's6_3', text: '퇴고 체크리스트를 점검했는가?', hint: 'R1~R10' },
-      { id: 's6_4', text: '초고를 쓰고 퇴고했는가?', hint: '초고는 형편없어도' },
-      { id: 's6_5', text: '자문 질문에 답했는가?', hint: 'Q1~Q11' }
-    ]
-  },
-  7: {
-    label: '⑦ 열린 문 (The Open Door)',
-    sub: 'LAYER 6 · 연재 전략 + 독자',
-    desc: '독자가 스스로 이어갈 수 있는 질문.',
-    chapterRange: '50화+',
-    checks: [
-      { id: 's7_1', text: '마지막 장면이 질문을 던지는가?', hint: '열린 결말' },
-      { id: 's7_2', text: '독자의 상상력을 자극하는가?', hint: '후속 이야기' },
-      { id: 's7_3', text: '연재 주기(주 5~7회)를 지킬 준비가 되었는가?', hint: '신뢰' },
-      { id: 's7_4', text: '제목·소개글·1화의 기대가 일치하는가?', hint: '진입률' },
-      { id: 's7_5', text: '인풋(트렌드 7, 개성 3)을 반영했는가?', hint: '시장 독해력' },
-      { id: 's7_6', text: '최소 250편 연재를 목표로 설계했는가?', hint: '장기전' },
-      { id: 's7_7', text: '완독률(55%↑), 이탈률(40%↓) 목표를 설정했는가?', hint: '데이터 기반' }
-    ]
-  }
-};
-
-// ============================================================
-// 1b. 매 화 공통 체크리스트 (수동과 동일)
-// ============================================================
-const DAILY_CHECKS = [
-  { id: 'd_hook1', text: '이번 화 첫 3줄 안에 지난 화의 긴장/궁금증이 이어지는가?', hint: '후킹' },
-  { id: 'd_hook2', text: '절단신공을 적용했는가?', hint: '보상기대·시점전환·위기·모두가 반대한 선택 중 1개' },
-  { id: 'd_plus', text: '이번 화가 원점 회귀 없이 +요소(성장·해소·획득)로 마무리되는가?', hint: '플러스/마이너스 상쇄 금지' },
-  { id: 'd_active', text: '주인공이 상황을 능동적으로 만들고 극복했는가?', hint: '수동적·우유부단 금지' },
-  { id: 'd_pace', text: '고구마가 길었다면 그만큼 사이다가 강한가?', hint: '사이다:고구마 밸런스' },
-  { id: 'd_cast', text: '등장인물이 각자 존재 이유가 있고, 비슷한 조연이 중복되지 않는가?', hint: '들러리 캐릭터 금지' },
-  { id: 'd_villain', text: '빌런/대립 인물이 흔들림 없는 확신을 갖고 움직이는가?', hint: '동기·상징 부여' },
-  { id: 'd_dial1', text: '설명을 위한 대사(서로 이미 아는 정보)가 없는가?', hint: '정보는 갈등 속에 자연스럽게' },
-  { id: 'd_dial2', text: '대사에서 이름을 불필요하게 반복하지 않는가?', hint: '실생활 대화처럼' },
-  { id: 'd_dial3', text: '캐릭터 성격에 안 맞는 과잉 수사·문어체 대사가 없는가?', hint: '중2병 대사 주의' },
-  { id: 'd_desc', text: '묘사가 꼭 필요한 "연출" 장면에만 쓰였는가?', hint: '배경묘사로 늘어지지 않게' },
-  { id: 'd_explain', text: '반복된 설명이나 불필요한 설명을 뺐는가?', hint: '설명 빼고 상황만으로' },
-  { id: 'd_ratio', text: '대화 대 지문 비율이 적절한가?', hint: '독자는 지문보다 대화 선호' },
-  { id: 'd_typo', text: '비문·오탈자를 확인했는가?', hint: '맞춤법 검사기 활용' },
-  { id: 'd_fs', text: '이번 화에서 회수 예정인 떡밥을 회수했는가? 3화 이상 방치된 떡밥은 없는가?', hint: '떡밥 탭과 연동' },
-  // 문장 퇴고 7개
-  { id: 'd_sentence1', text: '문장의 흐름이 자연스러운가?', hint: '끊기거나 어색한 부분 없이 말하듯 읽히는가?' },
-  { id: 'd_sentence2', text: '글의 목적이 명확하게 드러나는가?', hint: '처음 의도한 흐름이 끝까지 유지되었는가?' },
-  { id: 'd_sentence3', text: '중복되거나 군더더기 문장은 없는가?', hint: '같은 의미를 반복하거나 불필요한 수식어는 없는가?' },
-  { id: 'd_sentence4', text: '독자의 시선에서 이해하기 쉬운가?', hint: '전문 용어나 배경 설명이 부족하지 않은가?' },
-  { id: 'd_sentence5', text: '문장 길이와 구조가 다양하게 구성되었는가?', hint: '짧은 문장, 긴 문장, 질문형 등 리듬이 변화하는가?' },
-  { id: 'd_sentence6', text: '맞춤법과 띄어쓰기가 정확한가?', hint: '되/돼, 않/안 등 혼동하기 쉬운 표현은 없는가?' },
-  { id: 'd_sentence7', text: '제목이 내용을 정확히 반영하고 있는가?', hint: '제목이 내용을 구체적으로 설명하고 주목을 끄는가?' }
-];
-
-const GENRE_CHECKS = [
-  { id: 'g_knowledge', text: '주인공이 활용한 회귀/빙의/환생 지식이 "왜 지금, 왜 이렇게" 쓰였는지 근거가 있는가?', hint: '우연이 아니라 알고 움직였다는 티' },
-  { id: 'g_power', text: '이번 화의 먼치킨적 행동이 기존 설정 범위를 벗어나지 않는가?', hint: '설정 파워 인플레 체크' },
-  { id: 'g_persona', text: '빙의/환생 대상의 원래 기억·성격과 지금 화자의 태도가 모순되지 않는가?', hint: '인물 일관성' },
-  { id: 'g_period', text: '사극 배경이라면 호칭·관직·의복·화폐 등 시대 디테일이 일관적인가?', hint: '고증 일관성' }
-];
-
-// ============================================================
-// 2. 저장소 키
-// ============================================================
-const KEYS = {
-  PROJECTS: 'v39_projects',
-  DIARY: 'v39_diary',
-  GOALS: 'v39_goals',
-  FS: 'v39_foreshadow',
-  NOTES: 'v39_notes',
-  PROJECT_CHECKS: 'v39_project_checks',
-  CHAPTER_CHECKS: 'v39_chapter_checks',
-  SETTINGS: 'v39_settings',
-  DRAFT: 'v39_draft',
-};
-
-// ============================================================
-// 3. 기본 데이터
-// ============================================================
-const PROJECT_COLORS = ['#3b82f6','#22c55e','#f59e0b','#ec4899','#8b5cf6','#06b6d4','#f97316','#14b8a6'];
-
-let projects = [];
-let diary = {};
-let goals = { weekDays:5, monthChapters:20, monthChars:100000, chapterChars:5000 };
-let foreshadow = [];
-let notes = [];
-let projectChecks = {};
-let chapterChecks = {};
-let settings = { localFilePath: '' };
-
-// ============================================================
-// 4. 현재 상태
-// ============================================================
-let currentProjectId = null;
-let currentChapter = 1;
-let currentStage = 1;
-let manualStageOverride = null;
-let timerSec = 0;
-let timerRunning = false;
-let timerInterval = null;
-let currentCondition = null;
-let localFileHandle = null;
-let localFileName = '';
-
-// ============================================================
-// 5. 유틸리티 (수동과 동일)
-// ============================================================
-function uid() { return Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6); }
-function today() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-function formatDate(y,m,d) {
-  return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-}
-function getProjectColor(idx) { return PROJECT_COLORS[idx % PROJECT_COLORS.length]; }
-function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function getRecommendedStage(ch) {
-  if (ch <= 3) return 1;
-  if (ch <= 10) return 3;
-  if (ch <= 30) return 5;
-  if (ch <= 50) return 6;
-  return 7;
-}
-function getStageLabel(s) {
-  const labels = ['', '파편', '균열', '확장', '킬링', '수렴', '여운', '열린 문'];
-  return labels[s] || s + '단계';
-}
-
-// ============================================================
-// 6. 데이터 로드/저장 (수동과 동일)
-// ============================================================
-function loadAll() {
-  try {
-    const p = localStorage.getItem(KEYS.PROJECTS); if(p) projects = JSON.parse(p);
-    const d = localStorage.getItem(KEYS.DIARY); if(d) diary = JSON.parse(d);
-    const g = localStorage.getItem(KEYS.GOALS); if(g) goals = Object.assign(goals, JSON.parse(g));
-    const f = localStorage.getItem(KEYS.FS); if(f) foreshadow = JSON.parse(f);
-    const n = localStorage.getItem(KEYS.NOTES); if(n) notes = JSON.parse(n);
-    const pc = localStorage.getItem(KEYS.PROJECT_CHECKS); if(pc) projectChecks = JSON.parse(pc);
-    const cc = localStorage.getItem(KEYS.CHAPTER_CHECKS); if(cc) chapterChecks = JSON.parse(cc);
-    const s = localStorage.getItem(KEYS.SETTINGS); if(s) settings = Object.assign(settings, JSON.parse(s));
-  } catch(e) { console.warn('로드 오류', e); }
-}
-
-function saveAll() {
-  try {
-    localStorage.setItem(KEYS.PROJECTS, JSON.stringify(projects));
-    localStorage.setItem(KEYS.DIARY, JSON.stringify(diary));
-    localStorage.setItem(KEYS.GOALS, JSON.stringify(goals));
-    localStorage.setItem(KEYS.FS, JSON.stringify(foreshadow));
-    localStorage.setItem(KEYS.NOTES, JSON.stringify(notes));
-    localStorage.setItem(KEYS.PROJECT_CHECKS, JSON.stringify(projectChecks));
-    localStorage.setItem(KEYS.CHAPTER_CHECKS, JSON.stringify(chapterChecks));
-    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
-    if (localFileHandle) {
-      writeDataToFile(localFileHandle);
-    }
-  } catch(e) { console.warn('저장 오류', e); }
-}
-
-// ============================================================
-// 7. 로컬 파일 시스템 (수동과 동일)
-// ============================================================
-async function writeDataToFile(handle) {
-  if (!handle) return;
-  try {
-    const data = {
-      version: '3.9',
-      exportedAt: new Date().toISOString(),
-      projects, diary, goals, foreshadow, notes, projectChecks, chapterChecks, settings
-    };
-    const json = JSON.stringify(data, null, 2);
-    const writable = await handle.createWritable();
-    await writable.write(json);
-    await writable.close();
-    updateFileStatus(handle.name);
-  } catch(err) { console.warn('로컬 파일 쓰기 실패', err); }
-}
-
-async function saveToLocalFile() {
-  if (!window.showSaveFilePicker) {
-    showToast('⚠️ 이 브라우저는 지원하지 않습니다', 'Chrome/Edge 최신 버전을 사용하세요');
-    return;
-  }
-  try {
-    const options = {
-      suggestedName: '연재체크리스트_' + today() + '.json',
-      types: [{ description: 'JSON 파일', accept: { 'application/json': ['.json'] } }]
-    };
-    const handle = await window.showSaveFilePicker(options);
-    localFileHandle = handle;
-    localFileName = handle.name;
-    updateFileStatus(localFileName);
-    await writeDataToFile(handle);
-    showToast('✅ 로컬 파일 저장 완료', localFileName);
-  } catch(err) {
-    if (err.name !== 'AbortError') {
-      showToast('⚠️ 파일 저장 오류', err.message);
-    }
-  }
-}
-
-async function openLocalFile() {
-  if (!window.showOpenFilePicker) {
-    showToast('⚠️ 이 브라우저는 지원하지 않습니다', 'Chrome/Edge 최신 버전을 사용하세요');
-    return;
-  }
-  try {
-    const [handle] = await window.showOpenFilePicker({
-      types: [{ description: 'JSON 파일', accept: { 'application/json': ['.json'] } }],
-      multiple: false
-    });
-    localFileHandle = handle;
-    localFileName = handle.name;
-    updateFileStatus(localFileName);
-    const file = await handle.getFile();
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if (data.projects) projects = data.projects;
-    if (data.diary) diary = data.diary;
-    if (data.goals) goals = Object.assign(goals, data.goals);
-    if (data.foreshadow) foreshadow = data.foreshadow || [];
-    if (data.notes) notes = data.notes || [];
-    if (data.projectChecks) projectChecks = data.projectChecks || {};
-    if (data.chapterChecks) chapterChecks = data.chapterChecks || {};
-    if (data.settings) settings = Object.assign(settings, data.settings);
-    saveAll();
-    renderAll();
-    showToast('📂 파일 불러오기 완료', localFileName);
-  } catch(err) {
-    if (err.name !== 'AbortError') {
-      showToast('⚠️ 파일 열기 오류', err.message);
-    }
-  }
-}
-
-function updateFileStatus(name) {
-  const status = document.getElementById('fileStatus');
-  const modalStatus = document.getElementById('modalFileStatus');
-  const text = name ? '📁 ' + name : '📁 파일 없음';
-  status.textContent = text;
-  if (modalStatus) modalStatus.textContent = name || '없음';
-}
-
-// ============================================================
-// 8. 드래프트 (수동과 동일)
-// ============================================================
-function draftKey(projectId, chapter) {
-  return KEYS.DRAFT + '_' + projectId + '_' + chapter;
-}
-
-function saveDraft() {
-  if (!currentProjectId) return;
-  const draft = {
-    projectId: currentProjectId,
-    chapter: currentChapter,
-    stage: currentStage,
-    text: document.getElementById('textInput').value,
-    memo: document.getElementById('memoInput').value,
-    checks: getCurrentChecksState(),
-    condition: currentCondition,
-    timer: timerSec,
-    updated: new Date().toISOString()
-  };
-  try { localStorage.setItem(draftKey(currentProjectId, currentChapter), JSON.stringify(draft)); } catch(e) {}
-  document.getElementById('saveStatus').innerHTML = '<span>⏳ 자동 저장 중</span>';
-}
-
-function loadDraftFor(projectId, chapter) {
-  try {
-    const raw = localStorage.getItem(draftKey(projectId, chapter));
-    if(!raw) return null;
-    return JSON.parse(raw);
-  } catch(e) { return null; }
-}
-
-function clearDraft() {
-  if (!currentProjectId) return;
-  try { localStorage.removeItem(draftKey(currentProjectId, currentChapter)); } catch(e) {}
-}
-
-function applyDraftToWorkbench(d) {
-  document.getElementById('textInput').value = d ? (d.text || '') : '';
-  document.getElementById('memoInput').value = d ? (d.memo || '') : '';
-  setCondition(d && d.condition ? d.condition : null);
-  timerSec = d && d.timer ? d.timer : 0;
-  updateTimerDisplay();
-  if (d && d.stage) manualStageOverride = d.stage;
-}
-let draftAutoSaveTimer = null;
-function startDraftAutoSave() {
-  if(draftAutoSaveTimer) clearInterval(draftAutoSaveTimer);
-  draftAutoSaveTimer = setInterval(saveDraft, 3000);
-}
-
-// ============================================================
-// 9. 체크리스트 조합 (수동과 동일)
-// ============================================================
-function isGenreEnabled(projectId) {
-  const p = projects.find(x => x.id === projectId);
-  return !p || p.genreEnabled !== false;
-}
-
-function getCombinedChecks(projectId, stage, chapter) {
-  const base = STAGES[stage] ? STAGES[stage].checks : [];
-  const projectExtras = (projectChecks[projectId] && projectChecks[projectId][stage]) || [];
-  const chapterExtras = (chapterChecks[projectId] && chapterChecks[projectId][chapter]) || [];
-  const daily = DAILY_CHECKS;
-  const genre = isGenreEnabled(projectId) ? GENRE_CHECKS : [];
-  return [
-    ...base.map(c => ({ ...c, source: 'base' })),
-    ...daily.map(c => ({ ...c, source: 'daily' })),
-    ...genre.map(c => ({ ...c, source: 'genre' })),
-    ...projectExtras.map(c => ({ ...c, source: 'project' })),
-    ...chapterExtras.map(c => ({ ...c, source: 'chapter' })),
-  ];
-}
-
-function getCurrentChecksState() {
-  const items = document.querySelectorAll('#checklistContainer .check-item');
-  const state = {};
-  items.forEach(el => {
-    const id = el.dataset.checkId;
-    if(id) {
-      const cb = el.querySelector('input[type=checkbox]');
-      if(cb) state[id] = cb.checked;
-    }
-  });
-  return state;
-}
-
-// ============================================================
-// 10. 렌더링: 전체 (수동과 동일)
-// ============================================================
-function renderAll() {
-  renderProjectSelect();
-  renderWorkbench();
-  renderRecords();
-  updateStreakUI();
-  updateGoalsUI();
-  renderForeshadow();
-  renderNotes();
-  updateCharCount();
-  updateTimerDisplay();
-}
-
-// ============================================================
-// 11. 프로젝트 렌더링 (수동과 동일)
-// ============================================================
-function renderProjectSelect() {
-  const sel = document.getElementById('projectSelect');
-  const current = sel.value;
-  sel.innerHTML = '';
-  if(!projects.length) {
-    const opt = document.createElement('option');
-    opt.value = '';
-    opt.textContent = '⚡ 프로젝트 추가';
-    sel.appendChild(opt);
-    sel.value = '';
-    return;
-  }
-  projects.forEach((p, idx) => {
-    const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = '● ' + p.name;
-    opt.style.color = getProjectColor(idx);
-    sel.appendChild(opt);
-  });
-  const addOpt = document.createElement('option');
-  addOpt.value = '__add__';
-  addOpt.textContent = '➕ 새 프로젝트';
-  sel.appendChild(addOpt);
-  if(current && projects.some(p => p.id === current)) {
-    sel.value = current;
-  } else if(projects.length) {
-    sel.value = projects[0].id;
-  } else {
-    sel.value = '';
-  }
-  onProjectChange();
-}
-
-function onProjectChange() {
-  const sel = document.getElementById('projectSelect');
-  if(sel.value === '__add__') {
-    const name = prompt('새 프로젝트 이름:');
-    if(name && name.trim()) {
-      const newProject = { id: uid(), name: name.trim(), createdAt: new Date().toISOString() };
-      projects.push(newProject);
-      saveAll();
-      renderProjectSelect();
-      selectProject(newProject.id);
-    } else {
-      renderProjectSelect();
-    }
-    return;
-  }
-  selectProject(sel.value);
-}
-
-function selectProject(projectId) {
-  if(!projectId) { currentProjectId = null; return; }
-  const p = projects.find(x => x.id === projectId);
-  if(!p) return;
-  if (currentProjectId && currentProjectId !== p.id) { saveDraft(); }
-  currentProjectId = p.id;
-  const ch = parseInt(document.getElementById('chapterInput').value) || 1;
-  const draft = loadDraftFor(p.id, ch);
-  applyDraftToWorkbench(draft);
-  renderWorkbench(draft ? draft.checks : {});
-  updateProgress();
-  saveDraft();
-}
-
-// ============================================================
-// 12. 작업장 렌더링
-// ============================================================
-function renderWorkbench(overrideChecks) {
-  const ch = parseInt(document.getElementById('chapterInput').value) || 1;
-  currentChapter = ch;
-  let stage;
-  if (manualStageOverride !== null) {
-    stage = manualStageOverride;
-  } else {
-    stage = getRecommendedStage(ch);
-  }
-  currentStage = stage;
-  document.querySelectorAll('.stage-nav button').forEach(btn => {
-    const s = parseInt(btn.dataset.stage);
-    btn.classList.toggle('active', s === stage);
-    btn.classList.toggle('recommended', s === getRecommendedStage(ch) && manualStageOverride === null);
-  });
-  const stageInfo = STAGES[stage];
-  document.getElementById('stageBadge').textContent = stage + '단계 · ' + getStageLabel(stage);
-  document.getElementById('stageLabel').textContent = stageInfo ? stageInfo.sub : '';
-  const genreToggle = document.getElementById('genreCheckToggle');
-  if(genreToggle) genreToggle.checked = isGenreEnabled(currentProjectId);
-  if(!currentProjectId) {
-    document.getElementById('checklistContainer').innerHTML = '<div class="empty-state">프로젝트를 선택하세요</div>';
-    return;
-  }
-  const checks = getCombinedChecks(currentProjectId, stage, ch);
-  const savedChecks = overrideChecks || getCurrentChecksState();
-  let html = '';
-  checks.forEach(c => {
-    const checked = savedChecks[c.id] || false;
-    const tagMap = {
-      base: '<span class="tag">기본</span>',
-      daily: '<span class="tag daily">매화</span>',
-      sentence: '<span class="tag sentence">문장</span>',
-      genre: '<span class="tag genre">장르</span>',
-      project: '<span class="tag project">프로젝트</span>',
-      chapter: '<span class="tag chapter">이 회차</span>'
-    };
-    const doneClass = checked ? 'done' : '';
-    html += `
-      <div class="check-item ${doneClass}" data-check-id="${c.id}">
-        <div class="row-top">
-          <input type="checkbox" ${checked ? 'checked' : ''} />
-          <label class="label-text">
-            ${escapeHtml(c.text)}
-            <span class="hint">${escapeHtml(c.hint || '')}</span>
-            ${tagMap[c.source] || ''}
-          </label>
-        </div>
-      </div>
-    `;
-  });
-  document.getElementById('checklistContainer').innerHTML = html;
-  document.querySelectorAll('#checklistContainer .check-item input[type=checkbox]').forEach(cb => {
-    cb.addEventListener('change', function() {
-      const item = this.closest('.check-item');
-      if(item) {
-        item.classList.toggle('done', this.checked);
-        updateProgress();
-        saveDraft();
-      }
-    });
-  });
-  updateProgress();
-  updateCharCount();
-}
-
-function updateProgress() {
-  const items = document.querySelectorAll('#checklistContainer .check-item');
-  const total = items.length;
-  const done = document.querySelectorAll('#checklistContainer .check-item.done').length;
-  const pct = total ? Math.round(done/total*100) : 0;
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressText').textContent = pct + '%';
-  document.getElementById('checkCount').textContent = '(' + done + '/' + total + ')';
-}
-
-function updateCharCount() {
-  const text = document.getElementById('textInput').value;
-  document.getElementById('charCount').textContent = text.length.toLocaleString();
-}
-
-// ============================================================
-// 13. 저장 / 불러오기 (수동과 동일)
-// ============================================================
-function saveCurrentWork() {
-  if(!currentProjectId) { showToast('⚠️ 프로젝트를 선택하세요', ''); return; }
-  const date = today();
-  const chapter = currentChapter;
-  const text = document.getElementById('textInput').value;
-  const memo = document.getElementById('memoInput').value;
-  const checks = getCurrentChecksState();
-  if(!text.trim() && !memo.trim()) {
-    if(!confirm('내용이 비어 있습니다. 저장할까요?')) return;
-  }
-  const slot = {
-    id: uid(),
-    chapter: chapter,
-    stage: currentStage,
-    text: text,
-    memo: memo,
-    checks: checks,
-    charCount: text.length,
-    condition: currentCondition,
-    writingTime: timerSec,
-    savedAt: new Date().toISOString()
-  };
-  if(!diary[date]) diary[date] = {};
-  if(!diary[date][currentProjectId]) diary[date][currentProjectId] = { slots: [] };
-  diary[date][currentProjectId].slots.push(slot);
-  saveAll();
-  clearDraft();
-  document.getElementById('saveStatus').innerHTML = '<span class="ok">✅ 저장 완료 (' + new Date().toLocaleTimeString() + ')</span>';
-  const project = projects.find(p => p.id === currentProjectId);
-  showToast('✅ 저장 완료', (project ? project.name + ' · ' : '') + chapter + '화');
-  updateStreakUI();
-  updateGoalsUI();
-  renderRecords();
-}
-
-function loadSlot(dateKey, projectId, slotId) {
-  const dayData = diary[dateKey];
-  if(!dayData) return;
-  const projData = dayData[projectId];
-  if(!projData) return;
-  const slot = projData.slots.find(s => s.id === slotId);
-  if(!slot) return;
-  document.getElementById('textInput').value = slot.text || '';
-  document.getElementById('memoInput').value = slot.memo || '';
-  document.getElementById('chapterInput').value = slot.chapter || 1;
-  if(slot.condition) setCondition(slot.condition);
-  timerSec = slot.writingTime || 0;
-  updateTimerDisplay();
-  manualStageOverride = slot.stage || null;
-  currentChapter = slot.chapter || 1;
-  currentStage = slot.stage || getRecommendedStage(currentChapter);
-  renderWorkbench(slot.checks || {});
-  updateProgress();
-  saveDraft();
-  showToast('📂 불러오기 완료', (slot.chapter || '?') + '화');
-  switchTab('workbench');
-}
-
-// ============================================================
-// 14. 타이머 & 컨디션 (수동과 동일)
-// ============================================================
-function updateTimerDisplay() {
-  const m = String(Math.floor(timerSec/60)).padStart(2,'0');
-  const s = String(timerSec%60).padStart(2,'0');
-  document.getElementById('timerDisplay').textContent = m + ':' + s;
-}
-function startTimer() {
-  if(timerRunning) return;
-  timerRunning = true;
-  document.getElementById('timerToggle').textContent = '⏸';
-  timerInterval = setInterval(() => { timerSec++; updateTimerDisplay(); }, 1000);
-}
-function stopTimer() {
-  timerRunning = false;
-  document.getElementById('timerToggle').textContent = '▶';
-  if(timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-}
-function setCondition(n) {
-  currentCondition = n;
-  document.querySelectorAll('.cond-btn').forEach(el => {
-    const val = parseInt(el.dataset.cond);
-    el.classList.toggle('active', val === n);
-  });
-  document.getElementById('condLabel').textContent = n ? n + '/5' : '-';
-}
-
-// ============================================================
-// 15. 기록 (수동과 동일)
-// ============================================================
-function renderRecords() {
-  const container = document.getElementById('recordList');
-  const dates = Object.keys(diary).sort().reverse();
-  if(!dates.length) {
-    container.innerHTML = '<div class="record-empty">📭 저장된 기록이 없습니다.</div>';
-    document.getElementById('recordDetail').style.display = 'none';
-    return;
-  }
-  let html = '';
-  dates.forEach(dateKey => {
-    const dayData = diary[dateKey];
-    let totalSlots = 0;
-    for(const pid in dayData) {
-      totalSlots += dayData[pid].slots ? dayData[pid].slots.length : 0;
-    }
-    if(totalSlots === 0) return;
-    const isToday = dateKey === today();
-    const label = isToday ? '📅 ' + dateKey + ' (오늘)' : '📅 ' + dateKey;
-    html += `<div class="record-group" data-date="${dateKey}">
-      <div class="group-header">
-        <span>${label}</span>
-        <span class="badge">${totalSlots}개 슬롯</span>
-      </div>
-      <div class="group-body">`;
-    for(const pid in dayData) {
-      const p = projects.find(x => x.id === pid);
-      const pIdx = projects.findIndex(x => x.id === pid);
-      const color = pIdx >= 0 ? getProjectColor(pIdx) : '#888';
-      const slots = dayData[pid].slots || [];
-      slots.forEach((slot) => {
-        const ch = slot.chapter || '?';
-        const doneCount = Object.values(slot.checks || {}).filter(v => v).length;
-        const totalCount = Object.keys(slot.checks || {}).length;
-        const pct = totalCount ? Math.round(doneCount/totalCount*100) : 0;
-        html += `
-          <div class="record-item" data-date="${dateKey}" data-pid="${pid}" data-sid="${slot.id}">
-            <div class="ri-left">
-              <span class="ri-dot" style="background:${color};"></span>
-              <span class="ri-title">${escapeHtml(p ? p.name : '삭제됨')} · ${ch}화</span>
-              <span class="ri-meta">${slot.charCount || 0}자 · ${pct}%</span>
-              ${slot.memo ? '<span class="ri-meta">📌</span>' : ''}
-            </div>
-            <div class="ri-actions">
-              <button class="load-btn" data-date="${dateKey}" data-pid="${pid}" data-sid="${slot.id}">📂</button>
-              <button class="danger delete-btn" data-date="${dateKey}" data-pid="${pid}" data-sid="${slot.id}">🗑️</button>
-            </div>
+    <div class="main-split">
+      <div class="left-panel">
+        <div class="checklist-wrap">
+          <div class="progress-wrap">
+            <span>📊</span>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <span class="progress-text" id="progressText">0%</span>
+            <span class="progress-count" id="progressCount">(0/0)</span>
           </div>
-        `;
-      });
-    }
-    html += `</div></div>`;
-  });
-  container.innerHTML = html;
-
-  container.querySelectorAll('.load-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const date = this.dataset.date, pid = this.dataset.pid, sid = this.dataset.sid;
-      if(projects.some(p => p.id === pid)) {
-        document.getElementById('projectSelect').value = pid;
-        selectProject(pid);
-      }
-      setTimeout(() => { loadSlot(date, pid, sid); switchTab('workbench'); }, 100);
-    });
-  });
-
-  container.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const date = this.dataset.date, pid = this.dataset.pid, sid = this.dataset.sid;
-      if(!confirm('이 슬롯을 삭제할까요?')) return;
-      if(diary[date] && diary[date][pid]) {
-        diary[date][pid].slots = diary[date][pid].slots.filter(s => s.id !== sid);
-        if(!diary[date][pid].slots.length) delete diary[date][pid];
-        if(!Object.keys(diary[date]).length) delete diary[date];
-        saveAll();
-        renderRecords();
-        updateStreakUI();
-        updateGoalsUI();
-        showToast('🗑️ 삭제 완료', date);
-      }
-    });
-  });
-
-  container.querySelectorAll('.record-group .group-header').forEach(header => {
-    header.addEventListener('click', function() {
-      const body = this.parentElement.querySelector('.group-body');
-      if(body) {
-        const isHidden = body.style.display === 'none';
-        body.style.display = isHidden ? 'block' : 'none';
-        this.querySelector('.badge').textContent = isHidden ? '▼ 접기' : '▲ 펼치기';
-      }
-    });
-  });
-
-  container.querySelectorAll('.record-item').forEach(item => {
-    item.addEventListener('click', function(e) {
-      if(e.target.closest('button')) return;
-      const date = this.dataset.date, pid = this.dataset.pid, sid = this.dataset.sid;
-      showRecordDetail(date, pid, sid);
-    });
-  });
-}
-
-function showRecordDetail(dateKey, projectId, slotId) {
-  const detail = document.getElementById('recordDetail');
-  const dayData = diary[dateKey];
-  if(!dayData) { detail.style.display = 'none'; return; }
-  const projData = dayData[projectId];
-  if(!projData) { detail.style.display = 'none'; return; }
-  const slot = projData.slots.find(s => s.id === slotId);
-  if(!slot) { detail.style.display = 'none'; return; }
-  const p = projects.find(x => x.id === projectId);
-  const doneCount = Object.values(slot.checks || {}).filter(v => v).length;
-  const totalCount = Object.keys(slot.checks || {}).length;
-  detail.style.display = 'block';
-  detail.innerHTML = `
-    <h4>📖 ${p ? p.name : '삭제됨'} · ${slot.chapter || '?'}화</h4>
-    <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:4px;">
-      ${slot.charCount || 0}자 · 체크 ${doneCount}/${totalCount}
-      ${slot.condition ? '· 컨디션 ' + slot.condition + '/5' : ''}
-      ${slot.writingTime ? '· ⏱️ ' + formatTimer(slot.writingTime) : ''}
-      ${slot.memo ? '· 📌 ' + escapeHtml(slot.memo) : ''}
+          <div id="checklistContainer"></div>
+          <div class="toolbar">
+            <button class="btn" id="saveBtn" style="background:#4f46e5;color:#fff;border-color:#4f46e5;">💾 저장</button>
+            <button class="btn" id="loadBtn" style="background:#f1f4fa;color:#1e293b;">📂 불러오기</button>
+            <button class="btn btn-danger" id="resetBtn" style="color:#ef4444;border-color:#ef4444;">초기화</button>
+          </div>
+          <div class="save-status" id="saveStatus">⏳ 자동 저장 중</div>
+          <input type="file" id="fileInput" accept="application/json">
+        </div>
+      </div>
+      <div class="right-panel">
+        <div id="cy"></div>
+        <div id="nodeTooltip">
+          <div class="tt-title" id="ttTitle">노드</div>
+          <div class="tt-notes" id="ttNotes"><span class="tt-empty">메모 없음</span></div>
+        </div>
+      </div>
     </div>
-    <textarea readonly>${escapeHtml(slot.text || '')}</textarea>
-  `;
-}
+  </div>
+  <div class="toast" id="toast"></div>
 
-function formatTimer(sec) {
-  const m = String(Math.floor(sec/60)).padStart(2,'0');
-  const s = String(sec%60).padStart(2,'0');
-  return m + ':' + s;
-}
+  <script>
+    (function() {
+      'use strict';
 
-// ============================================================
-// 16. 스트릭 & 목표 (수동과 동일)
-// ============================================================
-function dayHasData(key) {
-  const dayData = diary[key] || {};
-  for(const pid in dayData) {
-    if(dayData[pid].slots && dayData[pid].slots.length) return true;
-  }
-  return false;
-}
+      // ============================================================
+      // 1. 체크리스트 데이터 (간소화)
+      // ============================================================
+      const STAGES = {
+        1: {
+          label: '① 일상의 파편',
+          checks: [
+            { id: 's1_1', text: '평범한 일상 생생 묘사' },
+            { id: 's1_2', text: '감정 이입 가능한가' },
+            { id: 's1_3', text: '불안한 전조 심었는가' },
+            { id: 's1_4', text: '"설명보다 보여주기" 적용' },
+            { id: 's1_5', text: '"재미있다" 느낄 요소' }
+          ]
+        },
+        2: {
+          label: '② 균열',
+          checks: [
+            { id: 's2_1', text: '"방해 요소" 등장' },
+            { id: 's2_2', text: '"계기적 사건" 발생' },
+            { id: 's2_3', text: '"왜?"라는 의문 심기' },
+            { id: 's2_4', text: '명확한 "목표" 드러내기' },
+            { id: 's2_5', text: '최소 하나의 떡밥 심기' }
+          ]
+        },
+        3: {
+          label: '③ 확장의 나선',
+          checks: [
+            { id: 's3_1', text: '주제가 내면/관계로 확장' },
+            { id: 's3_2', text: '치명적 결함 드러내기' },
+            { id: 's3_3', text: '조연/빌런이 주인공을 돋보이게' },
+            { id: 's3_4', text: '호기심 계속 자극' },
+            { id: 's3_5', text: '심리 묘사가 행동 묘사보다 앞서기' }
+          ]
+        },
+        4: {
+          label: '④ 절정의 킬링파트',
+          checks: [
+            { id: 's4_1', text: '모든 긴장 폭발' },
+            { id: 's4_2', text: '"아!" 하고 외칠 통찰' },
+            { id: 's4_3', text: '절단신공 적용' },
+            { id: 's4_4', text: '대화로 플롯 밀어붙이기' },
+            { id: 's4_5', text: '사건 한가운데로 즉시 진입' }
+          ]
+        },
+        5: {
+          label: '⑤ 수렴의 관',
+          checks: [
+            { id: 's5_1', text: '모든 서브플롯이 주제로 모임' },
+            { id: 's5_2', text: '작품 전체 메시지 명확' },
+            { id: 's5_3', text: '오감(시청후미촉) 활용' },
+            { id: 's5_4', text: '강하고 역동적인 동사' },
+            { id: 's5_5', text: '비유로 감정 전달' }
+          ]
+        },
+        6: {
+          label: '⑥ 여운의 메아리',
+          checks: [
+            { id: 's6_1', text: '주인공의 확실한 변화' },
+            { id: 's6_2', text: '다시 떠올리게 하는 장치' },
+            { id: 's6_3', text: '퇴고 체크리스트 점검' },
+            { id: 's6_4', text: '초고 쓰고 퇴고했는가' },
+            { id: 's6_5', text: '자문 질문에 답했는가' }
+          ]
+        },
+        7: {
+          label: '⑦ 열린 문',
+          checks: [
+            { id: 's7_1', text: '마지막 장면이 질문 던지기' },
+            { id: 's7_2', text: '독자의 상상력 자극' },
+            { id: 's7_3', text: '연재 주기 준비' },
+            { id: 's7_4', text: '제목·소개글·1화 기대 일치' },
+            { id: 's7_5', text: '인풋(트렌드7, 개성3) 반영' },
+            { id: 's7_6', text: '최소 250편 목표' },
+            { id: 's7_7', text: '완독률·이탈률 목표' }
+          ]
+        }
+      };
 
-function calcStreak() {
-  let streak = 0;
-  const d = new Date();
-  const todayKey = formatDate(d.getFullYear(), d.getMonth(), d.getDate());
-  if(!dayHasData(todayKey)) d.setDate(d.getDate() - 1);
-  while(true) {
-    const key = formatDate(d.getFullYear(), d.getMonth(), d.getDate());
-    if(!dayHasData(key)) break;
-    streak++;
-    d.setDate(d.getDate() - 1);
-  }
-  return streak;
-}
+      const DAILY_CHECKS = [
+        { id: 'd_hook1', text: '첫 3줄에 지난화 긴장 이어지는가' },
+        { id: 'd_hook2', text: '절단신공 적용' },
+        { id: 'd_plus', text: '+요소로 마무리' },
+        { id: 'd_active', text: '주인공 능동적 극복' },
+        { id: 'd_pace', text: '고구마↔사이다 밸런스' },
+        { id: 'd_cast', text: '등장인물 각자 존재 이유' },
+        { id: 'd_villain', text: '빌런 확신 있게 움직임' },
+        { id: 'd_dial1', text: '설명을 위한 대사 없는가' },
+        { id: 'd_dial2', text: '이름 불필요 반복 금지' },
+        { id: 'd_dial3', text: '성격에 맞는 대사' },
+        { id: 'd_desc', text: '묘사는 "연출"에만 사용' },
+        { id: 'd_explain', text: '불필요한 설명 제거' },
+        { id: 'd_ratio', text: '대화 vs 지문 비율 적절' },
+        { id: 'd_typo', text: '오탈자 확인' },
+        { id: 'd_fs', text: '3화 이상 방치된 떡밥 없는가' }
+      ];
 
-function updateStreakUI() {
-  const streak = calcStreak();
-  document.getElementById('streakBadge').textContent = '🔥 ' + streak + '일';
-  document.getElementById('streakNum').textContent = streak;
-  const now = new Date();
-  const monthKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  let days = 0, slots = 0;
-  for(const dateKey in diary) {
-    if(dateKey.startsWith(monthKey)) {
-      let dayHas = false;
-      for(const pid in diary[dateKey]) {
-        const s = diary[dateKey][pid].slots || [];
-        if(s.length) { dayHas = true; slots += s.length; }
-      }
-      if(dayHas) days++;
-    }
-  }
-  document.getElementById('monthCount').textContent = days;
-  document.getElementById('monthSlots').textContent = slots;
-}
+      const SENTENCE_CHECKS = [
+        { id: 'd_sentence1', text: '문장 흐름 자연스러운가' },
+        { id: 'd_sentence2', text: '글의 목적 명확한가' },
+        { id: 'd_sentence3', text: '중복·군더더기 없는가' },
+        { id: 'd_sentence4', text: '독자 시선에서 이해 쉬운가' },
+        { id: 'd_sentence5', text: '문장 길이·구조 다양성' },
+        { id: 'd_sentence6', text: '맞춤법·띄어쓰기 정확한가' },
+        { id: 'd_sentence7', text: '제목이 내용 반영하는가' }
+      ];
 
-function updateGoalsUI() {
-  document.getElementById('goalWeekDays').value = goals.weekDays;
-  document.getElementById('goalMonthCh').value = goals.monthChapters;
-  document.getElementById('goalMonthChars').value = goals.monthChars;
-  document.getElementById('goalChapterChars').value = goals.chapterChars || 5000;
-  const now = new Date();
-  const day = now.getDay();
-  const mon = new Date(now);
-  mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
-  let weekCnt = 0;
-  for(let i=0; i<7; i++) {
-    const d = new Date(mon); d.setDate(mon.getDate() + i);
-    const key = formatDate(d.getFullYear(), d.getMonth(), d.getDate());
-    if(diary[key]) {
-      let has = false;
-      for(const pid in diary[key]) {
-        if(diary[key][pid].slots && diary[key][pid].slots.length) { has = true; break; }
-      }
-      if(has) weekCnt++;
-    }
-  }
-  const wp = Math.min(100, Math.round(weekCnt / goals.weekDays * 100));
-  document.getElementById('goalWeekBar').style.width = wp + '%';
-  document.getElementById('goalWeekPct').textContent = weekCnt + '/' + goals.weekDays;
-  const monthKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  let monthSlots = 0, monthChars = 0;
-  for(const dateKey in diary) {
-    if(dateKey.startsWith(monthKey)) {
-      for(const pid in diary[dateKey]) {
-        const s = diary[dateKey][pid].slots || [];
-        if(s.length) monthSlots += s.length;
-        s.forEach(slot => { monthChars += slot.charCount || 0; });
-      }
-    }
-  }
-  const mp = Math.min(100, Math.round(monthSlots / goals.monthChapters * 100));
-  document.getElementById('goalMonthBar').style.width = mp + '%';
-  document.getElementById('goalMonthPct').textContent = monthSlots + '/' + goals.monthChapters;
-  const cp = goals.monthChars ? Math.min(100, Math.round(monthChars / goals.monthChars * 100)) : 0;
-  document.getElementById('goalCharsBar').style.width = cp + '%';
-  document.getElementById('goalCharsPct').textContent = monthChars.toLocaleString();
-  const avgChars = monthSlots > 0 ? Math.round(monthChars / monthSlots) : 0;
-  const chPct = goals.chapterChars ? Math.min(100, Math.round(avgChars / goals.chapterChars * 100)) : 0;
-  document.getElementById('goalChapterBar').style.width = chPct + '%';
-  document.getElementById('goalChapterPct').textContent = avgChars.toLocaleString() + '/' + (goals.chapterChars || 5000).toLocaleString();
-}
+      const GENRE_CHECKS = [
+        { id: 'g_knowledge', text: '지식 활용에 근거 있는가' },
+        { id: 'g_power', text: '먼치킨 행동이 설정 범위 내인가' },
+        { id: 'g_persona', text: '빙의 대상과 태도가 모순 없는가' },
+        { id: 'g_period', text: '호칭·관직·의복 등 시대 디테일 일관적인가' }
+      ];
 
-// ============================================================
-// 17. 떡밥 (수동과 동일)
-// ============================================================
-function renderForeshadow() {
-  const list = document.getElementById('foreshadowList');
-  const filtered = foreshadow.filter(f => !f.projectId || f.projectId === currentProjectId);
-  if(!filtered.length) { list.innerHTML = '<div class="empty-state">등록된 항목이 없습니다.</div>'; return; }
-  let html = '';
-  filtered.forEach((f, idx) => {
-    const realIdx = foreshadow.indexOf(f);
-    const stCls = f.status === 'done' ? 'fs-status-done' : (f.status === 'drop' ? 'fs-status-drop' : 'fs-status-open');
-    html += `
-      <div class="foreshadow-item" data-idx="${realIdx}">
-        <div class="fs-top">
-          <select class="fs-type" style="width:70px;font-size:.65rem;">
-            <option value="foreshadow" ${f.type === 'foreshadow' || !f.type ? 'selected' : ''}>🔮복선</option>
-            <option value="bait" ${f.type === 'bait' ? 'selected' : ''}>🎣떡밥</option>
-            <option value="macguffin" ${f.type === 'macguffin' ? 'selected' : ''}>🎯맥거핀</option>
-            <option value="setting" ${f.type === 'setting' ? 'selected' : ''}>⚙️설정</option>
-          </select>
-          <input type="text" class="fs-content" value="${escapeHtml(f.content || '')}" placeholder="내용"/>
-          <input type="number" class="fs-planted" value="${f.planted || ''}" placeholder="심은 화" style="width:45px;"/>
-          <input type="number" class="fs-resolve" value="${f.resolve || ''}" placeholder="회수" style="width:55px;"/>
-          <select class="fs-status ${stCls}" style="font-size:.65rem;">
-            <option value="open" ${f.status === 'open' ? 'selected' : ''}>미회수</option>
-            <option value="done" ${f.status === 'done' ? 'selected' : ''}>회수</option>
-            <option value="drop" ${f.status === 'drop' ? 'selected' : ''}>폐기</option>
-          </select>
-          <button class="fs-del" style="border:1px solid var(--danger);color:var(--danger);background:transparent;border-radius:20px;padding:0 6px;cursor:pointer;font-size:.6rem;">삭제</button>
-        </div>
-      </div>
-    `;
-  });
-  list.innerHTML = html;
-  list.querySelectorAll('.foreshadow-item').forEach(el => {
-    const idx = parseInt(el.dataset.idx);
-    el.querySelector('.fs-type').addEventListener('change', function() {
-      foreshadow[idx].type = this.value;
-      saveAll();
-    });
-    el.querySelector('.fs-content').addEventListener('change', function() {
-      foreshadow[idx].content = this.value;
-      saveAll();
-    });
-    el.querySelector('.fs-planted').addEventListener('change', function() {
-      foreshadow[idx].planted = parseInt(this.value) || null;
-      saveAll();
-    });
-    el.querySelector('.fs-resolve').addEventListener('change', function() {
-      foreshadow[idx].resolve = parseInt(this.value) || null;
-      saveAll();
-    });
-    el.querySelector('.fs-status').addEventListener('change', function() {
-      foreshadow[idx].status = this.value;
-      saveAll();
-      renderForeshadow();
-    });
-    el.querySelector('.fs-del').addEventListener('click', function() {
-      if(confirm('삭제할까요?')) { foreshadow.splice(idx, 1); saveAll(); renderForeshadow(); }
-    });
-  });
-}
+      // ============================================================
+      // 2. 모든 체크 항목을 평면 리스트로
+      // ============================================================
+      const CHECK_ITEMS = [];
 
-// ============================================================
-// 18. 메모 (수동과 동일)
-// ============================================================
-function renderNotes() {
-  const q = document.getElementById('notesSearch').value.trim().toLowerCase();
-  let list = notes.slice().reverse();
-  if(q) {
-    list = list.filter(n => {
-      const body = (n.body || '').toLowerCase();
-      const tags = (n.tags || []).join(' ').toLowerCase();
-      return body.indexOf(q) >= 0 || tags.indexOf(q.replace(/^#/,'')) >= 0;
-    });
-  }
-  const el = document.getElementById('notesList');
-  if(!list.length) { el.innerHTML = '<div class="empty-state">메모가 없습니다.</div>'; return; }
-  let html = '';
-  list.forEach(n => {
-    const tagsHtml = (n.tags || []).map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('');
-    html += `
-      <div class="note-item" data-id="${n.id}">
-        <div class="note-body">${escapeHtml(n.body || '')}</div>
-        <div class="note-tags">${tagsHtml}</div>
-        <div class="note-meta">
-          ${n.createdAt ? n.createdAt.replace('T',' ').slice(0,16) : ''}
-          <button class="note-del" style="margin-left:6px;border:1px solid var(--danger);color:var(--danger);background:transparent;border-radius:20px;padding:0 6px;cursor:pointer;font-size:.55rem;">삭제</button>
-        </div>
-      </div>
-    `;
-  });
-  el.innerHTML = html;
-  el.querySelectorAll('.note-del').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const id = this.closest('.note-item').dataset.id;
-      if(confirm('삭제할까요?')) { notes = notes.filter(n => n.id !== id); saveAll(); renderNotes(); }
-    });
-  });
-}
-
-function parseTags(str) { return (str || '').split(/[,\s]+/).map(t => t.trim().replace(/^#/,'')).filter(Boolean); }
-
-// ============================================================
-// 19. 토스트 & 탭 (수동과 동일)
-// ============================================================
-let toastTimeout = null;
-function showToast(title, detail) {
-  const el = document.getElementById('toast');
-  document.getElementById('toastTitle').textContent = title;
-  document.getElementById('toastDetail').textContent = detail || '';
-  el.classList.add('show');
-  if(toastTimeout) clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-function switchTab(tabId) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tabs button').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tabId).classList.add('active');
-  document.querySelector(`.tabs button[data-tab="${tabId}"]`).classList.add('active');
-  if(tabId === 'records') { renderRecords(); updateStreakUI(); updateGoalsUI(); }
-  if(tabId === 'goals') { updateGoalsUI(); renderForeshadow(); }
-  if(tabId === 'notes') renderNotes();
-}
-
-// ============================================================
-// 20. 프로그램 파일 다운로드 (자기 자신을 빈 HTML로 저장)
-// ============================================================
-function downloadProgram() {
-  // 실행 중인 DOM을 복제해서 다운로드용으로 가공한다 (라이브 페이지에는 영향 없음)
-  const clone = document.documentElement.cloneNode(true);
-  // 현재 불러온 프로젝트/체크리스트/기록 등 개인 데이터가 정적 파일에 그대로
-  // 남지 않도록 동적으로 채워지는 영역을 비운다. (열면 어차피 init()이 다시 채움)
-  ['projectSelect','checklistContainer','recordList','recordDetail','foreshadowList','notesList'].forEach(id => {
-    const el = clone.querySelector('#' + id);
-    if(el) el.innerHTML = '';
-  });
-  const textInput = clone.querySelector('#textInput');
-  if(textInput) { textInput.textContent = ''; textInput.removeAttribute('value'); }
-  const memoInput = clone.querySelector('#memoInput');
-  if(memoInput) { memoInput.textContent = ''; memoInput.removeAttribute('value'); }
-  clone.removeAttribute('data-theme');
-  const html = '<!DOCTYPE html>\n' + clone.outerHTML;
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = '연재체크리스트_v3.9.html';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('✅ 다운로드 완료', '빈 상태의 프로그램 파일이 저장되었습니다.');
-}
-
-// ============================================================
-// 21. 초기화
-// ============================================================
-function init() {
-  loadAll();
-  if(!projects.length) {
-    projects.push({ id: uid(), name: '내 첫 작품', createdAt: new Date().toISOString() });
-    saveAll();
-  }
-  const draft = loadDraftFor(projects[0]?.id, 1);
-  if(draft) {}
-  renderAll();
-  startDraftAutoSave();
-
-  // ===== 이벤트 바인딩 (수동과 동일) =====
-  document.getElementById('projectSelect').addEventListener('change', onProjectChange);
-  document.getElementById('chapterInput').addEventListener('change', function() {
-    const val = parseInt(this.value) || 1;
-    if (currentProjectId && currentChapter !== val) { saveDraft(); }
-    currentChapter = val;
-    if (manualStageOverride === null) { currentStage = getRecommendedStage(val); }
-    let draft = null;
-    if (currentProjectId) { draft = loadDraftFor(currentProjectId, val); applyDraftToWorkbench(draft); }
-    renderWorkbench(draft ? draft.checks : {});
-    saveDraft();
-  });
-  document.querySelectorAll('.stage-nav button').forEach(btn => {
-    btn.addEventListener('click', function() {
-      manualStageOverride = parseInt(this.dataset.stage);
-      currentStage = manualStageOverride;
-      renderWorkbench();
-      saveDraft();
-    });
-  });
-  document.getElementById('genreCheckToggle').addEventListener('change', function() {
-    if(!currentProjectId) { this.checked = true; return; }
-    const p = projects.find(x => x.id === currentProjectId);
-    if(p) { p.genreEnabled = this.checked; saveAll(); }
-    renderWorkbench();
-  });
-  document.getElementById('textInput').addEventListener('input', function() { updateCharCount(); saveDraft(); });
-  document.getElementById('memoInput').addEventListener('input', saveDraft);
-  document.getElementById('saveBtn').addEventListener('click', saveCurrentWork);
-  document.getElementById('loadBtn').addEventListener('click', function() {
-    const date = today();
-    const dayData = diary[date];
-    if(!dayData || !currentProjectId || !dayData[currentProjectId]) {
-      showToast('📂 불러올 데이터 없음', '오늘 저장된 슬롯이 없습니다.');
-      return;
-    }
-    const slots = dayData[currentProjectId].slots || [];
-    if(!slots.length) { showToast('📂 불러올 데이터 없음', ''); return; }
-    loadSlot(date, currentProjectId, slots[slots.length-1].id);
-  });
-  document.getElementById('clearBtn').addEventListener('click', function() {
-    if(confirm('작성 중인 내용을 모두 지울까요?')) {
-      document.getElementById('textInput').value = '';
-      document.getElementById('memoInput').value = '';
-      setCondition(null);
-      timerSec = 0; updateTimerDisplay();
-      document.querySelectorAll('#checklistContainer .check-item').forEach(el => {
-        const cb = el.querySelector('input[type=checkbox]');
-        if(cb) { cb.checked = false; el.classList.remove('done'); }
-      });
-      updateProgress();
-      clearDraft();
-      showToast('🗑️ 초기화 완료', '');
-    }
-  });
-  document.getElementById('selectAllBtn').addEventListener('click', function() {
-    document.querySelectorAll('#checklistContainer .check-item').forEach(el => {
-      const cb = el.querySelector('input[type=checkbox]');
-      if(cb) { cb.checked = true; el.classList.add('done'); }
-    });
-    updateProgress(); saveDraft();
-  });
-  document.getElementById('deselectAllBtn').addEventListener('click', function() {
-    document.querySelectorAll('#checklistContainer .check-item').forEach(el => {
-      const cb = el.querySelector('input[type=checkbox]');
-      if(cb) { cb.checked = false; el.classList.remove('done'); }
-    });
-    updateProgress(); saveDraft();
-  });
-  document.getElementById('addCheckBtn').addEventListener('click', function() {
-    if(!currentProjectId) { showToast('⚠️ 프로젝트를 선택하세요', ''); return; }
-    const text = prompt('체크 항목 내용:');
-    if(!text || !text.trim()) return;
-    const hint = prompt('힌트 (선택):') || '';
-    const scope = confirm('이 회차에만 적용할까요?\n(취소=프로젝트 단계 전체)');
-    const newId = 'c_' + uid();
-    if(scope) {
-      if(!chapterChecks[currentProjectId]) chapterChecks[currentProjectId] = {};
-      if(!chapterChecks[currentProjectId][currentChapter]) chapterChecks[currentProjectId][currentChapter] = [];
-      chapterChecks[currentProjectId][currentChapter].push({ id: newId, text: text.trim(), hint: hint });
-    } else {
-      if(!projectChecks[currentProjectId]) projectChecks[currentProjectId] = {};
-      if(!projectChecks[currentProjectId][currentStage]) projectChecks[currentProjectId][currentStage] = [];
-      projectChecks[currentProjectId][currentStage].push({ id: newId, text: text.trim(), hint: hint });
-    }
-    saveAll();
-    renderWorkbench();
-    showToast('✅ 항목 추가됨', scope ? currentChapter + '화 전용' : currentStage + '단계');
-  });
-  document.getElementById('timerToggle').addEventListener('click', function() { if(timerRunning) stopTimer(); else startTimer(); });
-  document.getElementById('timerReset').addEventListener('click', function() { stopTimer(); timerSec = 0; updateTimerDisplay(); });
-  document.querySelectorAll('.cond-btn').forEach(el => {
-    el.addEventListener('click', function() { setCondition(parseInt(this.dataset.cond)); saveDraft(); });
-  });
-  document.querySelectorAll('.tabs button').forEach(btn => {
-    btn.addEventListener('click', function() { switchTab(this.dataset.tab); });
-  });
-  document.getElementById('exportJsonBtn').addEventListener('click', function() {
-    const data = { version: '3.9', exportedAt: new Date().toISOString(), projects, diary, goals, foreshadow, notes, projectChecks, chapterChecks, settings };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = '연재체크리스트_백업_' + today() + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('📤 백업 내보내기 완료', '');
-  });
-  document.getElementById('exportTextBtn').addEventListener('click', function() {
-    let lines = ['# 연재 체크리스트 v3.9', '내보낸 시각: ' + new Date().toLocaleString('ko-KR'), ''];
-    for(const dateKey in diary) {
-      lines.push('='.repeat(50));
-      lines.push('📅 ' + dateKey);
-      for(const pid in diary[dateKey]) {
-        const p = projects.find(x => x.id === pid);
-        const slots = diary[dateKey][pid].slots || [];
-        lines.push('  📖 ' + (p ? p.name : '삭제됨'));
-        slots.forEach((s, i) => {
-          const done = Object.values(s.checks || {}).filter(v => v).length;
-          const total = Object.keys(s.checks || {}).length;
-          lines.push('    [' + (i+1) + '] ' + (s.chapter || '?') + '화 · ' + (s.charCount || 0) + '자 · ' + (total?Math.round(done/total*100):0) + '%');
-          if(s.memo) lines.push('      📌 ' + s.memo);
-          if(s.text) lines.push('      ' + s.text.slice(0, 80) + (s.text.length > 80 ? '...' : ''));
+      for (let s = 1; s <= 7; s++) {
+        const stage = STAGES[s];
+        if (!stage) continue;
+        stage.checks.forEach(c => {
+          CHECK_ITEMS.push({
+            id: c.id,
+            label: c.text,
+            section: 'stage_' + s,
+            sectionLabel: stage.label
+          });
         });
       }
-    }
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = '연재체크리스트_텍스트_' + today() + '.txt';
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('📄 텍스트 내보내기 완료', '');
-  });
-  document.getElementById('importJsonBtn').addEventListener('click', () => document.getElementById('importFileInput').click());
-  document.getElementById('importFileInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if(!data.diary && !data.projects) { showToast('⚠️ 잘못된 형식', ''); return; }
-        if(!confirm('현재 데이터를 모두 덮어쓸까요?')) return;
-        if(data.projects) projects = data.projects;
-        if(data.diary) diary = data.diary;
-        if(data.goals) goals = Object.assign(goals, data.goals);
-        if(data.foreshadow) foreshadow = data.foreshadow || [];
-        if(data.notes) notes = data.notes || [];
-        if(data.projectChecks) projectChecks = data.projectChecks || {};
-        if(data.chapterChecks) chapterChecks = data.chapterChecks || {};
-        if(data.settings) settings = Object.assign(settings, data.settings);
-        saveAll();
-        location.reload();
-      } catch(err) { showToast('⚠️ 파싱 실패', err.message); }
-    };
-    reader.readAsText(file);
-    this.value = '';
-  });
-  document.getElementById('saveGoalsBtn').addEventListener('click', function() {
-    goals.weekDays = Math.max(1, parseInt(document.getElementById('goalWeekDays').value) || 5);
-    goals.monthChapters = Math.max(1, parseInt(document.getElementById('goalMonthCh').value) || 20);
-    goals.monthChars = Math.max(0, parseInt(document.getElementById('goalMonthChars').value) || 0);
-    goals.chapterChars = Math.max(500, parseInt(document.getElementById('goalChapterChars').value) || 5000);
-    saveAll();
-    updateGoalsUI();
-    showToast('💾 목표 저장 완료', '');
-  });
-  document.getElementById('addForeshadowBtn').addEventListener('click', function() {
-    if(!currentProjectId) { showToast('⚠️ 프로젝트를 선택하세요', ''); return; }
-    foreshadow.push({ id: uid(), projectId: currentProjectId, type: 'foreshadow', content: '', planted: currentChapter || null, resolve: null, status: 'open' });
-    saveAll();
-    renderForeshadow();
-    showToast('➕ 항목 추가됨', '');
-  });
-  document.getElementById('addSettingBtn').addEventListener('click', function() {
-    if(!currentProjectId) { showToast('⚠️ 프로젝트를 선택하세요', ''); return; }
-    const desc = prompt('설정 변경 내용을 입력하세요');
-    if(!desc || !desc.trim()) return;
-    foreshadow.push({ id: uid(), projectId: currentProjectId, type: 'setting', content: desc.trim(), planted: currentChapter || null, resolve: null, status: 'done' });
-    saveAll();
-    renderForeshadow();
-    showToast('⚙️ 설정 변경 기록됨', currentChapter + '화');
-  });
-  document.getElementById('addNoteBtn').addEventListener('click', function() {
-    const body = document.getElementById('newNoteBody').value.trim();
-    if(!body) { showToast('⚠️ 내용을 입력하세요', ''); return; }
-    const tags = parseTags(document.getElementById('newNoteTags').value);
-    notes.push({ id: uid(), body: body, tags: tags, createdAt: new Date().toISOString() });
-    saveAll();
-    document.getElementById('newNoteBody').value = '';
-    document.getElementById('newNoteTags').value = '';
-    renderNotes();
-    showToast('📝 메모 추가됨', '');
-  });
-  document.getElementById('notesSearch').addEventListener('input', renderNotes);
-  document.getElementById('themeToggle').addEventListener('click', function() {
-    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
-    this.textContent = dark ? '🌙' : '☀️';
-  });
-  document.getElementById('resetBtn').addEventListener('click', function() {
-    if(!confirm('🚨 모든 데이터를 초기화할까요? (백업 권장)')) return;
-    if(!confirm('정말로요? 복구할 수 없습니다!')) return;
-    for(const key in KEYS) { try { localStorage.removeItem(KEYS[key]); } catch(e) {} }
-    localFileHandle = null;
-    localFileName = '';
-    updateFileStatus('');
-    location.reload();
-  });
-  document.getElementById('settingsBtn').addEventListener('click', function() {
-    document.getElementById('settingsModal').style.display = 'flex';
-    document.getElementById('modalFileStatus').textContent = localFileName || '없음';
-  });
-  document.getElementById('modalCloseBtn').addEventListener('click', function() {
-    document.getElementById('settingsModal').style.display = 'none';
-  });
-  document.getElementById('settingsModal').addEventListener('click', function(e) {
-    if(e.target === this) this.style.display = 'none';
-  });
-  document.getElementById('modalOpenFile').addEventListener('click', function() {
-    document.getElementById('settingsModal').style.display = 'none';
-    openLocalFile();
-  });
-  document.getElementById('modalSaveFile').addEventListener('click', function() {
-    document.getElementById('settingsModal').style.display = 'none';
-    saveToLocalFile();
-  });
-  document.getElementById('fileStatus').addEventListener('click', function() {
-    document.getElementById('settingsModal').style.display = 'flex';
-    document.getElementById('modalFileStatus').textContent = localFileName || '없음';
-  });
 
-  document.getElementById('downloadBtn').addEventListener('click', downloadProgram);
+      DAILY_CHECKS.forEach(c => {
+        CHECK_ITEMS.push({
+          id: c.id,
+          label: c.text,
+          section: 'daily',
+          sectionLabel: '📌 매화 공통'
+        });
+      });
 
-  window.addEventListener('beforeunload', saveDraft);
-  console.log('🚀 v3.9 로드 완료');
-}
+      SENTENCE_CHECKS.forEach(c => {
+        CHECK_ITEMS.push({
+          id: c.id,
+          label: c.text,
+          section: 'sentence',
+          sectionLabel: '✍️ 문장 퇴고'
+        });
+      });
 
-if(document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+      GENRE_CHECKS.forEach(c => {
+        CHECK_ITEMS.push({
+          id: c.id,
+          label: c.text,
+          section: 'genre',
+          sectionLabel: '🎭 장르 특화'
+        });
+      });
 
-})();
-</script>
+      // ============================================================
+      // 3. 상태
+      // ============================================================
+      let checkStates = {};
+      const STORAGE_KEY = 'checklist_sync_final_v2';
+
+      CHECK_ITEMS.forEach(item => {
+        checkStates[item.id] = false;
+      });
+
+      // ============================================================
+      // 4. 그래프 데이터 (계층 구조)
+      // ============================================================
+      const CAT_IDS = ['STAGE_1', 'STAGE_2', 'STAGE_3', 'STAGE_4', 'STAGE_5', 'STAGE_6', 'STAGE_7', 'DAILY', 'SENTENCE',
+        'GENRE'
+      ];
+      const CAT_LABELS = {
+        'STAGE_1': '① 파편',
+        'STAGE_2': '② 균열',
+        'STAGE_3': '③ 확장',
+        'STAGE_4': '④ 킬링',
+        'STAGE_5': '⑤ 수렴',
+        'STAGE_6': '⑥ 여운',
+        'STAGE_7': '⑦ 열린문',
+        'DAILY': '📌 매화',
+        'SENTENCE': '✍️ 문장',
+        'GENRE': '🎭 장르'
+      };
+
+      function buildGraphData() {
+        const nodes = [];
+        const edges = [];
+
+        // 루트
+        nodes.push({
+          data: {
+            id: 'ROOT_CHECKLIST',
+            label: '📚 체크리스트',
+            color: '#888',
+            notes: '전체 체크리스트 루트'
+          },
+          classes: 'node-cat'
+        });
+
+        // 카테고리
+        CAT_IDS.forEach(id => {
+          nodes.push({
+            data: {
+              id: id,
+              label: CAT_LABELS[id] || id,
+              color: '#888',
+              notes: '카테고리'
+            },
+            classes: 'node-cat'
+          });
+          edges.push({
+            data: {
+              id: 'edge_ROOT_' + id,
+              source: 'ROOT_CHECKLIST',
+              target: id,
+              label: '카테고리',
+              desc: `"${CAT_LABELS[id] || id}"는 체크리스트 루트에 속한 카테고리입니다.`
+            }
+          });
+        });
+
+        // 항목
+        CHECK_ITEMS.forEach(item => {
+          let parentId = '';
+          if (item.section === 'daily') parentId = 'DAILY';
+          else if (item.section === 'sentence') parentId = 'SENTENCE';
+          else if (item.section === 'genre') parentId = 'GENRE';
+          else if (item.section.startsWith('stage_')) {
+            const num = item.section.replace('stage_', '');
+            parentId = 'STAGE_' + num;
+          }
+
+          const label = item.label.length > 14 ? item.label.slice(0, 14) + '…' : item.label;
+
+          nodes.push({
+            data: {
+              id: item.id,
+              label: label,
+              baseLabel: label,
+              color: '#999',
+              notes: item.label
+            },
+            classes: 'node-unchecked'
+          });
+
+          edges.push({
+            data: {
+              id: 'edge_' + parentId + '_' + item.id,
+              source: parentId,
+              target: item.id,
+              label: '항목',
+              desc: `"${CAT_LABELS[parentId] || parentId}" 카테고리의 체크 항목입니다: ${item.label}`
+            }
+          });
+        });
+
+        return { nodes, edges };
+      }
+
+      // ============================================================
+      // 5. 핵심: 체크 상태 변경 (리스트 ↔ 그래프 동기화)
+      // ============================================================
+      function setCheckState(id, isChecked) {
+        console.log('setCheckState:', id, isChecked);
+        checkStates[id] = isChecked;
+
+        // 리스트 UI 업데이트
+        const listItem = document.querySelector(`.check-item[data-id="${id}"]`);
+        if (listItem) {
+          const cb = listItem.querySelector('input[type="checkbox"]');
+          if (cb) cb.checked = isChecked;
+          listItem.classList.toggle('done', isChecked);
+        }
+
+        // 그래프 노드 색상 업데이트 (클래스 토글 방식 - 인라인 style() 바이패스보다 렌더 반영이 확실함)
+        if (cy) {
+          const node = cy.getElementById(id);
+          if (node.length) {
+            node.removeClass('node-checked node-unchecked');
+            node.addClass(isChecked ? 'node-checked' : 'node-unchecked');
+            const base = node.data('baseLabel') || node.data('label');
+            node.data('label', isChecked ? '✅ ' + base : base);
+            console.log('노드 색상 변경:', id, isChecked ? '초록' : '회색');
+          } else {
+            console.log('노드 없음:', id);
+          }
+        }
+
+        updateProgress();
+        autoSaveTimerReset();
+      }
+
+      // ============================================================
+      // 6. 리스트 렌더링
+      // ============================================================
+      function renderChecklist() {
+        const container = document.getElementById('checklistContainer');
+        if (!container) return;
+
+        const sectionOrder = [];
+        for (let s = 1; s <= 7; s++) sectionOrder.push('stage_' + s);
+        sectionOrder.push('daily', 'sentence', 'genre');
+
+        const sectionLabels = {
+          'stage_1': '① 일상의 파편',
+          'stage_2': '② 균열',
+          'stage_3': '③ 확장',
+          'stage_4': '④ 킬링',
+          'stage_5': '⑤ 수렴',
+          'stage_6': '⑥ 여운',
+          'stage_7': '⑦ 열린문',
+          'daily': '📌 매화 공통',
+          'sentence': '✍️ 문장 퇴고',
+          'genre': '🎭 장르 특화'
+        };
+
+        let html = '';
+
+        sectionOrder.forEach(sectionKey => {
+          const items = CHECK_ITEMS.filter(item => item.section === sectionKey);
+          if (items.length === 0) return;
+
+          html += `<div class="section-title">${sectionLabels[sectionKey] || sectionKey}</div>`;
+
+          items.forEach(item => {
+            const checked = checkStates[item.id] || false;
+            const doneClass = checked ? 'done' : '';
+            html += `
+              <div class="check-item ${doneClass}" data-id="${item.id}">
+                <input type="checkbox" ${checked ? 'checked' : ''} />
+                <div class="label-text">${item.label}</div>
+              </div>
+            `;
+          });
+        });
+
+        container.innerHTML = html;
+
+        // 리스트 체크박스 이벤트
+        container.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
+          cb.addEventListener('change', function() {
+            const item = this.closest('.check-item');
+            const id = item.dataset.id;
+            setCheckState(id, this.checked);
+          });
+        });
+
+        updateProgress();
+        // 그래프가 초기화된 후 색상 적용을 위해 약간 지연
+        setTimeout(() => {
+          if (cy) updateAllNodeColors();
+        }, 300);
+      }
+
+      // ============================================================
+      // 7. 모든 노드 색상 일괄 업데이트
+      // ============================================================
+      function updateAllNodeColors() {
+        if (!cy) return;
+        console.log('updateAllNodeColors 실행');
+        CHECK_ITEMS.forEach(item => {
+          const node = cy.getElementById(item.id);
+          if (node.length) {
+            const isChecked = checkStates[item.id] || false;
+            node.removeClass('node-checked node-unchecked');
+            node.addClass(isChecked ? 'node-checked' : 'node-unchecked');
+            const base = node.data('baseLabel') || node.data('label');
+            node.data('label', isChecked ? '✅ ' + base : base);
+          }
+        });
+      }
+
+      // ============================================================
+      // 8. 진행률
+      // ============================================================
+      function updateProgress() {
+        const total = CHECK_ITEMS.length;
+        let done = 0;
+        CHECK_ITEMS.forEach(item => {
+          if (checkStates[item.id]) done++;
+        });
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = pct + '%';
+        document.getElementById('progressCount').textContent = `(${done}/${total})`;
+      }
+
+      // ============================================================
+      // 9. 그래프 초기화
+      // ============================================================
+      let cy = null;
+
+      function initGraph() {
+        console.log('initGraph 실행');
+        if (cy) {
+          cy.resize();
+          cy.fit();
+          updateAllNodeColors();
+          return;
+        }
+
+        if (typeof cytoscape === 'undefined' || window.__cytoscapeLoadFailed) {
+          console.error('cytoscape 라이브러리 로드 실패 (CDN 차단 가능성)');
+          const cyEl = document.getElementById('cy');
+          if (cyEl) {
+            cyEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:20px;text-align:center;color:#ef4444;font-size:0.85rem;">⚠️ 그래프 라이브러리(cytoscape)를 불러오지 못했습니다.<br>인터넷 연결 또는 광고 차단 프로그램을 확인한 뒤 새로고침 해주세요.<br>(unpkg.com 접속이 차단되어 있으면 그래프와 노드 색상 변경이 동작하지 않습니다)</div>';
+          }
+          showToast('⚠️ 그래프 라이브러리 로드 실패');
+          return;
+        }
+
+        try {
+          const graphData = buildGraphData();
+        console.log('그래프 데이터 노드 수:', graphData.nodes.length);
+
+        cy = cytoscape({
+          container: document.getElementById('cy'),
+          elements: graphData,
+          style: [{
+            selector: 'node',
+            style: {
+              'label': 'data(label)',
+              'background-color': 'data(color)',
+              'shape': 'round-rectangle',
+              'width': 'label',
+              'height': 26,
+              'padding': '6px',
+              'border-width': 2,
+              'border-color': '#666',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'color': '#fff',
+              'font-weight': 'bold',
+              'font-size': 10,
+              'text-outline-width': 2,
+              'text-outline-color': '#000',
+              'transition-property': 'background-color, border-color',
+              'transition-duration': '0.3s'
+            }
+          }, {
+            selector: 'node.node-checked',
+            style: { 'background-color': '#22c55e', 'border-color': '#22c55e' }
+          }, {
+            selector: 'node.node-unchecked',
+            style: { 'background-color': '#999', 'border-color': '#666' }
+          }, {
+            selector: 'node.node-cat',
+            style: { 'background-color': '#888', 'border-color': '#666' }
+          }, {
+            selector: 'node.node-hover',
+            style: { 'border-width': 3, 'border-color': '#4facfe' }
+          }, {
+            selector: 'node:selected',
+            style: { 'border-width': 3, 'border-color': '#FFD700' }
+          }, {
+            selector: 'edge',
+            style: {
+              'width': 1.5,
+              'line-color': '#888',
+              'target-arrow-shape': 'none',
+              'curve-style': 'bezier',
+              'opacity': 0.4,
+              'label': 'data(label)',
+              'font-size': 7,
+              'color': '#94a3b8',
+              'text-opacity': 0.85,
+              'text-rotation': 'autorotate',
+              'text-margin-y': -6
+            }
+          }, {
+            selector: 'edge:selected',
+            style: { 'opacity': 1, 'line-color': '#aaa' }
+          }, {
+            selector: 'edge.hover-highlight',
+            style: { 'opacity': 1, 'width': 2.5, 'line-color': '#4facfe', 'color': '#4facfe', 'font-weight': 'bold' }
+          }],
+          layout: { name: 'cose', animate: true, fit: true, padding: 40 }
+        });
+
+        console.log('cytoscape 초기화 완료');
+
+        // 그래프 노드 클릭 이벤트 (항목 노드만)
+        cy.on('click', 'node', function(evt) {
+          const node = evt.target;
+          const id = node.id();
+          console.log('그래프 노드 클릭:', id);
+
+          // 루트나 카테고리는 제외 (항목만)
+          const isItem = CHECK_ITEMS.some(item => item.id === id);
+          if (!isItem) {
+            console.log('루트/카테고리 노드, 무시');
+            return;
+          }
+
+          const current = checkStates[id] || false;
+          console.log('현재 상태:', current, '→', !current);
+          setCheckState(id, !current);
+        });
+
+        // 툴팁
+        const tooltip = document.getElementById('nodeTooltip');
+        const ttTitle = document.getElementById('ttTitle');
+        const ttNotes = document.getElementById('ttNotes');
+
+        cy.on('mouseover', 'node', function(evt) {
+          const node = evt.target;
+          const label = node.data('label') || node.id();
+          const notes = node.data('notes') || '';
+          ttTitle.textContent = label;
+          ttNotes.innerHTML = notes || '<span class="tt-empty">메모 없음</span>';
+          const pos = node.renderedPosition();
+          const rect = cy.container().getBoundingClientRect();
+          let x = rect.left + pos.x - tooltip.offsetWidth / 2;
+          let y = rect.top + pos.y - 50 - tooltip.offsetHeight;
+          if (x < 10) x = 10;
+          if (y < 10) y = rect.top + pos.y + 20;
+          tooltip.style.left = x + 'px';
+          tooltip.style.top = y + 'px';
+          tooltip.style.display = 'block';
+          node.addClass('node-hover');
+        });
+
+        cy.on('mouseout', 'node', function(evt) {
+          tooltip.style.display = 'none';
+          evt.target.removeClass('node-hover');
+        });
+
+        // 관계선(엣지) 설명 툴팁
+        cy.on('mouseover', 'edge', function(evt) {
+          const edge = evt.target;
+          const srcLabel = edge.source().data('label') || edge.source().id();
+          const tgtLabel = edge.target().data('label') || edge.target().id();
+          const desc = edge.data('desc') || '';
+          ttTitle.textContent = srcLabel + ' → ' + tgtLabel;
+          ttNotes.innerHTML = desc || '<span class="tt-empty">관계 설명 없음</span>';
+
+          // 마우스 커서 근처에 표시 (엣지는 노드 좌표가 없으므로 renderedPosition 사용 불가)
+          const rect = cy.container().getBoundingClientRect();
+          let x = evt.originalEvent.clientX - tooltip.offsetWidth / 2;
+          let y = evt.originalEvent.clientY - 20 - tooltip.offsetHeight;
+          if (x < 10) x = 10;
+          if (y < 10) y = evt.originalEvent.clientY + 20;
+          tooltip.style.left = x + 'px';
+          tooltip.style.top = y + 'px';
+          tooltip.style.display = 'block';
+
+          edge.addClass('hover-highlight');
+        });
+
+        cy.on('mouseout', 'edge', function(evt) {
+          tooltip.style.display = 'none';
+          evt.target.removeClass('hover-highlight');
+        });
+
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') tooltip.style.display = 'none';
+        });
+
+        window.addEventListener('resize', function() {
+          if (cy) cy.resize();
+        });
+
+        // 초기 색상 적용
+        setTimeout(() => {
+          updateAllNodeColors();
+          console.log('초기 색상 적용 완료');
+        }, 200);
+        } catch (err) {
+          console.error('initGraph 오류:', err);
+          const cyEl = document.getElementById('cy');
+          if (cyEl) {
+            cyEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:20px;text-align:center;color:#ef4444;font-size:0.85rem;">⚠️ 그래프 초기화 중 오류가 발생했습니다: ' + (err && err.message ? err.message : err) + '</div>';
+          }
+          showToast('⚠️ 그래프 초기화 오류');
+        }
+      }
+
+      // ============================================================
+      // 10. 저장 / 불러오기 / 초기화
+      // ============================================================
+      function saveChecklist() {
+        const data = { version: '1.0', exportedAt: new Date().toISOString(), checks: checkStates };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '연재체크리스트_' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('💾 저장 완료');
+      }
+
+      function loadChecklist() { document.getElementById('fileInput').click(); }
+
+      function handleFileSelected(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (data.checks && typeof data.checks === 'object') {
+              const newStates = {};
+              CHECK_ITEMS.forEach(item => {
+                newStates[item.id] = data.checks[item.id] || false;
+              });
+              checkStates = newStates;
+              renderChecklist();
+              showToast('📂 불러오기 완료');
+            } else {
+              showToast('⚠️ 잘못된 파일 형식');
+            }
+          } catch (err) {
+            showToast('⚠️ 파일 파싱 오류');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      }
+
+      function resetChecklist() {
+        if (!confirm('모든 체크를 해제할까요?')) return;
+        CHECK_ITEMS.forEach(item => { checkStates[item.id] = false; });
+        renderChecklist();
+        showToast('🔄 초기화 완료');
+      }
+
+      // ============================================================
+      // 11. 자동 저장
+      // ============================================================
+      let autoTimer = null;
+
+      function autoSaveTimerReset() {
+        if (autoTimer) clearTimeout(autoTimer);
+        autoTimer = setTimeout(() => {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(checkStates));
+            document.getElementById('saveStatus').innerHTML = '<span class="ok">✅ 자동 저장됨</span>';
+          } catch (e) {}
+        }, 3000);
+      }
+
+      // ============================================================
+      // 12. 토스트
+      // ============================================================
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(el._hide);
+        el._hide = setTimeout(() => el.classList.remove('show'), 2500);
+      }
+
+      // ============================================================
+      // 13. 다크모드
+      // ============================================================
+      function toggleDarkMode() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('viewerTheme', 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('viewerTheme', 'dark');
+        }
+        if (cy) { setTimeout(() => { cy.resize();
+            cy.fit(); }, 100); }
+      }
+      document.addEventListener('keydown', function(e) {
+        if ((e.key === 'd' || e.key === 'D') && !e.ctrlKey && !e.metaKey) toggleDarkMode();
+      });
+
+      const savedTheme = localStorage.getItem('viewerTheme');
+      if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+
+      // ============================================================
+      // 14. 다운로드
+      // ============================================================
+      function downloadSelf() {
+        const clone = document.documentElement.cloneNode(true);
+        const downloadBtn = clone.querySelector('#downloadBtn');
+        if (downloadBtn) downloadBtn.remove();
+        const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '창작통합도구.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('⬇️ 다운로드 완료');
+      }
+
+      // ============================================================
+      // 15. 초기화
+      // ============================================================
+      function init() {
+        console.log('init 시작');
+
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const data = JSON.parse(saved);
+            if (data && typeof data === 'object') {
+              CHECK_ITEMS.forEach(item => {
+                checkStates[item.id] = data.checks[item.id] || false;
+              });
+            }
+          }
+        } catch (e) {}
+
+        renderChecklist();
+
+        // 그래프는 DOM이 완전히 렌더링된 후 초기화
+        setTimeout(function() {
+          console.log('그래프 초기화 시작');
+          initGraph();
+        }, 300);
+
+        document.getElementById('saveBtn').addEventListener('click', saveChecklist);
+        document.getElementById('loadBtn').addEventListener('click', loadChecklist);
+        document.getElementById('resetBtn').addEventListener('click', resetChecklist);
+        document.getElementById('fileInput').addEventListener('change', handleFileSelected);
+        document.getElementById('downloadBtn').addEventListener('click', downloadSelf);
+
+        window.addEventListener('beforeunload', function() {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(checkStates)); } catch (e) {}
+        });
+
+        console.log('✅ 창작 통합 도구 로드 완료');
+        console.log('📋 체크 항목 수:', CHECK_ITEMS.length);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+    })();
+  </script>
 </body>
 </html>
