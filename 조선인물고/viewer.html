@@ -311,12 +311,48 @@
         // Load tab data (lazy)
         async function loadTabData(tab, query) {
             if (tab === 'geo' && !geoData) {
-                geoData = await fetchJSON('geography_index.json');
+                geoData = await fetchJSONGz('history_geography.json.gz');
             } else if (tab === 'terms' && !termsData) {
-                termsData = await fetchJSON('terms_index.json');
+                termsData = await fetchAllTerms();
             } else if (tab === 'timeline' && !timelineData) {
-                timelineData = await fetchJSON('timeline_index.json');
+                timelineData = await fetchJSONGz('history_timeline.json.gz');
             }
+        }
+        
+        // Fetch and decompress gzip JSON
+        async function fetchJSONGz(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) return null;
+                const buffer = await response.arrayBuffer();
+                const ds = new DecompressionStream('gzip');
+                const stream = new Response(new Blob([buffer]).stream().pipeThrough(ds));
+                const text = await stream.text();
+                return JSON.parse(text);
+            } catch (e) {
+                console.warn('Failed to load:', url, e);
+                return null;
+            }
+        }
+        
+        // Load all term group files
+        async function fetchAllTerms() {
+            const groups = [
+                'terms_1_삼국시대.json',
+                'terms_2_고려시대.json',
+                'terms_3_조선시대.json',
+                'terms_4_근현대.json',
+                'terms_5_기타.json'
+            ];
+            const all = [];
+            for (const g of groups) {
+                const data = await fetchJSON(g);
+                if (data && Array.isArray(data.data)) {
+                    all.push(...data.data);
+                }
+            }
+            console.log(`Terms loaded: ${all.length}`);
+            return { data: all };
         }
         
         async function fetchJSON(url) {
@@ -329,6 +365,15 @@
             return null;
         }
         
+        function escapeHtml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        
         // Render tab data (search results)
         function renderTabData(tab, query) {
             const q = query.trim().toLowerCase();
@@ -337,20 +382,27 @@
             
             if (tab === 'geo') {
                 data = geoData;
-                if (data && Array.isArray(data)) {
-                    results = q ? data.filter(d => (d.name || '').includes(q) || (d.hanja || '').includes(q)) : data.slice(0, 100);
+                if (data) {
+                    const all = data.all_nodes ? Object.values(data.all_nodes) : [];
+                    results = q ? all.filter(d => 
+                        (d.name || '').includes(q) || (d.name_hanja || '').includes(q)
+                    ) : all.slice(0, 100);
                     results = results.slice(0, 200);
                 }
             } else if (tab === 'terms') {
                 data = termsData;
-                if (data && Array.isArray(data)) {
-                    results = q ? data.filter(d => (d.name || '').includes(q) || (d.hanja || '').includes(q) || (d.category || '').includes(q)) : data.slice(0, 100);
+                if (data && Array.isArray(data.data)) {
+                    results = q ? data.data.filter(d => 
+                        (d.name || '').includes(q) || (d.name_hanja || '').includes(q) || (d.category || '').includes(q)
+                    ) : data.data.slice(0, 100);
                     results = results.slice(0, 200);
                 }
             } else if (tab === 'timeline') {
                 data = timelineData;
-                if (data && Array.isArray(data)) {
-                    results = q ? data.filter(d => (d.title || '').includes(q) || (d.period || '').includes(q)) : data.slice(0, 100);
+                if (data && Array.isArray(data.data)) {
+                    results = q ? data.data.filter(d => 
+                        (d.title || '').includes(q) || (d.period || '').includes(q)
+                    ) : data.data.slice(0, 100);
                     results = results.slice(0, 200);
                 }
             }
@@ -369,21 +421,23 @@
                 if (tab === 'geo') {
                     return `
                         <div class="data-item">
-                            <h2>${item.name || ''} ${item.hanja ? `<span style="font-size:0.9rem;color:#888;">(${item.hanja})</span>` : ''}</h2>
-                            ${item.parent ? `<div class="data-info">상위: ${item.parent}</div>` : ''}
+                            <h2>${item.name || ''} ${item.name_hanja ? `<span style="font-size:0.9rem;color:#888;">(${item.name_hanja})</span>` : ''}</h2>
+                            ${item.content ? `<div class="data-desc">${escapeHtml(item.content)}</div>` : ''}
                         </div>`;
                 } else if (tab === 'terms') {
                     return `
                         <div class="data-item">
                             <h2>${item.name || ''}</h2>
-                            ${item.hanja ? `<div class="data-hanja">${item.hanja}</div>` : ''}
+                            ${item.name_hanja ? `<div class="data-hanja">${item.name_hanja}</div>` : ''}
                             <div class="data-info">${item.period ? `시대: ${item.period}` : ''} ${item.category ? `| 분류: ${item.category}` : ''}</div>
+                            ${item.description ? `<div class="data-desc">${escapeHtml(item.description)}</div>` : ''}
                         </div>`;
                 } else {
                     return `
                         <div class="data-item">
                             <h2>${item.title || ''}</h2>
-                            <div class="data-info">${item.period ? `시대: ${item.period}` : ''} ${item.start ? `| ${item.start}` : ''}${item.end ? ` ~ ${item.end}` : ''}</div>
+                            <div class="data-info">${item.period ? `시대: ${item.period}` : ''} ${item.start_date ? `| ${item.start_date}` : ''}${item.end_date ? ` ~ ${item.end_date}` : ''}</div>
+                            ${item.content ? `<div class="data-desc">${escapeHtml(item.content)}</div>` : ''}
                         </div>`;
                 }
             }).join('');
