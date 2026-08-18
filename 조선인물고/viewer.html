@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인물고(人物考) 뷰어</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; background: #f5f0e8; color: #2c2c2c; }
+        .container { display: flex; height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { width: 320px; background: #2d2d2d; color: #e8e8e8; overflow-y: auto; border-right: 1px solid #444; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid #444; }
+        .sidebar-header h1 { margin: 0; font-size: 1.3rem; font-weight: 600; color: #ffd700; }
+        .sidebar-header p { margin: 5px 0 0; font-size: 0.85rem; color: #aaa; }
+        .search-box { padding: 15px; border-bottom: 1px solid #444; }
+        .search-box input { width: 100%; padding: 10px 12px; border: none; border-radius: 4px; background: #3d3d3d; color: #fff; font-size: 0.9rem; }
+        .search-box input:focus { outline: none; box-shadow: 0 0 0 2px #ffd700; }
+        .category-list { padding: 10px; }
+        .category { margin-bottom: 8px; }
+        .category-title { padding: 10px 12px; background: #3d3d3d; cursor: pointer; border-radius: 4px; font-weight: 500; transition: background 0.2s; }
+        .category-title:hover { background: #4a4a4a; }
+        .category-title.active { background: #ffd700; color: #2d2d2d; }
+        .entry-list { display: none; padding-left: 12px; }
+        .entry-list.open { display: block; }
+        .entry-item { padding: 8px 10px; cursor: pointer; border-radius: 3px; font-size: 0.85rem; transition: all 0.2s; border-left: 2px solid transparent; }
+        .entry-item:hover { background: #3d3d3d; }
+        .entry-item.active { background: #3d3d3d; border-left-color: #ffd700; color: #ffd700; }
+        .entry-item .name { font-weight: 500; }
+        .entry-item .title { font-size: 0.75rem; color: #888; margin-top: 2px; }
+        
+        /* Main Content */
+        .main { flex: 1; overflow-y: auto; padding: 30px 40px; background: #fdfbf7; }
+        .entry-header { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e8dfd4; }
+        .entry-title { font-size: 1.8rem; font-weight: 700; color: #1a1a1a; margin: 0 0 10px; }
+        .entry-title-hanja { font-size: 1.2rem; color: #666; font-family: 'Noto Serif KR', serif; }
+        .entry-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px; font-size: 0.85rem; color: #888; }
+        .entry-meta span { background: #f0ebe0; padding: 4px 10px; border-radius: 12px; }
+        
+        /* Content */
+        .content { line-height: 2; }
+        .paragraph { margin-bottom: 1.5em; padding-left: 1.5em; text-indent: -1.5em; }
+        .paragraph.indented { padding-left: 3em; text-indent: -1.5em; }
+        .hanja { color: #1a1a1a; font-family: 'Noto Serif KR', serif; font-size: 1.05rem; }
+        .hanja-proper { color: #c0392b; font-weight: 600; }
+        .note-ref { color: #2980b9; text-decoration: underline; cursor: pointer; font-size: 0.85em; vertical-align: super; margin-left: 2px; }
+        .page-ref { color: #888; font-size: 0.8rem; background: #f0ebe0; padding: 1px 6px; border-radius: 3px; margin: 0 4px; }
+        
+        /* Notes Panel */
+        .notes-panel { margin-top: 40px; padding: 20px; background: #fffdf5; border: 1px solid #e8dfd4; border-radius: 8px; }
+        .notes-panel h3 { margin: 0 0 15px; color: #2c2c2c; font-size: 1.1rem; }
+        .note-item { margin-bottom: 12px; padding: 10px; background: #faf8f3; border-radius: 4px; font-size: 0.9rem; line-height: 1.7; }
+        .note-item .note-title { font-weight: 600; color: #c0392b; margin-bottom: 4px; }
+        .note-item .note-content { color: #444; }
+        
+        /* Loading */
+        .loading { text-align: center; padding: 60px; color: #888; }
+        .loading-spinner { border: 3px solid #e8dfd4; border-top-color: #ffd700; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid #444; }
+            .main { padding: 20px; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>인물고(人物考)</h1>
+                <p>한국고전번역원 · 한국고전총간 전기류 5</p>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="인물명, 한자명 검색...">
+            </div>
+            <nav class="category-list" id="categoryList"></nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main" id="mainContent">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>데이터 로딩 중...</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Data storage
+        let allEntries = [];
+        let categories = {};
+        let currentEntry = null;
+        
+        // Name mapping (from JSON)
+        let nameMapping = {};
+        
+        // Wikipedia cache
+        const wikiCache = new Map();
+        
+        // Ollama config
+        const OLLAMA_URL = 'http://localhost:11434/api/generate';
+        const OLLAMA_MODEL = 'gemma4:e4b';  // or qwen2.5-coder:7b
+        
+        // Translation cache
+        const translationCache = new Map();
+        
+        // DOM elements
+        const categoryList = document.getElementById('categoryList');
+        const mainContent = document.getElementById('mainContent');
+        const searchInput = document.getElementById('searchInput');
+        
+        // Initialize
+        async function init() {
+            await loadNameMapping();
+            await loadAllData();
+            enrichEntriesWithMapping();
+            renderCategories();
+            setupSearch();
+        }
+        
+        // Load name mapping JSON
+        async function loadNameMapping() {
+            try {
+                const response = await fetch('name_mapping.json');
+                if (response.ok) {
+                    nameMapping = await response.json();
+                    console.log(`Loaded ${Object.keys(nameMapping).length} name mappings`);
+                }
+            } catch (e) {
+                console.warn('Failed to load name_mapping.json:', e);
+            }
+        }
+        
+        // Enrich entries with mapping data
+        function enrichEntriesWithMapping() {
+            allEntries.forEach(entry => {
+                const mapping = nameMapping[entry.name];
+                if (mapping) {
+                    entry.reading = mapping.reading;
+                    entry.wiki = mapping.wiki;
+                }
+            });
+        }
+        
+        // Load all XML files
+        async function loadAllData() {
+            const basePath = 'itkc_inmulgo_20250122/';
+            const files = [];
+            for (let i = 1; i <= 26; i++) {
+                const num = i.toString().padStart(3, '0') + '0';
+                files.push(`ITKC_KP_C005A_${num}.xml`);
+            }
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(basePath + file);
+                    if (response.ok) {
+                        const text = await response.text();
+                        parseXML(text, file);
+                    }
+                } catch (e) {
+                    console.warn('Failed to load:', file, e);
+                }
+            }
+            
+            // Sort entries by name
+            allEntries.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+        }
+        
+        // Parse XML
+        function parseXML(xmlText, filename) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xmlText, 'application/xml');
+            
+            const level4Nodes = doc.querySelectorAll('레벨4');
+            level4Nodes.forEach(node => {
+                const titleEl = node.querySelector('제목');
+                if (!titleEl) return;
+                
+                let titleText = titleEl.textContent || '';
+                // Extract name from title (before <원주> or first space)
+                const nameMatch = titleText.match(/([^<\s]+)/);
+                const name = nameMatch ? nameMatch[1].trim() : titleText.trim();
+                
+                // Get hanja name from 원주
+                let hanjaName = '';
+                const wonjuMatch = titleText.match(/<원주>([^<]+)<\/원주>/);
+                if (wonjuMatch) hanjaName = wonjuMatch[1].trim();
+                
+                // Get content
+                const contentEl = node.querySelector('내용');
+                const contentHtml = contentEl ? parseContent(contentEl.innerHTML) : '';
+                
+                // Get notes
+                const notes = parseNotes(node);
+                
+                // Get category from parent 레벨3
+                const level3 = node.closest('레벨3');
+                let category = '기타';
+                if (level3) {
+                    const catTitle = level3.querySelector('제목');
+                    if (catTitle) category = catTitle.textContent.trim();
+                }
+                
+                const entry = {
+                    id: node.getAttribute('id'),
+                    name: name,
+                    hanjaName: hanjaName,
+                    title: titleText.replace(/<[^>]+>/g, ''),
+                    content: contentHtml,
+                    notes: notes,
+                    category: category,
+                    filename: filename
+                };
+                
+                allEntries.push(entry);
+                
+                if (!categories[category]) categories[category] = [];
+                categories[category].push(entry);
+            });
+        }
+        
+        // Parse content HTML
+        function parseContent(html) {
+            return html
+                .replace(/<단락[^>]*indent="0"[^>]*>([\s\S]*?)<\/단락>/g, '<p class="paragraph">$1</p>')
+                .replace(/<단락[^>]*indent="2"[^>]*>([\s\S]*?)<\/단락>/g, '<p class="paragraph indented">$1</p>')
+                .replace(/<고유명사[^>]*>([^<]+)<\/고유명사>/g, '<span class="hanja hanja-proper">$1</span>')
+                .replace(/<주석[^>]*id="([^"]+)"[^>]*>([^<]+)<\/주석>/g, '<sup class="note-ref" data-note="$1">[$2]</sup>')
+                .replace(/<원주>([\s\S]*?)<\/원주>/g, '<span class="hanja" style="color:#666;">($1)</span>')
+                .replace(/<페이지[^>]*number="([^"]+)"[^>]*\/>/g, '<span class="page-ref">$1</span>');
+        }
+        
+        // Parse notes
+        function parseNotes(node) {
+            const notes = {};
+            const noteItems = node.querySelectorAll('주석항목');
+            noteItems.forEach(item => {
+                const id = item.getAttribute('id');
+                const title = item.querySelector('주석명')?.textContent || '';
+                const content = item.querySelector('주석내용')?.textContent || '';
+                if (id) notes[id] = { title, content };
+            });
+            return notes;
+        }
+        
+        // Render categories
+        function renderCategories() {
+            categoryList.innerHTML = '';
+            Object.keys(categories).sort().forEach(cat => {
+                const entries = categories[cat];
+                const catDiv = document.createElement('div');
+                catDiv.className = 'category';
+                catDiv.innerHTML = `
+                    <div class="category-title" data-category="${cat}">
+                        ${cat} (${entries.length})
+                    </div>
+                    <div class="entry-list" id="list-${cat.replace(/\s+/g, '-')}">
+                        ${entries.map(e => `
+                            <div class="entry-item" data-id="${e.id}">
+                                <div class="name">${e.name}${e.reading ? ' (' + e.reading + ')' : ''}${e.hanjaName ? ' [' + e.hanjaName + ']' : ''}</div>
+                                <div class="title">${e.title}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                categoryList.appendChild(catDiv);
+            });
+            
+            // Add click handlers
+            document.querySelectorAll('.category-title').forEach(el => {
+                el.addEventListener('click', () => {
+                    const list = el.nextElementSibling;
+                    list.classList.toggle('open');
+                    el.classList.toggle('active');
+                });
+            });
+            
+            document.querySelectorAll('.entry-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = el.dataset.id;
+                    showEntry(id);
+                    document.querySelectorAll('.entry-item').forEach(e => e.classList.remove('active'));
+                    el.classList.add('active');
+                });
+            });
+        }
+        
+        // Show entry
+        function showEntry(id) {
+            const entry = allEntries.find(e => e.id === id);
+            if (!entry) return;
+            currentEntry = entry;
+            
+            const notesHtml = Object.entries(entry.notes).map(([id, note]) => `
+                <div class="note-item">
+                    <div class="note-title">${note.title}</div>
+                    <div class="note-content">${note.content}</div>
+                </div>
+            `).join('');
+            
+            // Wiki button - use pre-fetched or search
+            const hasWiki = entry.wiki && entry.wiki.url;
+            const wikiBtnHtml = hasWiki 
+                ? `<button class="btn-wiki" onclick="openWiki('${entry.wiki.url}')" style="padding:8px 16px; background:#27ae60; color:white; border:none; border-radius:4px; cursor:pointer;">🌐 위키백과</button>`
+                : `<button class="btn-wiki" onclick="loadWikiInfo('${entry.id}')" style="padding:8px 16px; background:#27ae60; color:white; border:none; border-radius:4px; cursor:pointer;">🌐 위키백과 검색</button>`;
+            
+            mainContent.innerHTML = `
+                <div class="entry-header">
+                    <h1 class="entry-title">${entry.name}</h1>
+                    ${entry.reading ? `<div class="entry-title-reading" style="font-size:1.2rem; color:#2980b9; margin-bottom:5px;">${entry.reading}</div>` : ''}
+                    ${entry.hanjaName ? `<div class="entry-title-hanja">${entry.hanjaName}</div>` : ''}
+                    <div class="entry-meta">
+                        <span>${entry.category}</span>
+                        <span>${entry.filename.replace('.xml', '')}</span>
+                    </div>
+                    <div class="action-buttons" style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn-translate" onclick="translateEntry('${entry.id}')" style="padding:8px 16px; background:#2980b9; color:white; border:none; border-radius:4px; cursor:pointer;">📖 한글 번역</button>
+                        ${wikiBtnHtml}
+                    </div>
+                </div>
+                <div class="content">
+                    ${entry.content}
+                </div>
+                <div id="translation-panel-${entry.id}" style="display:none; margin-top:30px; padding:20px; background:#f0f7ff; border:1px solid #b3d9ff; border-radius:8px;"></div>
+                <div id="wiki-panel-${entry.id}" style="display:none; margin-top:30px; padding:20px; background:#f0fff4; border:1px solid #b3ffb3; border-radius:8px;"></div>
+                ${Object.keys(entry.notes).length > 0 ? `
+                <div class="notes-panel">
+                    <h3>주석・교감주</h3>
+                    ${notesHtml}
+                </div>
+                ` : ''}
+            `;
+            
+            // Add note tooltip functionality
+            document.querySelectorAll('.note-ref').forEach(ref => {
+                ref.addEventListener('mouseenter', (e) => {
+                    const noteId = e.target.dataset.note;
+                    const note = entry.notes[noteId];
+                    if (note) {
+                        showTooltip(e.target, `${note.title}: ${note.content}`);
+                    }
+                });
+                ref.addEventListener('mouseleave', hideTooltip);
+            });
+        }
+        
+        // Open pre-fetched wiki
+        function openWiki(url) {
+            window.open(url, '_blank');
+        }
+        
+        // Tooltip
+        let tooltip = null;
+        function showTooltip(target, text) {
+            hideTooltip();
+            tooltip = document.createElement('div');
+            tooltip.style.cssText = `
+                position: absolute; background: #2d2d2d; color: #fff; padding: 10px 12px;
+                border-radius: 4px; font-size: 0.8rem; line-height: 1.6; max-width: 300px;
+                z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            tooltip.textContent = text;
+            document.body.appendChild(tooltip);
+            
+            const rect = target.getBoundingClientRect();
+            tooltip.style.left = rect.left + 'px';
+            tooltip.style.top = (rect.bottom + 5) + 'px';
+        }
+        function hideTooltip() {
+            if (tooltip) { tooltip.remove(); tooltip = null; }
+        }
+        
+        // Search
+        function setupSearch() {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim().toLowerCase();
+                document.querySelectorAll('.entry-item').forEach(item => {
+                    const name = item.querySelector('.name').textContent.toLowerCase();
+                    const title = item.querySelector('.title').textContent.toLowerCase();
+                    const match = name.includes(query) || title.includes(query);
+                    item.style.display = match || !query ? '' : 'none';
+                });
+                
+                // Show/hide empty categories
+                document.querySelectorAll('.category').forEach(cat => {
+                    const visible = cat.querySelectorAll('.entry-item:not([style*="none"])').length;
+                    cat.style.display = visible > 0 || !query ? '' : 'none';
+                });
+            });
+        }
+        
+        // Translate Hanja text using Ollama
+        async function translateWithOllama(hanjaText) {
+            const cacheKey = hanjaText.slice(0, 200);
+            if (translationCache.has(cacheKey)) return translationCache.get(cacheKey);
+            
+            const prompt = `다음 한문(고전 한자) 텍스트를 현대 한국어로 자연스럽게 번역해 주세요. 인명, 지명, 관직명은 원문 한자와 함께 표기하세요.
+
+원문: ${hanjaText}
+
+번역:`;
+
+            try {
+                const response = await fetch(OLLAMA_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: OLLAMA_MODEL,
+                        prompt: prompt,
+                        stream: false,
+                        options: { temperature: 0.3, num_predict: 500 }
+                    })
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                const translation = data.response?.trim() || '번역 실패';
+                translationCache.set(cacheKey, translation);
+                return translation;
+            } catch (e) {
+                console.error('Ollama translation error:', e);
+                return `번역 오류: ${e.message}`;
+            }
+        }
+        
+        // Fetch Wikipedia summary
+        async function fetchWikiSummary(name, hanjaName) {
+            const cacheKey = name + '|' + hanjaName;
+            if (wikiCache.has(cacheKey)) return wikiCache.get(cacheKey);
+            
+            // Try multiple search strategies
+            const searchTerms = [
+                hanjaName ? `${name} (${hanjaName.replace('공', '').trim()})` : name,
+                name,
+                hanjaName
+            ].filter(Boolean);
+            
+            for (const term of searchTerms) {
+                try {
+                    // Search for page
+                    const searchUrl = `https://ko.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&format=json&origin=*`;
+                    const searchRes = await fetch(searchUrl);
+                    const searchData = await searchRes.json();
+                    
+                    if (searchData.query?.search?.length > 0) {
+                        const pageId = searchData.query.search[0].pageid;
+                        
+                        // Get extract
+                        const extractUrl = `https://ko.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&pageids=${pageId}&format=json&origin=*`;
+                        const extractRes = await fetch(extractUrl);
+                        const extractData = await extractRes.json();
+                        
+                        const page = extractData.query?.pages?.[pageId];
+                        if (page?.extract) {
+                            const result = {
+                                summary: page.extract.slice(0, 800),
+                                title: page.title,
+                                pageId: pageId
+                            };
+                            wikiCache.set(cacheKey, result);
+                            return result;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Wiki fetch failed for:', term, e);
+                }
+            }
+            
+            wikiCache.set(cacheKey, null);
+            return null;
+        }
+        
+        // Convert Hanja name to reading (basic)
+        function getNameReading(hanjaName) {
+            // Common surname readings
+            const surnameMap = {
+                '柳': '유', '姜': '강', '曺': '조', '金': '김', '韓': '한',
+                '李': '이', '朴': '박', '崔': '최', '鄭': '정', '趙': '조',
+                '尹': '윤', '張': '장', '林': '임', '吳': '오', '申': '신',
+                '權': '권', '黄': '황', '安': '안', '宋': '송', '全': '전',
+                '洪': '홍', '高': '고', '文': '문', '南': '남', '河': '하'
+            };
+            
+            if (!hanjaName) return '';
+            const firstChar = hanjaName.charAt(0);
+            const surname = surnameMap[firstChar] || firstChar;
+            // Return just surname for now - full reading needs dictionary
+            return surname + '씨';
+        }
+        
+        // Start
+        init();
+        
+        // Translate entry content
+        async function translateEntry(entryId) {
+            const entry = allEntries.find(e => e.id === entryId);
+            if (!entry) return;
+            
+            const panel = document.getElementById(`translation-panel-${entryId}`);
+            const btn = panel.previousElementSibling.querySelector('.btn-translate');
+            btn.disabled = true;
+            btn.textContent = '번역 중...';
+            panel.style.display = 'block';
+            panel.innerHTML = '<h3 style="margin-top:0;">한글 번역</h3><p style="color:#666;">Ollama로 번역 중...</p>';
+            
+            // Extract plain text from content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = entry.content;
+            const plainText = tempDiv.textContent || tempDiv.innerText;
+            
+            const translation = await translateWithOllama(plainText);
+            
+            panel.innerHTML = `
+                <h3 style="margin-top:0;">한글 번역</h3>
+                <div style="line-height:1.8; white-space:pre-wrap; font-size:0.95rem;">${translation}</div>
+                <button onclick="this.parentElement.style.display='none'" style="margin-top:10px; padding:5px 12px; background:#aaa; color:white; border:none; border-radius:3px; cursor:pointer;">닫기</button>
+            `;
+            btn.disabled = false;
+            btn.textContent = '📖 한글 번역';
+        }
+        
+        // Load Wikipedia info
+        async function loadWikiInfo(entryId) {
+            const entry = allEntries.find(e => e.id === entryId);
+            if (!entry) return;
+            
+            const panel = document.getElementById(`wiki-panel-${entryId}`);
+            const btn = panel.previousElementSibling.previousElementSibling.querySelector('.btn-wiki');
+            btn.disabled = true;
+            btn.textContent = '로딩 중...';
+            panel.style.display = 'block';
+            panel.innerHTML = '<h3 style="margin-top:0;">위키백과 정보</h3><p style="color:#666;">검색 중...</p>';
+            
+            const wiki = await fetchWikiSummary(entry.name, entry.hanjaName);
+            
+            if (wiki) {
+                panel.innerHTML = `
+                    <h3 style="margin-top:0;">위키백과: <a href="https://ko.wikipedia.org/?curid=${wiki.pageId}" target="_blank" style="color:#2980b9;">${wiki.title}</a></h3>
+                    <div style="line-height:1.8; font-size:0.95rem;">${wiki.summary}...</div>
+                    <button onclick="this.parentElement.style.display='none'" style="margin-top:10px; padding:5px 12px; background:#aaa; color:white; border:none; border-radius:3px; cursor:pointer;">닫기</button>
+                `;
+            } else {
+                panel.innerHTML = `
+                    <h3 style="margin-top:0;">위키백과 정보</h3>
+                    <p style="color:#e74c3c;">관련 문서를 찾지 못했습니다.</p>
+                    <button onclick="this.parentElement.style.display='none'" style="margin-top:10px; padding:5px 12px; background:#aaa; color:white; border:none; border-radius:3px; cursor:pointer;">닫기</button>
+                `;
+            }
+            btn.disabled = false;
+            btn.textContent = '🌐 위키백과';
+        }
+    </script>
+</body>
+</html>
