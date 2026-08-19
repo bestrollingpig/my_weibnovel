@@ -1,6 +1,7 @@
 import math
 import os
 import xml.etree.ElementTree as ET
+from datetime import datetime
 from pathlib import Path
 
 import httpx
@@ -10,6 +11,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.materials import MATERIALS, find_material, match_article
+from app.popularity import record as record_search
+from app.popularity import today as popularity_today
+from app.popularity import top as top_searches
 from app.rss import search_by_terms
 
 load_dotenv()
@@ -109,6 +113,47 @@ def _require_key():
         )
 
 
+_DATE_FORMATS = (
+    "%Y%m%d%H%M%S",
+    "%Y-%m-%dT%H:%M:%S%z",
+    "%a, %d %b %Y %H:%M:%S %Z",
+    "%a, %d %b %Y %H:%M:%S %z",
+    "%d %b %Y %H:%M:%S %Z",
+    "%d %b %Y %H:%M:%S",
+    "%Y-%m-%d",
+)
+
+
+def _parse_date(value: str) -> datetime:
+    value = value.strip()
+    for fmt in _DATE_FORMATS:
+        try:
+            return datetime.strptime(value, fmt)
+        except (ValueError, TypeError):
+            continue
+    return datetime.min
+
+
+def _is_kci(article: dict) -> bool:
+    return article.get("dataSource") == "KCI 보도자료"
+
+
+def _sort_results(results: list[dict], sort: str) -> None:
+    if sort == "recent":
+        results.sort(key=lambda r: _parse_date(r.get("writeDate", "")), reverse=True)
+    elif sort == "source":
+        results.sort(key=lambda r: (_is_kci(r), _parse_date(r.get("writeDate", ""))), reverse=True)
+    else:
+        results.sort(
+            key=lambda r: (
+                _is_kci(r),
+                len(r.get("matchedTerms", [])),
+                _parse_date(r.get("writeDate", "")),
+            ),
+            reverse=True,
+        )
+
+
 @app.get("/")
 async def root():
     return FileResponse(STATIC_DIR / "index.html")
@@ -134,6 +179,13 @@ async def list_materials():
     return MATERIALS
 
 
+@app.get("/api/popular")
+async def popular_materials(
+    limit: int = Query(10, ge=1, le=50, description="반환할 인기 소재 수"),
+):
+    return {"date": popularity_today(), "popular": top_searches(limit)}
+
+
 @app.get("/api/search")
 async def search_materials(
     genre: str = Query(..., description="장르 id (예: fantasy)"),
@@ -141,13 +193,15 @@ async def search_materials(
     pageNo: int = Query(1, ge=1, description="시작 페이지 번호"),
     maxPages: int = Query(3, ge=1, le=10, description="KCI에서 가져올 페이지 수"),
     recordCnt: int = Query(10, ge=1, le=100, description="한 페이지 결과 수"),
-    rssTerms: int = Query(3, ge=0, le=6, description="RSS에서 검색할 검색어 개수 (0이면 RSS 미사용)"),
+rssTerms: int = Query(3, ge=0, le=6, description="RSS에서 검색할 검색어 개수 (0이면 RSS 미사용)"),
     includeKci: bool = Query(True, description="KCI 보도자료 포함 여부"),
-    includeRss: bool = Query(True, description="Google뉴스(RSS) 포함 여부"),
+    includeRss: bool = Query(True, description="Google뉴스 포함 여부"),
+    sort: str = Query("relevance", pattern="^(relevance|recent|source)$", description="정렬: relevance(관련도) / recent(최신순) / source(소스별)"),
 ):
     target = find_material(genre, material)
     if target is None:
         raise HTTPException(status_code=404, detail=f"소재를 찾을 수 없습니다: {genre}/{material}")
+    genre_obj = next((g for g in MATERIALS["genres"] if g["id"] == genre), None)
     if includeKci:
         _require_key()
     if target is None:
@@ -180,11 +234,15 @@ async def search_materials(
                 rss_count += 1
                 results.append({**article, "dataSource": "Google뉴스"})
 
+    _sort_results(results, sort)
+    record_search(genre, material, genre_obj["name"], target["name"])
+
     return {
-        "genre": next(g["name"] for g in MATERIALS["genres"] if g["id"] == genre),
+        "genre": genre_obj["name"],
         "material": target["name"],
         "materialDesc": target["desc"],
         "searchTerms": target["searchTerms"],
+        "sort": sort,
         "kciSearchedCount": searched,
         "kciCount": kci_count,
         "rssCount": rss_count,

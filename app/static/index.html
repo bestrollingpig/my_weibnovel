@@ -35,6 +35,8 @@
   .tag { background: #f2f2f5; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
   .empty { text-align: center; color: #999; padding: 30px 0; font-size: 14px; }
   .loading-text { text-align: center; color: #5b4bd6; padding: 30px 0; }
+  .sortbar { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: #666; }
+  .sortbar select { padding: 5px 8px; border: 1px solid #d8d9e0; border-radius: 6px; background: #fff; font-size: 13px; }
   footer { text-align: center; color: #aaa; font-size: 12px; padding: 20px; }
 </style>
 </head>
@@ -48,6 +50,10 @@
     <h2>1. 장르 선택</h2>
     <div class="genres" id="genres"></div>
   </section>
+  <section id="popularSection" style="display:none;">
+    <h2>인기 소재 TOP 5</h2>
+    <div class="materials" id="popularList"></div>
+  </section>
   <section id="materialSection" style="display:none;">
     <h2>2. 소재 선택</h2>
     <div class="materials" id="materials"></div>
@@ -55,6 +61,14 @@
   <section>
     <h2>검색 결과</h2>
     <div id="resultInfo"></div>
+    <div class="sortbar">
+      <label for="sortSel">정렬</label>
+      <select id="sortSel">
+        <option value="relevance">관련도순</option>
+        <option value="recent">최신순</option>
+        <option value="source">소스별 (KCI → 뉴스)</option>
+      </select>
+    </div>
     <div id="resultList"><div class="empty">장르와 소재를 선택하면 기사가 여기에 표시됩니다.</div></div>
   </section>
 </main>
@@ -62,6 +76,7 @@
 <script>
 let genreData = [];
 let activeGenre = null;
+let lastSearch = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -91,16 +106,37 @@ function selectGenre(id) {
   );
 }
 
+async function loadPopular() {
+  const res = await fetch("/api/popular?limit=5");
+  const data = await res.json();
+  const list = data.popular || [];
+  if (list.length === 0) { $("popularSection").style.display = "none"; return; }
+  $("popularSection").style.display = "";
+  $("popularList").innerHTML = list.map(p =>
+    `<button class="mat-btn" data-genre="${p.genre}" data-material="${p.material}" data-name="${p.materialName}">${p.materialName}<small>${p.genreName} · 조회 ${p.count}</small></button>`
+  ).join("");
+  document.querySelectorAll("#popularList .mat-btn").forEach(btn =>
+    btn.addEventListener("click", () => {
+      selectGenre(btn.dataset.genre);
+      const matBtn = document.querySelector(`.mat-btn[data-material="${btn.dataset.material}"]`);
+      if (matBtn) search(matBtn.dataset.material, matBtn.dataset.name, matBtn);
+      else search(btn.dataset.material, btn.dataset.name, btn);
+    })
+  );
+}
+
 function escapeHtml(s) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 async function search(materialId, materialName, btn) {
   btn.classList.add("loading");
+  lastSearch = { materialId, materialName, btn };
   $("resultInfo").innerHTML = "";
   $("resultList").innerHTML = '<div class="loading-text">기사를 찾고 있습니다...</div>';
   try {
-    const url = `/api/search?genre=${encodeURIComponent(activeGenre)}&material=${encodeURIComponent(materialId)}&maxPages=3&recordCnt=100&rssTerms=3`;
+    const sort = $("sortSel").value;
+    const url = `/api/search?genre=${encodeURIComponent(activeGenre)}&material=${encodeURIComponent(materialId)}&maxPages=3&recordCnt=100&rssTerms=3&sort=${encodeURIComponent(sort)}`;
     const res = await fetch(url);
     if (!res.ok) {
       const err = await res.json();
@@ -128,6 +164,7 @@ async function search(materialId, materialName, btn) {
         </div>
       </div>`;
     }).join("");
+    loadPopular();
   } catch (e) {
     $("resultList").innerHTML = `<div class="empty">오류: ${escapeHtml(e.message)}</div>`;
   } finally {
@@ -135,7 +172,12 @@ async function search(materialId, materialName, btn) {
   }
 }
 
+$("sortSel").addEventListener("change", () => {
+  if (lastSearch) search(lastSearch.materialId, lastSearch.materialName, lastSearch.btn);
+});
+
 loadGenres();
+loadPopular();
 </script>
 </body>
 </html>

@@ -43,9 +43,10 @@ uvicorn app.main:app --reload
 
 배포 주소에 접속하면 바로 사용할 수 있는 검색 UI(`app/static/index.html`)가 함께 제공됩니다.
 
-1. 장르 선택 (판타지/로맨스/무협/현대/미스터리/재난)
-2. 소재 선택 (61개 소재, 예: 던전·레이드, 재벌, 연쇄 범죄)
+1. 인기 소재 TOP 5 (다른 작가들이 많이 찾은 소재, 하루 단위)
+2. 장르 선택 (판타지/로맨스/무협/현대/미스터리/재난) → 소재 선택 (79개)
 3. **검색 결과**: KCI 보도자료 + Google뉴스 기사가 함께 표시되고, 어떤 소재 검색어로 매칭됐는지 태그로 표시
+4. 정렬 선택: 관련도순 / 최신순 / 소스별 (KCI → 뉴스)
 
 ## API 명세
 
@@ -81,6 +82,7 @@ uvicorn app.main:app --reload
 | `rssTerms` | int | 3 | RSS에서 검색할 검색어 개수 (0이면 RSS 미사용, 검색어당 최대 30건) |
 | `includeKci` | bool | true | KCI 보도자료 포함 여부 |
 | `includeRss` | bool | true | Google뉴스 포함 여부 |
+| `sort` | str | relevance | `relevance`(관련도) / `recent`(최신순) / `source`(소스별) |
 
 응답 예시:
 
@@ -109,6 +111,23 @@ uvicorn app.main:app --reload
 
 - `dataSource`가 `KCI 보도자료` / `Google뉴스`로 어느 소스인지 구분됩니다.
 - 소재 키워드("던전", "회귀")는 뉴스 본문에 그대로 나오는 경우가 드물어, 사전(`app/materials.json`)의 `searchTerms`로 변환해 검색합니다. 사전은 언제든 확장 가능합니다.
+
+### `GET /api/popular`
+
+최근 검색된 인기 소재 순위 (하루 단위 초기화, 인메모리 집계)
+
+| 파라미터 | 타입 | 기본값 | 설명 |
+|---|---|---|---|
+| `limit` | int | 10 | 반환할 소재 수 (최대 50) |
+
+```json
+{
+  "date": "2026-08-19",
+  "popular": [
+    { "genre": "modern", "material": "chef", "genreName": "현대", "materialName": "요리·맛집", "count": 3 }
+  ]
+}
+```
 
 ### `GET /api/press`
 
