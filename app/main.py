@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.materials import MATERIALS, find_material, match_article
+from app.papers import search_papers
 from app.popularity import record as record_search
 from app.popularity import today as popularity_today
 from app.popularity import top as top_searches
@@ -141,12 +142,22 @@ def _is_kci(article: dict) -> bool:
 def _sort_results(results: list[dict], sort: str) -> None:
     if sort == "recent":
         results.sort(key=lambda r: _parse_date(r.get("writeDate", "")), reverse=True)
+    elif sort == "cited":
+        results.sort(
+            key=lambda r: (
+                r.get("dataSource") == "KCI 논문",
+                int(r.get("wosCiteCnt") or 0),
+                _parse_date(r.get("writeDate", "")),
+            ),
+            reverse=True,
+        )
     elif sort == "source":
         results.sort(key=lambda r: (_is_kci(r), _parse_date(r.get("writeDate", ""))), reverse=True)
     else:
         results.sort(
             key=lambda r: (
                 _is_kci(r),
+                r.get("dataSource") == "KCI 논문",
                 len(r.get("matchedTerms", [])),
                 _parse_date(r.get("writeDate", "")),
             ),
@@ -196,7 +207,9 @@ async def search_materials(
     rssTerms: int = Query(3, ge=0, le=6, description="RSS에서 검색할 검색어 개수 (0이면 RSS 미사용)"),
     includeKci: bool = Query(True, description="KCI 보도자료 포함 여부"),
     includeRss: bool = Query(True, description="Google뉴스 포함 여부"),
-    sort: str = Query("relevance", pattern="^(relevance|recent|source)$", description="정렬: relevance(관련도) / recent(최신순) / source(소스별)"),
+    includePapers: bool = Query(False, description="KCI 논문 검색 포함 여부 (논문명 부분일치, 응답이 느림)"),
+    paperTerms: int = Query(2, ge=0, le=4, description="KCI 논문 검색에 사용할 검색어 개수"),
+    sort: str = Query("relevance", pattern="^(relevance|recent|cited|source)$", description="정렬: relevance(관련도) / recent(최신순) / cited(인용순, 논문) / source(소스별)"),
 ):
     target = find_material(genre, material)
     if target is None:
@@ -209,7 +222,8 @@ async def search_materials(
     searched = 0
     kci_count = 0
     rss_count = 0
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    paper_count = 0
+    async with httpx.AsyncClient(timeout=30.0) as client:
         if includeKci:
             first = await _fetch_page(client, pageNo, recordCnt)
             total_count = int(first["totalCount"] or 0)
@@ -231,6 +245,10 @@ async def search_materials(
             for article in await search_by_terms(client, target["searchTerms"], rssTerms):
                 rss_count += 1
                 results.append({**article, "dataSource": "Google뉴스"})
+        if includePapers:
+            for paper in await search_papers(client, SERVICE_KEY, target["searchTerms"], paperTerms):
+                paper_count += 1
+                results.append({**paper, "dataSource": "KCI 논문"})
 
     _sort_results(results, sort)
     record_search(genre, material, genre_obj["name"], target["name"])
@@ -244,6 +262,7 @@ async def search_materials(
         "kciSearchedCount": searched,
         "kciCount": kci_count,
         "rssCount": rss_count,
+        "paperCount": paper_count,
         "totalCount": len(results),
         "results": results,
     }

@@ -7,6 +7,7 @@
 | 소스 | 내용 | 인증 |
 |---|---|---|
 | 한국연구재단 KCI 보도자료 | 공공데이터포털 오픈API | serviceKey (서버에만 보관) |
+| 한국연구재단 KCI 논문정보 | 학술논문 메타데이터(제목·초록·인용·DOI), 논문명 부분일치 검색 | serviceKey (동일 키, 서비스 활용신청) |
 | Google뉴스 RSS | 소재 검색어별 최신 기사 | 없음 |
 
 ### 왜 KCI 키가 필요한가
@@ -63,8 +64,8 @@ uvicorn app.main:app --reload
 1. **KCI 보도자료 전체 보기**: 대학·기관 1차 자료 목록을 전부 열람하고 제목·기관 필터로 바로 검색 (일반 검색엔진에 안 잡히는 원천)
 2. 인기 소재 TOP 5 (다른 작가들이 많이 찾은 소재, 하루 단위)
 3. 장르 선택 (판타지/로맨스/무협/현대/미스터리/재난) → 소재 선택 (79개)
-4. **검색 결과를 KCI 보도자료 / Google뉴스 그룹으로 분리 표시** — KCI 결과가 뉴스에 묻히지 않고 항상 먼저 나옵니다. 어떤 소재 검색어로 매칭됐는지 태그로 표시
-5. 정렬(관련도/최신) + **"KCI 보도자료만 보기" 체크박스**로 KCI 특별 자료만 집중 검색
+4. **검색 결과를 KCI 보도자료 / KCI 논문 / Google뉴스 그룹으로 분리 표시** — KCI 결과가 뉴스에 묻히지 않고 항상 먼저 나옵니다. 어떤 소재 검색어로 매칭됐는지 태그로 표시
+5. 정렬(관련도/최신/인용순) + **"KCI 보도자료만 보기" / "KCI 논문 포함" 체크박스**로 KCI 특별 자료만 집중 검색
 
 ## API 명세
 
@@ -100,7 +101,9 @@ uvicorn app.main:app --reload
 | `rssTerms` | int | 3 | RSS에서 검색할 검색어 개수 (0이면 RSS 미사용, 검색어당 최대 30건) |
 | `includeKci` | bool | true | KCI 보도자료 포함 여부 |
 | `includeRss` | bool | true | Google뉴스 포함 여부 |
-| `sort` | str | relevance | `relevance`(관련도) / `recent`(최신순) / `source`(소스별) |
+| `includePapers` | bool | false | KCI 논문 검색 포함 여부 (논문명 부분일치, 응답 평균 3초로 느림) |
+| `paperTerms` | int | 2 | KCI 논문 검색에 사용할 검색어 개수 (최대 4) |
+| `sort` | str | relevance | `relevance`(관련도) / `recent`(최신순) / `cited`(인용순, 논문) / `source`(소스별) |
 
 응답 예시:
 
@@ -127,7 +130,8 @@ uvicorn app.main:app --reload
 }
 ```
 
-- `dataSource`가 `KCI 보도자료` / `Google뉴스`로 어느 소스인지 구분됩니다.
+- `dataSource`가 `KCI 보도자료` / `KCI 논문` / `Google뉴스`로 어느 소스인지 구분됩니다.
+- KCI 논문 결과에는 초록·인용횟수(WOS)·원문 공개 여부·DOI가 포함될 수 있고, 원문URL이 없으면 KCI 논문 상세 페이지로 연결됩니다. 논문은 초록만으로는 아이디어 발굴에 충분한 연구 트렌드/전문 개념을 제공하지만, 원문 열람은 KCI 포털 또는 대학도서관 경유가 필요합니다.
 - 소재 키워드("던전", "회귀")는 뉴스 본문에 그대로 나오는 경우가 드물어, 사전(`app/materials.json`)의 `searchTerms`로 변환해 검색합니다. 사전은 언제든 확장 가능합니다.
 
 ### `GET /api/popular`
