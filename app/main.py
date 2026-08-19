@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.materials import MATERIALS, find_material, match_article
-from app.papers import search_papers
+from app.papers import search_papers, search_papers_page
 from app.popularity import record as record_search
 from app.popularity import today as popularity_today
 from app.popularity import top as top_searches
@@ -195,6 +195,17 @@ async def popular_materials(
     limit: int = Query(10, ge=1, le=50, description="반환할 인기 소재 수"),
 ):
     return {"date": popularity_today(), "popular": top_searches(limit)}
+
+
+@app.get("/api/papers")
+async def papers_page(
+    keyword: str = Query(..., min_length=1, max_length=100, description="검색 키워드 (논문명 부분일치)"),
+    pageNo: int = Query(1, ge=1, description="페이지 번호"),
+    recordCnt: int = Query(10, ge=1, le=100, description="한 페이지 결과 수"),
+):
+    _require_key()
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        return await search_papers_page(client, SERVICE_KEY, keyword, pageNo, recordCnt)
 
 
 @app.get("/api/search")

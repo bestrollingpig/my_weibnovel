@@ -71,6 +71,21 @@
     <div id="kciList" class="empty">불러오는 중...</div>
     <div id="kciCount" style="font-size:12px;color:#888;margin-top:8px;"></div>
   </section>
+  <section id="paperSection" style="display:none;">
+    <h2>KCI 논문 검색 <span style="font-weight:normal;font-size:12px;color:#888;">(연구 트렌드·전문 개념, 180만+ 논문 메타데이터)</span></h2>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input type="text" id="paperKeyword" placeholder="논문 제목 키워드 (예: 인공지능, 재난, 외교)" style="flex:1;padding:8px 10px;border:1px solid #d8d9e0;border-radius:8px;font-size:13px;">
+      <button id="paperSearchBtn" class="genre-btn" style="border-radius:8px;">검색</button>
+    </div>
+    <div id="paperList" class="empty">키워드를 입력해 논문을 검색하세요.</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+      <span id="paperCount" style="font-size:12px;color:#888;"></span>
+      <span style="display:flex;gap:8px;">
+        <button id="paperPrevBtn" class="genre-btn" style="border-radius:8px;display:none;">이전</button>
+        <button id="paperNextBtn" class="genre-btn" style="border-radius:8px;display:none;">다음</button>
+      </span>
+    </div>
+  </section>
   <section>
     <h2>검색 결과</h2>
     <div id="resultInfo"></div>
@@ -193,6 +208,47 @@ $("kciFilter").addEventListener("input", e => {
   kciTimer = setTimeout(() => renderKci(e.target.value), 200);
 });
 
+let paperPage = 1;
+let paperTotal = 0;
+let paperLoading = false;
+
+async function searchPapers(page) {
+  const kw = $("paperKeyword").value.trim();
+  if (!kw || paperLoading) return;
+  paperLoading = true;
+  $("paperSearchBtn").classList.add("loading");
+  $("paperList").innerHTML = '<div class="loading-text">논문을 찾고 있습니다 (수 초 소요)...</div>';
+  try {
+    const res = await fetch(`/api/papers?keyword=${encodeURIComponent(kw)}&pageNo=${page}&recordCnt=10`);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "논문 조회 실패");
+    }
+    const data = await res.json();
+    paperPage = data.pageNo || 1;
+    paperTotal = data.totalCount || 0;
+    const items = data.items || [];
+    $("paperCount").textContent = paperTotal ? `전체 ${paperTotal.toLocaleString()}건 · ${paperPage}페이지` : "";
+    $("paperPrevBtn").style.display = paperPage > 1 ? "" : "none";
+    $("paperNextBtn").style.display = paperPage * 10 < paperTotal ? "" : "none";
+    if (items.length === 0) {
+      $("paperList").innerHTML = '<div class="empty">조건에 맞는 논문이 없습니다.</div>';
+      return;
+    }
+    $("paperList").innerHTML = items.map(cardHtml).join("");
+  } catch (e) {
+    $("paperList").innerHTML = `<div class="empty">오류: ${escapeHtml(e.message)}</div>`;
+  } finally {
+    paperLoading = false;
+    $("paperSearchBtn").classList.remove("loading");
+  }
+}
+
+$("paperSearchBtn").addEventListener("click", () => searchPapers(1));
+$("paperKeyword").addEventListener("keydown", e => { if (e.key === "Enter") searchPapers(1); });
+$("paperPrevBtn").addEventListener("click", () => searchPapers(paperPage - 1));
+$("paperNextBtn").addEventListener("click", () => searchPapers(paperPage + 1));
+
 function cardHtml(r) {
   const isKci = r.dataSource === "KCI 보도자료";
   const isPaper = r.dataSource === "KCI 논문";
@@ -276,6 +332,7 @@ $("paperOn").addEventListener("change", () => {
 loadGenres();
 loadPopular();
 loadKci();
+$("paperSection").style.display = "block";
 </script>
 </body>
 </html>
