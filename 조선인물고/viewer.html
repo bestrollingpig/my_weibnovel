@@ -139,6 +139,10 @@
         let timelineData = null;
         let dictData = null;
         
+        // 페이지네이션 (더 보기)
+        let visibleCount = 100;
+        const PAGE_STEP = 100;
+        
         // Wikipedia cache
         const wikiCache = new Map();
         
@@ -287,6 +291,7 @@
         // ===== Tab switching =====
         function switchTab(tab) {
             currentTab = tab;
+            visibleCount = PAGE_STEP;
             document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
             searchInput.value = '';
             
@@ -390,32 +395,28 @@
                     const all = data.all_nodes ? Object.values(data.all_nodes) : [];
                     results = q ? all.filter(d => 
                         (d.name || '').includes(q) || (d.name_hanja || '').includes(q)
-                    ) : all.slice(0, 100);
-                    results = results.slice(0, 200);
+                    ).slice(0, 200) : all.slice(0, visibleCount);
                 }
             } else if (tab === 'terms') {
                 data = termsData;
                 if (data && Array.isArray(data.data)) {
                     results = q ? data.data.filter(d => 
                         (d.name || '').includes(q) || (d.name_hanja || '').includes(q) || (d.category || '').includes(q)
-                    ) : data.data.slice(0, 100);
-                    results = results.slice(0, 200);
+                    ).slice(0, 200) : data.data.slice(0, visibleCount);
                 }
             } else if (tab === 'timeline') {
                 data = timelineData;
                 if (data && Array.isArray(data.data)) {
                     results = q ? data.data.filter(d => 
                         (d.title || '').includes(q) || (d.date_text || '').includes(q)
-                    ) : data.data.slice(0, 100);
-                    results = results.slice(0, 200);
+                    ).slice(0, 200) : data.data.slice(0, visibleCount);
                 }
             } else if (tab === 'dict') {
                 data = dictData;
                 if (data && Array.isArray(data.data)) {
                     results = q ? data.data.filter(d => 
                         (d.name || '').includes(q) || (d.name_hanja || '').includes(q) || (d.type || '').includes(q) || (d.content || '').includes(q)
-                    ) : data.data.slice(0, 100);
-                    results = results.slice(0, 200);
+                    ).slice(0, 200) : data.data.slice(0, visibleCount);
                 }
             }
             
@@ -463,11 +464,20 @@
                 }
             }).join('');
             
+            const totalItems = q ? results.length : (tab === 'geo' ? (geoData && geoData.all_nodes ? Object.keys(geoData.all_nodes).length : 0) : (data ? data.data.length : 0));
+            const hasMore = !q && visibleCount < totalItems;
+            
             mainContent.innerHTML = `
                 <div class="data-panel">
-                    <div style="margin-bottom:20px;color:#888;font-size:0.9rem;">총 ${results.length}개${q ? ' 검색 결과' : ' (처음 200개 표시)'}</div>
+                    <div style="margin-bottom:20px;color:#888;font-size:0.9rem;">총 ${totalItems}개${q ? ' 검색 결과' : (hasMore ? ` (${visibleCount}개 표시)` : '')}</div>
                     ${html}
+                    ${hasMore ? `<div style="text-align:center;margin:30px 0;"><button onclick="loadMore()" style="padding:12px 40px;background:#ffd700;color:#2d2d2d;border:none;border-radius:6px;font-size:1rem;cursor:pointer;font-weight:600;">더 보기 (${totalItems - visibleCount}개 남음)</button></div>` : ''}
                 </div>`;
+        }
+        
+        function loadMore() {
+            visibleCount += PAGE_STEP;
+            renderTabData(currentTab, searchInput.value.trim().toLowerCase());
         }
         
         // Render categories (people tab)
@@ -598,6 +608,7 @@
         function setupSearch() {
             searchInput.addEventListener('input', (e) => {
                 const query = e.target.value.trim();
+                visibleCount = PAGE_STEP;
                 
                 if (currentTab !== 'people') {
                     mainContent.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>검색 중...</p></div>`;
