@@ -5,50 +5,73 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>웹소설 소재 검색</title>
 <style>
+  :root {
+    --bg: #f4f5f7; --surface: #fff; --text: #222; --muted: #888; --subtle: #999;
+    --border: #d8d9e0; --border2: #e3e4ea; --border3: #ececf1;
+    --btn-bg: #fff; --btn-text: #555; --mat-bg: #fafafc; --mat-text: #333;
+    --accent: #5b4bd6; --accent-bg: #eef0ff; --hover-bg: #f2efff;
+    --h2: #444; --tag-bg: #f2f2f5; --tag-text: #666; --input-bg: #fff;
+  }
+  [data-theme="dark"] {
+    --bg: #17171c; --surface: #22222a; --text: #e6e6ea; --muted: #9a9aa5; --subtle: #84848f;
+    --border: #3a3a45; --border2: #33333d; --border3: #2e2e37;
+    --btn-bg: #2a2a33; --btn-text: #c8c8d0; --mat-bg: #26262e; --mat-text: #d8d8de;
+    --accent: #8a7bff; --accent-bg: #2e2b4d; --hover-bg: #332f55;
+    --h2: #c6c6ce; --tag-bg: #33333d; --tag-text: #a8a8b2; --input-bg: #2a2a33;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; background: #f4f5f7; color: #222; }
-  header { background: linear-gradient(135deg, #5b4bd6, #8a54d6); color: #fff; padding: 28px 20px; text-align: center; }
+  body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
+  header { position: relative; background: linear-gradient(135deg, #5b4bd6, #8a54d6); color: #fff; padding: 28px 20px; text-align: center; }
   header h1 { font-size: 26px; margin-bottom: 8px; }
   header p { font-size: 14px; opacity: .9; }
+  #themeBtn { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 6px 12px; border-radius: 18px; cursor: pointer; font-size: 13px; }
+  #themeBtn:hover { background: rgba(255,255,255,.3); }
   main { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
-  section { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); padding: 18px; margin-bottom: 16px; }
-  h2 { font-size: 15px; color: #444; margin-bottom: 12px; }
+  section { background: var(--surface); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); padding: 18px; margin-bottom: 16px; }
+  h2 { font-size: 15px; color: var(--h2); margin-bottom: 12px; }
   .genres { display: flex; flex-wrap: wrap; gap: 8px; }
-  .genre-btn { border: 1px solid #d8d9e0; background: #fff; color: #555; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; transition: all .15s; }
-  .genre-btn:hover { border-color: #5b4bd6; color: #5b4bd6; }
-  .genre-btn.active { background: #5b4bd6; border-color: #5b4bd6; color: #fff; }
+  .genre-btn { border: 1px solid var(--border); background: var(--btn-bg); color: var(--btn-text); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; transition: all .15s; }
+  .genre-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .genre-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
   .materials { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-  .mat-btn { border: 1px solid #e3e4ea; background: #fafafc; color: #333; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 13px; line-height: 1.35; text-align: center; transition: all .15s; }
-  .mat-btn small { display: block; color: #999; font-size: 11px; margin-top: 4px; }
-  .mat-btn:hover { border-color: #5b4bd6; background: #f2efff; }
+  .mat-btn { border: 1px solid var(--border2); background: var(--mat-bg); color: var(--mat-text); padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 13px; line-height: 1.35; text-align: center; transition: all .15s; }
+  .mat-btn small { display: block; color: var(--subtle); font-size: 11px; margin-top: 4px; }
+  .mat-btn:hover { border-color: var(--accent); background: var(--hover-bg); }
   .mat-btn.loading { opacity: .5; pointer-events: none; }
   #resultInfo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 20px; }
-  #resultInfo .badge { background: #eef0ff; color: #5b4bd6; font-size: 12px; padding: 3px 10px; border-radius: 12px; }
-  #resultInfo .counts { font-size: 12px; color: #888; }
+  #resultInfo .badge { background: var(--accent-bg); color: var(--accent); font-size: 12px; padding: 3px 10px; border-radius: 12px; }
+  #resultInfo .counts { font-size: 12px; color: var(--muted); }
   #resultList { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
-  .card { border: 1px solid #ececf1; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .card a { color: #222; text-decoration: none; font-size: 15px; font-weight: 600; line-height: 1.4; }
-  .card a:hover { color: #5b4bd6; }
-  .card .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #888; }
+  .card { border: 1px solid var(--border3); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .card a { color: var(--text); text-decoration: none; font-size: 15px; font-weight: 600; line-height: 1.4; }
+  .card a:hover { color: var(--accent); }
+  .card .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
   .src-kci { background: #e7f6ee; color: #1a7f46; }
   .src-rss { background: #eef3ff; color: #3d5cc7; }
   .src-paper { background: #fdf0e3; color: #b05a1f; }
-  .tag { background: #f2f2f5; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
-  .empty { text-align: center; color: #999; padding: 30px 0; font-size: 14px; }
-  .loading-text { text-align: center; color: #5b4bd6; padding: 30px 0; }
-  .sortbar { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: #666; }
-  .sortbar select { padding: 5px 8px; border: 1px solid #d8d9e0; border-radius: 6px; background: #fff; font-size: 13px; }
-  #sourceNote { margin-top: 8px; font-size: 12px; color: #888; }
+  [data-theme="dark"] .src-kci { background: #1d3a2b; color: #6fd39a; }
+  [data-theme="dark"] .src-rss { background: #232f4d; color: #8fb0ff; }
+  [data-theme="dark"] .src-paper { background: #3d2d1a; color: #f0a469; }
+  .tag { background: var(--tag-bg); color: var(--tag-text); padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+  .empty { text-align: center; color: var(--subtle); padding: 30px 0; font-size: 14px; }
+  .loading-text { text-align: center; color: var(--accent); padding: 30px 0; }
+  .sortbar { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .sortbar select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text); font-size: 13px; }
+  .sortbar input[type="checkbox"] { accent-color: var(--accent); }
+  #sourceNote { margin-top: 8px; font-size: 12px; color: var(--muted); }
   #sourceNote .src-kci, #sourceNote .src-rss { font-weight: 600; }
   .group-head { display: flex; align-items: center; gap: 8px; margin: 14px 0 6px; }
-  .group-head .badge { background: #eef0ff; color: #5b4bd6; font-size: 12px; padding: 3px 10px; border-radius: 12px; }
+  .group-head .badge { background: var(--accent-bg); color: var(--accent); font-size: 12px; padding: 3px 10px; border-radius: 12px; }
   .paper-meta { font-size: 12px; color: #b05a1f; font-weight: 600; }
-  .paper-abs { font-size: 13px; color: #666; line-height: 1.5; background: #faf7f2; border-radius: 8px; padding: 8px 10px; }
-  footer { text-align: center; color: #aaa; font-size: 12px; padding: 20px; }
+  [data-theme="dark"] .paper-meta { color: #f0a469; }
+  .paper-abs { font-size: 13px; color: var(--muted); line-height: 1.5; background: var(--mat-bg); border-radius: 8px; padding: 8px 10px; }
+  input[type="text"] { background: var(--input-bg); color: var(--text); border-color: var(--border); }
+  footer { text-align: center; color: var(--subtle); font-size: 12px; padding: 20px; }
 </style>
 </head>
 <body>
 <header>
+  <button id="themeBtn" onclick="toggleTheme()">다크 모드</button>
   <h1>웹소설 소재 검색</h1>
   <p>장르와 소재를 고르면 소설에 쓸 만한 기사를 찾아드립니다</p>
 </header>
@@ -66,20 +89,20 @@
     <div class="materials" id="materials"></div>
   </section>
   <section id="kciSection" style="display:none;">
-    <h2>3. KCI 보도자료 전체 보기 <span style="font-weight:normal;font-size:12px;color:#888;">(대학·기관 1차 자료, 일반 검색에 안 잡히는 원천)</span></h2>
-    <input type="text" id="kciFilter" placeholder="제목·기관 검색어 입력 (예: 대학, 연구소)" style="width:100%;padding:8px 10px;border:1px solid #d8d9e0;border-radius:8px;font-size:13px;margin-bottom:10px;">
+    <h2>3. KCI 보도자료 전체 보기 <span style="font-weight:normal;font-size:12px;color:var(--muted);">(대학·기관 1차 자료, 일반 검색에 안 잡히는 원천)</span></h2>
+    <input type="text" id="kciFilter" placeholder="제목·기관 검색어 입력 (예: 대학, 연구소)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:10px;">
     <div id="kciList" class="empty">불러오는 중...</div>
-    <div id="kciCount" style="font-size:12px;color:#888;margin-top:8px;"></div>
+    <div id="kciCount" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
   </section>
   <section id="paperSection" style="display:none;">
-    <h2>KCI 논문 검색 <span style="font-weight:normal;font-size:12px;color:#888;">(연구 트렌드·전문 개념, 180만+ 논문 메타데이터)</span></h2>
+    <h2>KCI 논문 검색 <span style="font-weight:normal;font-size:12px;color:var(--muted);">(연구 트렌드·전문 개념, 180만+ 논문 메타데이터)</span></h2>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <input type="text" id="paperKeyword" placeholder="논문 제목 키워드 (예: 인공지능, 재난, 외교)" style="flex:1;padding:8px 10px;border:1px solid #d8d9e0;border-radius:8px;font-size:13px;">
+      <input type="text" id="paperKeyword" placeholder="논문 제목 키워드 (예: 인공지능, 재난, 외교)" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
       <button id="paperSearchBtn" class="genre-btn" style="border-radius:8px;">검색</button>
     </div>
     <div id="paperList" class="empty">키워드를 입력해 논문을 검색하세요.</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
-      <span id="paperCount" style="font-size:12px;color:#888;"></span>
+      <span id="paperCount" style="font-size:12px;color:var(--muted);"></span>
       <span style="display:flex;gap:8px;">
         <button id="paperPrevBtn" class="genre-btn" style="border-radius:8px;display:none;">이전</button>
         <button id="paperNextBtn" class="genre-btn" style="border-radius:8px;display:none;">다음</button>
@@ -109,11 +132,26 @@
 </main>
 <footer>자료 출처: 한국연구재단 KCI 보도자료 · Google뉴스 RSS / "이 기사에 ○○소재로 쓰세요"는 검색어 매칭 결과일 뿐, 사실 여부를 보장하지 않습니다.</footer>
 <script>
+const $ = (id) => document.getElementById(id);
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const next = cur === "dark" ? "" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("theme", next);
+  $("themeBtn").textContent = next === "dark" ? "라이트 모드" : "다크 모드";
+}
+
+(function initTheme() {
+  const saved = localStorage.getItem("theme");
+  const dark = saved === "dark" || (saved === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "");
+  $("themeBtn").textContent = dark ? "라이트 모드" : "다크 모드";
+})();
+
 let genreData = [];
 let activeGenre = null;
 let lastSearch = null;
-
-const $ = (id) => document.getElementById(id);
 
 async function loadGenres() {
   const res = await fetch("/api/materials");
