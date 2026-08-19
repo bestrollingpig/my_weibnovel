@@ -337,7 +337,8 @@ async function search(materialId, materialName, btn) {
     const data = await res.json();
     $("resultInfo").innerHTML =
       `<span class="badge">${escapeHtml(data.material)}</span>` +
-      `<span class="counts">${escapeHtml(data.materialDesc)} · 보도자료 ${data.kciCount}건 / 논문 ${data.paperCount}건 / 뉴스 ${data.rssCount}건</span>`;
+      `<span class="counts">${escapeHtml(data.materialDesc)} · 보도자료 ${data.kciCount}건 / 논문 ${data.paperCount}건 / 뉴스 ${data.rssCount}건</span>` +
+      (data.paperError ? `<span class="counts" style="color:#b05a1f;">${escapeHtml(data.paperError)}</span>` : "");
     if (data.results.length === 0) {
       $("resultList").innerHTML = '<div class="empty">이 소재에 맞는 기사를 찾지 못했습니다.</div>';
       return;

@@ -234,6 +234,7 @@ async def search_materials(
     kci_count = 0
     rss_count = 0
     paper_count = 0
+    paper_error = ""
     async with httpx.AsyncClient(timeout=30.0) as client:
         if includeKci:
             first = await _fetch_page(client, pageNo, recordCnt)
@@ -257,9 +258,12 @@ async def search_materials(
                 rss_count += 1
                 results.append({**article, "dataSource": "Google뉴스"})
         if includePapers:
-            for paper in await search_papers(client, SERVICE_KEY, target["searchTerms"], paperTerms):
-                paper_count += 1
-                results.append({**paper, "dataSource": "KCI 논문"})
+            try:
+                for paper in await search_papers(client, SERVICE_KEY, target["searchTerms"], paperTerms):
+                    paper_count += 1
+                    results.append({**paper, "dataSource": "KCI 논문"})
+            except HTTPException:
+                paper_error = "KCI 논문 API 일시 오류로 건너뛰었습니다. 다른 소스 결과는 정상입니다."
 
     _sort_results(results, sort)
     record_search(genre, material, genre_obj["name"], target["name"])
@@ -274,6 +278,7 @@ async def search_materials(
         "kciCount": kci_count,
         "rssCount": rss_count,
         "paperCount": paper_count,
+        "paperError": paper_error,
         "totalCount": len(results),
         "results": results,
     }
