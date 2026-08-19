@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>웹소설 소재 검색</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; background: #f4f5f7; color: #222; }
+  header { background: linear-gradient(135deg, #5b4bd6, #8a54d6); color: #fff; padding: 28px 20px; text-align: center; }
+  header h1 { font-size: 26px; margin-bottom: 8px; }
+  header p { font-size: 14px; opacity: .9; }
+  main { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
+  section { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); padding: 18px; margin-bottom: 16px; }
+  h2 { font-size: 15px; color: #444; margin-bottom: 12px; }
+  .genres { display: flex; flex-wrap: wrap; gap: 8px; }
+  .genre-btn { border: 1px solid #d8d9e0; background: #fff; color: #555; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; transition: all .15s; }
+  .genre-btn:hover { border-color: #5b4bd6; color: #5b4bd6; }
+  .genre-btn.active { background: #5b4bd6; border-color: #5b4bd6; color: #fff; }
+  .materials { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .mat-btn { border: 1px solid #e3e4ea; background: #fafafc; color: #333; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 13px; line-height: 1.35; text-align: center; transition: all .15s; }
+  .mat-btn small { display: block; color: #999; font-size: 11px; margin-top: 4px; }
+  .mat-btn:hover { border-color: #5b4bd6; background: #f2efff; }
+  .mat-btn.loading { opacity: .5; pointer-events: none; }
+  #resultInfo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 20px; }
+  #resultInfo .badge { background: #eef0ff; color: #5b4bd6; font-size: 12px; padding: 3px 10px; border-radius: 12px; }
+  #resultInfo .counts { font-size: 12px; color: #888; }
+  #resultList { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .card { border: 1px solid #ececf1; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .card a { color: #222; text-decoration: none; font-size: 15px; font-weight: 600; line-height: 1.4; }
+  .card a:hover { color: #5b4bd6; }
+  .card .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #888; }
+  .src-kci { background: #e7f6ee; color: #1a7f46; }
+  .src-rss { background: #eef3ff; color: #3d5cc7; }
+  .tag { background: #f2f2f5; color: #666; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+  .empty { text-align: center; color: #999; padding: 30px 0; font-size: 14px; }
+  .loading-text { text-align: center; color: #5b4bd6; padding: 30px 0; }
+  footer { text-align: center; color: #aaa; font-size: 12px; padding: 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>웹소설 소재 검색</h1>
+  <p>장르와 소재를 고르면 소설에 쓸 만한 기사를 찾아드립니다</p>
+</header>
+<main>
+  <section>
+    <h2>1. 장르 선택</h2>
+    <div class="genres" id="genres"></div>
+  </section>
+  <section id="materialSection" style="display:none;">
+    <h2>2. 소재 선택</h2>
+    <div class="materials" id="materials"></div>
+  </section>
+  <section>
+    <h2>검색 결과</h2>
+    <div id="resultInfo"></div>
+    <div id="resultList"><div class="empty">장르와 소재를 선택하면 기사가 여기에 표시됩니다.</div></div>
+  </section>
+</main>
+<footer>자료 출처: 한국연구재단 KCI 보도자료 · Google뉴스 RSS / "이 기사에 ○○소재로 쓰세요"는 검색어 매칭 결과일 뿐, 사실 여부를 보장하지 않습니다.</footer>
+<script>
+let genreData = [];
+let activeGenre = null;
+
+const $ = (id) => document.getElementById(id);
+
+async function loadGenres() {
+  const res = await fetch("/api/materials");
+  genreData = (await res.json()).genres;
+  $("genres").innerHTML = genreData.map(g =>
+    `<button class="genre-btn" data-id="${g.id}">${g.name}</button>`
+  ).join("");
+  document.querySelectorAll(".genre-btn").forEach(btn =>
+    btn.addEventListener("click", () => selectGenre(btn.dataset.id))
+  );
+}
+
+function selectGenre(id) {
+  activeGenre = id;
+  document.querySelectorAll(".genre-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.id === id)
+  );
+  const genre = genreData.find(g => g.id === id);
+  $("materialSection").style.display = "";
+  $("materials").innerHTML = genre.materials.map(m =>
+    `<button class="mat-btn" data-material="${m.id}" data-name="${m.name}">${m.name}<small>${m.desc}</small></button>`
+  ).join("");
+  document.querySelectorAll(".mat-btn").forEach(btn =>
+    btn.addEventListener("click", () => search(btn.dataset.material, btn.dataset.name, btn))
+  );
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+async function search(materialId, materialName, btn) {
+  btn.classList.add("loading");
+  $("resultInfo").innerHTML = "";
+  $("resultList").innerHTML = '<div class="loading-text">기사를 찾고 있습니다...</div>';
+  try {
+    const url = `/api/search?genre=${encodeURIComponent(activeGenre)}&material=${encodeURIComponent(materialId)}&maxPages=3&recordCnt=100&rssTerms=3`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "검색 실패");
+    }
+    const data = await res.json();
+    $("resultInfo").innerHTML =
+      `<span class="badge">${escapeHtml(data.material)}</span>` +
+      `<span class="counts">${escapeHtml(data.materialDesc)} · KCI ${data.kciCount}건 / 뉴스 ${data.rssCount}건</span>`;
+    if (data.results.length === 0) {
+      $("resultList").innerHTML = '<div class="empty">이 소재에 맞는 기사를 찾지 못했습니다.</div>';
+      return;
+    }
+    $("resultList").innerHTML = data.results.map(r => {
+      const isKci = r.dataSource === "KCI 보도자료";
+      const srcClass = isKci ? "src-kci" : "src-rss";
+      const tags = (r.matchedTerms || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+      return `<div class="card">
+        <a href="${escapeHtml(r.newsUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.newsTitle)}</a>
+        <div class="meta">
+          <span class="badge ${srcClass}">${escapeHtml(r.dataSource)}</span>
+          <span>${escapeHtml(r.pressName || "")}</span>
+          <span>${escapeHtml(r.writeDate || "")}</span>
+          ${tags}
+        </div>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    $("resultList").innerHTML = `<div class="empty">오류: ${escapeHtml(e.message)}</div>`;
+  } finally {
+    btn.classList.remove("loading");
+  }
+}
+
+loadGenres();
+</script>
+</body>
+</html>
