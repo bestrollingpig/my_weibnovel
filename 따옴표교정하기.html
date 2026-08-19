@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>완벽한 따옴표 교정기 (토큰 매칭 방식)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 2em; line-height: 1.6; background-color: #f8f9fa; color: #333;
+    }
+    .container {
+      max-width: 900px; margin: 0 auto; background: #ffffff; padding: 2.5em; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    h1 { font-size: 1.8rem; color: #111; margin-top: 0; border-bottom: 2px solid #edf2f7; padding-bottom: 0.5em; }
+    h2 { font-size: 1.3rem; color: #2d3748; margin-top: 1.5em; }
+    .info-box { background-color: #ebf8ff; border-left: 4px solid #3182ce; padding: 1em; border-radius: 4px; margin-bottom: 1.5em; font-size: 0.95rem; }
+    textarea {
+      width: 100%; height: 180px; margin-bottom: 1em; box-sizing: border-box; padding: 12px;
+      border: 1px solid #cbd5e0; border-radius: 6px; font-family: inherit; font-size: 0.95rem; resize: vertical;
+    }
+    textarea:focus { outline: none; border-color: #3182ce; box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); }
+    .btn-group { margin-bottom: 1.5em; }
+    button { padding: 0.6em 1.3em; margin-right: 0.5em; cursor: pointer; border-radius: 6px; border: none; font-weight: bold; font-size: 0.95rem; }
+    .btn-primary { background-color: #3182ce; color: white; }
+    .btn-primary:hover { background-color: #2b6cb0; }
+    .btn-secondary { background-color: #e2e8f0; color: #4a5568; }
+    .btn-secondary:hover { background-color: #cbd5e0; }
+    #output, #log {
+      white-space: pre-wrap; border: 1px solid #e2e8f0; padding: 1.2em; margin-top: 0.5em; background: #f7fafc; border-radius: 6px; word-break: break-all; font-size: 0.95rem; min-height: 50px;
+    }
+    #log { font-family: monospace; font-size: 0.85rem; color: #4a5568; max-height: 200px; overflow-y: auto; }
+    .log-entry { margin-bottom: 4px; border-bottom: 1px dashed #edf2f7; padding-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>따옴표 교정기 Pro (최종 수정본)</h1>
+  <div class="info-box">
+    <strong>✔ 수정 완료:</strong> 브라우저 DOM 왜곡 문제를 해결하기 위해 HTML 태그를 고유 토큰으로 임시 분리한 후 텍스트만 교정하는 알고리즘으로 전면 전개했습니다. 줄바꿈과 HTML 속성 파괴, 뒤집힘 현상이 모두 해결되었습니다.
+  </div>
+
+  <textarea id="input" placeholder="여기에 교정할 텍스트를 입력하거나 HTML 소스를 붙여넣으세요..."></textarea>
+  
+  <div class="btn-group">
+    <button class="btn-primary" onclick="fixQuotes()">✨ 교정하기</button>
+    <button class="btn-secondary" onclick="copyResult()">📋 결과 복사</button>
+  </div>
+  
+  <h2>교정된 결과</h2>
+  <div id="output"></div>
+
+  <h2>교정 내역</h2>
+  <div id="log">교정 내역이 여기에 표시됩니다.</div>
+</div>
+
+<script>
+  function fixQuotes() {
+    const inputValue = document.getElementById("input").value;
+    if (!inputValue.trim()) {
+      alert("텍스트를 입력해주세요.");
+      return;
+    }
+
+    let log = [];
+    let htmlTokens = [];
+    let text = inputValue;
+
+    // [핵심] 1. HTML 태그(<...>) 부분을 안전하게 추출하여 토큰화 (치환에서 제외시킴)
+    text = text.replace(/(<[^>]+>)/g, function(match) {
+      htmlTokens.push(match);
+      return `___HTML_TOKEN_${htmlTokens.length - 1}___`;
+    });
+
+    // 2. 순수 텍스트 영역에 대해 문맥 기반 따옴표 교정 진행
+    
+    // 큰따옴표 여는 조건 (앞이 공백/괄호/문장시작이고 뒤가 공백이 아닐 때)
+    text = text.replace(/(?:^|[\s\(\[\{])"(?=\S)/g, function(match) {
+      let replaced = match.replace('"', '“');
+      log.push(`[큰따옴표 열기] 문맥 교정: ${match.trim() || '[문장시작]'} -> ${replaced.trim()}`);
+      return replaced;
+    });
+
+    // 큰따옴표 닫는 조건 (앞이 공백이 아니고 뒤가 공백/괄호/문장끝/한국어 조사일 때)
+    text = text.replace(/(\S)"(?=[\s\)\}\]\.,\?!]|$|[은는이가을를에과와고로도])/g, function(match, p1) {
+      log.push(`[큰따옴표 닫기] 문맥 교정: ${p1}" -> ${p1}”`);
+      return p1 + '”';
+    });
+
+    // 작은따옴표 여는 조건
+    text = text.replace(/(?:^|[\s\(\[\{])'(?=\S)/g, function(match) {
+      let replaced = match.replace("'", "‘");
+      log.push(`[작은따옴표/열기] 문맥 교정: ${match.trim() || '[문장시작]'} -> ${replaced.trim()}`);
+      return replaced;
+    });
+
+    // 작은따옴표 닫는 조건
+    text = text.replace(/(\S)'(?=[\s\)\}\]\.,\?!]|$|[은는이가을를에과와고로도])/g, function(match, p1) {
+      log.push(`[작은따옴표/닫기] 문맥 교정: ${p1}' -> ${p1}’`);
+      return p1 + '’';
+    });
+
+    // 3. 미처 교정되지 못하고 남은 완벽한 한 쌍(Pair) 최종 치환 (개행문자 포함)
+    text = text.replace(/"([\s\S]*?)"/g, function(match, p1) {
+      log.push(`[큰따옴표 잔여쌍] 교정: "${p1.trim()}" -> “${p1.trim()}”`);
+      return "“" + p1 + "”";
+    });
+
+    text = text.replace(/'([\s\S]*?)'/g, function(match, p1) {
+      log.push(`[작은따옴표 잔여쌍] 교정: '${p1.trim()}' -> ‘${p1.trim()}’`);
+      return "‘" + p1 + "’";
+    });
+
+    // 4. 보관해 두었던 HTML 태그 토큰들을 원래 위치로 원상 복구
+    text = text.replace(/___HTML_TOKEN_(\d+)___/g, function(match, index) {
+      return htmlTokens[parseInt(index)];
+    });
+
+    // 화면에 출력
+    document.getElementById("output").textContent = text;
+
+    // 로그 표시
+    if (log.length > 0) {
+      document.getElementById("log").innerHTML = log.map(item => `<div class="log-entry">${item}</div>`).join('');
+    } else {
+      document.getElementById("log").textContent = "교정할 따옴표가 없거나 이미 완벽한 상태입니다.";
+    }
+  }
+
+  function copyResult() {
+    const result = document.getElementById("output").textContent;
+    if (!result.trim()) {
+      alert("먼저 교정할 텍스트를 입력하고 교정하기 버튼을 눌러주세요!");
+      return;
+    }
+    navigator.clipboard.writeText(result).then(() => {
+      alert("교정된 결과가 클립보드에 복사되었습니다!");
+    }).catch(err => {
+      alert("수동으로 드래그하여 복사해 주세요.");
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,3182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:#f0f0f0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.2em; text-shadow:1px 1px 0 #000; }
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .left-panel {
+      width:220px;
+      background:#fff;
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid #ddd;
+    }
+    .graph-area {
+      flex:1;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid #ddd;
+      border-radius:8px;
+      background:#fafafa;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+
+    .panel-section {
+      margin-bottom:12px;
+      padding:10px;
+      background:#f9f9f9;
+      border-radius:6px;
+      border:1px solid #e0e0e0;
+    }
+    .panel-section h3 {
+      font-size:0.9em;
+      margin-bottom:6px;
+      color:#667eea;
+      border-bottom:1px solid #667eea;
+      padding-bottom:3px;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:5px;
+      margin:3px 0;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+    }
+    input[readonly] {
+      background:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    textarea {
+      width:100%;
+      padding:5px;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+      resize:vertical;
+      min-height:60px;
+    }
+    button {
+      width:100%;
+      padding:6px;
+      margin:3px 0;
+      border:none;
+      border-radius:3px;
+      font-size:0.8em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+    }
+    button:active { transform:scale(0.97); }
+    .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+    .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
+    .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
+
+    .help-text { font-size:0.7em; color:#888; margin-top:3px; padding:4px; background:#fff; border-radius:3px; }
+    .connection-tools { display:flex; gap:4px; margin-bottom:3px; }
+    .connection-tools button { padding:3px; font-size:0.7em; margin:0; }
+
+    .info-badge {
+      display:block;
+      padding:4px 8px;
+      background:#667eea;
+      color:#fff;
+      border-radius:3px;
+      font-size:0.75em;
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .notes-display {
+      padding:6px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.8em;
+      min-height:40px;
+      white-space:pre-wrap;
+      margin-top:4px;
+    }
+    .file-select-wrapper { display:flex; gap:4px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:4px 8px; margin:0; }
+    .file-select-wrapper input[type="file"] { display:none; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
+    }
+    [data-theme="dark"] .left-panel {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .notes-display {
+      background:#2d2d4e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .cy-wrapper {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🌐 세계관 그래프</h1>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="panel-section">
+      <h3>📂 데이터</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
+      </div>
+      <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드</button>
+    </div>
+
+    <div class="panel-section">
+      <h3>➕ 노드</h3>
+      <input type="text" id="newNode" placeholder="노드 이름">
+      <button class="btn-primary" onclick="addNode()">노드 추가</button>
+      <div class="help-text">💡 빈 공간 더블클릭</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>🔗 엣지</h3>
+      <div class="connection-tools">
+        <button class="btn-info" onclick="clearEdgeInputs()">초기화</button>
+        <button class="btn-info" onclick="swapEdgeInputs()">교체</button>
+      </div>
+      <input type="text" id="edgeSrc" placeholder="출발 노드" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="도착 노드" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="라벨">
+      <button class="btn-primary" onclick="addEdge()">엣지 추가</button>
+      <div class="help-text">💡 노드 클릭 시 자동 입력</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>📝 노드 정보</h3>
+      <div class="info-badge" id="nodeInfo">노드를 클릭하세요</div>
+      <div class="notes-display" id="nodeNotes">선택한 노드의 메모가 여기에 표시됩니다</div>
+      <button class="btn-danger" onclick="deleteSelected()" style="margin-top:4px;">🗑️ 삭제 (Del)</button>
+    </div>
+  </div>
+
+  <div class="graph-area">
+    <div class="cy-wrapper">
+      <div id="cy"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const initialData = {
+  "nodes": [
+    {
+      "data": {
+        "id": "CONCEPT_CRIMEWORLD",
+        "label": "범죄 세계",
+        "color": "#9E9E9E",
+        "notes": "법과 질서 너머에 존재하는 범죄자들의 세계. 마약, 살인, 밀수, 조직 범죄, 사이버 범죄 등이 만나는 지하 사회. 무협의 '강호'에 대응되는 개념."
+      },
+      "position": {
+        "x": 791.3225558749809,
+        "y": 196.207155607785
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CONCEPT_INVESTIGATION",
+        "label": "수사 기관",
+        "color": "#9E9E9E",
+        "notes": "범죄를 해결하고 정의를 실현하는 공식 기관. 경찰, FBI, 국정원, 특수 수사팀 등. 무협의 '무림'에 대응되는 개념."
+      },
+      "position": {
+        "x": 804.4503216846621,
+        "y": 32.09603695940707
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_CSI",
+        "label": "CSI: Crime Scene Investigation",
+        "color": "#FFD700",
+        "notes": "라스베이거스 과학수사대의 이야기. 현장 증거 분석 중심의 수사 드라마. 2000~2015년 방영. 대표 인물: 길 그리섬, 캐서린 윌로스, 사라 사이들, 닉 스토크스, 그렉 샌더스."
+      },
+      "position": {
+        "x": 134.9548408734305,
+        "y": 284.8686113112123
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_CSI_MIAMI",
+        "label": "CSI: Miami",
+        "color": "#FFD700",
+        "notes": "CSI의 스핀오프. 마이애미 과학수사대. 따뜻한 색감과 호라시오 케인의 선글라스가 트레이드마크. 대표 인물: 호라시오 케인, 칼리 듀센."
+      },
+      "position": {
+        "x": 104.70861441855918,
+        "y": 926.1939525183908
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_CSI_NY",
+        "label": "CSI: NY",
+        "color": "#FFD700",
+        "notes": "CSI의 두 번째 스핀오프. 뉴욕 과학수사대. 어두운 도시 분위기와 맥 테일러의 리더십. 대표 인물: 맥 테일러, 스텔라 보나세라."
+      },
+      "position": {
+        "x": 11.50656512401739,
+        "y": 509.520059205917
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_MINDHUNTER",
+        "label": "마인드헌터",
+        "color": "#FFD700",
+        "notes": "FBI 행동과학부의 프로파일링 수사. 범죄자의 심리를 분석하는 드라마. 2017~2019년 넷플릭스 방영. 대표 인물: 홀든 포드, 빌 텐치, 웬디 카."
+      },
+      "position": {
+        "x": 855.3639748478299,
+        "y": 809.875482779568
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_TRUE_DETECTIVE",
+        "label": "트루 디텍티브",
+        "color": "#FFD700",
+        "notes": "시즌제 형사 드라마. 실존적, 철학적 탐구와 결합된 수사. HBO 방영. 시즌1: 러스트 콜 & 마티 하트, 시즌2: 레이 벨코로 & 안티 베제리데스, 시즌3: 웨인 헤이즈 & 롤랜드 웨스트."
+      },
+      "position": {
+        "x": 898.9711877646241,
+        "y": 60.44146832746382
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_MURDER_SHE_WROTE",
+        "label": "제시카의 추리극장",
+        "color": "#FFD700",
+        "notes": "추리 소설가 제시카 플레처가 우연히 얽힌 사건들을 해결하는 드라마. 1984~1996년 방영. 대표 인물: 제시카 플레처, 아모스 투퍼."
+      },
+      "position": {
+        "x": 692.8813188309616,
+        "y": 228.55577012895617
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_CRIMINAL_MINDS",
+        "label": "크리미널 마인드",
+        "color": "#FFD700",
+        "notes": "FBI 행동분석팀(BAU)의 프로파일링 수사 드라마. 2005~2020년 방영. 대표 인물: 제이슨 기디언, 애런 호치너, 페넬로페 가르시아, 스펜서 리드."
+      },
+      "position": {
+        "x": 957.2929656690427,
+        "y": 1000.7250567057779
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_SHARK",
+        "label": "샤크",
+        "color": "#FFD700",
+        "notes": "로스앤젤레스 지방검사관 출신의 현직 변호사 세바스찬 스탁. 검사 시절 배운 수사 기법과 변호사로서의 법정 기술을 결합한 드라마. 2006~2008년 방영. 대표 인물: 세바스찬 스탁, 줄리 스타."
+      },
+      "position": {
+        "x": 1096.417153419913,
+        "y": 306.6732956605888
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_LAW_AND_ORDER",
+        "label": "로앤오더: SVU",
+        "color": "#FFD700",
+        "notes": "뉴욕 경찰국 특수범죄수사대의 성범죄 수사 드라마. 1999년~현재 방영. 대표 인물: 올리비아 벤슨, 엘리엇 스테이블러, 핀 투투올라."
+      },
+      "position": {
+        "x": 651.8795981182029,
+        "y": 782.029076438276
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_NCIS",
+        "label": "NCIS",
+        "color": "#FFD700",
+        "notes": "미국 해군 범죄수사국(NCIS)의 해군 관련 범죄 수사 드라마. 2003년~현재 방영. 대표 인물: 러로이 제스로 깁스, 토니 디노조, 자이바 데이비드."
+      },
+      "position": {
+        "x": 482.3258028714365,
+        "y": 220.84239299716572
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_BONES",
+        "label": "본즈",
+        "color": "#FFD700",
+        "notes": "법의 인류학자 템피런스 브레넌이 FBI와 협력하여 유골을 분석해 사건을 해결하는 드라마. 2005~2017년 방영. 대표 인물: 템피런스 브레넌, 실리 부스."
+      },
+      "position": {
+        "x": 534.8456162263652,
+        "y": 866.6479483524496
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_CASTLE",
+        "label": "캐슬",
+        "color": "#FFD700",
+        "notes": "베스트셀러 추리 소설가 리처드 캐슬이 NYPD 형사 케이트 베켓과 함께 사건을 해결하는 드라마. 2009~2016년 방영. 대표 인물: 리처드 캐슬, 케이트 베켓."
+      },
+      "position": {
+        "x": 687.3741279063872,
+        "y": 676.5404965280583
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_ELEMENTARY",
+        "label": "엘리멘터리",
+        "color": "#FFD700",
+        "notes": "현대 뉴욕을 배경으로 한 셜록 홈즈의 현대판 드라마. 2012~2019년 방영. 대표 인물: 셜록 홈즈, 조안 왓슨."
+      },
+      "position": {
+        "x": 1009.7665146435983,
+        "y": 636.3734065287105
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_SHERLOCK",
+        "label": "셜록",
+        "color": "#FFD700",
+        "notes": "현대 런던을 배경으로 한 셜록 홈즈의 영국판 드라마. 2010~2017년 방영. 대표 인물: 베네딕트 컴버배치의 셜록 홈즈, 마틴 프리먼의 존 왓슨."
+      },
+      "position": {
+        "x": 965.7394260264781,
+        "y": 844.7225841681337
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_DEATH_NOTE",
+        "label": "데스노트",
+        "color": "#FFD700",
+        "notes": "사람을 죽일 수 있는 데스노트를 얻은 야가미 라이토와 그를 추적하는 명탐정 엘의 심리전을 그린 일본 애니메이션. 2006년 방영. 대표 인물: 야가미 라이토, 엘(L)."
+      },
+      "position": {
+        "x": 798.6629278629641,
+        "y": 408.98650452230436
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DRAMA_MONSTER",
+        "label": "몬스터",
+        "color": "#FFD700",
+        "notes": "쾰른 병원의 의사 텐마 겐조가 한 소년의 생명을 살린 후, 그 소년이 연쇄 살인범 요한 리베르트로 성장하면서 벌어지는 추적과 심리전을 그린 일본 애니메이션. 2004년 방영. 대표 인물: 텐마 겐조, 요한 리베르트, 엘자."
+      },
+      "position": {
+        "x": 1401.5597088799498,
+        "y": 42.00541637186749
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "AGENCY_FBI",
+        "label": "FBI",
+        "color": "#1A237E",
+        "notes": "미국 연방수사국. BSU(행동과학부)는 프로파일링 전문. 퀀티코(버지니아주)에 본부. 전국적인 수사 권한을 가진 최고 수사 기관."
+      },
+      "position": {
+        "x": 652.4714845201399,
+        "y": 941.8551632522758
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "AGENCY_FBI_BAU",
+        "label": "FBI 행동분석팀(BAU)",
+        "color": "#1A237E",
+        "notes": "FBI 산하 행동분석팀. 연쇄 살인범, 사이코패스 등 위험한 범죄자의 심리를 분석하고 프로파일링하는 전문 팀."
+      },
+      "position": {
+        "x": 757.0697394076154,
+        "y": 874.697960910776
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "AGENCY_NYPD",
+        "label": "NYPD",
+        "color": "#1A237E",
+        "notes": "뉴욕 경찰국. 5개 자치구(맨해튼, 브루클린, 퀸즈, 브롱크스, 스태튼아일랜드)를 관할. 다양한 범죄와 대형 사건을 담당하는 미국 최대 경찰 조직."
+      },
+      "position": {
+        "x": 795.9545309105139,
+        "y": 663.695507806609
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "AGENCY_LAPD",
+        "label": "LAPD",
+        "color": "#1A237E",
+        "notes": "로스앤젤레스 경찰국. 할리우드 배경의 다양한 범죄 수사. RHD(강력 범죄과)가 유명. 900만 명이 넘는 인구를 관할."
+      },
+      "position": {
+        "x": 994.1155641213455,
+        "y": 118.72726988527437
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "AGENCY_NIS",
+        "label": "국정원",
+        "color": "#1A237E",
+        "notes": "대한민국 국가정보원. 국내외 첩보 및 안보 수사 담당. 대테러, 사이버 보안, 대북 정보 수집."
+      },
+      "position": {
+        "x": 1491.8994893335057,
+        "y": 28.924542113043213
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "AGENCY_SCOTLAND_YARD",
+        "label": "스코틀랜드 야드",
+        "color": "#1A237E",
+        "notes": "영국 런던 경찰청. 세계적으로 유명한 형사 기관. 셜록 홈즈 시리즈의 배경. 메트로폴리탄 경찰청으로도 불림."
+      },
+      "position": {
+        "x": 1071.8615290872149,
+        "y": 843.1913415496025
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "AGENCY_CSI_LV",
+        "label": "CSI 라스베이거스 연구소",
+        "color": "#1A237E",
+        "notes": "라스베이거스 과학수사 연구소. 현장 증거 분석, DNA 감식, 법의학 전문. 세계 최고 수준의 과학수사 인력 보유."
+      },
+      "position": {
+        "x": 131.68657911586038,
+        "y": 643.0855839946996
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "AGENCY_NCIS",
+        "label": "해군 범죄수사국",
+        "color": "#1A237E",
+        "notes": "미국 해군성 산하의 범죄 수사 기관. 해군 및 해병대 관련 범죄를 전담. 워싱턴 D.C.에 본부."
+      },
+      "position": {
+        "x": 578.3754568349688,
+        "y": 98.77629080122354
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_GIL_GRISSOM",
+        "label": "길 그리섬",
+        "color": "#FF6B6B",
+        "notes": "CSI 라스베이거스의 수사 팀장. 곤충학자 출신. 과학적 증거에 집착하는 완벽주의자. 청각 장애를 가진 엘리자베스 로드리게스와 결혼. 대표 대사: '증거는 거짓말을 하지 않는다.'"
+      },
+      "position": {
+        "x": 232.9801728523784,
+        "y": 484.3602682652412
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_HOLDEN_FORD",
+        "label": "홀든 포드",
+        "color": "#FF6B6B",
+        "notes": "마인드헌터의 FBI 요원. 범죄자와의 면담을 통해 프로파일링 기법을 발전시킴. 감정적으로 몰입하는 경향이 있어 인간관계에 어려움을 겪음."
+      },
+      "position": {
+        "x": 751.149467717706,
+        "y": 979.6847395168971
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_RUST_COHLE",
+        "label": "러스트 콜",
+        "color": "#FF6B6B",
+        "notes": "트루 디텍티브 시즌1의 형사. 허무주의 철학자이자 탁월한 추리력의 소유자. 17년간 잠복 수사 경험. 알코올 중독과 우울증을 앓음."
+      },
+      "position": {
+        "x": 896.2073971696857,
+        "y": 248.05877787785252
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_JESSICA_FLETCHER",
+        "label": "제시카 플레처",
+        "color": "#FF6B6B",
+        "notes": "제시카의 추리극장 주인공. 추리 소설가이자 아마추어 탐정. 우연히 사건에 휘말려 해결. 100편 이상의 에피소드에서 사건 해결. 평온한 겉모습과 날카로운 추리력을 겸비."
+      },
+      "position": {
+        "x": 691.3574624300112,
+        "y": 459.1122397161397
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_AARON_HOTCHNER",
+        "label": "애런 호치너",
+        "color": "#FF6B6B",
+        "notes": "크리미널 마인드의 BAU 팀장. 전직 프로파일러 출신. 냉철하고 전략적인 리더십. 가족과의 갈등 속에서도 팀을 지휘."
+      },
+      "position": {
+        "x": 857.2383208531247,
+        "y": 951.3782503961548
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_SEBASTIAN_STARK",
+        "label": "세바스찬 스탁",
+        "color": "#FF6B6B",
+        "notes": "샤크(Shark)의 주인공. 로스앤젤레스 지방검찰청의 에이스 검사 출신 현직 변호사. 검사 시절 배운 수사 기법과 변호사로서의 법정 기술을 결합. 냉소적이지만 뛰어난 수사 능력."
+      },
+      "position": {
+        "x": 991.2665044893308,
+        "y": 292.334175175171
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_OLIVIA_BENSON",
+        "label": "올리비아 벤슨",
+        "color": "#FF6B6B",
+        "notes": "로앤오더: SVU의 주인공. NYPD 특수범죄수사대의 베테랑 형사. 성범죄 피해자들의 권리를 위해 헌신. 강인한 성격과 따뜻한 인간미를 겸비."
+      },
+      "position": {
+        "x": 691.3694863916667,
+        "y": 565.54212144703
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_LEROY_JETHRO_GIBBS",
+        "label": "러로이 제스로 깁스",
+        "color": "#FF6B6B",
+        "notes": "NCIS의 주인공. 해군 범죄수사국의 베테랑 요원. 전직 해병대 출신. 냉철하고 직관력이 뛰어나며 팀원들에게 강한 충성심을 보임. '깁스의 규칙'으로 유명."
+      },
+      "position": {
+        "x": 585.8478255590261,
+        "y": 350.48557846160577
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_TEMPERANCE_BRENNAN",
+        "label": "템피런스 브레넌",
+        "color": "#FF6B6B",
+        "notes": "본즈의 주인공. 법의 인류학자. 유골 분석의 세계적 권위자. 이성적이고 논리적이며 인간관계에 서툴지만 뛰어난 분석력과 직관력을 보유."
+      },
+      "position": {
+        "x": 485.67878734048156,
+        "y": 719.7740835352996
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_RICHARD_CASTLE",
+        "label": "리처드 캐슬",
+        "color": "#FF6B6B",
+        "notes": "캐슬의 주인공. 베스트셀러 추리 소설가. NYPD 형사 케이트 베켓과 함께 사건을 해결. 뛰어난 상상력과 추리력으로 범인을 추적. 유명 작가로서의 명성과 부를 이용해 수사에 참여."
+      },
+      "position": {
+        "x": 796.26663067599,
+        "y": 545.9784906122358
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_SHERLOCK_HOLMES",
+        "label": "셜록 홈즈",
+        "color": "#FF6B6B",
+        "notes": "엘리멘터리와 셜록의 주인공. 아서 코난 도일의 소설 캐릭터를 현대적으로 각색한 인물. 뛰어난 관찰력과 추리력으로 범죄를 해결. 사회성은 부족하지만 천재적인 두뇌를 가짐."
+      },
+      "position": {
+        "x": 956.2770494500501,
+        "y": 709.8347609131009
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_YAGAMI_LIGHT",
+        "label": "야가미 라이토",
+        "color": "#FF6B6B",
+        "notes": "데스노트의 주인공. 데스노트를 얻고 '키라'로 활동하며 지상에 새로운 신으로 군림하려는 천재 소년. 탁월한 지능과 카리스마를 가졌지만, 데스노트의 힘에 타락함."
+      },
+      "position": {
+        "x": 903.0224223626328,
+        "y": 593.3546956533618
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_L",
+        "label": "엘(L)",
+        "color": "#FF6B6B",
+        "notes": "데스노트의 명탐정. 세계 최고의 명탐정으로 자신의 이름을 'L'로만 알려져 있음. 비정상적인 행동과 독특한 논리로 키라를 추적. 키라와의 심리전에서 탁월한 두뇌를 보여줌."
+      },
+      "position": {
+        "x": 897.4701004350677,
+        "y": 535.1785186906997
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "METHOD_FORENSIC",
+        "label": "과학 수사",
+        "color": "#4CAF50",
+        "notes": "DNA 분석, 지문 감식, 혈흔 분석, 탄도학, 독성학 등 과학적 증거를 통한 수사 기법. 현대 범죄 수사의 핵심."
+      },
+      "position": {
+        "x": 438.7275782057832,
+        "y": 515.6521064464498
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "METHOD_PROFILING",
+        "label": "프로파일링",
+        "color": "#4CAF50",
+        "notes": "범죄자의 심리, 행동 패턴, 범죄 현장 분석을 통해 범인을 추정하는 기법. FBI 행동과학부(BSU)가 개발. 연쇄 살인범 수사에 핵심."
+      },
+      "position": {
+        "x": 787.7792456752687,
+        "y": 1152.1650078414502
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "METHOD_INTERROGATION",
+        "label": "심문 수사",
+        "color": "#4CAF50",
+        "notes": "용의자와의 대화를 통해 진술의 모순을 찾고 자백을 이끌어내는 기법. 라이드 기법 등 다양한 심문 기술이 존재."
+      },
+      "position": {
+        "x": 794.6503189307496,
+        "y": 353.2339040186656
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "METHOD_SURVEILLANCE",
+        "label": "잠복/감시",
+        "color": "#4CAF50",
+        "notes": "용의자의 동선을 추적하고 은밀히 관찰하는 수사 기법. 전자 감시, 물리적 잠복, 정보 수집을 포함."
+      },
+      "position": {
+        "x": 1001.7030163777468,
+        "y": 471.98843859256283
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "METHOD_BEHAVIORAL_ANALYSIS",
+        "label": "행동 분석",
+        "color": "#4CAF50",
+        "notes": "용의자의 일상 행동, 말투, 패턴을 분석하여 심리를 파악하는 기법. 거짓말 탐지, 언어 패턴 분석, 미묘한 행동 변화 관찰."
+      },
+      "position": {
+        "x": 798.7788847592161,
+        "y": 718.0715399130222
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "METHOD_CRIME_SCENE_RECONSTRUCTION",
+        "label": "사건 재구성",
+        "color": "#4CAF50",
+        "notes": "범죄 현장의 증거물, 혈흔 패턴, 탄도 등을 종합하여 사건 발생 과정을 재구성하는 기법. 법의학과 물리학을 결합한 과학적 접근."
+      },
+      "position": {
+        "x": 240.18871062209035,
+        "y": 665.1932927016785
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "METHOD_DIGITAL_FORENSIC",
+        "label": "디지털 포렌식",
+        "color": "#4CAF50",
+        "notes": "컴퓨터, 스마트폰, 인터넷 기록 등 디지털 증거를 분석하는 수사 기법. 사이버 범죄, 디지털 흔적 추적에 핵심."
+      },
+      "position": {
+        "x": 1202.322365089184,
+        "y": 191.4300979548439
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVIDENCE_DNA",
+        "label": "DNA 증거",
+        "color": "#FFCDD2",
+        "notes": "범죄 현장에서 채취된 생물학적 샘플(혈액, 타액, 모발 등)을 분석하여 범인을 특정하는 결정적 증거. 현대 과학수사의 핵심 도구."
+      },
+      "position": {
+        "x": 448.75182021327555,
+        "y": 370.81666182138787
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVIDENCE_FINGERPRINT",
+        "label": "지문 증거",
+        "color": "#FFCDD2",
+        "notes": "범죄 현장에서 발견된 지문을 데이터베이스(AFIS)와 대조하여 용의자를 특정. 20세기 초부터 사용된 가장 오래된 과학 수사 기법 중 하나."
+      },
+      "position": {
+        "x": 338.9973767954787,
+        "y": 373.5363365139972
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVIDENCE_BLOOD",
+        "label": "혈흔 분석",
+        "color": "#FFCDD2",
+        "notes": "범죄 현장의 혈흔 패턴(모양, 분포, 각도)을 분석하여 사건의 재구성과 범인의 동선을 파악하는 기법. 살인 사건 수사에 결정적 역할."
+      },
+      "position": {
+        "x": 368.9724280754287,
+        "y": 702.1983932769853
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVIDENCE_BALLISTICS",
+        "label": "탄도학 증거",
+        "color": "#FFCDD2",
+        "notes": "총기 사용 범죄에서 탄환, 탄피, 화약 잔여물을 분석하여 사용된 총기를 특정하고 사건을 재구성하는 기법."
+      },
+      "position": {
+        "x": 336.0866172568583,
+        "y": 544.449215981202
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EVIDENCE_TOXICOLOGY",
+        "label": "독성학 증거",
+        "color": "#FFCDD2",
+        "notes": "약물 중독, 독극물 사용, 음주 등 화학적 분석을 통해 사망 원인이나 범죄 경위를 파악하는 기법."
+      },
+      "position": {
+        "x": 590.1846236277019,
+        "y": 583.9809211835131
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CASE_SERIAL_KILLER",
+        "label": "연쇄 살인 사건",
+        "color": "#FF9800",
+        "notes": "일정한 패턴(표적, 살해 방법, 시신 유기)을 가진 다수의 살인 사건. 프로파일링이 가장 중요한 수사 기법. 범죄자 심리 분석과 행동 패턴 파악이 핵심."
+      },
+      "position": {
+        "x": 650.7453213189907,
+        "y": 1128.1591719324088
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CASE_COLD_CASE",
+        "label": "미제 사건",
+        "color": "#FF9800",
+        "notes": "오래전에 발생했지만 해결되지 않은 사건. 새로운 과학 기술(예: DNA 분석)로 재수사. 증거 보관과 새로운 정보가 결정적."
+      },
+      "position": {
+        "x": 545.1187128186256,
+        "y": 496.08252101665033
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CASE_ORGANIZED_CRIME",
+        "label": "조직 범죄",
+        "color": "#FF9800",
+        "notes": "마피아, 갱단, 카르텔, 야쿠자 등 조직적인 범죄 집단의 활동. 내부 정보원(제보자) 확보가 수사의 핵심. 장기적인 잠복 수사 필요."
+      },
+      "position": {
+        "x": 1116.2777590212982,
+        "y": 469.4662398539474
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": true,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CASE_CYBER_CRIME",
+        "label": "사이버 범죄",
+        "color": "#FF9800",
+        "notes": "해킹, 개인정보 유출, 사이버 사기, 디지털 테러 등 인터넷을 기반으로 한 범죄. 디지털 포렌식과 사이버 보안 전문가가 필요."
+      },
+      "position": {
+        "x": 1300.3807065437657,
+        "y": 31.121409838172433
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CASE_WHITE_COLLAR",
+        "label": "화이트칼라 범죄",
+        "color": "#FF9800",
+        "notes": "금융 사기, 횡령, 내부 거래, 자금 세탁 등 지식과 권력을 이용한 비폭력 경제 범죄. 회계 감사와 금융 분석이 중요."
+      },
+      "position": {
+        "x": 1301.1590385357156,
+        "y": 353.6515276719961
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CASE_KIDNAPPING",
+        "label": "납치 사건",
+        "color": "#FF9800",
+        "notes": "인질 납치, 아동 납치 등 인신매매 범죄. 협상 전문가와 심리학자가 투입되는 긴박한 수사. 제한된 시간 안에 인질을 구출하는 것이 핵심."
+      },
+      "position": {
+        "x": 905.296657233376,
+        "y": 395.2669907602315
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PROFILE_PSYCHOPATH",
+        "label": "사이코패스 프로필",
+        "color": "#9C27B0",
+        "notes": "공감 능력 결여, 반사회적 행동, 조종 능력, 냉철함. 연쇄 살인범의 대표적인 심리 프로필. 충동적이지 않고 계획적이며 자신의 행동에 죄책감이 없음."
+      },
+      "position": {
+        "x": 704.9170013817511,
+        "y": 1350.4059096125955
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PROFILE_SOCIAL_PATH",
+        "label": "소시오패스 프로필",
+        "color": "#9C27B0",
+        "notes": "다소 충동적이고 무책임하며 대인 관계가 불안정하지만 사회적으로는 적응하는 모습을 보임. 반사회적 성격 장애의 한 유형."
+      },
+      "position": {
+        "x": 810.3920258565164,
+        "y": 1377.9250347793507
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PROFILE_NARCISSIST",
+        "label": "나르시시스트 프로필",
+        "color": "#9C27B0",
+        "notes": "자기 자신에 대한 과도한 사랑, 타인에 대한 무관심, 인정욕구 강함. 자신의 우월함을 증명하기 위해 범죄를 저지르는 경우가 많음."
+      },
+      "position": {
+        "x": 895.7659330457367,
+        "y": 1253.1430659491996
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "CONCEPT_CRIMEWORLD",
+        "target": "CONCEPT_INVESTIGATION",
+        "label": "대립",
+        "id": "9cd54eb1-bcf7-4e19-8153-b970790a8e2d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_FBI",
+        "target": "AGENCY_FBI_BAU",
+        "label": "산하",
+        "id": "cb361bc5-4b84-499e-9146-f960555170c0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_FBI",
+        "target": "CHARACTER_HOLDEN_FORD",
+        "label": "소속",
+        "id": "c7608455-5b8f-4ae4-a9f7-f69a1788d386"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_FBI_BAU",
+        "target": "CHARACTER_AARON_HOTCHNER",
+        "label": "소속",
+        "id": "1f31cba3-caad-4502-a289-51f4b3dc94c4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_LAPD",
+        "target": "CHARACTER_RUST_COHLE",
+        "label": "소속",
+        "id": "c9db29ab-6be1-4ccd-9e90-95e143a3b93c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_LAPD",
+        "target": "CHARACTER_SEBASTIAN_STARK",
+        "label": "소속",
+        "id": "afc9fae3-3c5e-4ae7-8079-6a7ee46e438d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_NYPD",
+        "target": "CHARACTER_OLIVIA_BENSON",
+        "label": "소속",
+        "id": "9b0e873d-5d15-43d3-bf05-e852435cc002"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_NYPD",
+        "target": "CHARACTER_RICHARD_CASTLE",
+        "label": "소속",
+        "id": "afd6bd50-19a5-4b36-9b73-337bc1e12e59"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_CSI_LV",
+        "target": "CHARACTER_GIL_GRISSOM",
+        "label": "소속",
+        "id": "3f8ad35f-f6cc-4527-9d2a-3c482b1f931a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_NCIS",
+        "target": "CHARACTER_LEROY_JETHRO_GIBBS",
+        "label": "소속",
+        "id": "dc365d48-ca6c-4e90-accd-c529ef8b29de"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "AGENCY_SCOTLAND_YARD",
+        "target": "CHARACTER_SHERLOCK_HOLMES",
+        "label": "소속",
+        "id": "b8a37070-fb23-4f61-84a0-5735ceae95b5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_CSI",
+        "target": "CHARACTER_GIL_GRISSOM",
+        "label": "등장",
+        "id": "f7d2a26e-305b-479a-915b-97867df057e6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_CSI",
+        "target": "AGENCY_CSI_LV",
+        "label": "배경",
+        "id": "63b102ad-0ef8-43e2-9497-5e6a708d1f40"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_CSI_MIAMI",
+        "target": "AGENCY_CSI_LV",
+        "label": "스핀오프",
+        "id": "0bea6c41-6847-4edb-b95f-2e1f0e221b97"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_CSI_NY",
+        "target": "AGENCY_CSI_LV",
+        "label": "스핀오프",
+        "id": "eb943326-d947-48a7-b6e2-4c762f75669a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_MINDHUNTER",
+        "target": "CHARACTER_HOLDEN_FORD",
+        "label": "등장",
+        "id": "8af02cd7-2d3d-4104-97b9-49df93e1e41b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_MINDHUNTER",
+        "target": "AGENCY_FBI_BAU",
+        "label": "배경",
+        "id": "6b4c6219-4607-455f-b510-77b9cd8f38b1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_TRUE_DETECTIVE",
+        "target": "CHARACTER_RUST_COHLE",
+        "label": "등장",
+        "id": "ac5627e2-41b6-4b7e-9ba1-d61501d2bec3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_MURDER_SHE_WROTE",
+        "target": "CHARACTER_JESSICA_FLETCHER",
+        "label": "등장",
+        "id": "68d46ad2-08e1-466f-badd-6f3125425668"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_CRIMINAL_MINDS",
+        "target": "CHARACTER_AARON_HOTCHNER",
+        "label": "등장",
+        "id": "a01d7078-9926-4659-82d1-98dd88942f76"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_CRIMINAL_MINDS",
+        "target": "AGENCY_FBI_BAU",
+        "label": "배경",
+        "id": "ac9a5759-b6e9-4f4c-a0eb-f0b6f6d6f02f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_SHARK",
+        "target": "CHARACTER_SEBASTIAN_STARK",
+        "label": "등장",
+        "id": "ccf96d54-982d-4131-b33b-e0e7a4bbae77"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_LAW_AND_ORDER",
+        "target": "CHARACTER_OLIVIA_BENSON",
+        "label": "등장",
+        "id": "f5c120ae-f2a8-47db-8de4-3542bbf183e5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_LAW_AND_ORDER",
+        "target": "AGENCY_NYPD",
+        "label": "배경",
+        "id": "fd286de1-fa08-4400-9208-fb3a98bc8076"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_NCIS",
+        "target": "CHARACTER_LEROY_JETHRO_GIBBS",
+        "label": "등장",
+        "id": "5bd6b00b-16ec-4e35-bbf9-16e36d19b7ce"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_NCIS",
+        "target": "AGENCY_NCIS",
+        "label": "배경",
+        "id": "ee8e3d87-4b15-4286-808e-f6d882859a7e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_BONES",
+        "target": "CHARACTER_TEMPERANCE_BRENNAN",
+        "label": "등장",
+        "id": "6fed9bc9-014b-4a42-b75d-6c48af957657"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_BONES",
+        "target": "AGENCY_FBI",
+        "label": "배경",
+        "id": "982ad6c3-2c01-4857-87d1-f1fe6ead9939"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_CASTLE",
+        "target": "CHARACTER_RICHARD_CASTLE",
+        "label": "등장",
+        "id": "6dc64b9c-6d0f-4f6a-a1a4-d7b1f01d4291"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_CASTLE",
+        "target": "AGENCY_NYPD",
+        "label": "배경",
+        "id": "08381e94-8d38-48c3-88a5-1acc4378a92a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_ELEMENTARY",
+        "target": "CHARACTER_SHERLOCK_HOLMES",
+        "label": "등장",
+        "id": "fc504ef6-0e9f-4c62-a4fa-ccad3fe40ea1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_ELEMENTARY",
+        "target": "AGENCY_NYPD",
+        "label": "배경",
+        "id": "57cde5f0-ab61-47a1-a9d4-9ccdf0519a35"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_SHERLOCK",
+        "target": "CHARACTER_SHERLOCK_HOLMES",
+        "label": "등장",
+        "id": "58d0f729-851e-48d9-98c7-155a3a3d750b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_SHERLOCK",
+        "target": "AGENCY_SCOTLAND_YARD",
+        "label": "배경",
+        "id": "6d9e7805-4666-42dc-885d-5e3f0050c263"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_DEATH_NOTE",
+        "target": "CHARACTER_YAGAMI_LIGHT",
+        "label": "등장",
+        "id": "1a3a452a-7eed-4e59-bd8b-ead23da563ac"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_DEATH_NOTE",
+        "target": "CHARACTER_L",
+        "label": "등장",
+        "id": "fe98e8a2-9024-4046-8901-03e9b2e7a4bc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DRAMA_DEATH_NOTE",
+        "target": "CONCEPT_CRIMEWORLD",
+        "label": "배경",
+        "id": "d3dc9ed7-510c-471d-8761-29053e8cdab5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_GIL_GRISSOM",
+        "target": "METHOD_FORENSIC",
+        "label": "사용",
+        "id": "1187e068-853d-491f-8d4f-e1331d4cf101"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_GIL_GRISSOM",
+        "target": "METHOD_CRIME_SCENE_RECONSTRUCTION",
+        "label": "사용",
+        "id": "427cb26b-3e1e-419e-8b5f-f152b4d3b2d1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_HOLDEN_FORD",
+        "target": "METHOD_PROFILING",
+        "label": "사용",
+        "id": "78f7e9a4-2df6-40e6-ace8-f0fe2113ca47"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_HOLDEN_FORD",
+        "target": "METHOD_BEHAVIORAL_ANALYSIS",
+        "label": "사용",
+        "id": "2888bd15-5bba-4550-a216-734a1e5852be"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_RUST_COHLE",
+        "target": "METHOD_INTERROGATION",
+        "label": "사용",
+        "id": "c09305c7-f792-4454-a976-75c641326fc9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_RUST_COHLE",
+        "target": "METHOD_SURVEILLANCE",
+        "label": "사용",
+        "id": "c8659ae3-5f4c-4d42-8e5b-f828dfb7b091"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_JESSICA_FLETCHER",
+        "target": "METHOD_INTERROGATION",
+        "label": "사용",
+        "id": "45924e36-2263-48e3-90e3-e1e6dfd2ae0f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_JESSICA_FLETCHER",
+        "target": "METHOD_BEHAVIORAL_ANALYSIS",
+        "label": "사용",
+        "id": "ed14b845-c973-4747-b16c-4ad73a45f078"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_AARON_HOTCHNER",
+        "target": "METHOD_PROFILING",
+        "label": "사용",
+        "id": "d918c164-6c75-43eb-91c3-01a4bd0bb5c7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_AARON_HOTCHNER",
+        "target": "METHOD_BEHAVIORAL_ANALYSIS",
+        "label": "사용",
+        "id": "c678d844-6412-4d09-9b94-0eb2660bfda5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_SEBASTIAN_STARK",
+        "target": "METHOD_INTERROGATION",
+        "label": "사용",
+        "id": "0cb57920-a44d-41c1-94be-58d11a83f68f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_SEBASTIAN_STARK",
+        "target": "METHOD_SURVEILLANCE",
+        "label": "사용",
+        "id": "9f6e6b05-26ba-4389-a927-2c496ac34104"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_OLIVIA_BENSON",
+        "target": "METHOD_INTERROGATION",
+        "label": "사용",
+        "id": "d2abf126-76c7-4461-a1db-317ab62515c5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_OLIVIA_BENSON",
+        "target": "METHOD_BEHAVIORAL_ANALYSIS",
+        "label": "사용",
+        "id": "a9f7a172-e7a9-4b84-8fff-fafce1981fd1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_LEROY_JETHRO_GIBBS",
+        "target": "METHOD_FORENSIC",
+        "label": "사용",
+        "id": "9f365708-0746-4f8c-a0ef-b31c58bc0b67"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_LEROY_JETHRO_GIBBS",
+        "target": "METHOD_INTERROGATION",
+        "label": "사용",
+        "id": "2d52d631-4bdf-41ec-85f0-d672d0538f8d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_TEMPERANCE_BRENNAN",
+        "target": "METHOD_FORENSIC",
+        "label": "사용",
+        "id": "4fa3d45f-65df-44b9-aaac-18875fe87942"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_RICHARD_CASTLE",
+        "target": "METHOD_BEHAVIORAL_ANALYSIS",
+        "label": "사용",
+        "id": "d30707aa-bd17-4a0d-b7f4-98de3efdefa9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_RICHARD_CASTLE",
+        "target": "METHOD_INTERROGATION",
+        "label": "사용",
+        "id": "6426f31a-9938-41ec-9b60-97c3197f6766"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_SHERLOCK_HOLMES",
+        "target": "METHOD_BEHAVIORAL_ANALYSIS",
+        "label": "사용",
+        "id": "598aa4fa-b2c9-47b7-941d-e59c95d01139"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_SHERLOCK_HOLMES",
+        "target": "METHOD_SURVEILLANCE",
+        "label": "사용",
+        "id": "c43a6efd-175c-4472-8ff7-2bfeda5a110c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_YAGAMI_LIGHT",
+        "target": "METHOD_BEHAVIORAL_ANALYSIS",
+        "label": "사용",
+        "id": "164d728d-cf85-4c44-8964-1a4903bd80c9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_YAGAMI_LIGHT",
+        "target": "METHOD_SURVEILLANCE",
+        "label": "사용",
+        "id": "7c02f652-0037-4121-ac56-5c49f4107a22"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_L",
+        "target": "METHOD_BEHAVIORAL_ANALYSIS",
+        "label": "사용",
+        "id": "789dd5a5-caf9-4313-825b-68e3c8622e63"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_L",
+        "target": "METHOD_SURVEILLANCE",
+        "label": "사용",
+        "id": "378a8370-d729-4adc-9f47-c7d2c85a91a9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_FORENSIC",
+        "target": "EVIDENCE_DNA",
+        "label": "분석",
+        "id": "49e7ff02-38f8-4dad-b2df-4d1a41a4b5aa"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_FORENSIC",
+        "target": "EVIDENCE_FINGERPRINT",
+        "label": "분석",
+        "id": "59fc17a8-d723-499d-bd78-8f046919a6d0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_FORENSIC",
+        "target": "EVIDENCE_BLOOD",
+        "label": "분석",
+        "id": "da5c078d-8424-424b-8538-7e0708a18e97"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_FORENSIC",
+        "target": "EVIDENCE_BALLISTICS",
+        "label": "분석",
+        "id": "479c55e5-6912-4e84-b47a-3e5d411bb7cc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_FORENSIC",
+        "target": "EVIDENCE_TOXICOLOGY",
+        "label": "분석",
+        "id": "3ec654c5-73ce-4568-b02b-e3e69bdec078"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_CRIME_SCENE_RECONSTRUCTION",
+        "target": "EVIDENCE_BLOOD",
+        "label": "재구성",
+        "id": "27a2a91d-1a7f-46c6-8fec-de437856adda"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_CRIME_SCENE_RECONSTRUCTION",
+        "target": "EVIDENCE_BALLISTICS",
+        "label": "재구성",
+        "id": "df55a4bd-c343-4ed8-9d55-703fb0a54de6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_PROFILING",
+        "target": "PROFILE_PSYCHOPATH",
+        "label": "유형",
+        "id": "51fa5578-8ba6-4862-9836-71e114aeead6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_PROFILING",
+        "target": "PROFILE_SOCIAL_PATH",
+        "label": "유형",
+        "id": "ad7bb25d-94ca-462b-8b7d-7aaa994212d6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "METHOD_PROFILING",
+        "target": "PROFILE_NARCISSIST",
+        "label": "유형",
+        "id": "6cd55d7e-2942-4e56-91a8-086d0ae5b019"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CASE_SERIAL_KILLER",
+        "target": "METHOD_PROFILING",
+        "label": "해결",
+        "id": "414e182d-35af-443d-8b49-30c9f07eaa35"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CASE_SERIAL_KILLER",
+        "target": "PROFILE_PSYCHOPATH",
+        "label": "관련",
+        "id": "d4d54a81-3a54-4700-b7ec-5a2e9f0d26e7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CASE_COLD_CASE",
+        "target": "METHOD_FORENSIC",
+        "label": "재수사",
+        "id": "c102c0b6-63c4-4dbc-933e-2355eafae6e4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CASE_ORGANIZED_CRIME",
+        "target": "METHOD_SURVEILLANCE",
+        "label": "해결",
+        "id": "401f652f-0d8d-485c-b9b7-aa4921f65f5e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CASE_CYBER_CRIME",
+        "target": "METHOD_DIGITAL_FORENSIC",
+        "label": "해결",
+        "id": "9c6a8582-944d-4227-bf6b-f27329715b6c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CASE_WHITE_COLLAR",
+        "target": "METHOD_DIGITAL_FORENSIC",
+        "label": "해결",
+        "id": "56b32658-9772-4ebe-8288-f635b428072e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CASE_KIDNAPPING",
+        "target": "METHOD_INTERROGATION",
+        "label": "해결",
+        "id": "9b01afa0-fba2-4709-a0dc-d5718686ac60"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CASE_KIDNAPPING",
+        "target": "METHOD_SURVEILLANCE",
+        "label": "해결",
+        "id": "8a537f68-7076-4684-825c-4c344c7bcdef"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  let cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: initialData,
+    style: [
+      { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':28, 'padding':'8px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':13, 'text-outline-width':2, 'text-outline-color':'#000' } },
+      { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':11 } },
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
+      { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true }
+  });
+
+  let selectedId = null;
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+  const nodeInfo = document.getElementById('nodeInfo');
+  const nodeNotes = document.getElementById('nodeNotes');
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    const selected = cy.$(':selected');
+    if (selected.length === 0) { alert('삭제할 요소를 선택하세요.'); return; }
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(selected);
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = document.activeElement.tagName.toUpperCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        deleteSelected();
+      }
+    }
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const id = node.id();
+    
+    if (edgeSrcInput.value === '') {
+      edgeSrcInput.value = id;
+    } else if (edgeTgtInput.value === '' && edgeSrcInput.value !== id) {
+      edgeTgtInput.value = id;
+    }
+    
+    nodeInfo.textContent = '📌 ' + (node.data('label') || id);
+    nodeNotes.textContent = node.data('notes') || '메모 없음';
+    selectedId = id;
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt('새 노드 이름:');
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+      }
+    }
+  });
+
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        let els = [];
+        if (Array.isArray(data)) els = data;
+        else if (data.nodes || data.edges) els = [...(data.nodes||[]), ...(data.edges||[])];
+        else if (data.elements) els = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        if (els.length) { cy.elements().remove(); cy.add(els); cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run(); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:#f0f0f0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.2em; text-shadow:1px 1px 0 #000; }
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .left-panel {
+      width:220px;
+      background:#fff;
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid #ddd;
+    }
+    .graph-area {
+      flex:1;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid #ddd;
+      border-radius:8px;
+      background:#fafafa;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+
+    .panel-section {
+      margin-bottom:12px;
+      padding:10px;
+      background:#f9f9f9;
+      border-radius:6px;
+      border:1px solid #e0e0e0;
+    }
+    .panel-section h3 {
+      font-size:0.9em;
+      margin-bottom:6px;
+      color:#667eea;
+      border-bottom:1px solid #667eea;
+      padding-bottom:3px;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:5px;
+      margin:3px 0;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+    }
+    input[readonly] {
+      background:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    textarea {
+      width:100%;
+      padding:5px;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+      resize:vertical;
+      min-height:60px;
+    }
+    button {
+      width:100%;
+      padding:6px;
+      margin:3px 0;
+      border:none;
+      border-radius:3px;
+      font-size:0.8em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+    }
+    button:active { transform:scale(0.97); }
+    .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+    .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
+    .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
+
+    .help-text { font-size:0.7em; color:#888; margin-top:3px; padding:4px; background:#fff; border-radius:3px; }
+    .connection-tools { display:flex; gap:4px; margin-bottom:3px; }
+    .connection-tools button { padding:3px; font-size:0.7em; margin:0; }
+
+    .info-badge {
+      display:block;
+      padding:4px 8px;
+      background:#667eea;
+      color:#fff;
+      border-radius:3px;
+      font-size:0.75em;
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .notes-display {
+      padding:6px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.8em;
+      min-height:40px;
+      white-space:pre-wrap;
+      margin-top:4px;
+    }
+    .file-select-wrapper { display:flex; gap:4px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:4px 8px; margin:0; }
+    .file-select-wrapper input[type="file"] { display:none; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
+    }
+    [data-theme="dark"] .left-panel {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .notes-display {
+      background:#2d2d4e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .cy-wrapper {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🌐 세계관 그래프</h1>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="panel-section">
+      <h3>📂 데이터</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
+      </div>
+      <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드</button>
+    </div>
+
+    <div class="panel-section">
+      <h3>➕ 노드</h3>
+      <input type="text" id="newNode" placeholder="노드 이름">
+      <button class="btn-primary" onclick="addNode()">노드 추가</button>
+      <div class="help-text">💡 빈 공간 더블클릭</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>🔗 엣지</h3>
+      <div class="connection-tools">
+        <button class="btn-info" onclick="clearEdgeInputs()">초기화</button>
+        <button class="btn-info" onclick="swapEdgeInputs()">교체</button>
+      </div>
+      <input type="text" id="edgeSrc" placeholder="출발 노드" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="도착 노드" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="라벨">
+      <button class="btn-primary" onclick="addEdge()">엣지 추가</button>
+      <div class="help-text">💡 노드 클릭 시 자동 입력</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>📝 노드 정보</h3>
+      <div class="info-badge" id="nodeInfo">노드를 클릭하세요</div>
+      <div class="notes-display" id="nodeNotes">선택한 노드의 메모가 여기에 표시됩니다</div>
+      <button class="btn-danger" onclick="deleteSelected()" style="margin-top:4px;">🗑️ 삭제 (Del)</button>
+    </div>
+  </div>
+
+  <div class="graph-area">
+    <div class="cy-wrapper">
+      <div id="cy"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const initialData = {
+  "nodes": [
+    {
+      "data": {
+        "id": "FUN_GROWTH",
+        "label": "성장의 쾌감",
+        "color": "#4CAF50",
+        "notes": "수련을 통해 경지가 오르고, 새로운 능력을 얻으며 강해지는 과정에서 느끼는 기본적 재미. 선협 장르의 가장 근본적인 흥미 요소."
+      },
+      "position": {
+        "x": 122.8141875138817,
+        "y": 870.5414384482075
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_REALM_BREAK",
+        "label": "경지 돌파",
+        "color": "#4CAF50",
+        "notes": "연기→결단→금단→원영→화신 등 경지를 넘어설 때의 쾌감. 독자들은 '드디어!'라며 성취감을 느낌. 모든 선협물의 기본 재미."
+      },
+      "position": {
+        "x": 32.1296374623784,
+        "y": 720.2012934803477
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_NEW_SKILL",
+        "label": "공법/스킬 습득",
+        "color": "#4CAF50",
+        "notes": "희귀하거나 강력한 공법, 비급, 스킬을 획득하는 순간. 독자들은 '와! 이거 대박'이라며 설렘. 도왕의 도법(道法), 완미세계의 각종 비급."
+      },
+      "position": {
+        "x": 224.77948348038922,
+        "y": 704.7195216884306
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_TREASURE",
+        "label": "보물/아이템 획득",
+        "color": "#4CAF50",
+        "notes": "전설적 법보, 희귀 영초, 신비한 유물을 얻는 순간. 독자들은 수집욕을 충족받음. 범인수선전의 장원주패, 완미세계의 각종 유물."
+      },
+      "position": {
+        "x": 71.66374091823666,
+        "y": 1082.5651012335727
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_CLONE",
+        "label": "분신 성장",
+        "color": "#4CAF50",
+        "notes": "분신이 독립적으로 수련해 강해지는 것. 주인공의 전략적 사고를 보여주는 장치. 범인수선전의 제2, 제3분신이 대표적."
+      },
+      "position": {
+        "x": 224.932702176453,
+        "y": 1011.8594269688001
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_SODA",
+        "label": "사이다 / 통쾌함",
+        "color": "#FF1744",
+        "notes": "독자들이 가장 열광하는 요소. 약자가 강자를 제압하고, 복수가 성공하고, 오만한 자가 굴복하는 순간의 쾌감."
+      },
+      "position": {
+        "x": 97.99829521684433,
+        "y": 288.8389050978569
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_UNDERDOG",
+        "label": "역관광 / 약자의 반격",
+        "color": "#FF1744",
+        "notes": "자신을 무시하던 천재나 강자를 주인공이 역으로 제압하는 순간. '이거지!', '사이다!'가 터져 나옴. 대봉황의 주인공이 천재들을 관광보내는 장면."
+      },
+      "position": {
+        "x": 129.07817476947056,
+        "y": 533.7950219136104
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_REVENGE",
+        "label": "복수 성공",
+        "color": "#FF1744",
+        "notes": "오랜 시간 준비한 복수가 드디어 성공하는 순간. '드디어!', '기다렸다!'는 반응. 대봉황의 복수극, 신목의 원한 해소."
+      },
+      "position": {
+        "x": 202.9626905202848,
+        "y": 321.8298377745258
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_ARROGANT",
+        "label": "거만한 자의 굴복",
+        "color": "#FF1744",
+        "notes": "주인공을 무시하던 오만한 인물이 결국 굴복하는 순간. '꼴 좋다!', '쾌하다!'는 반응. 영역의 천재들이 주인공 앞에 무릎 꿇음."
+      },
+      "position": {
+        "x": 202.07011856412586,
+        "y": 122.28329423996388
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_HIDDEN_CARD",
+        "label": "숨겨진 카드 공개",
+        "color": "#FF1744",
+        "notes": "갑자기 강력한 비장의 무기나 능력을 공개하는 순간. 독자들은 '오!', '예상 못 했네!'라며 놀람. 도왕의 숨겨진 도법, 완미세계의 전설적 유물."
+      },
+      "position": {
+        "x": 59.11277225896002,
+        "y": 58.222412829112045
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_COMEBACK",
+        "label": "역전승 / 반전 승리",
+        "color": "#FF1744",
+        "notes": "절망적 상황에서 극적으로 역전하는 순간. '대박!', '이게 무슨...' 반응. 대부분의 선협물에서 중요하게 다루는 장치."
+      },
+      "position": {
+        "x": 27.95992413883031,
+        "y": 510.22775834031745
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_EMOTION",
+        "label": "감정적 카타르시스",
+        "color": "#9C27B0",
+        "notes": "독자의 눈물과 감성을 자극하는 요소. 소중한 인물의 죽음, 세월의 무게, 외로움 등이 여기에 해당."
+      },
+      "position": {
+        "x": 940.0994374393979,
+        "y": 275.80974470899275
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_DEATH",
+        "label": "스승/동료의 죽음",
+        "color": "#9C27B0",
+        "notes": "주인공에게 소중한 인물이 떠나는 순간. 독자들은 '눈물 난다...'며 슬퍼함. 범인수선전의 이화원 장로들, 신목의 동료들의 죽음."
+      },
+      "position": {
+        "x": 1041.289951966578,
+        "y": 79.39830511811631
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_GENERATION",
+        "label": "세대 교체의 씁쓸함",
+        "color": "#9C27B0",
+        "notes": "동시대 인물들이 모두 수명을 다해 떠나는 장면. '허전하다...', '현실적이네'라는 반응. 범인수선전의 독보적 특징."
+      },
+      "position": {
+        "x": 1035.813356499196,
+        "y": 486.0518448369859
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_LONELINESS",
+        "label": "긴 세월의 외로움",
+        "color": "#9C27B0",
+        "notes": "수백 년을 혼자 살아가는 주인공의 고독. '불쌍해...', '마음 아프다'는 반응. 범인수선전의 한립, 도왕의 주인공."
+      },
+      "position": {
+        "x": 867.3682002768755,
+        "y": 500.78518971760167
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_HOMESICK",
+        "label": "고향/가족 상실",
+        "color": "#9C27B0",
+        "notes": "돌아갈 곳을 잃고 가족과 이별하는 순간. 독자들은 깊은 공감을 느낌. 완미세계의 주인공이 고향을 떠나고, 대봉황의 환생."
+      },
+      "position": {
+        "x": 879.4445299883422,
+        "y": 51.055094790083224
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_EXPLORE",
+        "label": "세계관 탐험",
+        "color": "#2196F3",
+        "notes": "새로운 차원, 비경, 유적, 전설적 존재들을 만나는 재미. 세계가 확장될 때의 설렘과 호기심."
+      },
+      "position": {
+        "x": 678.8670720827595,
+        "y": 219.7118953725483
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_UPPER_REALM",
+        "label": "상위 차원 등장",
+        "color": "#2196F3",
+        "notes": "인계→영계→선계로 차원이 올라갈 때의 충격과 설렘. '와! 스케일 미쳤다!'는 반응. 범인수선전의 3중 세계관, 구신의 신계."
+      },
+      "position": {
+        "x": 780.0129513891837,
+        "y": 61.24809119378919
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_SECRET_REALM",
+        "label": "비경/유적 탐험",
+        "color": "#2196F3",
+        "notes": "미지의 공간에서 모험하고 기연을 찾는 재미. '모험 가고 싶다', '재밌다'는 반응. 완미세계의 각종 비경, 영역의 유적."
+      },
+      "position": {
+        "x": 575.0850855313824,
+        "y": 56.694558054645356
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_LEGEND",
+        "label": "전설적 존재 등장",
+        "color": "#2196F3",
+        "notes": "고대 신선, 전설적 신수, 신화적 인물이 등장하는 순간. '이야... 대단하다'는 경외감. 신목의 신화적 존재들, 구신의 9대 신격."
+      },
+      "position": {
+        "x": 624.7891173747391,
+        "y": 427.3299356573395
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_COSMIC",
+        "label": "거대 세력/흑막 등장",
+        "color": "#2196F3",
+        "notes": "세계를 움직이는 배후 세력이 드러나는 순간. '이게 진짜 흑막이지'라는 반응. 성제의 제왕 세력, 범인수선전의 마교."
+      },
+      "position": {
+        "x": 772.9425547875707,
+        "y": 404.28807389941824
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_INTELLECTUAL",
+        "label": "지적 만족감",
+        "color": "#FF9800",
+        "notes": "독자의 머리를 쓰게 하고, 깨달음과 통찰을 주는 요소. 철학, 복선, 권모술수, 설정의 일관성 등."
+      },
+      "position": {
+        "x": 423.7282604733184,
+        "y": 975.1485475492075
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_PHILOSOPHY",
+        "label": "철학적 깨달음",
+        "color": "#FF9800",
+        "notes": "도(道)에 대한 통찰과 깊은 사유를 제공하는 순간. '와... 깊다', '생각하게 되네'는 반응. 도왕의 도법 철학, 범인수선전의 장생론."
+      },
+      "position": {
+        "x": 308.4613938697836,
+        "y": 917.4285996023347
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_FORESHADOW",
+        "label": "복선/떡밥 회수",
+        "color": "#FF9800",
+        "notes": "오래전에 심어둔 떡밥이 드디어 풀리는 순간. '아! 그거였구나!'는 통쾌함. 범인수선전의 장원주패 정체, 신목의 세계관 비밀."
+      },
+      "position": {
+        "x": 315.8202429520608,
+        "y": 1111.8563496237684
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_POLITICS",
+        "label": "권모술수 / 정치적 생존",
+        "color": "#FF9800",
+        "notes": "종파 내부나 선계에서의 권력 다툼과 생존 전략. '이게 진짜 현실이지'라는 공감. 성제의 제왕 투쟁, 범인수선전의 종파 정치."
+      },
+      "position": {
+        "x": 423.7434160402249,
+        "y": 723.8828088903521
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_CONSISTENCY",
+        "label": "설정 일관성",
+        "color": "#FF9800",
+        "notes": "수련 체계, 세계관, 캐릭터 설정이 논리적으로 일관될 때의 만족감. '설정 오류 없네', '탄탄하다'는 평가. 도왕, 범인수선전."
+      },
+      "position": {
+        "x": 420.4379431616226,
+        "y": 1155.543052152339
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_EMPATHY",
+        "label": "공감 / 현실감",
+        "color": "#795548",
+        "notes": "독자가 주인공에게 감정 이입하고, 현실적인 인간관계와 상황에서 공감을 느끼는 요소."
+      },
+      "position": {
+        "x": 513.815175257829,
+        "y": 916.5454698754152
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_REALISTIC",
+        "label": "현실적 인간관계",
+        "color": "#795548",
+        "notes": "냉철하고 실용적인 인간관계. '이게 진짜지'라는 공감. 범인수선전의 한립, 성제의 냉철한 제왕."
+      },
+      "position": {
+        "x": 576.6038896770964,
+        "y": 706.2692543801815
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_FAILURE",
+        "label": "실패와 좌절",
+        "color": "#795548",
+        "notes": "주인공도 실패하고, 도망치고, 좌절하는 모습. '나랑 비슷하네'는 공감. 범인수선전의 한립, 도왕의 주인공."
+      },
+      "position": {
+        "x": 614.7571278194553,
+        "y": 917.7836717258203
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_ECONOMY",
+        "label": "자원/경제 관리",
+        "color": "#795548",
+        "notes": "영석, 영초, 재료를 철저히 계산하고 관리하는 모습. '경제 관념 있다', '현실적이야'는 반응. 범인수선전, 성제."
+      },
+      "position": {
+        "x": 535.4733452782826,
+        "y": 1117.7760106079868
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_ACTION",
+        "label": "전투/액션의 재미",
+        "color": "#F44336",
+        "notes": "박진감 넘치는 전투, 대규모 종파전, 압도적 전력 과시 등 액션에서 오는 쾌감."
+      },
+      "position": {
+        "x": 400.6425598747137,
+        "y": 259.14300364635204
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_SECT_WAR",
+        "label": "대규모 종파전",
+        "color": "#F44336",
+        "notes": "수많은 수선자가 참여하는 전쟁의 박진감. '와! 스케일 크다'는 반응. 영역의 종파 대전, 성제의 제왕 전쟁."
+      },
+      "position": {
+        "x": 482.15064798369866,
+        "y": 64.71624822078002
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_ONE_VS_MANY",
+        "label": "일대다 / 압도적 전투",
+        "color": "#F44336",
+        "notes": "주인공 혼자 수백 명을 상대하는 압도적 전투. '이게 바로 먼치킨'은 반응. 대봉황, 완미세계의 주인공."
+      },
+      "position": {
+        "x": 293.28974945258693,
+        "y": 78.7561239560902
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FUN_SKILL_COMBO_ACTION",
+        "label": "스킬 연계 / 공법 조합",
+        "color": "#F44336",
+        "notes": "다양한 공법과 스킬을 조합해 전투하는 묘미. '이 조합 대박'은 반응. 도왕, 완미세계."
+      },
+      "position": {
+        "x": 315.5388106869412,
+        "y": 484.3973326117721
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "FUN_GROWTH",
+        "target": "FUN_REALM_BREAK",
+        "label": "포함",
+        "id": "6afb5e4c-57d8-453c-a4c4-2ac1f5cfe6c6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_GROWTH",
+        "target": "FUN_NEW_SKILL",
+        "label": "포함",
+        "id": "0bacb7cd-d640-4f18-a1af-2ee8e2d456e4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_GROWTH",
+        "target": "FUN_TREASURE",
+        "label": "포함",
+        "id": "cd47097f-ad13-4676-a5b4-40e216c145f1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_GROWTH",
+        "target": "FUN_CLONE",
+        "label": "포함",
+        "id": "f630b060-5b67-4888-9872-f50ce4e253c3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_SODA",
+        "target": "FUN_UNDERDOG",
+        "label": "포함",
+        "id": "04a2ec4f-89e9-4496-89ff-3b1135c4bee5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_SODA",
+        "target": "FUN_REVENGE",
+        "label": "포함",
+        "id": "8ea656b8-9e30-4392-828e-4c2e115fbcbb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_SODA",
+        "target": "FUN_ARROGANT",
+        "label": "포함",
+        "id": "ed7625f6-cb8b-4158-a374-4e8d7c233dbf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_SODA",
+        "target": "FUN_HIDDEN_CARD",
+        "label": "포함",
+        "id": "582b7dfa-8e6b-41a4-87fe-3c77fc886b2a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_SODA",
+        "target": "FUN_COMEBACK",
+        "label": "포함",
+        "id": "56ec518e-fd27-4a2b-95ae-f177e20f08d0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EMOTION",
+        "target": "FUN_DEATH",
+        "label": "포함",
+        "id": "38783659-5988-4086-b650-a74de24d0424"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EMOTION",
+        "target": "FUN_GENERATION",
+        "label": "포함",
+        "id": "0fbb42ce-a928-4305-9179-f17b9361f092"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EMOTION",
+        "target": "FUN_LONELINESS",
+        "label": "포함",
+        "id": "99073828-bbb2-417a-b4c8-8f64d4c20228"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EMOTION",
+        "target": "FUN_HOMESICK",
+        "label": "포함",
+        "id": "a31b0c1d-bfc0-47d1-8108-200a24183864"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EXPLORE",
+        "target": "FUN_UPPER_REALM",
+        "label": "포함",
+        "id": "9d507a33-1d8e-4ce9-9c7a-1cc944f2a739"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EXPLORE",
+        "target": "FUN_SECRET_REALM",
+        "label": "포함",
+        "id": "ac8c20d5-fdf0-4846-b0ec-0aa379e4b5d4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EXPLORE",
+        "target": "FUN_LEGEND",
+        "label": "포함",
+        "id": "e06de5ab-55c4-47f5-bbf0-b985dbd36cbf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EXPLORE",
+        "target": "FUN_COSMIC",
+        "label": "포함",
+        "id": "fdd11d7d-bfc8-4631-9850-259846a06fe6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_INTELLECTUAL",
+        "target": "FUN_PHILOSOPHY",
+        "label": "포함",
+        "id": "b008521c-af53-4dc7-898c-7865924dfa14"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_INTELLECTUAL",
+        "target": "FUN_FORESHADOW",
+        "label": "포함",
+        "id": "dd16c28c-9a48-4b5d-acfd-3c13de3fa57a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_INTELLECTUAL",
+        "target": "FUN_POLITICS",
+        "label": "포함",
+        "id": "cb5281e9-eade-4378-840f-c660befde16d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_INTELLECTUAL",
+        "target": "FUN_CONSISTENCY",
+        "label": "포함",
+        "id": "1f0c4abb-a7a5-478a-9b00-ec0329e104aa"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EMPATHY",
+        "target": "FUN_REALISTIC",
+        "label": "포함",
+        "id": "1a16f152-4181-4286-90e5-f8c6c0605a32"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EMPATHY",
+        "target": "FUN_FAILURE",
+        "label": "포함",
+        "id": "eaa4ecd6-fa89-4ba8-9981-92eae575fd7e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_EMPATHY",
+        "target": "FUN_ECONOMY",
+        "label": "포함",
+        "id": "459e66ac-1ea9-453c-b040-429eb6380e1f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_ACTION",
+        "target": "FUN_SECT_WAR",
+        "label": "포함",
+        "id": "d79345c8-f9dd-43e5-9c31-665439152c7e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_ACTION",
+        "target": "FUN_ONE_VS_MANY",
+        "label": "포함",
+        "id": "046b583b-db14-427c-9296-8e8c39199d3c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FUN_ACTION",
+        "target": "FUN_SKILL_COMBO_ACTION",
+        "label": "포함",
+        "id": "66654eb2-3b75-41fb-803b-cd3df8cd9c19"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  let cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: initialData,
+    style: [
+      { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':28, 'padding':'8px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':13, 'text-outline-width':2, 'text-outline-color':'#000' } },
+      { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':11 } },
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
+      { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true }
+  });
+
+  let selectedId = null;
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+  const nodeInfo = document.getElementById('nodeInfo');
+  const nodeNotes = document.getElementById('nodeNotes');
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    const selected = cy.$(':selected');
+    if (selected.length === 0) { alert('삭제할 요소를 선택하세요.'); return; }
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(selected);
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = document.activeElement.tagName.toUpperCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        deleteSelected();
+      }
+    }
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const id = node.id();
+    
+    if (edgeSrcInput.value === '') {
+      edgeSrcInput.value = id;
+    } else if (edgeTgtInput.value === '' && edgeSrcInput.value !== id) {
+      edgeTgtInput.value = id;
+    }
+    
+    nodeInfo.textContent = '📌 ' + (node.data('label') || id);
+    nodeNotes.textContent = node.data('notes') || '메모 없음';
+    selectedId = id;
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt('새 노드 이름:');
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+      }
+    }
+  });
+
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        let els = [];
+        if (Array.isArray(data)) els = data;
+        else if (data.nodes || data.edges) els = [...(data.nodes||[]), ...(data.edges||[])];
+        else if (data.elements) els = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        if (els.length) { cy.elements().remove(); cy.add(els); cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run(); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>

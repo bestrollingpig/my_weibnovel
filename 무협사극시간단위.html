@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사극 시간 표현 변환기 (완전판)</title>
+    <style>
+        /* CSS 스타일링 */
+        body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        h1 { color: #333; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .input-group { margin-bottom: 20px; display: flex; gap: 10px; align-items: center;}
+        .input-group input[type="text"] { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        .input-group button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
+        .input-group button:hover { background-color: #45a049; }
+        #output { background-color: #f9f9f9; padding: 15px; border: 1px dashed #ccc; border-radius: 4px; white-space: pre-wrap; margin-top: 20px; min-height: 200px; line-height: 1.6; }
+        .output-title { font-size: 1.2em; color: #333; margin-bottom: 10px; font-weight: bold; }
+        .highlight { color: #D64545; font-weight: bold; }
+        .output-heading { font-weight: bold; color: #007BFF; margin-bottom: 10px; }
+        .explanation { margin-top: 15px; padding: 10px; border-left: 4px solid #007BFF; background-color: #e9f5ff; }
+        .explanation p { margin: 5px 0; }
+        .explanation strong { color: #4CAF50; }
+        .etymology { font-size: 0.9em; margin-top: 5px; color: #007BFF; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 무협이나 사극 시간 표현 변환기 (용어 뜻 풀이)</h1>
+        <p>입력 형식: **YYYYMMDD HHMM** (예: 20241017 1230)</p>
+        
+        <div class="input-group">
+            <input type="text" id="date-input" value="20250305 1000" placeholder="YYYYMMDD HHMM">
+            <button onclick="runCode()">변환 실행</button>
+        </div>
+
+        <div id="output">
+            <div class="output-heading">실행 결과:</div>
+            <div id="result-content">변환할 날짜를 입력하고 '변환 실행' 버튼을 눌러주세요.</div>
+        </div>
+    </div>
+
+    <script>
+        // ===============================================
+        // 🌳 상수 정의 (JavaScript)
+        // ===============================================
+
+        const NUM_TO_KR = {1: '일', 2: '이', 3: '삼', 4: '사', 5: '오', 6: '육', 7: '칠', 8: '팔', 9: '구', 10: '십'};
+        const NUM_TO_NATIVE = {1: '첫째', 2: '둘째', 3: '셋째', 4: '넷째'}; 
+        
+        const heavenlyStems = {'갑': '나무', '을': '나무', '병': '불', '정': '불', '무': '흙', '기': '흙', '경': '쇠', '신': '쇠', '임': '물', '계': '물'};
+        const earthlyBranches = {'자': '물', '축': '흙', '인': '나무', '묘': '나무', '진': '흙', '사': '불', '오': '불', '미': '흙', '신': '쇠', '유': '쇠', '술': '흙', '해': '물'};
+
+        const monthNames = {
+            1: ["정월", "해오름달"], 2: ["이월", "시샘달"], 3: ["삼월", "물오름달"],
+            4: ["사월", "잎새달"], 5: ["오월", "푸른달"], 6: ["유월", "누리달"],
+            7: ["칠월", "견우직녀달"], 8: ["팔월", "타오름달"], 9: ["구월", "열매달"],
+            10: ["시월", "하늘연달"], 11: ["십일월", "미틈달"], 12: ["섣달", "매듭달"]
+        };
+        
+        // [월, 일, 이름, 한자, 간단 설명, 상세 해설] - 절기의 이름 뜻 해설 보강
+        const SOLAR_TERMS = [
+            [1, 5, "소한", "小寒", "겨울 중 작은 추위", "작은(小) 추위(寒)라는 뜻이지만, 사실 이때가 대한(大寒)보다 더 추운 경우가 많답니다."],
+            [1, 20, "대한", "大寒", "가장 큰 추위", "큰(大) 추위(寒)라는 뜻이에요. 일 년 중 마지막 추위를 매듭짓는다는 의미를 가지고 있어요."],
+            [2, 4, "입춘", "立春", "봄이 시작되는 날", "봄이 선다(立)는 뜻으로, 24절기 중 가장 처음이며, 새해의 시작을 알리는 절기예요."],
+            [2, 19, "우수", "雨水", "비가 내리고 얼음이 녹는 때", "비(雨)가 내리고 물(水)이 된다는 뜻으로, 이때부터 날씨가 풀려 얼음이 녹고 봄비가 내리기 시작해요."],
+            [3, 5, "경칩", "驚蟄", "개구리가 잠에서 깨는 날", "놀랄 경(驚), 숨을 칩(蟄)을 써서 **'겨울잠 자던 벌레가 놀라 깨어난다'**는 뜻이에요. 따뜻해진다는 신호랍니다."],
+            [3, 20, "춘분", "春分", "낮과 밤 길이가 같은 날", "봄(春)을 반(分)으로 나눈다는 뜻. 태양이 적도 위에 있어 낮과 밤의 길이가 똑같이 12시간으로 같아요."],
+            [4, 4, "청명", "清明", "하늘이 맑고 깨끗한 때", "맑을 청(清), 밝을 명(明)을 써서 **하늘이 맑고 깨끗해진다**는 뜻이에요. 농사 준비하기 좋은 날씨가 된답니다."],
+            [4, 20, "곡우", "穀雨", "농사 비가 내리는 때", "곡식(穀)을 적시는 비(雨)라는 뜻으로, 봄비가 내려 백곡을 윤택하게 하는 중요한 절기예요."],
+            [5, 5, "입하", "立夏", "여름이 시작되는 날", "여름이 선다(立)는 뜻. 이때부터 본격적인 여름이 시작되며, 산과 들이 푸른 녹음으로 변해요."],
+            [5, 21, "소만", "小滿", "모든 것이 가득 차는 때", "작을 소(小), 찰 만(滿)을 써서 곡식의 씨앗이 여물기 시작하며 세상이 점차 가득 찬다는 의미예요."],
+            [6, 6, "망종", "芒種", "곡식 종자를 뿌리는 때", "까끄라기(芒)가 있는 곡식의 종자(種)를 뿌려야 할 때라는 뜻. 바쁜 모내기철이 시작돼요."],
+            [6, 21, "하지", "夏至", "낮이 가장 긴 날", "여름(夏)이 극에 달한다(至)는 뜻. 일 년 중 낮의 길이가 가장 긴 날이랍니다."],
+            [7, 7, "소서", "小暑", "조금씩 더워지기 시작하는 때", "작을 소(小), 더울 서(暑)를 써서 **작은 더위**라는 뜻. 본격적인 더위가 시작되는 시기예요."],
+            [7, 23, "대서", "大暑", "가장 심하게 더운 때", "큰(大) 더위(暑)라는 뜻으로, 일 년 중 가장 더위가 심한 때예요. '염소 뿔도 녹는다'는 속담이 있을 정도예요."],
+            [8, 7, "입추", "立秋", "가을이 시작되는 날", "가을이 선다(立)는 뜻. 절기상으로는 가을이지만, 실제로는 가장 더운 날씨가 이어지기도 해요."],
+            [8, 23, "처서", "處暑", "더위가 물러나는 때", "더위(暑)가 물러난다(處)는 뜻. 이때부터 아침저녁으로 선선한 바람이 불어 더위가 가시게 돼요."],
+            [9, 8, "백로", "白露", "흰 이슬이 내리는 때", "흰(白) 이슬(露)이 내린다는 뜻. 밤에는 기온이 떨어져 풀잎에 이슬이 맺히는 것을 볼 수 있어요."],
+            [9, 23, "추분", "秋分", "가을의 낮과 밤 길이가 같은 날", "가을(秋)을 반(分)으로 나눈다는 뜻. 춘분처럼 낮과 밤의 길이가 다시 같아져요."],
+            [10, 8, "한로", "寒露", "찬 이슬이 내리는 때", "차가운(寒) 이슬(露)이 내린다는 뜻. 이슬이 찬 기운을 머금기 시작해 가을이 깊어짐을 알 수 있어요."],
+            [10, 23, "상강", "霜降", "서리가 내리기 시작하는 때", "서리(霜)가 내린다(降)는 뜻. 가을의 마지막 절기로, 곧 겨울이 다가옴을 알려줘요."],
+            [11, 7, "입동", "立冬", "겨울이 시작되는 날", "겨울이 선다(立)는 뜻. 김장을 하고 월동 준비를 하는 시기예요."],
+            [11, 22, "소설", "小雪", "작은 눈이 내리는 때", "작은(小) 눈(雪)이 내리기 시작한다는 뜻. 초겨울 추위와 함께 살얼음이 얼기도 한답니다."],
+            [12, 7, "대설", "大雪", "큰 눈이 내리는 때", "큰(大) 눈(雪)이 내린다는 뜻. 이때부터 본격적으로 큰 눈이 많이 내리기 시작해요."],
+            [12, 22, "동지", "冬至", "밤이 가장 긴 날", "겨울(冬)이 극에 달한다(至)는 뜻. 일 년 중 밤의 길이가 가장 긴 날이며, 팥죽을 먹는 풍습이 있어요."]
+        ];
+
+        // ===============================================
+        // 🟢 년 간지 (年干支) 및 오행
+        // ===============================================
+        function getYearGanjiSimple(year) {
+            const ganjiList = [
+                "갑자", "을축", "병인", "정묘", "무진", "기사", "경오", "신미", "임신", "계유",
+                "갑술", "을해", "병자", "정축", "무인", "기묘", "경진", "신사", "임오", "계미",
+                "갑신", "을유", "병술", "정해", "무자", "기축", "경인", "신묘", "임진", "계사",
+                "갑오", "을미", "병신", "정유", "무술", "기해", "경자", "신축", "임인", "계묘",
+                "갑진", "을사", "병오", "정미", "무신", "기유", "경술", "신해", "임자", "계축",
+                "갑인", "을묘", "병진", "정사"
+            ];
+            let offset = (year - 1984) % 60;
+            if (offset < 0) { offset += 60; }
+            return ganjiList[offset];
+        }
+        
+        function getElement(ganji) {
+            if (!ganji || ganji.length < 2) return ["?", "?"];
+            const stem = ganji[0];
+            const branch = ganji[1];
+            return [heavenlyStems[stem] || "?", earthlyBranches[branch] || "?"];
+        }
+
+        // ===============================================
+        // 🔆 24절기 및 🌸 4계절 계산
+        // ===============================================
+        function getSolarTerm(month, day) {
+            const todayCode = month * 100 + day;
+            let currentTerm = SOLAR_TERMS[SOLAR_TERMS.length - 1]; // 기본값: 동지
+
+            for (let i = 0; i < SOLAR_TERMS.length; i++) {
+                const [termMonth, termDay, termName, termHanja, termDesc, termEtymology] = SOLAR_TERMS[i];
+                const termCode = termMonth * 100 + termDay;
+                
+                if (todayCode >= termCode) {
+                    currentTerm = [termName, termHanja, termDesc, termEtymology];
+                } else {
+                    return currentTerm; 
+                }
+            }
+            return currentTerm; 
+        }
+        
+        function getSeason(month, day) {
+            const dateCode = month * 100 + day;
+            
+            // 입춘(2/4) ~ 입하(5/5) 전
+            if ((month >= 3 || (month === 2 && day >= 4)) && dateCode < 505) {
+                return { name: "봄", hanja: "春", description: "새싹이 돋고 만물이 소생하는 춘(春)" };
+            // 입하(5/5) ~ 입추(8/7) 전
+            } else if (dateCode >= 505 && dateCode < 807) {
+                return { name: "여름", hanja: "夏", description: "해가 길고 무성한 더운 계절 하(夏)" };
+            // 입추(8/7) ~ 입동(11/7) 전
+            } else if (dateCode >= 807 && dateCode < 1107) {
+                return { name: "가을", hanja: "秋", description: "하늘이 높고 곡식을 거두는 계절 추(秋)" };
+            // 입동(11/7) ~ 다음해 입춘(2/4) 전
+            } else {
+                return { name: "겨울", hanja: "冬", description: "눈이 오고 만물이 움츠러드는 계절 동(冬)" };
+            }
+        }
+
+        // ===============================================
+        // 📅 날짜 표현 및 ⏰ 시간 표현
+        // ===============================================
+        function getDayExprSimple(day) {
+            if (day <= 10) { return `${NUM_TO_KR[day] || ''}일`; } 
+            if (day === 20) { return "이십일"; }
+            if (day === 30) { return "삼십일"; }
+            
+            const tens = Math.floor(day / 10);
+            const ones = day % 10;
+            const tensKr = (tens === 1) ? "십" : `${NUM_TO_KR[tens] || ''}십`;
+            const onesKr = NUM_TO_KR[ones] || '';
+            return `${tensKr}${onesKr}일`;
+        }
+        
+        function getJijiHour(hour) {
+            const jiji = [
+                ["자시", 23, 1, "子時"], ["축시", 1, 3, "丑時"], ["인시", 3, 5, "寅時"],
+                ["묘시", 5, 7, "卯時"], ["진시", 7, 9, "辰時"], ["사시", 9, 11, "巳時"],
+                ["오시", 11, 13, "午時"], ["미시", 13, 15, "未時"], ["신시", 15, 17, "申時"],
+                ["유시", 17, 19, "酉時"], ["술시", 19, 21, "戌時"], ["해시", 21, 23, "亥時"]
+            ];
+            for (const [name, start, end, cn] of jiji) {
+                if (start <= hour && hour < end || (start > end && (hour >= start || hour < end))) {
+                    return [name, cn];
+                }
+            }
+            return ["알 수 없음", "未知"];
+        }
+
+        function getGyeong(hour) {
+            const gyeong = [[19, 21], [21, 23], [23, 1], [1, 3], [3, 5]];
+            const gyeongKr = ["일경", "이경", "삼경", "사경", "오경"];
+            const gyeongCn = ["第一更", "第二更", "第三更", "第四更", "第五更"];
+            
+            for (let i = 0; i < gyeong.length; i++) {
+                const [start, end] = gyeong[i];
+                if (start <= hour && hour < end || (start > end && (hour >= start || hour < end))) {
+                    return [gyeongKr[i], gyeongCn[i]];
+                }
+            }
+            return [null, null];
+        }
+
+        function getMinutePhrase(minute) {
+            const phaseIdx = Math.floor(minute / 15);
+            const phaseNames = ["초반", "중반", "후반", "끝자락"];
+            const phase = phaseNames[Math.min(phaseIdx, 3)];
+            const kakNative = NUM_TO_NATIVE[phaseIdx + 1] || '첫'; 
+            const phraseKr = `${kakNative} 각`; 
+            
+            return [phase, phraseKr];
+        }
+
+        function getJijiTimeRange(jijiKr) {
+            const jijiMap = [
+                ["자시", 23, 1], ["축시", 1, 3], ["인시", 3, 5], ["묘시", 5, 7], 
+                ["진시", 7, 9], ["사시", 9, 11], ["오시", 11, 13], ["미시", 13, 15], 
+                ["신시", 15, 17], ["유시", 17, 19], ["술시", 19, 21], ["해시", 21, 23]
+            ];
+            const jijiInfo = jijiMap.find(t => t[0] === jijiKr);
+            if (!jijiInfo) return "해설 불가";
+
+            const [_, jijiStartHour, jijiEndHour] = jijiInfo;
+            const startStr = (jijiStartHour === 23) ? "밤 11시" : `${jijiStartHour}시`;
+            const endStr = (jijiEndHour === 1) ? "다음날 새벽 1시" : `${jijiEndHour}시`;
+            return `${startStr}부터 ${endStr}까지`;
+        }
+        
+        // ===============================================
+        // 🏁 메인 실행 함수
+        // ===============================================
+        function runTraditionalCalendar(inputRaw) {
+            const match = inputRaw.match(/^(\d{4})(\d{2})(\d{2})\s(\d{2})(\d{2})$/);
+            if (!match) {
+                return "❌ 입력 형식이 올바르지 않습니다. (YYYYMMDD HHMM 형식 필요)";
+            }
+
+            const [_, yearStr, monthStr, dayStr, hourStr, minuteStr] = match;
+            const year = parseInt(yearStr);
+            const month = parseInt(monthStr);
+            const day = parseInt(dayStr);
+            const hour = parseInt(hourStr);
+            const minute = parseInt(minuteStr);
+            
+            if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+                return "❌ 날짜 또는 시간 값이 유효하지 않습니다.";
+            }
+
+            const ganjiYear = getYearGanjiSimple(year);
+            const yearElem = getElement(ganjiYear);
+            
+            const [jijiKr] = getJijiHour(hour);
+            const [gyeongKr, gyeongCn] = getGyeong(hour);
+            const [minutePhase, minuteKakKr] = getMinutePhrase(minute);
+            
+            const [monthExpr, nativeMonth] = monthNames[month] || [month + '월', ''];
+            const dayExpr = getDayExprSimple(day);
+            
+            const [solarTermName, solarTermHanja, solarTermDesc, solarTermEtymology] = getSolarTerm(month, day);
+            const seasonInfo = getSeason(month, day);
+            
+            
+            let output = "";
+            output += "<div class='output-title'>변환 결과:</div>";
+            output += "----------------------------------------\n";
+            
+            // 1. 사극 말투 (핵심 출력)
+            output += "\n🧙 사극 말투 (핵심):\n";
+            output += `“지금은 <span class='highlight'>${ganjiYear}</span>(${yearElem[0]}+${yearElem[1]}) <span class='highlight'>${monthExpr}</span>(${nativeMonth}) <span class='highlight'>${dayExpr}</span>이옵니다.”\n`;
+            output += `“바야흐로 ${seasonInfo.name}(${seasonInfo.hanja}) <span class='highlight'>${solarTermName}</span>의 때이니, \n`;
+            
+            if (gyeongKr) {
+                output += `시각은 <span class='highlight'>${jijiKr}</span>, 곧 ${gyeongKr}이라 하겠사옵니다. ${gyeongKr}의 ${minutePhase}(${minuteKakKr})이옵니다.”\n`;
+            } else {
+                output += `시각은 <span class='highlight'>${jijiKr}</span>, 곧 낮 시간이라 하겠사옵니다. ${jijiKr}의 ${minutePhase}(${minuteKakKr})이옵니다.”\n`;
+            }
+                
+
+            // 2. 정보 요약
+            output += "\n📜 정보 요약:\n";
+            output += `- 입력 시각: ${year}년 ${month}월 ${day}일 ${hour}시 ${minute}분\n`;
+            output += `- 년 간지: ${ganjiYear} (오행: ${yearElem[0]} + ${yearElem[1]})\n`;
+            output += `- 계절: <span class='highlight'>${seasonInfo.name}(${seasonInfo.hanja})</span>\n`;
+            output += `- 절기: <span class='highlight'>${solarTermName}(${solarTermHanja})</span> (${solarTermDesc})\n`;
+            const gyeongOutput = gyeongKr ? `${gyeongKr}(${gyeongCn})` : "낮 시간";
+            output += `- 시간: ${jijiKr} / ${gyeongOutput} / ${minuteKakKr}\n`;
+            
+            // 3. 용어 해설 (최종 완성)
+            output += "\n<div class='output-title'>📚 용어 해설 (소설창작시 참고용으로 만든 자료고 양력이라서 음력과 차이가 있습니다.):</div>";
+            output += "<div class='explanation'>";
+            
+            // 해설 1: 절기 (이름 뜻 상세 추가)
+            output += `<p><strong>1. 24절기 (${solarTermName})</strong>: </p>`;
+            output += `<p style='margin-left: 15px;'>&bull; 절기는 태양의 움직임에 따라 1년을 <span class='highlight'>24개로 나눈 날</span>이에요. 농사의 때를 정하기 위해 만들었죠.</p>`;
+            output += `<p style='margin-left: 15px;'>&bull; 오늘 절기인 <span class='highlight'>${solarTermName}(${solarTermHanja})</span>는 **"${solarTermDesc}"**라는 뜻입니다. </p>`;
+            output += `<p class='etymology' style='margin-left: 15px;'>➡️ **[이름 뜻 풀이]** ${solarTermEtymology} </p>`;
+            
+            // 해설 2: 계절 (춘하추동)
+            output += `<p><strong>2. 한국의 4계절 (춘하추동)</strong>: </p>`;
+            output += `<p style='margin-left: 15px;'>&bull; <span class='highlight'>춘하추동(春夏秋冬)</span>은 봄, 여름, 가을, 겨울을 한자로 부르는 말이에요. ${seasonInfo.name}(${seasonInfo.hanja})은 **${seasonInfo.description}**를 뜻합니다.</p>`;
+            
+            // 해설 3: 명절 (설날, 추석)
+            output += `<p><strong>3. 가장 큰 명절 (설날, 추석/한가위)</strong>: </p>`;
+            output += `<p style='margin-left: 15px;'>&bull; <span class='highlight'>설날</span>: <span class='highlight'>음력 1월 1일</span>! 새해를 맞이해 떡국을 먹으며 어른들께 세배를 드리고 한 살 더 먹는 날이에요.</p>`;
+            output += `<p style='margin-left: 15px;'>&bull; <span class='highlight'>추석 (한가위)</span>: <span class='highlight'>음력 8월 15일</span>. 가을에 곡식을 거두어 조상님께 감사드리고 송편을 만들어 먹는, **가장 둥근 보름달**이 뜨는 명절이랍니다.</p>`;
+            
+            // 해설 4: 간지
+            output += `<p><strong>4. 년 간지 (${ganjiYear})</strong>: </p>`;
+            output += `<p style='margin-left: 15px;'>&bull; <span class='highlight'>간지(干支)</span>는 60년마다 돌아오는 해의 이름이에요. 동양에서는 이 간지로 그 해의 특징을 알아보았답니다. (예: '청룡의 해')</p>`;
+
+            // 해설 5: 지시/경/각촌
+            output += `<p><strong>5. 전통 시각 단위 (지시, 경, 각)</strong>: </p>`;
+            output += `<p style='margin-left: 15px;'>&bull; <span class='highlight'>지시</span>: 하루를 12개의 시(時, 2시간 단위)로 나눈 시계예요. ${jijiKr}는 **${getJijiTimeRange(jijiKr)}**를 뜻해요.</p>`;
+            output += `<p style='margin-left: 15px;'>&bull; <span class='highlight'>경</span>: 밤 시간(저녁 7시~새벽 5시)을 5개로 쪼갠 단위예요. 순찰하는 군인들이 시간을 북으로 알려주었죠.</p>`;
+            output += `<p style='margin-left: 15px;'>&bull; <span class='highlight'>각</span>: 아주 짧은 시간을 재는 단위로, ${minuteKakKr}는 지금의 15분(14분 24초) 단위 구간을 나타낸답니다. 하루를 100으로 보고 24시간으로 나눈 값입니다. 보통 각은 그래서 대략 15분, 촌은 10으로 나눠서 1.5분, 그 아래 초는 쓰이지 않지만, 쓴다면 대략 1.5초로 자료 기록단위로 초라는 개념이 있기는 합니다.</p>`;
+
+            output += "</div>";
+            output += "----------------------------------------";
+            
+            return output;
+        }
+
+        // ===============================================
+        // 🚀 실행 블록
+        // ===============================================
+
+        function runCode() {
+            const inputValue = document.getElementById('date-input').value;
+            const result = runTraditionalCalendar(inputValue.trim());
+            document.getElementById('result-content').innerHTML = result;
+        }
+
+        // 초기 실행: 페이지 로드 시 현재 시각으로 자동 변환하여 출력
+        window.onload = function() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hour = String(now.getHours()).padStart(2, '0');
+            const minute = String(now.getMinutes()).padStart(2, '0');
+            const currentInput = `${year}${month}${day} ${hour}${minute}`;
+            
+            document.getElementById('date-input').value = currentInput;
+            runCode();
+        };
+    </script>
+</body>
+</html>

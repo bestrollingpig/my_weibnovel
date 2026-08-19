@@ -1,0 +1,3594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그래프 뷰어</title>
+<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { 
+    background:#fafafa; 
+    height:100vh; 
+    display:flex; 
+    flex-direction:column;
+    font-family:'Malgun Gothic',sans-serif;
+    overflow:hidden;
+  }
+  #cy { 
+    flex:1; 
+    width:100%;
+    background:#fafafa;
+  }
+  #info { 
+    position:fixed; 
+    bottom:20px; 
+    left:50%; 
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.7); 
+    color:#fff; 
+    padding:6px 16px; 
+    border-radius:20px; 
+    font-size:12px; 
+    pointer-events:none; 
+    z-index:100;
+    backdrop-filter:blur(4px);
+  }
+  #info span { font-weight:bold; color:#FFD700; }
+  .header {
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    color:#fff;
+    padding:8px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-shrink:0;
+  }
+  .header h1 { font-size:1em; }
+  .header .hint { font-size:0.7em; opacity:0.8; }
+  .tip { 
+    position:fixed; 
+    top:60px; 
+    left:50%; 
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.5); 
+    color:#fff; 
+    padding:4px 14px; 
+    border-radius:12px; 
+    font-size:11px; 
+    pointer-events:none; 
+    z-index:100;
+    backdrop-filter:blur(4px);
+    transition: opacity 1s;
+  }
+  .tip.hidden { opacity:0; }
+
+  /* ===== 툴팁 ===== */
+  #nodeTooltip {
+    display:none;
+    position:fixed;
+    z-index:1000;
+    pointer-events:none;
+    background:#fff;
+    border-radius:10px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.25);
+    max-width:320px;
+    padding:10px 14px;
+    border:1px solid #ddd;
+    font-family:'Malgun Gothic',sans-serif;
+    font-size:0.85em;
+    line-height:1.5;
+    color:#333;
+  }
+  #nodeTooltip .tt-title {
+    font-weight:bold;
+    color:#667eea;
+    border-bottom:1px solid #eee;
+    padding-bottom:3px;
+    margin-bottom:4px;
+  }
+  #nodeTooltip .tt-notes { white-space:pre-wrap; word-break:break-word; }
+  #nodeTooltip .tt-empty { color:#999; font-style:italic; }
+
+  .dark-toggle {
+    background:rgba(255,255,255,0.15);
+    border:1px solid rgba(255,255,255,0.25);
+    color:#fff;
+    padding:4px 12px;
+    border-radius:16px;
+    cursor:pointer;
+    font-size:0.7em;
+  }
+  .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+  
+  [data-theme="dark"] body { background:#0f0f1a; }
+  [data-theme="dark"] #cy { background:#0f0f1a; }
+  [data-theme="dark"] #nodeTooltip {
+    background:#1a1a2e;
+    border-color:#444466;
+    color:#e0e0e0;
+  }
+  [data-theme="dark"] #nodeTooltip .tt-title {
+    color:#bb86fc;
+    border-color:#444466;
+  }
+  [data-theme="dark"] #nodeTooltip .tt-empty { color:#888; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🌐 그래프 뷰어</h1>
+  <div>
+    <span class="hint">🔍 호버=메모보기 · D키 다크모드</span>
+    <button class="dark-toggle" onclick="toggleDark()">🌙</button>
+  </div>
+</div>
+<div id="cy"></div>
+<div id="info">📊 <span id="nodeCount">0</span> 노드 · <span id="edgeCount">0</span> 엣지</div>
+<div class="tip" id="tip">💡 노드에 마우스를 올리면 메모를 볼 수 있어요</div>
+
+<!-- 툴팁 -->
+<div id="nodeTooltip">
+  <div class="tt-title" id="ttTitle">노드명</div>
+  <div class="tt-notes" id="ttNotes"><span class="tt-empty">메모가 없습니다</span></div>
+</div>
+
+<script>
+  const data = {
+  "nodes": [
+    {
+      "data": {
+        "id": "CALENDAR_MAIN",
+        "label": "📅 달력",
+        "color": "#2c3e50",
+        "group": "시간과달력",
+        "notes": "【12개월】\n1월: 늑대의 달 (한겨울, 굶주린 늑대 출몰)\n2월: 진흙 달 (땅이 녹아 파종 준비)\n3월: 거친 달 (봄바람, 첫 파종)\n4월: 여신의 달 (부활절, 새싹)\n5월: 꽃의 달 (만발)\n6월: 목초 달 (한여름 축제)\n7월: 낫의 달 (첫 수확)\n8월: 곡식 달 (본수확)\n9월: 거룩한 달 (미카엘마스, 세금 납부)\n10월: 포도주 달 (포도 수확)\n11월: 피의 달 (가축 도살)\n12월: 율의 달 (동지/성탄절, 최대 명절)\n\n【축제】\n- 율 (12/25): 사흘간 잔치, 선물 교환\n- 부활절 (봄): 사순절 종료, 경축\n- 미카엘마스 (9/29): 수확 감사, 세금 분기점"
+      },
+      "position": {
+        "x": 1170.178973034934,
+        "y": 818.9283389395104
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TIME_MAIN",
+        "label": "⏰ 하루 시간",
+        "color": "#2c3e50",
+        "group": "시간과달력",
+        "notes": "【7개 기도 시간 (수도원 일과)】\n1. 마틴 (새벽 3시) - 하루의 시작, 가장 엄숙한 기도\n2. 프라임 (오전 6시) - 해 뜨고 성문 개방\n3. 테르스 (오전 9시) - 장 개장, 궁정 업무 시작\n4. 섹스트 (낮 12시) - 정오, 점심과 낮잠\n5. 논 (오후 3시) - 오후 업무 및 훈련 재개\n6. 베스퍼 (해질녘, 오후 6시) - 성문 폐쇄, 가족 귀가\n7. 컴플라인 (밤 9시) - 하루 마무리, 취침"
+      },
+      "position": {
+        "x": 1173.377779745089,
+        "y": 676.8973761447585
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SEASON_MAIN",
+        "label": "🌿 계절",
+        "color": "#2c3e50",
+        "group": "시간과달력",
+        "notes": "【사계절 순환】\n봄 (3~5월): 파종기, 씨를 뿌리고 새 생명이 시작됨\n여름 (6~8월): 성장기, 곡식이 자라고 낮이 가장 김\n가을 (9~11월): 수확기, 거둬들이고 겨울을 준비\n겨울 (12~2월): 휴한기, 땅이 쉬고 실내에서 공예와 이야기를 나눔"
+      },
+      "position": {
+        "x": 1186.3073769652244,
+        "y": 911.4138170914357
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRICE_MAIN",
+        "label": "💰 가격표",
+        "color": "#f39c12",
+        "group": "경제/생활물가",
+        "notes": "【생활 물가 (1 SP = 1만 원 기준)】\n- 호밀빵: 2 CP (2천원)\n- 싸구려 맥주: 3 CP (3천원)\n- 여관 공동침실: 1 SP (1만원)\n- 농민 품삯(하루): 1 SP (1만원)\n- 구운 닭: 2 SP (2만원)\n- 공중 목욕탕: 2 SP (2만원)\n- 용병(하루): 5 SP (5만원)\n- 고급 포도주: 1 GP (10만원)\n- 여관 스위트룸: 2 GP (20만원)\n- 소형 회복 물약: 1 GP (10만원)\n- 외과 수술: 2 GP (20만원)\n- 마법사 고용(하루): 5~20 GP (50~200만원)\n- 판금 갑옷 수리: 3 GP (30만원)\n- 전투마: 100 GP (1천만원)\n\n【대규모 경제】\n- 포장도로(1km): 100 GP (1천만원)\n- 철광석(1톤): 10 GP (100만원)\n- 향신료(1kg): 15 GP (150만원)\n- 석조 다리: 800 GP (8천만원)\n- 성벽(100m): 500 GP (5천만원)\n- 공성 투석기: 500 GP (5천만원)\n- 상선(대형): 2,000 GP (2억원)\n- 군함(갤리선): 5,000 GP (5억원)\n- 용병 부대(100명/1개월): 2,000 GP (2억원)\n- 대성당(소규모): 10,000 GP (10억원)"
+      },
+      "position": {
+        "x": 1036.4516053553384,
+        "y": 1004.5638335696083
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TERM_MAIN",
+        "label": "📖 용어사전",
+        "color": "#7f8c8d",
+        "group": "용어집",
+        "notes": "【정치】\n- 봉신 (Fealty): 하위 귀족이 상위 영주에게 충성과 군사 원조를 맹세하는 계약.\n\n【경제】\n- 십일조 (Tithe): 수확량의 10%를 교회에 바치는 의무적 세금.\n- 길드 (Guild): 같은 직업의 장인들이 만든 독점 조합.\n\n【사회】\n- 농노제 (Serfdom): 농민이 땅에 묶여 영주의 허가 없이 이주할 수 없는 제도.\n- 지참금 (Dowry): 신부 집안이 신랑 집안에 주는 결혼 자금/토지.\n- 징집병 (Levy): 전쟁 시 영주가 강제로 모은 농민 군대.\n\n【문화】\n- 기사도 (Chivalry): 기사가 지켜야 할 명예, 용기, 약속 준수 규범.\n- 성유물 (Relic): 성인의 뼈나 소지품 등 신성한 힘이 깃든 물건."
+      },
+      "position": {
+        "x": 1205.1561394265211,
+        "y": 1011.3071168396366
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KING_01",
+        "label": "국왕",
+        "color": "#8e44ad",
+        "group": "왕실",
+        "class": "전투 대가",
+        "level": "12",
+        "alignment": "질서 중립",
+        "secret": "젊은 시절, 검은 그물단에게 왕좌 등록 자금을 빌려 현재 빚에 시달린다.",
+        "goal": "대공을 제압하고 절대 왕권을 확립하여 국가 재정을 독립시키는 것.",
+        "notes": "국가 최고 통치자. 군대 통수권, 법률 제정권, 귀족 임명권 보유. 왕위 계승 분쟁의 핵심.\n[추가] 매년 12월(율의 달)이 되면 붉은 용의 공물 요구로 골머리를 앓는다. 올해도 대책을 마련해야 한다.\n[호칭 규칙 - 서양식]\n- 타인(신하/귀족) → 국왕: '폐하 (Your Majesty)' 또는 'Sire'\n- 국왕 → 타인(신하): '경 (Sir)' 또는 '그대 (You)'\n- 국왕 → 왕비: '마마 (My Queen)' 또는 '부인 (Madam)'\n- 국왕 → 왕세자: '저하 (My Son)' 또는 '왕세자'\n- 하인 → 국왕: '폐하 (Your Majesty)'\n- 자신(국왕)을 지칭할 때: '짐 (We)' 또는 '과인 (I)'"
+      },
+      "position": {
+        "x": 246.90416798296016,
+        "y": 963.3359211914394
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KING_02",
+        "label": "왕비 / 왕대비",
+        "color": "#8e44ad",
+        "group": "왕실",
+        "class": "정치적 책략가",
+        "level": "10",
+        "alignment": "질서 악",
+        "secret": "왕실 외척 세력을 이끌며, 섭정과 은밀히 내통하여 왕세자를 위협하고 있다.",
+        "goal": "왕세자를 허수아비로 세우고 자신의 친정 가문이 실권을 장악하게 한다.",
+        "notes": "왕실 혈통의 정통성. 외척 세력의 수장. 궁정 내 실질적 영향력 행사.\n[호칭 규칙 - 서양식]\n- 타인(귀족/신하) → 왕비: '마마 (Your Majesty)' 또는 '부인 (My Queen)'\n- 왕비 → 국왕: '폐하 (My King)'\n- 왕비 → 왕세자: '저하 (My Son)' 또는 '그대'\n- 하인 → 왕비: '마마 (Your Majesty)' 또는 '마님 (Ma'am)'\n- 자신(왕비)을 지칭할 때: '본궁 (I)' 또는 '과인'"
+      },
+      "position": {
+        "x": 113.597777188388,
+        "y": 659.7459530233552
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KING_03",
+        "label": "왕세자",
+        "color": "#8e44ad",
+        "group": "왕실",
+        "class": "견습 무관 / 도적",
+        "level": "6",
+        "alignment": "중립 선",
+        "secret": "용병대장과 비밀리에 접촉하여, 아버지가 쓰러질 경우를 대비한 사병을 모으고 있다.",
+        "goal": "아버지의 시기와 귀족들의 견제를 피해 살아남아 정당한 왕위를 계승한다.",
+        "notes": "차기 왕위 계승자. 부왕의 시기와 형제 귀족들의 견제 속에서 생존.\n[호칭 규칙 - 서양식]\n- 타인(귀족/신하) → 왕세자: '저하 (Your Highness)' 또는 '왕세자님 (My Prince)'\n- 왕세자 → 국왕(부왕): '폐하 (Father)' 또는 '아버님'\n- 왕세자 → 왕비(모후): '마마 (Mother)'\n- 하인 → 왕세자: '저하 (Your Highness)' 또는 '도련님 (My Prince)'\n- 자신(왕세자)을 지칭할 때: '과인 (I)' 또는 '신 (Your subject)'"
+      },
+      "position": {
+        "x": 455.87586314754685,
+        "y": 973.7602074728993
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KING_04",
+        "label": "섭정",
+        "color": "#8e44ad",
+        "group": "왕실",
+        "class": "악령 계약자 (워록)",
+        "level": "14",
+        "alignment": "중립 악",
+        "secret": "폭정의 군주(베인)와 영혼 계약을 맺어 언데드로 서서히 변모 중이다.",
+        "goal": "국왕을 암살하고 왕좌를 차지해, 폭정의 군주를 이 땅에 강림시킨다.",
+        "notes": "왕이 미성년일 때 대리 통치. 왕권을 노리는 가장 위험한 인물.\n[호칭 규칙 - 서양식]\n- 타인(귀족/신하) → 섭정: '전하 (Your Grace)' 또는 '섭정 각하 (My Lord Regent)'\n- 섭정 → 국왕(어린 왕): '폐하 (Your Majesty)' (공식석상), (뒤에서는) '저 아이'\n- 섭정 → 왕세자: '저하 (Your Highness)' (공식), '얘야' (사적)\n- 하인 → 섭정: '전하 (Your Grace)' 또는 '마스터 (My Master)'\n- 자신(섭정)을 지칭할 때: '신 (I)' 또는 '본좌'"
+      },
+      "position": {
+        "x": 88.73525440480813,
+        "y": 1251.6792246225937
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KING_05",
+        "label": "재상 (수상)",
+        "color": "#8e44ad",
+        "group": "왕실",
+        "class": "회계사 / 첩보원",
+        "level": "8",
+        "alignment": "절대 중립",
+        "secret": "대공과 검은 그물단 양측에서 뇌물을 받으며, 누가 이기든 살아남을 준비를 마쳤다.",
+        "goal": "왕실 재정을 유지하는 동시에, 자신의 안전과 부를 최우선으로 보장한다.",
+        "notes": "국왕의 최고 보좌관. 행정과 재정 총괄. 귀족과 왕 사이에서 줄타기.\n[호칭 규칙 - 서양식]\n- 타인(귀족/신하) → 재상: '각하 (Your Excellency)' 또는 '재상님 (My Lord Chancellor)'\n- 재상 → 국왕: '폐하 (Your Majesty)'\n- 재상 → 대공: '각하 (Your Grace)'\n- 하인 → 재상: '각하 (My Lord)'\n- 자신(재상)을 지칭할 때: '소신 (I)' 또는 '본인'"
+      },
+      "position": {
+        "x": 85.54165316566818,
+        "y": 827.4894385222868
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KING_06",
+        "label": "왕실 비서관",
+        "color": "#8e44ad",
+        "group": "왕실",
+        "class": "전문 비밀록 보관인",
+        "level": "5",
+        "alignment": "질서 선",
+        "secret": "사실 조화의 수호자(하퍼스)의 핵심 첩자로, 모든 왕명을 이중으로 기록하고 있다.",
+        "goal": "국왕을 보호하고, 조화의 수호자에게 귀족들의 음모를 폭로한다.",
+        "notes": "왕명 문서화, 외교 서신 담당. 정보의 핵심으로 문서 위조와 은닉 가능.\n[호칭 규칙 - 서양식]\n- 타인(귀족) → 비서관: '비서관님 (Secretary)' 또는 '서기관님'\n- 비서관 → 국왕: '폐하 (Your Majesty)'\n- 비서관 → 재상: '각하 (Your Excellency)'\n- 자신(비서관)을 지칭할 때: '말료 (I)' 또는 '본인'"
+      },
+      "position": {
+        "x": 439.04166887169566,
+        "y": 1209.4794398712986
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "NOB_01",
+        "label": "대공 (공작)",
+        "color": "#c0392b",
+        "group": "귀족",
+        "class": "속임수의 달인 (로그)",
+        "level": "14",
+        "alignment": "중립 악",
+        "secret": "붉은 파멸의 화신(티아마트)과 비밀 회동을 갖고, 왕국 분할을 약속받았다.",
+        "goal": "국왕을 암살하고, 용의 힘을 빌려 새로운 왕조를 연다.",
+        "notes": "왕 다음가는 최고 귀족. 넓은 영지와 사병 보유. 왕위를 노릴 수 있는 유일한 경쟁자.\n[호칭 규칙 - 서양식]\n- 타인(하급 귀족/신하) → 대공: '각하 (Your Grace)' 또는 '대공 각하 (My Lord Duke)'\n- 대공 → 국왕: '폐하 (Your Majesty)'\n- 대공 → 공작부인: '부인 (My Lady)' 또는 '당신'\n- 하인 → 대공: '각하 (My Lord)' 또는 '마스터 (Master)'\n- 자신(대공)을 지칭할 때: '본작 (I)' 또는 '나'"
+      },
+      "position": {
+        "x": -293.193444904445,
+        "y": 838.801679505877
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "NOB_02",
+        "label": "후작 (변경백)",
+        "color": "#c0392b",
+        "group": "귀족",
+        "class": "국경 수호자 (파이터)",
+        "level": "10",
+        "alignment": "질서 선",
+        "secret": "피의 도끼 대족장의 습격을 막기 위해, 산 아래 군주에게 무기를 빚으로 사들였다.",
+        "goal": "변경을 사수하고, 중앙 귀족들의 무관심 속에서 독자적인 군사력을 키운다.",
+        "notes": "변경(국경) 수비 책임자. 변방의 강력한 군사력 보유. 중앙 귀족과 갈등.\n[호칭 규칙 - 서양식]\n- 타인(하급 귀족) → 후작: '각하 (My Lord Marquess)' 또는 'Your Lordship'\n- 후작 → 대공: '각하 (Your Grace)'\n- 후작 → 국왕: '폐하 (Your Majesty)'\n- 하인 → 후작: '각하 (My Lord)'\n- 자신(후작)을 지칭할 때: '본작 (I)'"
+      },
+      "position": {
+        "x": -222.7779376549353,
+        "y": 664.3373720412297
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "NOB_03",
+        "label": "백작",
+        "color": "#c0392b",
+        "group": "귀족",
+        "class": "영지 관리자 (파이터/행정가)",
+        "level": "7",
+        "alignment": "질서 중립",
+        "secret": "에메랄드 수호회와 비밀리에 협약하여, 영지 내 숲을 베지 않는 대가로 드루이드의 도움을 받는다.",
+        "goal": "영지 내 농민 반란을 진압하고, 대공과 후작 사이에서 중립을 유지한다.",
+        "notes": "행정과 사법권을 가진 핵심 귀족. 영지 내 농민 직접 지배.\n[호칭 규칙 - 서양식]\n- 타인(농민/하급 귀족) → 백작: '각하 (My Lord)' 또는 '백작님 (My Lord Count)'\n- 백작 → 대공: '각하 (Your Grace)'\n- 백작 → 후작: '각하 (Your Lordship)'\n- 하인 → 백작: '각하 (My Lord)'\n- 자신(백작)을 지칭할 때: '본작 (I)' 또는 '나'"
+      },
+      "position": {
+        "x": -148.2961653050768,
+        "y": 298.5638594076032
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "NOB_04",
+        "label": "자작",
+        "color": "#c0392b",
+        "group": "귀족",
+        "class": "소영주 (파이터)",
+        "level": "5",
+        "alignment": "중립 선",
+        "secret": "백작의 명령을 따르는 척 하지만, 사실 반란군 두목에게 몰래 식량을 지원 중이다.",
+        "goal": "가난한 영지를 살리기 위해 세금을 낮추고, 농민들의 신망을 얻는다.",
+        "notes": "백작의 대리인 또는 독립 영주. 소규모 영지와 마을 관리.\n[호칭 규칙 - 서양식]\n- 타인(농민/기사) → 자작: '자작 나리 (My Lord Viscount)' 또는 '나리 (My Lord)'\n- 자작 → 백작: '각하 (My Lord)'\n- 하인 → 자작: '나리 (My Lord)'\n- 자신(자작)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": -105.73005476590254,
+        "y": 439.23676967368596
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "NOB_05",
+        "label": "남작",
+        "color": "#c0392b",
+        "group": "귀족",
+        "class": "최하위 봉건 군주",
+        "level": "4",
+        "alignment": "혼돈 중립",
+        "secret": "가난을 견디다 못해, 도적단에게 자신의 영지 일부를 세놓고 수익을 나누고 있다.",
+        "goal": "최소한의 기사단을 유지하고, 어떻게든 영지를 확장할 구실을 찾는다.",
+        "notes": "최하위 귀족. 기사들을 거느리는 봉건적 군주. 가난한 영지로 고민.\n[호칭 규칙 - 서양식]\n- 타인(농민/기사) → 남작: '남작 나리 (My Lord Baron)' 또는 '나리 (My Lord)'\n- 남작 → 자작: '자작 각하 (My Lord)'\n- 하인 → 남작: '나리 (My Lord)'\n- 자신(남작)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": -67.82715255993719,
+        "y": 521.573468503788
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "NOB_06",
+        "label": "기사 (영지 기사)",
+        "color": "#c0392b",
+        "group": "귀족",
+        "class": "중장갑 기병",
+        "level": "3",
+        "alignment": "질서 선",
+        "secret": "남작에게 충성하지만, 사실 왕실 기사단장에게 더 많은 급료를 제안받고 갈등 중이다.",
+        "goal": "명예를 지키면서도 생계를 유지할 수 있는 주군을 찾는다.",
+        "notes": "귀족의 최하위 계급이자 군사 계급. 영주에게 충성 서약.\n[호칭 규칙 - 서양식]\n- 타인(농민/하인) → 기사: '기사님 (Sir)' 또는 '경 (Sir)'\n- 기사 → 남작/영주: '나리 (My Lord)' 또는 '주군님 (Master)'\n- 기사 → 상급 기사: '경 (Sir)'\n- 자신(기사)을 지칭할 때: '소인 (I)' 또는 '본인'"
+      },
+      "position": {
+        "x": -11.193504072079563,
+        "y": 606.308450759437
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "NOB_07",
+        "label": "국경 백작",
+        "color": "#c0392b",
+        "group": "귀족",
+        "class": "전략가 / 외교관",
+        "level": "8",
+        "alignment": "질서 중립",
+        "secret": "오크와 드워프 국경에서 실질적인 접촉을 담당하며, 대공과 숲 왕 사이에서 이중 외교를 펼친다.",
+        "goal": "변경백의 명령을 수행하면서도, 자신의 영지와 가문을 보호하기 위해 독자적인 외교 노선을 구축한다.",
+        "notes": "변경백(NOB_02)의 직속 부하. 국경 지역의 실질적 통치자.\n[호칭 규칙 - 서양식]\n- 타인 → 국경 백작: '각하 (My Lord)' 또는 '백작님'\n- 국경 백작 → 변경백: '각하 (Your Grace)'\n- 자신(국경 백작)을 지칭할 때: '본작 (I)'"
+      },
+      "position": {
+        "x": -502.79661958879586,
+        "y": 846.8174122349917
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHU_01",
+        "label": "대주교 (교황)",
+        "color": "#2980b9",
+        "group": "교회",
+        "class": "태양 성직자 (클레릭)",
+        "level": "16",
+        "alignment": "질서 선",
+        "secret": "교황청 내부에 혼돈의 악마 대공이 심은 타락한 사제가 잠입해 있음을 알지만, 누군지 특정하지 못한다.",
+        "goal": "망자의 군주(리치)를 토벌하고, 교회의 순수성을 되찾아 왕권을 견제한다.",
+        "notes": "종교 최고 지도자. 왕관을 씌우는 권한(왕권 신수설). 교회법과 십일조 관리.\n[호칭 규칙 - 서양식]\n- 타인(모든 신자/귀족) → 대주교: '성하 (Your Holiness)' 또는 '대주교님 (Holy Father)'\n- 대주교 → 국왕: '폐하 (Your Majesty)' (왕과 동등한 서열로 대함)\n- 대주교 → 주교: '주교님 (My Lord Bishop)' 또는 '그대'\n- 하인(수사) → 대주교: '성하 (Your Holiness)'\n- 자신(대주교)을 지칭할 때: '본좌 (I)' 또는 '나'"
+      },
+      "position": {
+        "x": 361.5522664441783,
+        "y": 462.41265713844035
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHU_02",
+        "label": "주교",
+        "color": "#2980b9",
+        "group": "교회",
+        "class": "고위 성직자",
+        "level": "10",
+        "alignment": "질서 중립",
+        "secret": "대주교를 능가하려는 야심을 품고, 변경백과 손잡고 교회령을 확장하려 한다.",
+        "goal": "대도시 교구를 장악하고, 귀족 회의에서 교회의 정치적 발언권을 강화한다.",
+        "notes": "대도시 관할 교구장. 귀족 회의에 참석하여 정치적 영향력 행사.\n[호칭 규칙 - 서양식]\n- 타인(사제/신자) → 주교: '주교님 (My Lord Bishop)' 또는 'Your Lordship'\n- 주교 → 대주교: '성하 (Your Holiness)'\n- 주교 → 사제: '신부님 (Father)' 또는 '그대'\n- 하인 → 주교: '주교님 (My Lord)'\n- 자신(주교)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 645.809781649239,
+        "y": 276.53848011695595
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHU_03",
+        "label": "사제 (신부)",
+        "color": "#2980b9",
+        "group": "교회",
+        "class": "마을 사목자",
+        "level": "4",
+        "alignment": "질서 선",
+        "secret": "매주 밤, 마을 장로와 함께 에메랄드 수호회의 드루이드와 비밀 회합을 갖는다.",
+        "goal": "농민들의 고해를 듣고, 마을을 재해와 괴물로부터 보호한다.",
+        "notes": "마을 교회 책임자. 농민의 고해성사와 세례. 마을의 유일한 지식인.\n[호칭 규칙 - 서양식]\n- 타인(농민/신자) → 사제: '신부님 (Father)' 또는 '(이름) 신부님'\n- 사제 → 주교: '주교님 (My Lord Bishop)'\n- 사제 → 농민: '그대 (You)' 또는 '내 아들딸들'\n- 자신(사제)을 지칭할 때: '소인 (I)' 또는 '본인'"
+      },
+      "position": {
+        "x": 370.4566762679637,
+        "y": 237.9372175164169
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHU_04",
+        "label": "수도사 / 수녀",
+        "color": "#2980b9",
+        "group": "교회",
+        "class": "학자 / 약초사",
+        "level": "3",
+        "alignment": "완전 중립",
+        "secret": "수도원 지하에 고대 거인의 유물을 발굴했으나, 교황청에 보고하지 않고 은닉했다.",
+        "goal": "고문서와 의술을 보존하고, 외부의 침입으로부터 수도원을 지킨다.",
+        "notes": "수도원 생활을 통해 학문과 의술 보존. 고문서와 약초 지식 보유.\n[추가] 매일 새벽 3시(마틴)에 일어나 기도하는 것이 수도원의 규칙이다. 이 시간이 하루 중 가장 엄숙하다.\n[호칭 규칙 - 서양식]\n- 타인(신자) → 수도사/수녀: '수사님 (Brother)' 또는 '수녀님 (Sister)'\n- 수도사 → 대주교: '성하 (Your Holiness)'\n- 수도사 → 사제: '신부님 (Father)'\n- 자신(수도사)을 지칭할 때: '소승 (I)'"
+      },
+      "position": {
+        "x": 17.452769087198945,
+        "y": -25.188172020986286
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHU_05",
+        "label": "이단심문관",
+        "color": "#2980b9",
+        "group": "교회",
+        "class": "신성 심판관 (인퀴지터)",
+        "level": "12",
+        "alignment": "혼돈 선 (점차 타락 중)",
+        "secret": "혼돈의 악마 대공(그라즈트)이 꿈에 나타나, 대주교가 사실 이단이라고 세뇌당했다.",
+        "goal": "모든 마법사와 이교도를 색출하여 화형에 처하지만, 점차 악마의 손에 놀아나고 있다.",
+        "notes": "교회의 무력 조직. 마법사, 이교도, 마녀를 색출하고 소각.\n[호칭 규칙 - 서양식]\n- 타인(사제/신자) → 이단심문관: '심문관님 (Inquisitor)' 또는 '각하 (My Lord Inquisitor)'\n- 이단심문관 → 대주교: '성하 (Your Holiness)' (공식), (뒤에서는) '저 늙은이'\n- 이단심문관 → 마법사: '이단자 (Heretic)' 또는 '저주받은 자'\n- 자신(심문관)을 지칭할 때: '본관 (I)'"
+      },
+      "position": {
+        "x": 923.101191925262,
+        "y": 436.34967060853256
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHU_06",
+        "label": "순회 사제",
+        "color": "#2980b9",
+        "group": "교회",
+        "class": "선교사 / 정보 수집자",
+        "level": "6",
+        "alignment": "질서 선 (위장)",
+        "secret": "대주교의 명령으로 전국을 돌며 이단과 마법사의 동향을 보고하지만, 사실 조화의 수호자(하퍼스)의 이중 첩자다.",
+        "goal": "교회와 하퍼스 양측에 정보를 제공하며, 종교적 긴장을 완화시키는 중재자 역할을 한다.",
+        "notes": "전국을 순회하는 떠돌이 사제. 많은 정보를 접하지만 정체를 숨긴다.\n[호칭 규칙 - 서양식]\n- 타인 → 순회 사제: '신부님 (Father)' 또는 '순회 사제님'\n- 순회 사제 → 대주교: '성하 (Your Holiness)'\n- 자신(순회 사제)을 지칭할 때: '소인 (I)'"
+      },
+      "position": {
+        "x": 633.724617751797,
+        "y": 1283.9882941407805
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MAG_01",
+        "label": "마법사 협회장",
+        "color": "#8e44ad",
+        "group": "마법사",
+        "class": "예언 마법사 (위저드)",
+        "level": "18",
+        "alignment": "완전 중립",
+        "secret": "마법의 여신(미스트라)으로부터 붉은 마법사단의 침공을 꿈으로 예언받았다.",
+        "goal": "어떤 대가를 치르더라도 마법 도서관의 금서를 지키고, 협회의 독립성을 유지한다.",
+        "notes": "마법사 협회 최고 권력자. 마법 사용 허가와 금지령(금서 목록) 통제.\n[호칭 규칙 - 서양식]\n- 타인(마법사/귀족) → 협회장: '협회장님 (Archmage)' 또는 '원로님 (Grand Master)'\n- 협회장 → 국왕: '폐하 (Your Majesty)'\n- 협회장 → 대마법사: '제자 (My Apprentice)' 또는 '그대'\n- 하인 → 협회장: '마스터 (Master)' 또는 '원로님'\n- 자신(협회장)을 지칭할 때: '본회장 (I)'"
+      },
+      "position": {
+        "x": 477.6873092009205,
+        "y": 757.1788700392718
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MAG_02",
+        "label": "왕실 마법사",
+        "color": "#8e44ad",
+        "group": "마법사",
+        "class": "방어 마법사 (위저드)",
+        "level": "11",
+        "alignment": "질서 중립",
+        "secret": "그의 증조할아버지가 바로 타이의 붉은 마법사단 창립 멤버였다.",
+        "goal": "국왕을 지키고, 왕실에 대한 흑마법 공격을 탐지 및 차단한다.",
+        "notes": "국왕 직속 고문. 왕실의 마법 방어와 흑마법 탐지.\n[호칭 규칙 - 서양식]\n- 타인(귀족/신하) → 왕실 마법사: '마법사님 (Court Mage)' 또는 '고문님 (Advisor)'\n- 왕실 마법사 → 국왕: '폐하 (Your Majesty)'\n- 왕실 마법사 → 협회장: '원로님 (Grand Master)'\n- 자신(왕실 마법사)을 지칭할 때: '본인 (I)' 또는 '신'"
+      },
+      "position": {
+        "x": 437.30398118454383,
+        "y": 880.4724337124375
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MAG_03",
+        "label": "대마법사",
+        "color": "#8e44ad",
+        "group": "마법사",
+        "class": "원소 마법 대가 (위저드)",
+        "level": "15",
+        "alignment": "혼돈 중립",
+        "secret": "협회장의 예언을 의심하고, 오히려 붉은 마법사단과 손잡을 생각을 품고 있다.",
+        "goal": "협회 이사회를 장악하고, 금지된 마법 연구를 재개한다.",
+        "notes": "특정 마법 계통(원소, 환영, 신성)의 최고 권위자. 협회 이사회 멤버.\n[호칭 규칙 - 서양식]\n- 타인(하급 마법사) → 대마법사: '대마법사님 (Archmage)' 또는 '스승님 (Master)'\n- 대마법사 → 협회장: '원로님 (Grand Master)'\n- 대마법사 → 제자: '제자 (My pupil)' 또는 '너'\n- 자신(대마법사)을 지칭할 때: '본좌 (I)'"
+      },
+      "position": {
+        "x": 806.6057975707355,
+        "y": 854.935722133994
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MAG_04",
+        "label": "마법사",
+        "color": "#8e44ad",
+        "group": "마법사",
+        "class": "연구 및 전투 마법사",
+        "level": "7",
+        "alignment": "질서 선",
+        "secret": "이단심문관에게 쫓기던 중, 마법사 협회 대신 에메랄드 수호회에 은신해 있다.",
+        "goal": "협회의 규율과 개인의 연구 자유 사이에서 균형을 찾는다.",
+        "notes": "각 마법 계통의 연구자. 학자이자 전투원. 협회의 규율과 자유 사이 갈등.\n[호칭 규칙 - 서양식]\n- 타인(일반인) → 마법사: '마법사님 (Mage)' 또는 '학자님'\n- 마법사 → 대마법사: '스승님 (Master)' 또는 '대마법사님'\n- 자신(마법사)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 984.7542164277294,
+        "y": 654.5765425060729
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MAG_05",
+        "label": "연금술사",
+        "color": "#8e44ad",
+        "group": "마법사",
+        "class": "물질 변환가",
+        "level": "8",
+        "alignment": "완전 중립",
+        "secret": "현자의 돌 제조에 거의 성공했으나, 마지막 재료로 용의 심장이 필요하다.",
+        "goal": "현자의 돌을 완성해 금속을 변환하고 불로장생을 얻는다.",
+        "notes": "물질 변환과 약초학 전문. '현자의 돌'을 꿈꾸며 금속 변환 연구.\n[호칭 규칙 - 서양식]\n- 타인 → 연금술사: '연금술사님 (Alchemist)' 또는 '박사님 (Doctor)'\n- 연금술사 → 협회장: '원로님 (Grand Master)'\n- 자신(연금술사)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 1003.2106515467195,
+        "y": 837.9480781850145
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MAG_06",
+        "label": "마도서 보관관",
+        "color": "#8e44ad",
+        "group": "마법사",
+        "class": "금서 사서 (위저드)",
+        "level": "9",
+        "alignment": "질서 선",
+        "secret": "도서관 지하最深部에 티아마트의 비늘로 만든 '세계 파괴서'를 숨기고 있다.",
+        "goal": "금서(블랙 스크롤)를 감시하고, 타이의 붉은 마법사단의 침입으로부터 도서관을 사수한다.",
+        "notes": "마법 도서관 관장. 금서(블랙 스크롤)를 보관하고 감시.\n[호칭 규칙 - 서양식]\n- 타인(마법사) → 보관관: '관장님 (Curator)' 또는 '사서님 (Librarian)'\n- 보관관 → 협회장: '원로님 (Grand Master)'\n- 자신(보관관)을 지칭할 때: '본관 (I)'"
+      },
+      "position": {
+        "x": 571.2659209977446,
+        "y": 659.8240835319805
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MAG_07",
+        "label": "부적 제조사",
+        "color": "#8e44ad",
+        "group": "마법사",
+        "class": "마법 물품 장인",
+        "level": "7",
+        "alignment": "완전 중립",
+        "secret": "마법사 협회와 상인 조합 사이에서 중립을 지키며, 검은 그물단의 접근을 받고 있다.",
+        "goal": "마법 아이템 제조를 통해 생계를 유지하고, 양측에 균형 있게 납품하여 위기를 피한다.",
+        "notes": "마법 부적, 반지, 무기를 제작하는 장인. 협회 등록 마법사.\n[호칭 규칙 - 서양식]\n- 타인 → 부적 제조사: '장인님 (Artificer)' 또는 '제조사님'\n- 부적 제조사 → 협회장: '원로님 (Grand Master)'\n- 자신(부적 제조사)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 450.07275656458,
+        "y": 1348.5858265758616
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MIL_01",
+        "label": "기사단장",
+        "color": "#27ae60",
+        "group": "군대",
+        "class": "수호 성기사 (팔라딘)",
+        "level": "15",
+        "alignment": "질서 선",
+        "secret": "그의 가문은 수백 년 전 붉은 파멸의 화신에게 맹세를 바친 '용의 기사단' 후예다.",
+        "goal": "국왕을 호위하고, 붉은 용이 깨어날 경우 성검으로 맞서기 위해 신성한 힘을 모은다.",
+        "notes": "국왕 직속 친위대 또는 성기사단의 수장. 명예와 충성 사이 갈등.\n[호칭 규칙 - 서양식]\n- 타인(기사/병사) → 기사단장: '사령관님 (Commander)' 또는 '단장님 (Lord Commander)'\n- 기사단장 → 국왕: '폐하 (Your Majesty)'\n- 기사단장 → 부하 기사: '경 (Sir)' 또는 '그대'\n- 자신(기사단장)을 지칭할 때: '본장 (I)'"
+      },
+      "position": {
+        "x": 25.988501776238614,
+        "y": 721.4794387615013
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MIL_02",
+        "label": "용병대장",
+        "color": "#27ae60",
+        "group": "군대",
+        "class": "야만 전사 (바바리안)",
+        "level": "9",
+        "alignment": "혼돈 중립",
+        "secret": "피의 도끼 대족장과는 피로 맺은 형제 관계이며, 한쪽이 위기에 빠지면 도와주기로 했다.",
+        "goal": "가장 많은 돈을 주는 의뢰인에게 충성하며, 전쟁이 끝나지 않도록 전국에 분쟁을 유지한다.",
+        "notes": "돈을 받고 전투하는 용병 집단의 우두머리. 배신과 충성 사이에서 생존.\n[호칭 규칙 - 서양식]\n- 타인(부하 용병) → 용병대장: '대장님 (Captain)' 또는 '우두머리님 (Boss)'\n- 용병대장 → 의뢰인(귀족): '각하 (My Lord)'\n- 용병대장 → 부하: '너 (You)' 또는 '병사 (Soldier)'\n- 자신(용병대장)을 지칭할 때: '본장 (I)' 또는 '나'"
+      },
+      "position": {
+        "x": 181.58316021179598,
+        "y": 453.0130105050195
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MIL_03",
+        "label": "분대장 (중위급)",
+        "color": "#27ae60",
+        "group": "군대",
+        "class": "전술 지휘관 (파이터)",
+        "level": "5",
+        "alignment": "질서 중립",
+        "secret": "병사들의 급료를 착복하여, 그 돈으로 도망친 농노 가족을 뒷돈으로 돌려보내고 있다.",
+        "goal": "전술 단위를 지휘하고, 병사들의 생존률을 높여 전공을 세운다.",
+        "notes": "전술 단위 지휘. 병사들의 생사와 급여를 책임.\n[호칭 규칙 - 서양식]\n- 타인(징집병) → 분대장: '대장님 (Sergeant)' 또는 '지휘관님 (Captain)'\n- 분대장 → 기사단장: '사령관님 (Commander)'\n- 분대장 → 징집병: '병사 (Soldier)' 또는 '너'\n- 자신(분대장)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 1414.679982270941,
+        "y": 838.0217004693733
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MIL_04",
+        "label": "징집병 (창병/궁병)",
+        "color": "#27ae60",
+        "group": "군대",
+        "class": "최하위 전투원",
+        "level": "1",
+        "alignment": "혼돈 선",
+        "secret": "처음으로 적을 죽인 밤, 가족에게 보내는 편지에 거짓말을 썼다.",
+        "goal": "전장에서 살아남아 고향으로 돌아가 가족의 빚을 갚는다.",
+        "notes": "최하위 전투원. 대부분 농민 출신. 전장에서 살아남기 위해 도망침.\n[호칭 규칙 - 서양식]\n- 타인(상관) → 징집병: '병사 (Soldier)' 또는 '너'\n- 징집병 → 분대장: '대장님 (Captain)'\n- 자신(징집병)을 지칭할 때: '소인 (I)'"
+      },
+      "position": {
+        "x": 1518.3141530871778,
+        "y": 736.8640958294415
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MER_01",
+        "label": "상인 조합장",
+        "color": "#f39c12",
+        "group": "상인",
+        "class": "독점 자본가 (로그)",
+        "level": "9",
+        "alignment": "절대 중립",
+        "secret": "대금고를 통해 지옥의 대공과 연결되어 있으며, 전쟁이 발발하면 무기 값을 3배로 올리기로 했다.",
+        "goal": "도시 경제를 완전히 장악하고, 귀족과 왕실 모두를 자신의 빚노예로 만든다.",
+        "notes": "도시 최대 상인 길드 수장. 사실상 도시 경제를 좌우.\n[호칭 규칙 - 서양식]\n- 타인(상인/시민) → 조합장: '조합장님 (Guildmaster)' 또는 '거두님 (Master)'\n- 조합장 → 귀족: '각하 (My Lord)'\n- 조합장 → 하인: '너 (You)'\n- 자신(조합장)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": -324.58164195645367,
+        "y": 1367.0641750172401
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MER_02",
+        "label": "대금고 (은행가)",
+        "color": "#f39c12",
+        "group": "상인",
+        "class": "국제 사채업자",
+        "level": "7",
+        "alignment": "질서 악",
+        "secret": "지옥의 대공(메피스토펠레스)과 영혼 계약을 체결해, 국가 부채를 지옥불 증서로 전환했다.",
+        "goal": "왕실을 파산시켜 모든 영지와 자산을 담보로 인수한다.",
+        "notes": "왕실이나 귀족에게 자금을 대출하는 거대 자본가.\n[호칭 규칙 - 서양식]\n- 타인(채무자) → 대금고: '금고주님 (Banker)' 또는 '주인님 (Master)'\n- 대금고 → 국왕: '폐하 (Your Majesty)'\n- 대금고 → 하인: '너 (You)'\n- 자신(대금고)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 268.7894254150203,
+        "y": 1432.0798206632273
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MER_03",
+        "label": "길드 마스터",
+        "color": "#f39c12",
+        "group": "상인",
+        "class": "직업별 조합 수장",
+        "level": "4",
+        "alignment": "질서 중립",
+        "secret": "대장간 지하에 비밀 무기 제조 공장을 운영하며, 반란군에게도 무기를 납품한다.",
+        "goal": "조합원들의 생계를 보호하고, 상인 조합장의 횡포에서 길드를 지킨다.",
+        "notes": "대장장이, 직조공 등 각 직업별 조합의 장.\n[호칭 규칙 - 서양식]\n- 타인(조합원) → 길드 마스터: '마스터님 (Master)' 또는 '길드장님'\n- 길드 마스터 → 상인 조합장: '조합장님 (Guildmaster)'\n- 자신(길드 마스터)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": -260.22859638128773,
+        "y": 1538.4110320356763
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MER_04",
+        "label": "여관주인",
+        "color": "#f39c12",
+        "group": "상인",
+        "class": "정보 중개인 (로그)",
+        "level": "6",
+        "alignment": "혼돈 중립",
+        "secret": "발 밑의 그림자 우두머리(하플링)의 직속 정보원이며, 동시에 조화의 수호자에게도 정보를 판다.",
+        "goal": "소문을 가장 비싸게 파는 쪽에 팔아 넘기며, 전대륙의 정보망을 장악한다.",
+        "notes": "정보의 집결지. 소문을 모아 귀족이나 모험가에게 정보 판매.\n[호칭 규칙 - 서양식]\n- 타인(손님/정보원) → 여관주인: '주모님 (Innkeeper)' 또는 '주인장님 (Host)'\n- 여관주인 → 귀족 손님: '각하 (My Lord)'\n- 여관주인 → 하인: '너 (You)'\n- 자신(여관주인)을 지칭할 때: '소인 (I)'"
+      },
+      "position": {
+        "x": 799.6978518411568,
+        "y": 1008.8288439709153
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PEA_01",
+        "label": "마을 장로",
+        "color": "#f1c40f",
+        "group": "농민",
+        "class": "농민 대표 (전직 하사관)",
+        "level": "3",
+        "alignment": "질서 선",
+        "secret": "에메랄드 수호회와 손잡고, 백작의 삼림 벌채를 막는 대신 드루이드의 보호를 받는다.",
+        "goal": "영주와 농민 사이에서 중재하며, 마을이 기근과 전쟁에서 살아남게 한다.",
+        "notes": "영지 내 마을의 대표자. 귀족(영주)과 농민 사이의 중재자.\n[호칭 규칙 - 서양식]\n- 타인(농민) → 마을 장로: '장로님 (Elder)' 또는 '대표님'\n- 장로 → 백작: '각하 (My Lord)'\n- 장로 → 농민: '그대 (You)' 또는 '내 동지'\n- 자신(장로)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 167.6710387303391,
+        "y": 290.5309400132808
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PEA_02",
+        "label": "자유민",
+        "color": "#f1c40f",
+        "group": "농민",
+        "class": "도시 상인 / 수공업자",
+        "level": "2",
+        "alignment": "혼돈 선",
+        "secret": "상인 조합장의 독점을 깨기 위해, 암시장 상인과 직접 거래하고 있다.",
+        "goal": "길드의 족쇄에서 벗어나 독립적인 장사로 부를 축적한다.",
+        "notes": "영주에 종속되지 않은 자유로운 시민(도시 상인, 수공업자).\n[호칭 규칙 - 서양식]\n- 타인(시민) → 자유민: '상인님 (Merchant)' 또는 '그대'\n- 자유민 → 상인 조합장: '조합장님 (Guildmaster)'\n- 자신(자유민)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": -587.5608760024714,
+        "y": 1380.2746516761863
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PEA_03",
+        "label": "농노 (노비)",
+        "color": "#f1c40f",
+        "group": "농민",
+        "class": "최하층 예속민",
+        "level": "0",
+        "alignment": "혼돈 중립",
+        "secret": "반란군 두목의 선동을 받아들여, 다음 수확철에 영주 성을 불태울 계획을 짜고 있다.",
+        "goal": "가족과 함께 자유를 얻어 도망가 도적이 되거나, 새로운 땅에서 생존한다.",
+        "notes": "영주에게 완전히 종속된 최하층. 땅과 함께 매매됨.\n[호칭 규칙 - 서양식]\n- 타인(영주/상인) → 농노: '노비 (Serf)' 또는 '너'\n- 농노 → 영주: '각하 (My Lord)' 또는 '주인님 (Master)'\n- 농노 → 반란군 두목: '두목님'\n- 자신(농노)을 지칭할 때: '소인 (I)'"
+      },
+      "position": {
+        "x": -738.0374723997339,
+        "y": 624.7103658730675
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PEA_04",
+        "label": "도적 (산적)",
+        "color": "#f1c40f",
+        "group": "농민",
+        "class": "법 밖의 무법자 (로그)",
+        "level": "3",
+        "alignment": "혼돈 악",
+        "secret": "사실 반란군 두목에게 고용된 정찰병이며, 자신이 약탈한 물품의 3할을 반란군에 바친다.",
+        "goal": "생존을 위해 약탈하고, 기회가 되면 암살이나 밀수로 큰돈을 번다.",
+        "notes": "법 밖의 자유인. 생존을 위해 약탈하거나 밀수·암살 대행.\n[호칭 규칙 - 서양식]\n- 타인(농민/상인) → 도적: '도적놈 (Bandit)' 또는 '산적'\n- 도적 → 반란군 두목: '두목님 (Boss)'\n- 도적 → 동료: '형제 (Brother)' 또는 '너'\n- 자신(도적)을 지칭할 때: '나 (I)'"
+      },
+      "position": {
+        "x": -677.439324938817,
+        "y": 462.05167999728803
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PEA_05",
+        "label": "방랑 예술가",
+        "color": "#f1c40f",
+        "group": "농민",
+        "class": "음유시인 / 정보 수집가",
+        "level": "3",
+        "alignment": "혼돈 중립",
+        "secret": "모든 여관주인의 친구이며, 조화의 수호자(하퍼스)의 비공식 정보원이다.",
+        "goal": "노래와 이야기로 생계를 유지하며, 전국에서 가장 빠른 소식을 전한다.",
+        "notes": "성과 마을을 돌며 노래를 파는 떠돌이 악사. 많은 정보를 접하지만 위험을 피한다.\n[호칭 규칙 - 서양식]\n- 타인 → 방랑 예술가: '음유시인님 (Bard)' 또는 '악사님'\n- 방랑 예술가 → 여관주인: '주인장님 (Host)'\n- 자신(방랑 예술가)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 738.0399717110869,
+        "y": 1203.3332075885733
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DARK_01",
+        "label": "암살자 협회장",
+        "color": "#2c3e50",
+        "group": "암흑세력",
+        "class": "암살의 대가 (로그)",
+        "level": "15",
+        "alignment": "중립 악",
+        "secret": "사실 그는 수년 전 이더 두뇌에게 정신 지배당한 꼭두각시일 뿐이다.",
+        "goal": "모든 암살 의뢰를 성공시키고, 뒷세계의 절대 군주로 군림한다 (하지만 실제로는 두뇌의 명령을 따른다).",
+        "notes": "뒷세계를 지배하는 암살 조직의 수장. 귀족 의뢰로 정치적 암살 주선.\n[호칭 규칙 - 서양식]\n- 타인(부하 암살자) → 협회장: '두목님 (Master)' 또는 '우두머리님 (Boss)'\n- 협회장 → 귀족 의뢰인: '각하 (My Lord)'\n- 협회장 → 부하: '암살자 (Assassin)' 또는 '너'\n- 노예 → 협회장: '마이 오너 (My Owner)' (완전한 소유를 강조)\n- 자신(협회장)을 지칭할 때: '본좌 (I)'"
+      },
+      "position": {
+        "x": -135.70023750423667,
+        "y": 1059.508718158274
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DARK_02",
+        "label": "흑마법사",
+        "color": "#2c3e50",
+        "group": "암흑세력",
+        "class": "망령 소환사 (워록)",
+        "level": "9",
+        "alignment": "혼돈 악",
+        "secret": "망자의 군주(리치)에게 직접 스승으로 삼아, 언데드 군단을 소환하는 비술을 배웠다.",
+        "goal": "마법사 협회를 전복하고, 이단심문관에게 복수하여 자유롭게 흑마법을 연구한다.",
+        "notes": "금지된 마법(망령, 언데드)을 연구하는 추종자. 마법사 협회와 이단심문관에 쫓김.\n[호칭 규칙 - 서양식]\n- 타인(추종자) → 흑마법사: '흑마법사님 (Dark Mage)' 또는 '스승님 (Master)'\n- 흑마법사 → 망자의 군주: '주인님 (My Master)'\n- 자신(흑마법사)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 711.5472116938854,
+        "y": 671.6830218055198
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DARK_03",
+        "label": "반란군 두목",
+        "color": "#2c3e50",
+        "group": "암흑세력",
+        "class": "혁명가 (파이터)",
+        "level": "8",
+        "alignment": "혼돈 선",
+        "secret": "현 왕조를 무너뜨리기 위해, 피의 도끼 대족장과 임시 동맹을 맺었지만, 그들이 약탈을 멈추지 않아 고민이다.",
+        "goal": "왕정을 타도하고, 모든 농민이 자유로운 공화국을 세운다.",
+        "notes": "현 왕조에 반기를 든 혁명군 또는 전직 귀족. 이상과 현실 사이 갈등.\n[호칭 규칙 - 서양식]\n- 타인(반란군/농민) → 두목: '두목님 (Commander)' 또는 '동지 (Comrade)'\n- 두목 → 국왕: '폐하' (조롱조로), 또는 '폭군'\n- 두목 → 부하: '동지 (Comrade)' 또는 '자네'\n- 자신(두목)을 지칭할 때: '나 (I)' 또는 '본좌'"
+      },
+      "position": {
+        "x": -456.0288664388171,
+        "y": 493.8950353119569
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DARK_04",
+        "label": "암시장 상인",
+        "color": "#2c3e50",
+        "group": "암흑세력",
+        "class": "밀수업자 (로그)",
+        "level": "5",
+        "alignment": "중립 악",
+        "secret": "검은 그물단의 하부 조직원으로, 여관주인에게 받은 정보로 귀족들의 약점을 잡아 협박한다.",
+        "goal": "불법 무기, 독, 마법 물품 거래를 독점하고, 도적 길드와 연계하여 이익을 극대화한다.",
+        "notes": "불법 무기, 독, 마법 물품을 거래. 도적 길드와 연계.\n[호칭 규칙 - 서양식]\n- 타인(고객) → 암시장 상인: '상인님 (Merchant)' 또는 '거래처님'\n- 암시장 상인 → 검은 그물단 상관: '주인님 (Master)'\n- 자신(암시장 상인)을 지칭할 때: '본인 (I)'"
+      },
+      "position": {
+        "x": 934.5405154540198,
+        "y": 1407.7239816113672
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RACE_ELF_01",
+        "label": "실바리스의 숲 왕",
+        "color": "#1abc9c",
+        "group": "종족왕국",
+        "class": "대마법사",
+        "level": "18",
+        "alignment": "질서 중립",
+        "secret": "고대 요정 제국의 유산을 되찾아 인간 왕국을 굴복시키려 한다.",
+        "goal": "인간의 마법사 협회를 해체하고 엘프 중심의 마법 질서를 세운다.",
+        "notes": "수천 년을 산 요정 왕. 인간의 수명을 경멸하지만, 드래곤의 부활을 두려워한다.\n[호칭 규칙 - 서양식]\n- 타인(엘프/인간) → 숲 왕: '폐하 (Your Majesty)' 또는 '숲의 군주님 (My Lord)'\n- 숲 왕 → 인간 국왕: '폐하' (예의상)\n- 자신(숲 왕)을 지칭할 때: '과인 (I)'\n\n\n\n\n\n\n엘프 숲 왕은 인간 마법사들이 마법의 근원을 오용한다고 비판하며, 협회장에게 '인간의 오만'을 꾸짖음.",
+        "image": ""
+      },
+      "position": {
+        "x": -427.583877690886,
+        "y": 1094.3454091706192
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RACE_DWF_01",
+        "label": "산 아래 군주",
+        "color": "#e67e22",
+        "group": "종족왕국",
+        "class": "전쟁 군주",
+        "level": "20",
+        "alignment": "질서 선",
+        "secret": "땅 깊은 곳에서 고대 악마의 봉인이 깨지고 있음을 알고 있다.",
+        "goal": "드워프 왕국을 통일하고, 지하에서 올라오는 언데드 군단을 막는다.",
+        "notes": "미스릴과 아다만타이트를 독점 공급하며, 대공에게 최신 무기를 팔아넘긴다.\n[호칭 규칙 - 서양식]\n- 타인(드워프/인간) → 산 아래 군주: '폐하 (Your Majesty)' 또는 '군주님 (My Lord)'\n- 자신(군주)을 지칭할 때: '나 (I)'"
+      },
+      "position": {
+        "x": -506.49358236338105,
+        "y": 976.6832790385141
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RACE_ORC_01",
+        "label": "피의 도끼 대족장",
+        "color": "#d35400",
+        "group": "종족왕국",
+        "class": "야만 전사",
+        "level": "16",
+        "alignment": "혼돈 악",
+        "secret": "붉은 마법사단에게 타락한 피를 주입받아 더욱 흉폭해졌다.",
+        "goal": "북부 전체를 약탈하고, 인간의 변경백을 처형한 후 자신의 제국을 세운다.",
+        "notes": "용병대장과 밀약을 맺고, 반란군과 임시 동맹을 고려 중이다.\n[호칭 규칙 - 서양식]\n- 타인(오크) → 대족장: '족장님 (Warchief)' 또는 '우두머리님 (Boss)'\n- 자신(대족장)을 지칭할 때: '나 (I)'"
+      },
+      "position": {
+        "x": -514.0478039884825,
+        "y": 700.4649930097048
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RACE_HALF_01",
+        "label": "발 밑의 그림자 우두머리",
+        "color": "#f1c40f",
+        "group": "종족왕국",
+        "class": "암살의 대가",
+        "level": "14",
+        "alignment": "중립 악",
+        "secret": "전 대륙의 여관주인들이 모두 그의 정보원이다.",
+        "goal": "암살자 협회를 장악하고, 왕국 전체의 암시장을 하나로 묶는다.",
+        "notes": "하플링이지만, 그의 정체를 아는 자는 아무도 없다.\n[호칭 규칙 - 서양식]\n- 타인(정보원) → 우두머리: '우두머리님 (Boss)' 또는 '주인님 (Master)'\n- 자신(우두머리)을 지칭할 때: '나 (I)'"
+      },
+      "position": {
+        "x": 1465.4828178368546,
+        "y": 943.4799362758887
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FAC_HARPER_01",
+        "label": "조화의 수호자 (하퍼스)",
+        "color": "#2ecc71",
+        "group": "국제길드",
+        "class": "첩보 & 정보 길드",
+        "level": "???",
+        "alignment": "질서 선",
+        "secret": "국왕의 비서관은 사실 이 길드의 핵심 요원이다.",
+        "goal": "권력의 불균형을 막고, 약한 자들을 보호하기 위해 비밀리에 움직인다.",
+        "notes": "여관주인들과 손잡고 검은 그물단의 자금줄을 끊으려 한다.\n[호칭 규칙 - 서양식]\n- 내부 요원들끼리는 '동지' 또는 코드네임으로 호칭.\n- 외부인은 존재 자체를 모름."
+      },
+      "position": {
+        "x": 564.327426040731,
+        "y": 1112.1495418623613
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FAC_ZENT_01",
+        "label": "검은 그물단 (젠타림)",
+        "color": "#2c3e50",
+        "group": "국제길드",
+        "class": "범죄 & 상업 독점",
+        "level": "???",
+        "alignment": "중립 악",
+        "secret": "대금고의 실제 주인이며, 국왕에게 거액을 빌려준 채권자다.",
+        "goal": "모든 왕국의 경제를 마비시키고, 빚으로 왕관을 사들인다.",
+        "notes": "암시장 상인들을 흡수했으며, 노예와 마약 거래로 엄청난 이익을 본다.\n[호칭 규칙 - 서양식]\n- 상급자 → 하급자: '요원 (Agent)' 또는 '너'\n- 하급자 → 상급자: '주인님 (Master)' 또는 '각하'"
+      },
+      "position": {
+        "x": 657.4784750097282,
+        "y": 1587.0209104820167
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FAC_EMERALD_01",
+        "label": "에메랄드 수호회",
+        "color": "#27ae60",
+        "group": "국제길드",
+        "class": "드루이드 & 자연 길드",
+        "level": "???",
+        "alignment": "완전 중립",
+        "secret": "도시가 확장되는 땅 아래에 고대 정령의 무덤이 있다는 것을 알고 있다.",
+        "goal": "인간의 무분별한 개발을 막고, 자연의 경계선을 복원한다.",
+        "notes": "마을 장로와 수도사를 지원하며, 백작과 날카롭게 대립 중이다.\n[호칭 규칙 - 서양식]\n- 서로를 '형제 (Brother)' 또는 '자매 (Sister)'로 호칭."
+      },
+      "position": {
+        "x": 35.71592457508663,
+        "y": 122.297035295439
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FAC_THAY_01",
+        "label": "타이의 붉은 마법사단",
+        "color": "#8e44ad",
+        "group": "국제길드",
+        "class": "흑마법 & 언데드 군단",
+        "level": "???",
+        "alignment": "혼돈 악",
+        "secret": "왕실 마법사의 가문이 원래 이 마법사단의 분파였다.",
+        "goal": "마법사 협회를 전복하고, 금지된 마법서들을 모두 탈취한다.",
+        "notes": "이단심문관이 추적하는 흑마법사들의 실질적인 본산이다.\n[호칭 규칙 - 서양식]\n- 상급 마법사 → 하급: '제자 (Apprentice)' 또는 '너'\n- 하급 → 상급: '스승님 (Master)' 또는 '대마법사님'"
+      },
+      "position": {
+        "x": 629.823609770178,
+        "y": 502.58277483984574
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MON_DRAGON_01",
+        "label": "붉은 파멸의 화신 (티아마트)",
+        "color": "#c0392b",
+        "group": "재앙급괴물",
+        "class": "고대 붉은 용",
+        "level": "30",
+        "alignment": "혼돈 악",
+        "secret": "대공과 비밀 계약을 맺고, 왕국을 분할하려 한다.",
+        "goal": "모든 인간 도시를 불태우고, 자신의 용 제국을 건설한다.",
+        "notes": "매년 황금 공물을 요구하며, 거절할 경우 수도를 잿더미로 만들겠다고 협박한다.\n[추가] 매년 12월(율의 달)이 되면 국왕에게 황금 공물을 요구한다. 거부 시 수도를 잿더미로 만들겠다고 협박.\n[호칭 규칙 - 서양식]\n- 인간 → 붉은 용: '파멸의 군주 (Destroyer)' 또는 '위대한 용님 (Great Wyrm)'\n- 붉은 용 → 인간: '벌레 (Worm)' 또는 '연기'"
+      },
+      "position": {
+        "x": -79.41901805514384,
+        "y": 937.0470947273685
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MON_DRAGON_02",
+        "label": "은빛 수호 성기사 (바하무트)",
+        "color": "#bdc3c7",
+        "group": "재앙급괴물",
+        "class": "은색 용 / 신성 수호자",
+        "level": "28",
+        "alignment": "질서 선",
+        "secret": "인간의 기사단장에게 신성한 힘을 빌려주고 있다.",
+        "goal": "붉은 파멸의 화신을 봉인하고, 대지의 균형을 되찾는다.",
+        "notes": "국왕에게 붉은 용 토벌을 간청하지만, 정치적 난관에 부딪힌다.\n[호칭 규칙 - 서양식]\n- 인간 → 은빛 용: '성기사님 (Paladin)' 또는 '수호자님 (Protector)'"
+      },
+      "position": {
+        "x": 1508.8212369088678,
+        "y": 1167.015361502693
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MON_MIND_01",
+        "label": "이더 두뇌 (정신 지배 군체)",
+        "color": "#9b59b6",
+        "group": "재앙급괴물",
+        "class": "마인드 플레이어 / 군체 지성",
+        "level": "25",
+        "alignment": "질서 악",
+        "secret": "암살자 협회장을 이미 정신 지배하여 꼭두각시로 만들었다.",
+        "goal": "왕세자를 암살하고 혼란을 틈타 지하 제국을 지상으로 확장한다.",
+        "notes": "모든 암살 의뢰는 사실 이 두뇌가 내린 명령이었다.\n[호칭 규칙 - 서양식]\n- 정신 지배된 자 → 이더 두뇌: '주인님 (Master)' 또는 '위대한 의지 (Great Will)'"
+      },
+      "position": {
+        "x": -197.73689645200378,
+        "y": 1180.0999244030018
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MON_LICH_01",
+        "label": "망자의 군주 (리치)",
+        "color": "#34495e",
+        "group": "재앙급괴물",
+        "class": "언데드 흑마법 군주",
+        "level": "26",
+        "alignment": "혼돈 악",
+        "secret": "대주교의 성물함을 훔쳐 자신의 영혼 단지로 만들려 한다.",
+        "goal": "전 대륙을 언데드의 땅으로 만들고, 영원한 밤을 내린다.",
+        "notes": "흑마법사들을 부하로 삼아, 이단심문관의 눈을 피해 다닌다.\n[호칭 규칙 - 서양식]\n- 추종자 → 리치: '군주님 (My Lord)' 또는 '위대한 스승 (Great Master)'\n- 리치 → 추종자: '너' 또는 '도구'"
+      },
+      "position": {
+        "x": 441.0804625779478,
+        "y": 586.6847038398749
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GOD_TYRANT_01",
+        "label": "폭정의 군주 (베인)",
+        "color": "#000000",
+        "group": "신성차원",
+        "class": "지배와 폭력의 신",
+        "level": "??",
+        "alignment": "질서 악",
+        "secret": "섭정에게 영혼을 바치는 대가로 왕좌를 주겠다고 유혹했다.",
+        "goal": "인간 세계에 절대적 독재 군주를 세우고, 자신의 신앙을 강제한다.",
+        "notes": "국왕에게도 접근하여 타락시키려 하지만 국왕은 완강히 저항 중이다.\n[호칭 규칙 - 서양식]\n- 추종자 → 베인: '폭정의 군주님 (Lord of Tyranny)' 또는 '지배자님'\n- 베인 → 추종자: '내 종 (My Servant)'"
+      },
+      "position": {
+        "x": 18.359605044838155,
+        "y": 1351.768695616671
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GOD_MAGIC_01",
+        "label": "마법의 여신 (미스트라)",
+        "color": "#3498db",
+        "group": "신성차원",
+        "class": "마법과 예언의 신",
+        "level": "??",
+        "alignment": "중립 선",
+        "secret": "마법사 협회장에게 붉은 마법사단의 음모를 꿈으로 알려주었다.",
+        "goal": "마법망이 파괴되지 않도록 막고, 마법의 균형을 유지한다.",
+        "notes": "흑마법사들의 추종자들을 끊임없이 감시하고 있다.\n[호칭 규칙 - 서양식]\n- 신자 → 미스트라: '여신님 (Goddess)' 또는 '마법의 어머니 (Mother of Magic)'"
+      },
+      "position": {
+        "x": 1465.738218261784,
+        "y": 1031.5141904607503
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PLAN_DEMON_01",
+        "label": "혼돈의 악마 대공 (그라즈트)",
+        "color": "#e74c3c",
+        "group": "신성차원",
+        "class": "심연의 악마 군주",
+        "level": "??",
+        "alignment": "혼돈 악",
+        "secret": "이단심문관의 마음에 타락의 씨앗을 심었다.",
+        "goal": "교회를 내전으로 몰아넣고, 수많은 영혼을 지옥으로 끌어들인다.",
+        "notes": "붉은 마법사단과도 손을 잡고 혼란을 가중시키는 중이다.\n[호칭 규칙 - 서양식]\n- 추종자 → 그라즈트: '악마 대공님 (Demon Lord)' 또는 '혼돈의 군주'\n- 그라즈트 → 추종자: '내 놀이감'"
+      },
+      "position": {
+        "x": 1027.4770300000673,
+        "y": 297.1828532038494
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PLAN_DEVIL_01",
+        "label": "지옥의 대공 (메피스토펠레스)",
+        "color": "#f39c12",
+        "group": "신성차원",
+        "class": "나인헬의 악마 대공",
+        "level": "??",
+        "alignment": "질서 악",
+        "secret": "대금고와 영혼 계약을 맺고 국가 부채를 인수했다.",
+        "goal": "왕국 전체를 부채 노예로 만들고, 지옥의 전초기지로 삼는다.",
+        "notes": "모든 화폐 거래에 지옥불 증서가 섞여 들어가고 있다.\n[호칭 규칙 - 서양식]\n- 계약자 → 메피스토펠레스: '지옥의 대공님 (Archdevil)' 또는 '계약자님'\n- 메피스토펠레스 → 계약자: '내 채무자'"
+      },
+      "position": {
+        "x": 184.23524313368952,
+        "y": 1630.803287556324
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "KING_01",
+        "target": "KING_04",
+        "label": "대립 (섭정 vs 왕)",
+        "notes": "[호칭] 공식석상: 섭정은 국왕에게 '폐하'를 쓰나, 국왕이 없을 때는 '저 아이'라 멸시. 국왕은 섭정에게 '전하'를 쓰지만 서늘한 어조로 대함.",
+        "id": "85f5e687-392e-4371-b49c-41f400a6c9be"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KING_01",
+        "target": "KING_03",
+        "label": "후계 갈등",
+        "notes": "[호칭] 국왕은 왕세자를 '저하' 또는 '내 아들'이라 부르며 경계심을 숨기지 않음.",
+        "id": "0b808285-7483-4fa8-87ac-25a6d7d39cc6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KING_01",
+        "target": "NOB_01",
+        "label": "견제/대립",
+        "notes": "[호칭] 공식: 국왕은 '경', 대공은 '폐하'. 사적: 서로 '그대'를 쓰며 신경전.",
+        "id": "8ec2c44e-63f3-4014-adaa-79b8d940108e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KING_01",
+        "target": "CHU_01",
+        "label": "서임권 갈등",
+        "notes": "[호칭] 국왕은 '성하', 대주교는 '폐하'를 쓰나, 신의 대리자로서 당당한 어조.",
+        "id": "5317a86d-8c52-4307-bb87-d14fa0e53e51"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KING_01",
+        "target": "MAG_02",
+        "label": "고용/의존",
+        "notes": "[호칭] 국왕은 '마법사님', 마법사는 '폐하'. 사적은 '자네'와 '그대'.",
+        "id": "13a0c7ef-b1b8-4193-adb3-cd00971eeb9d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KING_05",
+        "target": "KING_01",
+        "label": "보좌",
+        "notes": "[호칭] 재상은 '폐하', 국왕은 '경' 또는 '재상'.",
+        "id": "f3ec6371-6b7f-4f42-b0f9-1f30d2780956"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KING_05",
+        "target": "NOB_01",
+        "label": "협력/배신",
+        "notes": "[호칭] 공식: '각하'. 은밀히: '마이 로드'.",
+        "id": "c2d6578c-13fe-4d6e-a89c-11f18766e647"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NOB_01",
+        "target": "NOB_02",
+        "label": "지휘/갈등",
+        "notes": "[호칭] 대공은 '후작' 또는 '경', 후작은 '각하'.",
+        "id": "7dc22053-3f38-4017-96c6-686238637819"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NOB_02",
+        "target": "NOB_03",
+        "label": "지휘",
+        "notes": "[호칭] 후작은 '백작' 또는 '경', 백작은 '각하'.",
+        "id": "1601060f-92f0-4e85-89f8-c6aad399f9ec"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NOB_03",
+        "target": "NOB_04",
+        "label": "지휘",
+        "notes": "[호칭] 백작은 '자작' 또는 '그대', 자작은 '각하'.",
+        "id": "36c68748-b8ea-4add-905b-1451070bcace"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NOB_04",
+        "target": "NOB_05",
+        "label": "지휘",
+        "notes": "[호칭] 자작은 '남작' 또는 '자네', 남작은 '나리'.",
+        "id": "eb9d5063-da40-4610-94bd-d552eeaf2d01"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NOB_05",
+        "target": "NOB_06",
+        "label": "봉신",
+        "notes": "[호칭] 남작은 '기사' 또는 '자네', 기사는 '나리' 또는 '주군님'.",
+        "id": "6cb13cd4-4ab3-4eb1-86e8-85f31118ff4f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NOB_06",
+        "target": "MIL_01",
+        "label": "충성",
+        "notes": "[호칭] 기사는 '사령관님' 또는 '경', 단장은 '기사' 또는 '자네'.",
+        "id": "25cef142-9f5b-4165-a588-12a55dd4782b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHU_01",
+        "target": "CHU_02",
+        "label": "임명",
+        "notes": "[호칭] 대주교는 '주교님' 또는 '그대', 주교는 '성하'.",
+        "id": "6453a35b-5b46-4477-b3ae-b27c7f22e0b3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHU_02",
+        "target": "CHU_03",
+        "label": "지휘",
+        "notes": "[호칭] 주교는 '신부님' 또는 '그대', 사제는 '주교님'.",
+        "id": "e56725d3-63db-444c-b972-c32f5f830b02"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHU_03",
+        "target": "PEA_01",
+        "label": "영향력",
+        "notes": "[호칭] 사제는 '장로님', 장로는 '신부님'.",
+        "id": "16ab6f56-8a06-4682-819f-a258b84d0d62"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHU_02",
+        "target": "CHU_05",
+        "label": "지휘",
+        "notes": "[호칭] 주교는 '심문관' 또는 '그대', 심문관은 '주교님'.",
+        "id": "8c3a11db-49db-4867-a5cd-8d775646712a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHU_05",
+        "target": "MAG_04",
+        "label": "대립/탄압",
+        "notes": "[호칭] 심문관은 '이단자', 마법사는 '광신자'.",
+        "id": "decf7682-e68c-4700-8724-fd7c81ea3bd5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHU_05",
+        "target": "DARK_02",
+        "label": "추적/처형",
+        "notes": "[호칭] 심문관은 '마귀의 하수인', 흑마법사는 '재판관'이라 비웃음.",
+        "id": "93995ab3-1420-4c3c-8346-6987fcfe71a0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MAG_01",
+        "target": "MAG_02",
+        "label": "파견",
+        "notes": "[호칭] 협회장은 '마법사' 또는 '자네', 왕실 마법사는 '원로님'.",
+        "id": "ca73e5de-3fb2-4b30-9bf9-5fdd831e2b62"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MAG_01",
+        "target": "MAG_03",
+        "label": "지휘",
+        "notes": "[호칭] 협회장은 '대마법사' 또는 '그대', 대마법사는 '원로님'.",
+        "id": "9b8708d5-50a0-4d3f-9f0b-00ce12ca9082"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MAG_03",
+        "target": "MAG_04",
+        "label": "교육/평가",
+        "notes": "[호칭] 대마법사는 '제자' 또는 '학생', 마법사는 '스승님'.",
+        "id": "e939ef10-fb81-4497-809e-b41fca81e12e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MAG_04",
+        "target": "MAG_05",
+        "label": "연구 협력",
+        "notes": "[호칭] 서로 '박사님' 또는 '동료'.",
+        "id": "1a271664-e969-4915-9219-31684f92c7e5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MAG_01",
+        "target": "MAG_06",
+        "label": "임명",
+        "notes": "[호칭] 협회장은 '관장' 또는 '사서', 보관관은 '원로님'.",
+        "id": "5819268d-32da-4a2b-89a1-d6f86d210f40"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MIL_01",
+        "target": "KING_01",
+        "label": "직속",
+        "notes": "[호칭] 단장은 '폐하', 국왕은 '단장' 또는 '경'. 사적은 '자네'.",
+        "id": "3310b983-65c2-4add-a830-8b7099366b26"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MIL_01",
+        "target": "NOB_01",
+        "label": "대립",
+        "notes": "[호칭] 단장은 '각하', 대공은 '기사단장'이라 날카롭게.",
+        "id": "3cd45cd4-0fa7-4c6e-91e1-276fdfc59cdd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MIL_02",
+        "target": "NOB_03",
+        "label": "고용",
+        "notes": "[호칭] 대장은 '각하', 백작은 '대장' 또는 '용병대장'.",
+        "id": "fc554779-f23c-4bdc-8f59-2d6d065c2903"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MIL_02",
+        "target": "KING_01",
+        "label": "배신 가능성",
+        "notes": "[호칭] 대장은 '폐하'를 쓰나 영혼 없음. 국왕은 항상 배신 의심.",
+        "id": "fd1967e7-e0c5-4bef-9a84-e3b8d0a22f15"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MIL_03",
+        "target": "MIL_04",
+        "label": "지휘",
+        "notes": "[호칭] 분대장은 '병사' 또는 '너', 징집병은 '대장님'.",
+        "id": "cfb8bd85-eac2-4b11-87ba-5bac16b9731a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MER_01",
+        "target": "KING_01",
+        "label": "자금 지원",
+        "notes": "[호칭] 조합장은 '폐하'를 쓰나 채권자처럼 당당. 국왕은 '조합장'.",
+        "id": "d86a81bf-1de0-41c8-8a86-faa8b62a51a7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MER_01",
+        "target": "NOB_01",
+        "label": "밀약",
+        "notes": "[호칭] 조합장은 '각하', 대공은 '조합장'.",
+        "id": "c007f53f-05b5-4035-9688-23a1995bca2c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MER_02",
+        "target": "KING_01",
+        "label": "채무",
+        "notes": "[호칭] 대금고는 '폐하'를 쓰나 독촉 어조. 국왕은 '금고주'.",
+        "id": "518b32f5-0104-4753-ac06-bc010d43faea"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MER_03",
+        "target": "MER_01",
+        "label": "소속",
+        "notes": "[호칭] 마스터는 '조합장님', 조합장은 '마스터'.",
+        "id": "c60cec64-fd77-49c3-a6d6-6e407f7a9f2b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MER_04",
+        "target": "DARK_04",
+        "label": "정보 거래",
+        "notes": "[호칭] 여관주인은 '상인님', 암시장 상인은 '주인장'.",
+        "id": "4ca8bd7c-a696-4afb-a0fb-10849b2ce5f1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PEA_01",
+        "target": "NOB_03",
+        "label": "조세 저항",
+        "notes": "[호칭] 장로는 '각하'를 쓰나 항의 어조, 백작은 '장로'.",
+        "id": "ee9d3f11-5baf-4d37-90d0-633c1d8ce136"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PEA_02",
+        "target": "MER_01",
+        "label": "경쟁",
+        "notes": "[호칭] 자유민은 '조합장님'을 쓰나 불만, 조합장은 '상인' 또는 '그대'.",
+        "id": "359a0f54-cb35-4876-a1d9-ba4df299b558"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PEA_03",
+        "target": "PEA_04",
+        "label": "도망/합류",
+        "notes": "[호칭] 농노는 '두목님', 도적은 '동지'.",
+        "id": "cea8b701-797f-4f38-b312-522c102f9f01"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PEA_04",
+        "target": "DARK_03",
+        "label": "가담",
+        "notes": "[호칭] 도적은 '두목님', 두목은 '동지'.",
+        "id": "dd6e5306-d297-4a1a-a879-b765b227fb55"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DARK_01",
+        "target": "NOB_01",
+        "label": "암살 의뢰",
+        "notes": "[호칭] 협회장은 '각하', 대공은 '두목'.",
+        "id": "b53b2589-4d57-4ef7-8d16-85d10c71f90f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DARK_01",
+        "target": "KING_01",
+        "label": "왕실 스파이",
+        "notes": "[호칭] 스파이는 '폐하', 국왕은 '요원'.",
+        "id": "ef1b5685-9dee-4083-a145-5269e9c697db"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TERM_MAIN_GOD_MAGIC_01_1785471879667",
+        "source": "TERM_MAIN",
+        "target": "GOD_MAGIC_01",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DARK_02",
+        "target": "MAG_01",
+        "label": "추방/대립",
+        "notes": "[호칭] 협회장은 '추방자', 흑마법사는 '원로'.",
+        "id": "41785940-6045-470e-b488-ad4545f51bd1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DARK_03",
+        "target": "NOB_02",
+        "label": "반란",
+        "notes": "[호칭] 두목은 '폭군의 앞잡이', 후작은 '반역자'.",
+        "id": "830d4ead-20aa-4263-b7e4-a5548d7e3ab1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DARK_03",
+        "target": "PEA_03",
+        "label": "선동",
+        "notes": "[호칭] 두목은 '동지', 농노는 '두목님'.",
+        "id": "42f45bb4-a4e6-4f34-84bb-f4d00c3c925d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MON_DRAGON_01",
+        "target": "KING_01",
+        "label": "강제 공물 요구",
+        "notes": "[호칭] 용은 '벌레', 국왕은 '파멸의 군주'.",
+        "id": "edge_new_01"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MON_MIND_01",
+        "target": "DARK_01",
+        "label": "정신 지배 (꼭두각시)",
+        "notes": "[호칭] 두뇌는 '내 그릇', 협회장은 겉으로 '두목'.",
+        "id": "edge_new_02"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_THAY_01",
+        "target": "MAG_06",
+        "label": "금서 탈취 음모",
+        "notes": "[호칭] 마법사단은 '사서', 보관관은 '이단자'.",
+        "id": "edge_new_03"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GOD_TYRANT_01",
+        "target": "KING_04",
+        "label": "타락 계약 (영혼의 대가)",
+        "notes": "[호칭] 신은 '내 아들', 섭정은 '군주님'.",
+        "id": "edge_new_04"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_HARPER_01",
+        "target": "MER_04",
+        "label": "첩보망 가동",
+        "notes": "[호칭] 요원은 '주인장', 여관주인은 '손님'.",
+        "id": "edge_new_05"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MON_LICH_01",
+        "target": "CHU_01",
+        "label": "성물 약탈 개시",
+        "notes": "[호칭] 리치는 '성직자', 대주교는 '망자'.",
+        "id": "edge_new_06"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PLAN_DEMON_01",
+        "target": "CHU_05",
+        "label": "내적 타락 유도",
+        "notes": "[호칭] 악마는 '내 심판관', 심문관은 악마의 목소리를 신의 계시로 착각.",
+        "id": "edge_new_07"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PLAN_DEVIL_01",
+        "target": "MER_02",
+        "label": "지옥불 증서 계약",
+        "notes": "[호칭] 대공은 '채무자', 대금고는 '계약자님'.",
+        "id": "edge_new_08"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RACE_ORC_01",
+        "target": "NOB_02",
+        "label": "끊임없는 변경 약탈",
+        "notes": "[호칭] 대족장은 '약한 인간', 후작은 '야수'.",
+        "id": "edge_new_09"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RACE_DWF_01",
+        "target": "NOB_01",
+        "label": "무기 밀매",
+        "notes": "[호칭] 드워프 군주는 '고객', 대공은 '장인'.",
+        "id": "edge_new_10"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TERM_MAIN_MIL_03_1785472083357",
+        "source": "TERM_MAIN",
+        "target": "MIL_03",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RACE_ELF_01",
+        "target": "NOB_01",
+        "label": "비밀 외교",
+        "notes": "숲 왕은 대공에게 엘프 궁수 부대를 지원하는 대가로, 왕위 계승 후 국경 숲을 엘프에게 반환할 것을 요구함.",
+        "id": "edge_new_12"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RACE_ORC_01",
+        "target": "DARK_03",
+        "label": "임시 동맹 (위험한 거래)",
+        "notes": "반란군 두목은 오크의 힘을 빌려 왕정을 타도하려 하지만, 오크들이 약탈을 멈추지 않아 골치를 앓음.",
+        "id": "edge_new_13"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_HARPER_01",
+        "target": "KING_06",
+        "label": "직속 지휘 (핵심 요원)",
+        "notes": "비서관은 하퍼스의 최고 첩자로, 모든 왕명을 이중으로 기록하며 국왕을 보호함.",
+        "id": "edge_new_14"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_HARPER_01",
+        "target": "KING_03",
+        "label": "은밀한 보호",
+        "notes": "하퍼스는 왕세자가 암살자에게 노출되지 않도록 비밀리에 경호하고, 왕세자에게 귀족들의 음모를 알려줌.",
+        "id": "edge_new_15"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_ZENT_01",
+        "target": "MER_02",
+        "label": "실질적 소유 (채권자)",
+        "notes": "대금고는 검은 그물단의 전면에 세운 꼭두각시로, 국왕의 빚을 이용해 왕실을 압박함.",
+        "id": "edge_new_16"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_ZENT_01",
+        "target": "DARK_04",
+        "label": "하부 조직 운영",
+        "notes": "암시장 상인들은 검은 그물단의 하부 요원으로, 불법 무기와 노예 거래를 담당함.",
+        "id": "edge_new_17"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TERM_MAIN_RACE_HALF_01_1785471883801",
+        "source": "TERM_MAIN",
+        "target": "RACE_HALF_01",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_EMERALD_01",
+        "target": "PEA_01",
+        "label": "비밀 협약 (숲 보호)",
+        "notes": "드루이드들은 마을 장로에게 농업 기술을 가르치는 대가로, 백작의 삼림 벌채를 막아달라 요청함.",
+        "id": "edge_new_19"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_EMERALD_01",
+        "target": "CHU_04",
+        "label": "지식 공유 (고대 유물)",
+        "notes": "수도원 지하에서 발견된 고대 유물을 드루이드들이 감정해주고, 그 대가로 수도원 정원을 보호해줌.",
+        "id": "edge_new_20"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_EMERALD_01",
+        "target": "NOB_03",
+        "label": "첨예한 대립",
+        "notes": "백작이 영지 내 숲을 베어 개간하려 하자, 드루이드들은 동물 군단을 풀어 농민들을 위협함.",
+        "id": "edge_new_21"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_THAY_01",
+        "target": "DARK_02",
+        "label": "실질적 본산 (상급자)",
+        "notes": "흑마법사는 타이의 붉은 마법사단에서 파견된 요원으로, 협회를 전복할 임무를 받음.",
+        "id": "edge_new_22"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FAC_THAY_01",
+        "target": "MON_LICH_01",
+        "label": "밀약 (언데드 군단 지원)",
+        "notes": "마법사단은 리치에게 흑마법 연구를 지원하는 대가로, 언데드 군단을 정치적 테러에 활용함.",
+        "id": "edge_new_23"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MON_DRAGON_01",
+        "target": "NOB_01",
+        "label": "비밀 계약 (왕국 분할)",
+        "notes": "대공은 용에게 왕위 계승 후 국토의 3분의 1을 바치기로 약속하고, 용은 대공에게 화염 숨결의 힘을 빌려줌.",
+        "id": "edge_new_24"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NOB_07",
+        "target": "RACE_ORC_01",
+        "label": "휴전 협상 시도",
+        "notes": "국경 백작은 오크 대족장과 비밀리에 휴전 협상을 시도하며, 변경백의 눈을 피해 움직임.",
+        "id": "edge_new_25"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NOB_07",
+        "target": "RACE_DWF_01",
+        "label": "무기 수입 담당",
+        "notes": "국경 백작은 드워프 왕국으로부터 무기를 수입해 변경백의 국경 방어를 보조함.",
+        "id": "edge_new_26"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHU_06",
+        "target": "FAC_HARPER_01",
+        "label": "이중 첩자 (실제 상관)",
+        "notes": "순회 사제는 대주교에게 충성하는 척 하지만, 실제로는 조화의 수호자에게 모든 정보를 보고함.",
+        "id": "edge_new_27"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MAG_07",
+        "target": "FAC_ZENT_01",
+        "label": "포섭 시도",
+        "notes": "검은 그물단은 부적 제조사에게 접근해, 불법 마법 아이템 제조를 제안하며 협박함.",
+        "id": "edge_new_28"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PEA_05",
+        "target": "FAC_HARPER_01",
+        "label": "비공식 정보원",
+        "notes": "방랑 예술가는 각지의 여관에서 듣는 소문을 조화의 수호자에게 전달하는 비공식 요원임.",
+        "id": "edge_new_29"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PEA_05",
+        "target": "MER_04",
+        "label": "정보 교류",
+        "notes": "방랑 예술가는 여관주인과 친분을 유지하며, 서로 가장 빠른 소식을 교환함.",
+        "id": "edge_new_30"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CALENDAR_MAIN_SEASON_MAIN_1785471366268",
+        "source": "CALENDAR_MAIN",
+        "target": "SEASON_MAIN",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MER_04_PRICE_MAIN_1785471385670",
+        "source": "MER_04",
+        "target": "PRICE_MAIN",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KING_02_KING_01_1785471409698",
+        "source": "KING_02",
+        "target": "KING_01",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRICE_MAIN_TERM_MAIN_1785471442208",
+        "source": "PRICE_MAIN",
+        "target": "TERM_MAIN",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SEASON_MAIN_TERM_MAIN_1785471802352",
+        "source": "SEASON_MAIN",
+        "target": "TERM_MAIN",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CALENDAR_MAIN_TIME_MAIN_1785471834981",
+        "source": "CALENDAR_MAIN",
+        "target": "TIME_MAIN",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TERM_MAIN_MON_DRAGON_02_1785471874471",
+        "source": "TERM_MAIN",
+        "target": "MON_DRAGON_02",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  const cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: data,
+    style: [
+      { selector: 'node', style: { 
+        'label':'data(label)', 
+        'background-color':'data(color)',
+        'shape':'round-rectangle',
+        'width':'label', 'height':30, 'padding':'10px',
+        'border-width':2, 'border-color':'#333',
+        'text-valign':'center', 'text-halign':'center',
+        'color':'#fff', 'font-weight':'bold', 'font-size':14,
+        'text-outline-width':2, 'text-outline-color':'#000'
+      }},
+      { selector: 'edge', style: {
+        'label':'data(label)',
+        'curve-style':'bezier',
+        'line-color':'data(color)',
+        'width':2,
+        'target-arrow-shape':'triangle',
+        'target-arrow-color':'data(color)',
+        'font-size':11
+      }},
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true, fit: true, padding: 30 }
+  });
+
+  // ===== 툴팁 =====
+  const tooltip = document.getElementById('nodeTooltip');
+  const ttTitle = document.getElementById('ttTitle');
+  const ttNotes = document.getElementById('ttNotes');
+
+  function showTooltip(node) {
+    if (!node || node.length === 0) return;
+    const label = node.data('label') || node.id();
+    const notes = node.data('notes') || '';
+    ttTitle.textContent = label;
+    ttNotes.innerHTML = notes || '<span class="tt-empty">메모가 없습니다</span>';
+    const pos = node.renderedPosition();
+    const rect = cy.container().getBoundingClientRect();
+    let x = rect.left + pos.x - tooltip.offsetWidth / 2;
+    let y = rect.top + pos.y - 50 - tooltip.offsetHeight;
+    if (x < 10) x = 10;
+    if (y < 10) y = rect.top + pos.y + 20;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+    tooltip.style.display = 'block';
+  }
+
+  function hideTooltip() { tooltip.style.display = 'none'; }
+
+  cy.on('mouseover', 'node', function(evt) {
+    showTooltip(evt.target);
+    evt.target.style('border-width', '4px');
+    evt.target.style('border-color', '#4facfe');
+  });
+
+  cy.on('mouseout', 'node', function(evt) {
+    hideTooltip();
+    if (!evt.target.selected()) {
+      evt.target.style('border-width', '2px');
+      evt.target.style('border-color', '#333');
+    }
+  });
+
+  document.getElementById('nodeCount').textContent = cy.nodes().length;
+  document.getElementById('edgeCount').textContent = cy.edges().length;
+
+  setTimeout(() => {
+    document.getElementById('tip').classList.add('hidden');
+  }, 3000);
+
+  function toggleDark() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('viewerTheme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('viewerTheme', 'dark');
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if ((e.key === 'd' || e.key === 'D') && !e.ctrlKey && !e.metaKey) {
+      toggleDark();
+    }
+    if (e.key === 'Escape') hideTooltip();
+  });
+
+  const savedTheme = localStorage.getItem('viewerTheme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+
+  window.addEventListener('resize', function() { cy.fit(30); });
+</script>
+</body>
+</html>

@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:#f0f0f0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.2em; text-shadow:1px 1px 0 #000; }
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .left-panel {
+      width:220px;
+      background:#fff;
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid #ddd;
+    }
+    .graph-area {
+      flex:1;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid #ddd;
+      border-radius:8px;
+      background:#fafafa;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+
+    .panel-section {
+      margin-bottom:12px;
+      padding:10px;
+      background:#f9f9f9;
+      border-radius:6px;
+      border:1px solid #e0e0e0;
+    }
+    .panel-section h3 {
+      font-size:0.9em;
+      margin-bottom:6px;
+      color:#667eea;
+      border-bottom:1px solid #667eea;
+      padding-bottom:3px;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:5px;
+      margin:3px 0;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+    }
+    input[readonly] {
+      background:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    textarea {
+      width:100%;
+      padding:5px;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+      resize:vertical;
+      min-height:60px;
+    }
+    button {
+      width:100%;
+      padding:6px;
+      margin:3px 0;
+      border:none;
+      border-radius:3px;
+      font-size:0.8em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+    }
+    button:active { transform:scale(0.97); }
+    .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+    .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
+    .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
+
+    .help-text { font-size:0.7em; color:#888; margin-top:3px; padding:4px; background:#fff; border-radius:3px; }
+    .connection-tools { display:flex; gap:4px; margin-bottom:3px; }
+    .connection-tools button { padding:3px; font-size:0.7em; margin:0; }
+
+    .info-badge {
+      display:block;
+      padding:4px 8px;
+      background:#667eea;
+      color:#fff;
+      border-radius:3px;
+      font-size:0.75em;
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .notes-display {
+      padding:6px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.8em;
+      min-height:40px;
+      white-space:pre-wrap;
+      margin-top:4px;
+    }
+    .file-select-wrapper { display:flex; gap:4px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:4px 8px; margin:0; }
+    .file-select-wrapper input[type="file"] { display:none; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
+    }
+    [data-theme="dark"] .left-panel {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .notes-display {
+      background:#2d2d4e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .cy-wrapper {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🌐 세계관 그래프</h1>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="panel-section">
+      <h3>📂 데이터</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
+      </div>
+      <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드</button>
+    </div>
+
+    <div class="panel-section">
+      <h3>➕ 노드</h3>
+      <input type="text" id="newNode" placeholder="노드 이름">
+      <button class="btn-primary" onclick="addNode()">노드 추가</button>
+      <div class="help-text">💡 빈 공간 더블클릭</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>🔗 엣지</h3>
+      <div class="connection-tools">
+        <button class="btn-info" onclick="clearEdgeInputs()">초기화</button>
+        <button class="btn-info" onclick="swapEdgeInputs()">교체</button>
+      </div>
+      <input type="text" id="edgeSrc" placeholder="출발 노드" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="도착 노드" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="라벨">
+      <button class="btn-primary" onclick="addEdge()">엣지 추가</button>
+      <div class="help-text">💡 노드 클릭 시 자동 입력</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>📝 노드 정보</h3>
+      <div class="info-badge" id="nodeInfo">노드를 클릭하세요</div>
+      <div class="notes-display" id="nodeNotes">선택한 노드의 메모가 여기에 표시됩니다</div>
+      <button class="btn-danger" onclick="deleteSelected()" style="margin-top:4px;">🗑️ 삭제 (Del)</button>
+    </div>
+  </div>
+
+  <div class="graph-area">
+    <div class="cy-wrapper">
+      <div id="cy"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const initialData = {
+  "nodes": [
+    {
+      "data": {
+        "id": "CLICHE_WEAK_START",
+        "label": "약자 출발 / 천재 굴욕",
+        "color": "#FF6B35",
+        "notes": "주인공이 문파 내에서 최하위(잡영근, 외제, 무시받는 존재)로 시작. 천재들의 조롱과 멸시를 받으며 성장의 동기를 부여받음. 대표: 한립(잡영근)의 시작."
+      },
+      "position": {
+        "x": -47.022363807443845,
+        "y": 561.6900600983613
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_CHEAT_ITEM",
+        "label": "역천 기연 습득",
+        "color": "#FF6B35",
+        "notes": "우연히 전설적인 보물이나 비급을 얻게 됨. 주인공만의 독점적 이점을 제공하며, 성장의 핵심 동력이 됨. 대표: 장원주패(掌天瓶) - 시간 가속 + 영초 재배."
+      },
+      "position": {
+        "x": 133.78369939631722,
+        "y": 401.192578079044
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_SECRET_REALM",
+        "label": "비경 / 유적 입장",
+        "color": "#FF6B35",
+        "notes": "제한된 인원만 들어갈 수 있는 특수 공간에 운 좋게 진입. 내부에서 희귀 영초, 전설적 법보, 상실된 비급을 획득. 위험과 기회가 공존하는 전형적 장치."
+      },
+      "position": {
+        "x": 239.04085667328184,
+        "y": 797.2787769811536
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_CONDITIONAL_BOON",
+        "label": "조건부 기연",
+        "color": "#FF6B35",
+        "notes": "특정 조건(혈통, 영근 속성, 공법, 체질)을 만족해야만 획득 가능한 기연. 주인공만의 특수성이 부각되는 장치. 귀곡팔황의 속성 제한 기연이 대표적."
+      },
+      "position": {
+        "x": 232.7412847347471,
+        "y": 1002.8837446589293
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_ELDER_DISCIPLE",
+        "label": "장로의 제자",
+        "color": "#FF6B35",
+        "notes": "숨겨진 재능이나 특별함을 알아본 장로가 주인공을 제자로 삼음. 이로 인해 문파 내에서 보호와 특혜를 받으며 성장. 대표: 한립의 여러 스승들."
+      },
+      "position": {
+        "x": 137.21738569964117,
+        "y": 841.6347505224668
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_INNER_OUTER",
+        "label": "내제 / 외제 차별",
+        "color": "#FF6B35",
+        "notes": "문파 내 핵심 제자(내제)와 외부 제자(외제)의 대우와 자원 배분이 완전히 다름. 주인공은 외제에서 시작해 내제로 승격하는 성장 과정을 겪음."
+      },
+      "position": {
+        "x": 30.20824646108084,
+        "y": 771.421220635249
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_SECT_WAR",
+        "label": "종파 대전",
+        "color": "#FF6B35",
+        "notes": "정파와 사파, 또는 종파 간의 대규모 전투. 수많은 수선자가 참여하며, 주인공의 활약이 돋보이는 백색의 장면. 귀곡팔황의 종파전 시스템."
+      },
+      "position": {
+        "x": 446.3644525788771,
+        "y": 993.799068289835
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_TRIBULATION",
+        "label": "천겁 / 뇌겁 극복",
+        "color": "#FF6B35",
+        "notes": "경지 상승 시 하늘이 내리는 시험. 뇌격(번개)을 견뎌내야 하며, 견뎌내면 더 강해지고 실패하면 죽거나 폐인이 됨. 주인공은 항상 이 위기를 극복함."
+      },
+      "position": {
+        "x": 682.2617300291034,
+        "y": 993.8726367638799
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_REVENGE",
+        "label": "원한 / 복수",
+        "color": "#FF6B35",
+        "notes": "과거에 당한 억울함이나 원한을 수백 년이 지나서 갚음. 주인공이 성장한 후 과거의 적을 찾아가 응징하는 카타르시스 제공. 한립의 오래된 원수 처리."
+      },
+      "position": {
+        "x": 764.8197482868482,
+        "y": 692.661345514993
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_SURVIVAL_FLEE",
+        "label": "도망 / 생존 본능",
+        "color": "#FF6B35",
+        "notes": "자신보다 강한 적을 만나면 무조건 도망치는 전략. 명예나 체면보다 생존을 우선시함. 범인수선전 한립의 트레이드마크이자, 선협물의 독특한 클리셰."
+      },
+      "position": {
+        "x": 951.1716391213312,
+        "y": 803.2346578013345
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_CLONE",
+        "label": "분신 육성",
+        "color": "#FF6B35",
+        "notes": "분신(分身)을 만들어 각자 다른 경로로 수련시킴. 본체가 위험에 처해도 분신을 통해 생존 가능. 한립의 제2분신, 제3분신이 대표적."
+      },
+      "position": {
+        "x": 899.8155930866784,
+        "y": 591.9427254235851
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_GENERATION_GAP",
+        "label": "세대 교체의 비극",
+        "color": "#FF6B35",
+        "notes": "동료, 연인, 스승, 후배가 모두 수명을 다해 주인공보다 먼저 떠남. 장생의 외로움과 고립을 극명하게 보여주는 클리셰. 한립이 겪은 모든 인간관계의 결말."
+      },
+      "position": {
+        "x": 646.3128514666413,
+        "y": 548.0488050663607
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_SKILL_COMBO",
+        "label": "공법 / 스킬 조합",
+        "color": "#FF6B35",
+        "notes": "여러 공법이나 스킬을 조합해 자신만의 독특한 수련 경로를 개척. 귀곡팔황의 핵심 재미이자, 선협물에서 천재성을 증명하는 장치."
+      },
+      "position": {
+        "x": 380.9895093597008,
+        "y": 306.8821744683359
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_SPIRIT_BEAST",
+        "label": "영수 계약",
+        "color": "#FF6B35",
+        "notes": "강력한 영수(靈獸)와 계약하여 전투력을 증가시킴. 영수는 단순한 펫이 아니라 전투의 핵심 전력. 한립의 원후(猿猴)와 계약이 대표적."
+      },
+      "position": {
+        "x": 22.245164077294262,
+        "y": 286.29554912910737
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_ALCHEMY_MASTER",
+        "label": "연단술 대가",
+        "color": "#FF6B35",
+        "notes": "단약 제조 기술로 종파 내에서 핵심적인 역할을 하게 됨. 귀한 연단사는 어떤 종파에서도 귀하게 대접받음. 한립은 연단술로 많은 자원과 인맥을 확보."
+      },
+      "position": {
+        "x": 237.35602388813012,
+        "y": 470.42839614060085
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_TREASURE_HUNT",
+        "label": "보물 발굴 / 탈취",
+        "color": "#FF6B35",
+        "notes": "강자의 무덤, 유적, 비경에서 보물을 발굴하거나, 적에게서 빼앗아 획득. 수집욕과 성장의 재미를 동시에 제공."
+      },
+      "position": {
+        "x": 340.7561564549373,
+        "y": 646.8557964723756
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_PATH_CHOICE",
+        "label": "마도 / 정파 선택",
+        "color": "#FF6B35",
+        "notes": "빠른 성장이 가능하지만 위험한 마도(魔道) vs 안전하지만 더딘 정파(正派) 사이에서 갈등. 귀곡팔황에서는 플레이어의 성향 선택이 게임 전반에 영향을 미침."
+      },
+      "position": {
+        "x": 560.8125416097309,
+        "y": 845.173639769047
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_SECRET_ORG",
+        "label": "비밀 세력 / 암흑 조직",
+        "color": "#FF6B35",
+        "notes": "표면에 드러나지 않은 암흑 세력과의 갈등. 주인공은 이들의 음모를 파헤치며 성장. 범인수선전의 마교(魔敎)와 각종 비밀 결사."
+      },
+      "position": {
+        "x": 343.3386808414695,
+        "y": 1143.6253628402187
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_UPPER_REALM",
+        "label": "상위 차원 승계",
+        "color": "#FF6B35",
+        "notes": "인계(凡界) → 영계(靈界) → 선계(仙界)로 올라갈 때마다 새로운 법칙과 도전에 직면. 단순한 이동이 아닌 완전히 다른 세계에서의 재시작."
+      },
+      "position": {
+        "x": 841.8299684366635,
+        "y": 273.7521341942124
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_IMMORTAL_LEGACY",
+        "label": "신선의 유산 계승",
+        "color": "#FF6B35",
+        "notes": "고대 진선(眞仙)이 남긴 유산을 발견하고 계승. 주인공은 이 유산을 통해 압도적인 성장을 이루거나, 새로운 임무를 부여받음."
+      },
+      "position": {
+        "x": 440.9116444504797,
+        "y": 64.99587315147112
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": true,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_TIME_ACCEL",
+        "label": "시간 가속 수련",
+        "color": "#FF6B35",
+        "notes": "외부 시간보다 빠르게 흐르는 공간(시간 가속 영역)에서 수련. 장원주패 내부 공간이 대표적. 동시대 수선자들보다 압도적으로 많은 수련 시간을 확보."
+      },
+      "position": {
+        "x": 267.82253471731025,
+        "y": 165.01666014646918
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_MOB_CLEAR",
+        "label": "대량 양산형 적 처치",
+        "color": "#FF6B35",
+        "notes": "수많은 잡몹을 쓸어버리는 전투 쾌감. 수선자의 압도적 전력을 과시하는 장치. 귀곡팔황의 던전 전투가 대표적."
+      },
+      "position": {
+        "x": 31.091004705310592,
+        "y": 81.69471293279749
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_COSMIC_VILAIN",
+        "label": "삼계 초월 흑막",
+        "color": "#FF6B35",
+        "notes": "인계→영계→선계를 아우르는 거대한 음모의 배후. 장원주패의 진정한 정체와 선계 창조주의 비밀이 이에 해당."
+      },
+      "position": {
+        "x": 849.3305236798504,
+        "y": 54.07004526827231
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_LIFESPAN_PRESSURE",
+        "label": "수명 압박",
+        "color": "#FF6B35",
+        "notes": "정해진 수명 안에 다음 경지에 도달하지 못하면 죽음. 항상 시간과 싸우는 긴장감을 유지. 한립의 끊임없는 수명 압박이 대표적."
+      },
+      "position": {
+        "x": 786.555915144261,
+        "y": 934.6764076991426
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_IMMORTAL_ASCEND",
+        "label": "선계 승천",
+        "color": "#FF6B35",
+        "notes": "마침내 진선(眞仙)이 되어 선계로 올라가는 결말. 범인수선전의 최종 목표이자, 모든 선협물의 궁극적 클리셰."
+      },
+      "position": {
+        "x": 747.6338759887623,
+        "y": 396.7990137798692
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_GROUP_START",
+        "label": "초기 성장 클리셰",
+        "color": "#FF9800",
+        "notes": "CLICHE_WEAK_START + CLICHE_CHEAT_ITEM + CLICHE_ELDER_DISCIPLE + CLICHE_INNER_OUTER. 작품 초반에 등장하는 기본 성장 패턴들의 집합."
+      },
+      "position": {
+        "x": 132.6791485772148,
+        "y": 633.4557626014362
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_GROUP_MID",
+        "label": "중반 갈등 클리셰",
+        "color": "#FF9800",
+        "notes": "CLICHE_SECRET_REALM + CLICHE_SECT_WAR + CLICHE_TREASURE_HUNT + CLICHE_SECRET_ORG. 작품 중반에 등장하는 주요 갈등과 모험 패턴."
+      },
+      "position": {
+        "x": 340.21699180413924,
+        "y": 879.4801432646996
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_GROUP_LATE",
+        "label": "후반/결말 클리셰",
+        "color": "#FF9800",
+        "notes": "CLICHE_UPPER_REALM + CLICHE_COSMIC_VILAIN + CLICHE_IMMORTAL_ASCEND. 작품 후반과 결말을 장식하는 거대 서사 패턴."
+      },
+      "position": {
+        "x": 567.3594647351616,
+        "y": 231.81334248705443
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_GROUP_EMOTIONAL",
+        "label": "정서적 클리셰",
+        "color": "#FF9800",
+        "notes": "CLICHE_GENERATION_GAP + CLICHE_REVENGE + CLICHE_LIFESPAN_PRESSURE. 독자의 감정적 몰입을 유도하는 서사 장치."
+      },
+      "position": {
+        "x": 619.918088221841,
+        "y": 703.40164605378
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CLICHE_GROUP_GAMEPLAY",
+        "label": "게임적 클리셰",
+        "color": "#FF9800",
+        "notes": "CLICHE_SKILL_COMBO + CLICHE_SPIRIT_BEAST + CLICHE_ALCHEMY_MASTER + CLICHE_MOB_CLEAR. 귀곡팔황 등 게임에서 강조되는 상호작용적 요소."
+      },
+      "position": {
+        "x": 139.87060846868144,
+        "y": 274.07322058291123
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "CLICHE_WEAK_START",
+        "target": "CLICHE_CHEAT_ITEM",
+        "label": "보완",
+        "id": "0290c33c-621f-41a4-aa5a-edf52f319357"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_WEAK_START",
+        "target": "CLICHE_INNER_OUTER",
+        "label": "배경",
+        "id": "f6b6c35e-55a0-45c1-8e09-35271d3e0dc7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_CHEAT_ITEM",
+        "target": "CLICHE_TIME_ACCEL",
+        "label": "대표 능력",
+        "id": "eb501aee-c14c-4368-bef3-7c59757b0c5e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_CHEAT_ITEM",
+        "target": "CLICHE_ALCHEMY_MASTER",
+        "label": "활용",
+        "id": "dda667e1-e565-498d-a1ae-be1d3ad2663c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_SECRET_REALM",
+        "target": "CLICHE_TREASURE_HUNT",
+        "label": "장소",
+        "id": "a6669484-3a48-407f-aedb-1fa69941489c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_SECRET_REALM",
+        "target": "CLICHE_CONDITIONAL_BOON",
+        "label": "내부",
+        "id": "b5b50352-b0e2-4102-a4c4-2b29d65f7255"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_ELDER_DISCIPLE",
+        "target": "CLICHE_INNER_OUTER",
+        "label": "승진",
+        "id": "48ba8688-efd1-4ad4-ab1e-25477ef9b450"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_TRIBULATION",
+        "target": "CLICHE_LIFESPAN_PRESSURE",
+        "label": "연결",
+        "id": "ded0fa2f-1bfa-43e2-952e-47f763a75ca9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_SURVIVAL_FLEE",
+        "target": "CLICHE_REVENGE",
+        "label": "전제",
+        "id": "7439af4d-4512-492c-ab0b-d34844c77e1f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_CLONE",
+        "target": "CLICHE_SURVIVAL_FLEE",
+        "label": "생존 전략",
+        "id": "cc7615c8-3033-4df0-9a39-0ffa3e6f1539"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_GENERATION_GAP",
+        "target": "CLICHE_IMMORTAL_ASCEND",
+        "label": "대가",
+        "id": "0facce97-d67b-4810-80b8-3c5843f389b2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_PATH_CHOICE",
+        "target": "CLICHE_SECT_WAR",
+        "label": "결정",
+        "id": "ebfc1f95-23ca-405a-ad38-c888bb3d8906"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_UPPER_REALM",
+        "target": "CLICHE_COSMIC_VILAIN",
+        "label": "확장",
+        "id": "75621335-343e-4eaf-aa75-3f868cb828a0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_UPPER_REALM",
+        "target": "CLICHE_IMMORTAL_ASCEND",
+        "label": "최종",
+        "id": "5b20f2a0-ad0c-4a9d-87ec-7ebd3b4b81b3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_SPIRIT_BEAST",
+        "target": "CLICHE_MOB_CLEAR",
+        "label": "전투",
+        "id": "285ed9eb-33e5-4ecf-9c90-de7efe0a179a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_ALCHEMY_MASTER",
+        "target": "CLICHE_TREASURE_HUNT",
+        "label": "자원 확보",
+        "id": "d86a035b-bbd8-4a4b-b640-813fa1b2aa1f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_WEAK_START",
+        "target": "CLICHE_GROUP_START",
+        "label": "포함",
+        "id": "5e7bc58e-9e45-4d8c-b47e-48b590f0dcd8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_CHEAT_ITEM",
+        "target": "CLICHE_GROUP_START",
+        "label": "포함",
+        "id": "60008a82-ec58-4ba1-8a6d-5d4f47d5e8cd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_ELDER_DISCIPLE",
+        "target": "CLICHE_GROUP_START",
+        "label": "포함",
+        "id": "5a73203d-cec7-4fbf-b2c9-c33b42af5d9e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_INNER_OUTER",
+        "target": "CLICHE_GROUP_START",
+        "label": "포함",
+        "id": "c695735c-8067-4ce9-a9a3-5e7035a98ab2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_SECRET_REALM",
+        "target": "CLICHE_GROUP_MID",
+        "label": "포함",
+        "id": "fd07615d-099b-4088-956d-022e24d3e3b7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_SECT_WAR",
+        "target": "CLICHE_GROUP_MID",
+        "label": "포함",
+        "id": "5b0fe0bb-e334-4105-abc0-f452f047c23c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_TREASURE_HUNT",
+        "target": "CLICHE_GROUP_MID",
+        "label": "포함",
+        "id": "3e52b131-91d2-4eff-8ff1-69afdcd5eef1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_SECRET_ORG",
+        "target": "CLICHE_GROUP_MID",
+        "label": "포함",
+        "id": "ceb39843-69d6-4f50-803f-814e91317b83"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_UPPER_REALM",
+        "target": "CLICHE_GROUP_LATE",
+        "label": "포함",
+        "id": "f2850f2d-4494-41f9-9099-ac7607c86bde"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_COSMIC_VILAIN",
+        "target": "CLICHE_GROUP_LATE",
+        "label": "포함",
+        "id": "40fbeaf0-e35e-4e4e-a620-b9657c5f52a2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_IMMORTAL_ASCEND",
+        "target": "CLICHE_GROUP_LATE",
+        "label": "포함",
+        "id": "58c0efb6-1098-4471-9cd0-b77c58f30050"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_GENERATION_GAP",
+        "target": "CLICHE_GROUP_EMOTIONAL",
+        "label": "포함",
+        "id": "db78c6fa-2628-4077-8870-2e924ecfb58c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_REVENGE",
+        "target": "CLICHE_GROUP_EMOTIONAL",
+        "label": "포함",
+        "id": "019a1ed0-7f58-4dba-9fc4-7a90abc763e8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_LIFESPAN_PRESSURE",
+        "target": "CLICHE_GROUP_EMOTIONAL",
+        "label": "포함",
+        "id": "b6bdcb3f-d124-4d7f-85b4-cb526e87878b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_SKILL_COMBO",
+        "target": "CLICHE_GROUP_GAMEPLAY",
+        "label": "포함",
+        "id": "e690b80b-beb0-4d3b-83c5-90a940001ca6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_SPIRIT_BEAST",
+        "target": "CLICHE_GROUP_GAMEPLAY",
+        "label": "포함",
+        "id": "556553a6-22da-43c9-bbb9-e6970d9b11e7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_ALCHEMY_MASTER",
+        "target": "CLICHE_GROUP_GAMEPLAY",
+        "label": "포함",
+        "id": "0deacbbf-5467-4167-bffe-b00f1b7711f0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CLICHE_MOB_CLEAR",
+        "target": "CLICHE_GROUP_GAMEPLAY",
+        "label": "포함",
+        "id": "4229142d-d623-4925-8e4c-083ff2a38739"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  let cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: initialData,
+    style: [
+      { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':28, 'padding':'8px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':13, 'text-outline-width':2, 'text-outline-color':'#000' } },
+      { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':11 } },
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
+      { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true }
+  });
+
+  let selectedId = null;
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+  const nodeInfo = document.getElementById('nodeInfo');
+  const nodeNotes = document.getElementById('nodeNotes');
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    const selected = cy.$(':selected');
+    if (selected.length === 0) { alert('삭제할 요소를 선택하세요.'); return; }
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(selected);
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = document.activeElement.tagName.toUpperCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        deleteSelected();
+      }
+    }
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const id = node.id();
+    
+    if (edgeSrcInput.value === '') {
+      edgeSrcInput.value = id;
+    } else if (edgeTgtInput.value === '' && edgeSrcInput.value !== id) {
+      edgeTgtInput.value = id;
+    }
+    
+    nodeInfo.textContent = '📌 ' + (node.data('label') || id);
+    nodeNotes.textContent = node.data('notes') || '메모 없음';
+    selectedId = id;
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt('새 노드 이름:');
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+      }
+    }
+  });
+
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        let els = [];
+        if (Array.isArray(data)) els = data;
+        else if (data.nodes || data.edges) els = [...(data.nodes||[]), ...(data.edges||[])];
+        else if (data.elements) els = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        if (els.length) { cy.elements().remove(); cy.add(els); cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run(); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>

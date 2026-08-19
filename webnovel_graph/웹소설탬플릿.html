@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>완전체 20가지 프리셋 + 1~10화 전체</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f1f5f9; font-family: 'Segoe UI', 'Nanum Gothic', sans-serif; padding: 40px 20px; color: #0f172a; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #cbd5e1; }
+        header h1 { font-size: 2.2rem; font-weight: 800; color: #0f172a; }
+        header p { margin-top: 10px; color: #475569; font-size: 1.05rem; }
+        .section-title { font-size: 1.8rem; font-weight: 700; margin: 50px 0 20px 0; padding-left: 10px; border-left: 8px solid #3b82f6; color: #0f172a; }
+        .section-sub { font-size: 1rem; color: #475569; margin-bottom: 25px; padding-left: 10px; }
+        .episode-card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 30px; padding: 24px 30px; border-left: 6px solid #3b82f6; transition: all 0.2s; }
+        .episode-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .episode-card.preset { border-left-color: #8b5cf6; }
+        .episode-card.preset .episode-title { color: #5b21b6; }
+        .episode-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 18px; }
+        .episode-title { font-size: 1.5rem; font-weight: 700; color: #0f172a; }
+        .episode-title small { font-weight: 400; font-size: 0.85rem; color: #64748b; margin-left: 12px; background: #f1f5f9; padding: 2px 12px; border-radius: 20px; }
+        .preset-desc { font-size: 0.95rem; color: #4b5563; background: #f8fafc; padding: 8px 16px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #cbd5e1; width: 100%; }
+        .copy-btn { background: #e2e8f0; border: none; padding: 8px 18px; border-radius: 40px; font-size: 0.9rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        .copy-btn:hover { background: #3b82f6; color: #fff; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
+        .copy-btn:active { transform: scale(0.95); }
+        .copy-btn.copied { background: #22c55e; color: #fff; }
+        .template-content { font-family: 'Consolas', 'Courier New', monospace; font-size: 0.92rem; line-height: 2; background: #f8fafc; padding: 18px 22px; border-radius: 12px; border: 1px solid #e9edf2; white-space: pre-wrap; word-break: break-word; color: #0f172a; }
+        .template-content .blank { color: #2563eb; font-weight: 700; letter-spacing: 0.5px; border-bottom: 2px dashed #94a3b8; padding: 0 2px; }
+        .template-content .hint { color: #6b7280; font-weight: 400; font-style: italic; background: #f1f5f9; padding: 0 4px; border-radius: 4px; }
+        .badge-list { margin-top: 30px; background: #ffffff; border-radius: 16px; padding: 24px 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 6px solid #8b5cf6; }
+        .badge-list .tags { display: flex; flex-wrap: wrap; gap: 8px 12px; }
+        .badge-list .tags span { background: #eef2ff; color: #4338ca; padding: 4px 14px; border-radius: 30px; font-size: 0.9rem; font-weight: 500; }
+        .toast-message { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px); background: #0f172a; color: #fff; padding: 12px 30px; border-radius: 60px; font-weight: 600; font-size: 0.95rem; opacity: 0; transition: all 0.4s ease; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 999; }
+        .toast-message.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } body { padding: 20px 12px; } .episode-card { padding: 18px 16px; } .episode-header { flex-direction: column; align-items: flex-start; } .template-content { font-size: 0.8rem; padding: 14px; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🧠 완전체 20가지 프리셋 + 1~10화 전체</h1>
+        <p>1~10화는 힌트 포함 고정형, 11화 이후는 <strong>20가지 장르/갈등 프리셋</strong>. 모든 내용이 빠짐없이 포함되었습니다.</p>
+    </header>
+
+    <h2 class="section-title">📌 1화 ~ 10화 (힌트 포함, 전 화면)</h2>
+    <div class="section-sub">각 화의 목적에 맞춰 빈칸마다 구체적인 작성 포인트(힌트)를 달아두었습니다.</div>
+    <div id="episodeList"></div>
+
+    <h2 class="section-title">🚀 11화 이후 20가지 정교 프리셋</h2>
+    <div class="section-sub">18가지 교체 키워드 + 생존/심리/수호 추가. 각 프리셋의 5대 핵심 항목에 구체적 예시 포함.</div>
+    <div id="presetList" class="grid-2"></div>
+
+    <h2 class="section-title">📄 기본 반복 원본 (참고용)</h2>
+    <div id="baseTemplate"></div>
+
+    <div class="badge-list">
+        <h2>🎯 이 프리셋들이 커버하는 20가지 갈등 형태</h2>
+        <div class="tags">
+            <span>⚔️ 전투</span><span>🕵️ 추리</span><span>💕 로맨스</span><span>📈 성장</span><span>☕ 휴식</span>
+            <span>🎭 반전</span><span>🏃 탈출</span><span>🔍 추적</span><span>🤝 협상</span><span>🗡️ 배신</span>
+            <span>🆘 구출</span><span>🗺️ 탐험</span><span>🔥 복수</span><span>📢 정보 공개</span><span>💥 감정 폭발</span>
+            <span>🏁 아크 결산</span><span>🌪️ 생존/재해</span><span>🌀 심리/공포</span><span>😊 일상</span><span>🛡️ 수호</span>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast-message">✅ 템플릿이 복사되었습니다!</div>
+
+<script>
+    // ========================================================================
+    // 1. 1~10화 전체 데이터 (빠짐없이 모두 포함)
+    // ========================================================================
+    const episodes = [
+        // 1화
+        {
+            id: 1,
+            title: '1화 — 강제 후킹형',
+            lines: [
+                '[첫 문장: 즉시 긴장감을 주는 사건] (주인공이 죽을 뻔한 순간 or 충격적 발견) __________',
+                '[주인공의 현재 상태] (나이, 직업, 성격의 핵심) __________',
+                '[주인공이 처한 평범한 상황] (일상의 루틴, 불만족스러운 점) __________',
+                '[평범함을 깨뜨리는 사건] (예: 의문의 편지, 갑작스러운 폭발, 낯선 이의 등장) __________',
+                '[사건의 즉각적 영향] (정신적 충격, 신체적 상해, 쫓기는 신세) __________',
+                '[주인공의 첫 번째 행동] (도망, 맞서기, 숨기, 조사) __________',
+                '[발견한 이상한 정보/인물] (예: 죽은 줄 알았던 사람, 금지된 마크, 기억과 다른 장소) __________',
+                '[독자가 궁금해할 핵심 질문] (이게 왜 일어난 거지? 그는 누구지?) __________',
+                '[주인공이 아직 모르는 중요한 사실] (자신이 저주를 받았다거나, 계획된 사건이었다는 점) __________',
+                '[1화의 핵심 갈등] (생존 vs 진실, 과거 vs 현재) __________',
+                '[화 중반 작은 반전] (도움을 청한 인물이 오히려 적이었음) __________',
+                '[주인공이 예상치 못한 결과] (도망쳤지만 오히려 함정에 빠짐) __________',
+                '[1화에서 주는 첫 번째 보상] (강력한 단서나 조력자의 등장) __________',
+                '[미해결 사건 (다음 화로)] (적이 왜 자신을 노리는지 모름) __________',
+                '[마지막 문장 후킹] (그때, 그의 뒤에서 차가운 금속이 목에 닿았다) __________'
+            ]
+        },
+        // 2화
+        {
+            id: 2,
+            title: '2화 — 후킹 유지 + 첫 목표',
+            lines: [
+                '[1화 마지막 사건의 결과] (체포당함, 위기에서 도움받음, 정보 입수) __________',
+                '[주인공이 당장 해결해야 할 문제] (신변 위협, 증거 인멸, 협력 제안) __________',
+                '[주인공이 세우는 첫 번째 목표] (예: 마을을 탈출한다 / 서류를 찾는다) __________',
+                '[목표를 방해하는 장애물] (시스템, 경비, 날씨, 신체적 한계) __________',
+                '[새롭게 등장하는 인물/세력] (도움을 주는 자 vs 방해하는 자) __________',
+                '[얻는 첫 번째 단서] (메모, 물건, 흉터, 말투) __________',
+                '[주인공의 잘못된 판단] (이 사람은 믿을 수 있다고 생각함) __________',
+                '[판단으로 인한 문제] (정보 누설, 위치 발각) __________',
+                '[주인공이 선택해야 하는 상황] (동료를 버리고 갈 것인가, 함께 위험을 감수할 것인가) __________',
+                '[주인공의 선택] __________',
+                '[선택의 즉각적 결과] (구출 성공 or 분열) __________',
+                '[독자에게 공개되는 새 정보] (이 세계의 특수 규칙, 배경 설정) __________',
+                '[이번 화에서 해결된 문제] (단기 위기 회피) __________',
+                '[이번 화에서 새로 생긴 문제] (선택으로 인한 적의 집중 공격) __________',
+                '[다음 화를 읽어야 하는 이유] (선택의 대가가 드러남) __________'
+            ]
+        },
+        // 3화
+        {
+            id: 3,
+            title: '3화 — 첫 번째 작은 성공/실패',
+            lines: [
+                '[이전 화의 결과] (도망 성공, 그러나 지쳤음) __________',
+                '[주인공의 새로운 목표] (안전한 은신처 찾기) __________',
+                '[목표를 위한 행동] (낯선 이에게 도움 요청) __________',
+                '[첫 번째 장애물] (언어 장벽, 돈 부족, 불신) __________',
+                '[주인공이 사용하는 방법] (정보를 대가로 제안) __________',
+                '[방법의 결과 (성공/실패/부분)] (은신처는 얻었으나 정보를 너무 많이 줌) __________',
+                '[예상치 못한 부작용] (정보를 넘긴 상대가 주인공을 뒤쫓음) __________',
+                '[새로운 정보] (이 지역의 암거래 루트) __________',
+                '[기존에 알던 사실의 변화] (도움을 청한 이는 단순한 상인이 아니었음) __________',
+                '[주인공의 감정 변화] (절망 → 희망 → 다시 경계) __________',
+                '[주인공이 내려야 할 새 선택] (이 사람을 믿고 협력할 것인가) __________',
+                '[선택의 결과] (임시 동맹 성사) __________',
+                '[작은 보상] (잠잘 곳과 식량 획득) __________',
+                '[장기 복선] (상인이 우연히 꺼낸 낡은 사진 속에 주인공 아버지가 있음) __________',
+                '[다음 화 핵심 질문] (그 사진은 무엇인가?) __________'
+            ]
+        },
+        // 4화
+        {
+            id: 4,
+            title: '4화 — 세계관 확장형',
+            lines: [
+                '[이전 사건과 연결되는 새 사건] (은신처에 침입자가 생김) __________',
+                '[새롭게 등장하는 세계관 요소] (이 세계의 마법/초능력/계급 시스템) __________',
+                '[새 요소와 현재 문제의 연결] (침입자는 마법을 사용했고, 주인공은 무력함) __________',
+                '[독자에게 반드시 설명해야 하는 정보] (마법의 기본 원리, 사용 제약) __________',
+                '[설명하지 않고 숨겨야 하는 정보] (주인공이 특별한 능력을 가지고 있다는 사실) __________',
+                '[새로운 인물/조직/장소] (마법사 길드, 혹은 지하 감옥) __________',
+                '[주인공과 새 요소의 충돌] (마법을 사용하지 못해 굴욕을 당함) __________',
+                '[주인공이 얻는 정보] (자신이 속한 혈통에 대한 소문) __________',
+                '[독자가 추론할 수 있는 것] (주인공도 마법을 쓸 수 있을지도 모른다) __________',
+                '[아직 밝혀지지 않은 핵심 비밀] (주인공이 봉인된 이유) __________',
+                '[작은 갈등] (길드원과의 언쟁) __________',
+                '[갈등의 결과] (추방 위협, 혹은 임무 부여) __________',
+                '[세계관의 변화] (길드가 부패했다는 사실을 깨달음) __________',
+                '[새로운 질문] (길드를 믿어야 하는가?) __________'
+            ]
+        },
+        // 5화
+        {
+            id: 5,
+            title: '5화 — 첫 번째 보상형',
+            lines: [
+                '[초반에 뿌려둔 문제/복선] (주인공의 기억 상실, 또는 잃어버린 물건) __________',
+                '[문제 해결을 위한 행동] (기억을 되찾기 위해 위험한 약물을 마심) __________',
+                '[예상되는 해결 방법] (약물이 기억을 되찾아줄 것이라 믿음) __________',
+                '[예상과 다른 장애물] (약물이 환각을 일으킴) __________',
+                '[주인공의 새로운 전략] (환각 속에서 진짜 단서를 찾음) __________',
+                '[전략 실행] (일부러 환각에 빠져듦) __________',
+                '[결과] (과거의 일부를 떠올림) __________',
+                '[독자가 기다리던 보상] (주인공의 과거 정체가 조금 공개됨) __________',
+                '[주인공의 감정적 보상] (자신이 누군지 알게 된 안도감) __________',
+                '[변화한 요소 (능력/정보/관계)] (과거의 검술을 한순간 떠올려 사용함) __________',
+                '[보상으로 인한 새 문제] (기억을 되찾은 대가로 강력한 두통과 발각 위험) __________',
+                '[다음 단계의 목표] (기억의 나머지를 찾기 위해 특정 장소로 이동) __________',
+                '[장기 복선 추가] (기억 속에 나타난 적군의 스파이) __________'
+            ]
+        },
+        // 6화
+        {
+            id: 6,
+            title: '6화 — 관계 형성형',
+            lines: [
+                '[기존 인물 관계 상태] (주인공과 동료는 서로를 경계 중) __________',
+                '[관계 변화의 계기] (갑작스러운 함정에 함께 빠짐) __________',
+                '[상대 인물의 욕망] (자신의 가족을 구하고 싶어함) __________',
+                '[주인공의 욕망] (진실을 밝히고 복수하고 싶음) __________',
+                '[두 사람의 공통점] (모두에게 버림받은 과거) __________',
+                '[두 사람의 충돌점] (방법론 차이: 과격 vs 신중) __________',
+                '[첫 번째 상호작용] (서로의 약점을 지적하며 언쟁) __________',
+                '[오해/갈등/협력] (오해로 인해 서로를 의심하다가, 함께 위기를 돌파하며 신뢰) __________',
+                '[상대 인물의 숨겨진 정보] (사실 그도 주인공을 찾고 있었다) __________',
+                '[주인공의 시선 변화] (처음엔 짐덩어리라 생각했으나, 이제는 능력 있는 동료로 봄) __________',
+                '[상대의 시선 변화] (냉혈한이라 생각했으나, 따뜻한 면이 있음을 깨달음) __________',
+                '[관계의 현재 상태] (묵묵히 협력하는 사이, 아직 완전히 믿지는 않음) __________',
+                '[앞으로의 갈등 씨앗] (서로의 과거가 충돌할 가능성) __________'
+            ]
+        },
+        // 7화
+        {
+            id: 7,
+            title: '7화 — 첫 번째 위기형',
+            lines: [
+                '[주인공이 지금까지 얻은 것] (동료, 단서, 약간의 능력) __________',
+                '[그것을 위협하는 사건] (적의 대규모 습격) __________',
+                '[위기의 원인] (주인공의 행방이 노출됨) __________',
+                '[주인공이 처음 선택하는 해결책] (정면 돌파) __________',
+                '[해결책의 실패] (적이 너무 강력함) __________',
+                '[상황 악화 방식] (동료가 부상을 입고, 퇴로가 차단됨) __________',
+                '[주인공의 가장 큰 약점] (아직 능력을 제어하지 못함) __________',
+                '[주인공이 잃을 수 있는 것] (동료의 생명, 혹은 자신의 자유) __________',
+                '[내려야 하는 어려운 선택] (동료를 버리고 도망칠까, 위험을 무릅쓰고 능력을 사용할까) __________',
+                '[선택] (능력을 사용하기로 결심) __________',
+                '[선택의 대가] (능력을 사용했지만, 반동으로 큰 부상을 입음) __________',
+                '[부분적인 해결] (적을 격퇴했으나, 동료가 의식불명에 빠짐) __________',
+                '[위기로 변화한 세계/관계] (주인공은 더 이상 숨을 수 없게 되었고, 동료를 지키겠다는 맹세를 함) __________',
+                '[다음 화의 긴장 요소] (의식불명인 동료를 살릴 방법이 없음) __________'
+            ]
+        },
+        // 8화
+        {
+            id: 8,
+            title: '8화 — 반전형',
+            lines: [
+                '[독자가 지금까지 믿고 있던 사실] (적은 A였고, 주인공은 피해자다) __________',
+                '[주인공이 믿고 있던 사실] (자신은 평범한 인간이다) __________',
+                '[새롭게 발견되는 단서] (주인공의 몸에서 이상한 문신이 나타남) __________',
+                '[기존 정보와 모순되는 부분] (문신은 적군의 마크임) __________',
+                '[주인공의 조사/행동] (도서관에서 문신의 기원을 찾음) __________',
+                '[숨겨져 있던 정보] (주인공은 사실 적의 핵심 전사였고, 기억이 봉인됨) __________',
+                '[1차 반전] (주인공이 자신이 싸우던 적의 일원이었음) __________',
+                '[반전으로 인한 재해석] (지금까지 당한 위협들은 자신을 회수하려는 것이었음) __________',
+                '[주인공의 감정 변화] (충격 → 분노 → 혼란) __________',
+                '[독자에게 공개하는 진실의 범위] (문신의 의미까지 공개, 그러나 누가 봉인했는지는 미공개) __________',
+                '[아직 숨겨두는 진실] (봉인한 자가 바로 현재의 조력자일 수 있음) __________',
+                '[반전의 결과] (주인공이 자신의 적을 다시 정의해야 함) __________',
+                '[더 큰 질문] (내가 과거에 무슨 짓을 했기에 봉인된 걸까?) __________'
+            ]
+        },
+        // 9화
+        {
+            id: 9,
+            title: '9화 — 진실 일부 공개형',
+            lines: [
+                '[장기 미스터리] (왜 주인공이 봉인되었는가) __________',
+                '[지금까지의 관련 단서] (문신, 과거 사진, 적의 대사) __________',
+                '[새로운 결정적 단서] (봉인을 풀 수 있는 일기장 발견) __________',
+                '[주인공이 도달하는 가설] (자신이 위험해서가 아니라, 자신이 위험해서 봉인되었을 것이다) __________',
+                '[가설의 일부가 맞다는 증거] (일기장에 자신의 필체로 "내가 위험해"라고 적힘) __________',
+                '[진실의 일부 공개] (주인공은 과거에 폭주했고, 이를 막기 위해 자진해서 봉인을 요청함) __________',
+                '[진실과 함께 밝혀지는 새 사실] (봉인을 풀면 세계가 위험해질 수 있음) __________',
+                '[아직 설명되지 않는 부분] (그럼 지금의 적들은 왜 봉인을 풀려고 하는가?) __________',
+                '[주인공의 목표 변화] (봉인을 유지할지, 풀고 대적할지 고민) __________',
+                '[독자가 갖게 되는 새 질문] (주인공은 과연 나쁜 사람인가, 착한 사람인가?) __________',
+                '[다음 화에서 해결할 단기 문제] (일기장을 노리는 적의 습격) __________',
+                '[장기 복선] (일기장 마지막 장에 "그를 믿지 마라"라는 낙서가 있음) __________'
+            ]
+        },
+        // 10화
+        {
+            id: 10,
+            title: '10화 — 첫 번째 아크 폭발형',
+            lines: [
+                '[1~9화 누적된 핵심 갈등] (봉인 vs 해방, 과거의 죄책감) __________',
+                '[주인공이 반드시 해결해야 할 문제] (다가오는 적의 대장과의 대면) __________',
+                '[주요 인물들이 모이는 이유] (봉인이 깨질 위기에 모두 모임) __________',
+                '[대립 구조] (주인공+현재 동료 vs 과거의 부하들) __________',
+                '[주인공의 목표] (봉인을 지키거나, 통제하는 법을 찾음) __________',
+                '[적대자의 목표] (봉인을 깨고 세계를 재건) __________',
+                '[첫 번째 충돌] (대장과의 정면 대치) __________',
+                '[상황 악화] (동료가 인질로 잡힘) __________',
+                '[주인공의 결정적 선택] (봉인을 풀고 힘을 얻어 동료를 구함) __________',
+                '[최대 긴장 구간] (힘을 제어하지 못해 주변을 파괴할 위기) __________',
+                '[첫 번째 큰 보상] (동료 구출 성공, 과거의 힘을 일부 되찾음) __________',
+                '[핵심 진실의 공개] (대장은 자신의 쌍둥이 형제였음) __________',
+                '[주인공의 변화] (과거를 받아들이고, 힘을 통제하겠다고 결심) __________',
+                '[세계/관계/목표의 변화] (더 이상 숨지 않고, 스스로 적이 되기로 함) __________',
+                '[1차 아크 종료] (대장은 도주, 주인공은 새로운 길을 걷기 시작) __________',
+                '[다음 아크의 핵심 질문] (쌍둥이 형제는 왜 그런 선택을 했는가?) __________',
+                '[다음 아크 연결 장면] (하늘에서 거대한 그림자가 내려앉으며, 2부 예고) __________'
+            ]
+        }
+    ];
+
+    // ========================================================================
+    // 2. 기본 반복 템플릿 (원본)
+    // ========================================================================
+    const baseLines = [
+        '[이전 화의 결과] (전투 승리, 정보 획득, 관계 진전 등) __________',
+        '[현재 세계 상태] (세력 균형, 날씨, 사회 분위기) __________',
+        '[현재 주요 인물들의 상태] (심리적/신체적 컨디션) __________',
+        '[이번 화의 핵심 목표] (구체적인 행동 목표) __________',
+        '[목표가 발생한 이유] (외부 압박, 내적 결심) __________',
+        '[목표를 방해하는 장애물] (적, 환경, 내면의 약함) __________',
+        '[주인공의 첫 번째 행동] (접근 방식) __________',
+        '[행동의 결과] (성공/실패/부분 성공) __________',
+        '[새롭게 드러나는 정보] (세계관, 인물 과거) __________',
+        '[예상하지 못한 변수] (예상치 못한 인물 등장, 날씨 변화) __________',
+        '[주인공의 선택] (중간 기로) __________',
+        '[선택의 결과] (갈등 방향 전환) __________',
+        '[갈등의 변화] (격화 또는 완화) __________',
+        '[감정의 변화] (분노→연민, 공포→용기 등) __________',
+        '[이번 화에서 해결된 문제] (단기 목표 달성) __________',
+        '[이번 화에서 새롭게 발생한 문제] (새로운 적, 새로운 의문) __________',
+        '[이번 화의 보상] (단서, 아이템, 신뢰) __________',
+        '[장기 복선의 진행] (서서히 드러나는 큰 그림) __________',
+        '[다음 화의 핵심 질문] (독자가 궁금해할 점) __________',
+        '[다음 화를 강제하는 마지막 사건] (클리프행어) __________'
+    ];
+
+    // ========================================================================
+    // 3. 20가지 정교 프리셋 (11화 이후)
+    // ========================================================================
+    function createPreset(title, desc, goal, obstacle, choice, result, reward) {
+        let lines = baseLines.slice();
+        lines[3] = `[이번 화의 핵심 목표] (예: ${goal}) __________`;
+        lines[5] = `[목표를 방해하는 장애물] (예: ${obstacle}) __________`;
+        lines[10] = `[주인공의 선택] (예: ${choice}) __________`;
+        lines[11] = `[선택의 결과] (예: ${result}) __________`;
+        lines[16] = `[이번 화의 보상] (예: ${reward}) __________`;
+        return { title, desc, lines };
+    }
+
+    const presets = [
+        createPreset('⚔️ 전투 / 액션', '정면 대치, 힘의 격돌', '적장의 약점을 찾아 일격', '적이 거대 방패 마법으로 방어', '공격 유지 vs 방어 전환', '방어 전환했으나 측면 공격 당함', '전투 중 적의 과거 기억 단서 획득'),
+        createPreset('🕵️ 추리 / 미스터리', '단서 연결, 진실 추적', '연쇄 사건의 공통점 찾기', '용의자들 모두 완벽한 알리바이', '이물질 분석 vs 목격자 압박', '분석 선택했으나 실험실 침입', '범인이 경찰 내부라는 증거'),
+        createPreset('💕 관계 / 로맨스', '감정적 장벽 허물기', '숨겨진 약점을 고백', '상대가 과거 때문에 오해', '직접 고백 vs 행동으로 보여줌', '행동 선택했으나 상대가 부담스러워함', '상대가 자신의 비밀 하나를 건넴'),
+        createPreset('📈 성장 / 수련', '한계 극복, 새로운 경지', '트라우마 직면 후 능력 각성', '과거 기억의 환영이 방해', '트라우마 수용 vs 부정', '수용했으나 능력 폭주 위기', '능력 통제법 깨닫고 정신적 안정'),
+        createPreset('☕ 휴식 / 치유', '긴장 완화, 내면 회복', '평화로운 장소에서 심신 회복', '갑작스러운 과거 인물의 등장', '휴식 유지 vs 과거와 대면', '휴식을 선택했으나 과거가 따라옴', '과거를 조금 받아들이는 평온함'),
+        createPreset('😊 일상 / 코미디', '평범한 하루, 캐릭터 개성 부각', '시장에서 특별한 재료를 구함', '재료를 두고 상인과 실랑이', '화해할까 vs 끝까지 우길까', '화해했으나 상인이 오히려 선물을 줌', '뜻밖의 요리 레시피와 웃음'),
+        createPreset('🎭 반전 / 충격', '기존 신뢰를 무너뜨리는 진실', '조력자의 배신을 확인', '조력자가 완벽한 알리바이 제시', '직접 추궁 vs 몰래 캐기', '몰래 캐다가 함정 발견', '배신 확인했으나 새로운 의문 발생'),
+        createPreset('🏃 탈출 / 생존', '절체절명의 위기에서 빠져나옴', '추적자 따돌리고 탈출 루트 탐색', '유일한 루트가 붕괴됨', '다른 루트 개척 vs 붕괴 루트 복구', '다른 루트 선택했으나 야수 소굴', '야수를 피해 숨은 굴에서 탈출 지도 발견'),
+        createPreset('🔍 추적 / 사냥', '목표물의 흔적을 쫓음', '도망친 적의 혈흔을 따라 늪지로', '혈흔이 끊기고 갈림길 등장', '왼쪽 vs 오른쪽 선택', '왼쪽 선택했으나 오른쪽에서 기습', '기습 당했으나 적의 보급로 발견'),
+        createPreset('🤝 협상 / 외교', '이해관계 조율, 합의 도출', '두 세력 사이 휴전 중재', '양측 모두 상대가 먼저 무기 내려놓길 요구', '무기 내려놓기 설득 vs 다른 대가 제시', '다른 대가(영토) 제시했으나 분노 유발', '비밀 거래 내역 폭로 협박으로 성사'),
+        createPreset('🗡️ 배신 / 음모', '내부의 적 색출 및 대면', '정보를 유출한 스파이 찾기', '단서가 세 명의 핵심 인물을 가리킴', '함정 설치 vs 역추적', '함정 설치했으나 예상치 못한 친구가 걸림', '친구는 스파이 아니지만 다른 중대한 비밀 발견'),
+        createPreset('🆘 구출 / 구조', '인질이 된 동료 구출', '적 기지 잠입 후 위치 파악', '감금실 앞에 생체 인식 잠금장치', '경비원 제압 vs 해킹 시도', '해킹 시도했으나 경보 울림', '혼란 틈타 구출했으나 동료에 폭탄 장착'),
+        createPreset('🗺️ 탐험 / 모험', '미지 유적 탐사, 유산 발굴', '전설의 수정 동굴 입구 발견', '내부는 환각 가스로 가득 참', '방독면 사용 vs 환각 이용', '환각 이용해 내면의 악마와 대면', '악마 물리치고 고대 유물 획득'),
+        createPreset('🔥 복수 / 응징', '과거의 원한을 되갚음', '복수 대상을 궁지로 몰아넣음', '대상이 인질을 확보함', '인질 구출 vs 복수 실행', '복수 포기하고 인질 구출함', '인질이 과거 복수의 실마리를 제공함'),
+        createPreset('📢 정보 공개 / 계시', '결정적 단서를 세상에 알림', '오랫동안 숨겨온 문서 확보', '문서가 소각되려 함', '문서 빼돌리기 vs 사본 만들기', '사본 만들다 발각되어 도주', '사본 속에 결정적 이름이 적혀 있음'),
+        createPreset('💥 감정 폭발 / 격정', '쌓인 감정이 터져 나옴', '오해를 풀고 진심을 전달', '상대가 듣기조차 거부함', '강제로 붙잡음 vs 기다림', '기다렸으나 상대가 돌아서며 차가움', '작은 쪽지를 받아 관계 회복 실마리 획득'),
+        createPreset('🏁 아크 결산 / 마무리', '현재 챕터의 모든 갈등 정리', '현재 갈등의 마무리를 짓기', '뜻밖의 후속 타격이 옴', '완전히 끝냄 vs 휴전', '휴전 제안했으나 상대가 음모', '내부의 동조자를 발견하고 차기 준비'),
+        createPreset('🌪️ 생존 / 재해', '대규모 재난 속에서 살아남기', '붕괴되는 건물에서 대피', '출구가 완전히 무너짐', '다른 길 개척 vs 구조 기다림', '다른 길 가다 유독가스 노출', '대피 중 잃어버린 중요 물건 회수'),
+        createPreset('🌀 심리 / 공포', '정신적 공포에 맞서 정신력 회복', '악몽의 근원을 찾아 정신 해방', '현실과 악몽의 경계가 흐려짐', '악몽 속으로 의식적으로 진입 vs 현실 집중', '악몽 속으로 들어가 두려움과 대면', '두려움 극복하고 정신력 강화'),
+        createPreset('🛡️ 수호 / 보호', '누군가 또는 무언가를 지킴', '취약한 동맹국을 적의 공격에서 보호', '적이 우회로를 통해 기습함', '전선을 넓혀 막을까 vs 요새에 틀어박힐까', '전선을 넓혀 막았으나 병력이 분산됨', '작은 성과를 거두고 동맹국의 감사 인사를 받음')
+    ];
+
+    // ========================================================================
+    // 렌더링 함수
+    // ========================================================================
+    function renderCards(containerId, data, isPreset = false, grid = false) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        if (grid) container.classList.add('grid-2');
+        else container.classList.remove('grid-2');
+        
+        data.forEach((item) => {
+            const card = document.createElement('div');
+            card.className = `episode-card ${isPreset ? 'preset' : ''}`;
+            const header = document.createElement('div');
+            header.className = 'episode-header';
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'episode-title';
+            titleDiv.innerHTML = `${item.title} ${isPreset ? '<small>프리셋</small>' : ''}`;
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.innerHTML = '📋 텍스트 복사';
+            header.appendChild(titleDiv);
+            header.appendChild(btn);
+            card.appendChild(header);
+            if (isPreset && item.desc) {
+                const descDiv = document.createElement('div');
+                descDiv.className = 'preset-desc';
+                descDiv.textContent = item.desc;
+                card.appendChild(descDiv);
+            }
+            const content = document.createElement('div');
+            content.className = 'template-content';
+            let rawText = item.lines.join('\n');
+            let displayText = rawText.replace(/__________/g, '<span class="blank">__________</span>');
+            displayText = displayText.replace(/\(([^)]*)\)/g, (match, p1) => `<span class="hint">(${p1})</span>`);
+            content.innerHTML = displayText;
+            card.appendChild(content);
+            container.appendChild(card);
+
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const titlePrefix = isPreset ? `[프리셋] ${item.title}` : item.title;
+                const textToCopy = `${titlePrefix}\n${item.lines.join('\n')}`;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const toast = document.getElementById('toast');
+                    toast.textContent = `✅ "${item.title}" 템플릿이 복사되었습니다!`;
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 2000);
+                    btn.classList.add('copied');
+                    btn.innerHTML = '✅ 복사 완료!';
+                    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '📋 텍스트 복사'; }, 2000);
+                }).catch(() => alert('복사 실패. 직접 선택하세요.'));
+            });
+        });
+    }
+
+    // ========================================================================
+    // 실행
+    // ========================================================================
+    // 1~10화 전체 렌더링
+    renderCards('episodeList', episodes, false);
+    // 20가지 프리셋 렌더링 (2컬럼 그리드)
+    renderCards('presetList', presets, true, true);
+
+    // 기본 원본 렌더링
+    const baseContainer = document.getElementById('baseTemplate');
+    if (baseContainer) {
+        const card = document.createElement('div');
+        card.className = 'episode-card';
+        card.style.borderLeftColor = '#94a3b8';
+        const header = document.createElement('div');
+        header.className = 'episode-header';
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'episode-title';
+        titleDiv.innerHTML = '기본 반복 원본 (11화~) <small>힌트 포함</small>';
+        header.appendChild(titleDiv);
+        card.appendChild(header);
+        const content = document.createElement('div');
+        content.className = 'template-content';
+        let rawText = baseLines.join('\n');
+        let displayText = rawText.replace(/__________/g, '<span class="blank">__________</span>');
+        displayText = displayText.replace(/\(([^)]*)\)/g, (match, p1) => `<span class="hint">(${p1})</span>`);
+        content.innerHTML = displayText;
+        card.appendChild(content);
+
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.innerHTML = '📋 텍스트 복사';
+        btn.style.marginTop = '15px';
+        card.appendChild(btn);
+        baseContainer.appendChild(card);
+
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const textToCopy = `기본 반복 원본 (11화~)\n${baseLines.join('\n')}`;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const toast = document.getElementById('toast');
+                toast.textContent = `✅ 기본 원본이 복사되었습니다!`;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+                btn.classList.add('copied');
+                btn.innerHTML = '✅ 복사 완료!';
+                setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '📋 텍스트 복사'; }, 2000);
+            }).catch(() => alert('복사 실패.'));
+        });
+    }
+</script>
+</body>
+</html>

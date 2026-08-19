@@ -1,0 +1,5549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그래프 뷰어</title>
+<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { 
+    background:#fafafa; 
+    height:100vh; 
+    display:flex; 
+    flex-direction:column;
+    font-family:'Malgun Gothic',sans-serif;
+    overflow:hidden;
+  }
+  #cy { 
+    flex:1; 
+    width:100%;
+    background:#fafafa;
+  }
+  #info { 
+    position:fixed; 
+    bottom:20px; 
+    left:50%; 
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.7); 
+    color:#fff; 
+    padding:6px 16px; 
+    border-radius:20px; 
+    font-size:12px; 
+    pointer-events:none; 
+    z-index:100;
+    backdrop-filter:blur(4px);
+  }
+  #info span { font-weight:bold; color:#FFD700; }
+  .header {
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    color:#fff;
+    padding:8px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-shrink:0;
+  }
+  .header h1 { font-size:1em; }
+  .header .hint { font-size:0.7em; opacity:0.8; }
+  .tip { 
+    position:fixed; 
+    top:60px; 
+    left:50%; 
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.5); 
+    color:#fff; 
+    padding:4px 14px; 
+    border-radius:12px; 
+    font-size:11px; 
+    pointer-events:none; 
+    z-index:100;
+    backdrop-filter:blur(4px);
+    transition: opacity 1s;
+  }
+  .tip.hidden { opacity:0; }
+
+  /* ===== 툴팁 ===== */
+  #nodeTooltip {
+    display:none;
+    position:fixed;
+    z-index:1000;
+    pointer-events:none;
+    background:#fff;
+    border-radius:10px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.25);
+    max-width:320px;
+    padding:10px 14px;
+    border:1px solid #ddd;
+    font-family:'Malgun Gothic',sans-serif;
+    font-size:0.85em;
+    line-height:1.5;
+    color:#333;
+  }
+  #nodeTooltip .tt-title {
+    font-weight:bold;
+    color:#667eea;
+    border-bottom:1px solid #eee;
+    padding-bottom:3px;
+    margin-bottom:4px;
+  }
+  #nodeTooltip .tt-notes { white-space:pre-wrap; word-break:break-word; }
+  #nodeTooltip .tt-empty { color:#999; font-style:italic; }
+
+  .dark-toggle {
+    background:rgba(255,255,255,0.15);
+    border:1px solid rgba(255,255,255,0.25);
+    color:#fff;
+    padding:4px 12px;
+    border-radius:16px;
+    cursor:pointer;
+    font-size:0.7em;
+  }
+  .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+  
+  [data-theme="dark"] body { background:#0f0f1a; }
+  [data-theme="dark"] #cy { background:#0f0f1a; }
+  [data-theme="dark"] #nodeTooltip {
+    background:#1a1a2e;
+    border-color:#444466;
+    color:#e0e0e0;
+  }
+  [data-theme="dark"] #nodeTooltip .tt-title {
+    color:#bb86fc;
+    border-color:#444466;
+  }
+  [data-theme="dark"] #nodeTooltip .tt-empty { color:#888; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🌐 그래프 뷰어</h1>
+  <div>
+    <span class="hint">🔍 호버=메모보기 · D키 다크모드</span>
+    <button class="dark-toggle" onclick="toggleDark()">🌙</button>
+  </div>
+</div>
+<div id="cy"></div>
+<div id="info">📊 <span id="nodeCount">0</span> 노드 · <span id="edgeCount">0</span> 엣지</div>
+<div class="tip" id="tip">💡 노드에 마우스를 올리면 메모를 볼 수 있어요</div>
+
+<!-- 툴팁 -->
+<div id="nodeTooltip">
+  <div class="tt-title" id="ttTitle">노드명</div>
+  <div class="tt-notes" id="ttNotes"><span class="tt-empty">메모가 없습니다</span></div>
+</div>
+
+<script>
+  const data = {
+  "nodes": [
+    {
+      "data": {
+        "id": "PLEROMA_01",
+        "label": "플레로마",
+        "color": "#F9E79F",
+        "notes": "영지주의의 완전한 세계. 모든 신성한 충만함이 존재하는 절대적 완전성. 진정한 신(하나님)이 거주하는 곳으로, 시간과 공간을 초월함."
+      },
+      "position": {
+        "x": 457.7091092776118,
+        "y": 151.6739033924694
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PLEROMA_02",
+        "label": "아르레토스",
+        "color": "#F1C40F",
+        "notes": "플레로마의 최고 존재. '말할 수 없는 자'. 이름도, 형체도, 성별도 없는 절대적 근원. 모든 에온(Aeon)의 아버지."
+      },
+      "position": {
+        "x": 779.4027432720052,
+        "y": 213.63034320755537
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PLEROMA_03",
+        "label": "에온",
+        "color": "#F39C12",
+        "notes": "아르레토스에서 흘러나온 30쌍의 신성한 존재들. 플레로마를 구성하는 기본 단위."
+      },
+      "position": {
+        "x": 662.0332934775693,
+        "y": 309.92931467326207
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SOPHIA_01",
+        "label": "소피아",
+        "color": "#E67E22",
+        "notes": "플레로마의 최하위 에온. 지혜의 의인화. 자신을 완전히 알려는 욕망으로 데미우르고스를 낳음. 모든 신화 속 '여신'들의 원형."
+      },
+      "position": {
+        "x": 661.8165081075871,
+        "y": 437.3899104439907
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SOPHIA_02",
+        "label": "아함모트",
+        "color": "#D35400",
+        "notes": "소피아가 플레로마에서 분리되어 낳은 '낮은 소피아'. 데미우르고스를 창조한 직접적 주체."
+      },
+      "position": {
+        "x": 755.0788653234073,
+        "y": 400.8745876887387
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DEMIURGE_01",
+        "label": "야알다바오트",
+        "color": "#C0392B",
+        "notes": "소피아(아함모트)가 낳은 결함 있는 창조신. 자신이 유일한 신이라 착각하며 물질계를 창조함."
+      },
+      "position": {
+        "x": 869.1837230241495,
+        "y": 624.527735070078
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DEMIURGE_02",
+        "label": "사마엘",
+        "color": "#E74C3C",
+        "notes": "데미우르고스의 다른 이름. '맹인 신'이라는 뜻으로, 자신의 근원(플레로마)을 보지 못함을 상징."
+      },
+      "position": {
+        "x": 1129.4196153745745,
+        "y": 389.0676129391044
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DEMIURGE_03",
+        "label": "사카라스",
+        "color": "#C0392B",
+        "notes": "데미우르고스의 또 다른 이름. '어리석은 자'라는 뜻."
+      },
+      "position": {
+        "x": 1092.0100502919727,
+        "y": 121.44925789885995
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "YHWH_01",
+        "label": "야훼",
+        "color": "#2980B9",
+        "notes": "정통 기독교/유대교의 유일신. 전능하고 선한 창조주. 정통 신학에서 그는 악의 근원이 아님."
+      },
+      "position": {
+        "x": 766.102185188663,
+        "y": 762.8689112182932
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SATAN_01",
+        "label": "사탄",
+        "color": "#E74C3C",
+        "notes": "구약에서 '고발자'로 시작해, 신약에서 '이 세상의 통치자'로 발전. 밀턴의 『실낙원』에서는 반항아로 정립됨."
+      },
+      "position": {
+        "x": 621.0868375147119,
+        "y": 788.9550592767886
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SATAN_02",
+        "label": "루시퍼",
+        "color": "#F39C12",
+        "notes": "이사야 14장의 '새벽별'에서 유래. 중세 이후 사탄의 타락 전 이름으로 굳어짐."
+      },
+      "position": {
+        "x": 706.9407821649066,
+        "y": 852.5076351494913
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SATAN_03",
+        "label": "벨제붑",
+        "color": "#8E44AD",
+        "notes": "'파리의 군주'라는 뜻. 구약에서 블레셋의 신으로 등장, 신약에서 사탄의 주요 부하로 발전."
+      },
+      "position": {
+        "x": 558.4309302129161,
+        "y": 792.4895807615815
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SATAN_04",
+        "label": "벨리알",
+        "color": "#9B59B6",
+        "notes": "'무가치한 자'라는 뜻. 사해 두루마리에서 어둠의 아들들의 우두머리로 등장."
+      },
+      "position": {
+        "x": 762.3327492808406,
+        "y": 709.4713027233215
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SATAN_05",
+        "label": "아스모데우스",
+        "color": "#E74C3C",
+        "notes": "토비트서에 등장하는 악마. 솔로몬의 72악마 중 하나. 정욕과 복수의 악마로 유명."
+      },
+      "position": {
+        "x": 1138.0558719718583,
+        "y": 292.1262888218492
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "SATAN_06",
+        "label": "타락한 천사들",
+        "color": "#9B59B6",
+        "notes": "사탄과 함께 타락한 천사들의 군대. 중세 신학에서는 전체 천사의 1/3이 타락했다고 봄."
+      },
+      "position": {
+        "x": 799.0493748741162,
+        "y": 992.3177452646072
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ARCHON_01",
+        "label": "아콘",
+        "color": "#8E44AD",
+        "notes": "데미우르고스가 물질계를 통제하기 위해 만든 하위 신들. 인간의 영혼을 육체에 가두는 자들."
+      },
+      "position": {
+        "x": 1013.8034164418649,
+        "y": 641.2188702968926
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ARCHON_02",
+        "label": "7대 아콘",
+        "color": "#9B59B6",
+        "notes": "데미우르고스가 창조한 7명의 주요 아콘들. 각각 하나의 행성을 통치하며, 인간의 운명을 좌우함."
+      },
+      "position": {
+        "x": 912.0956030567979,
+        "y": 664.2053901727826
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ARCHON_03",
+        "label": "아콘의 군대",
+        "color": "#8E44AD",
+        "notes": "아콘들을 따르는 하급 영적 존재들. 인간을 유혹하고 의식을 혼란시키는 역할."
+      },
+      "position": {
+        "x": 1121.7079713469982,
+        "y": 697.121786710704
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "LEGION_01",
+        "label": "지옥의 군단",
+        "color": "#7F8C8D",
+        "notes": "신약에서 예수가 쫓아낸 '군단' 귀신들. 수많은 악마들의 집단을 상징."
+      },
+      "position": {
+        "x": 907.0897398356894,
+        "y": 1184.5869983450564
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "LEGION_02",
+        "label": "72악마",
+        "color": "#8E44AD",
+        "notes": "솔로몬의 72악마. 데미우르고스의 몸에서 분리된 아콘들로, 각각 하나의 우주력을 담당."
+      },
+      "position": {
+        "x": 1067.202797731426,
+        "y": 534.9367463119218
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GATES_01",
+        "label": "지옥문",
+        "color": "#2C3E50",
+        "notes": "『실낙원』에서 지옥과 천국을 구분하는 관문. 죄(Sin)가 이 문의 열쇠를 쥐고 지킴."
+      },
+      "position": {
+        "x": 914.1821825250128,
+        "y": 810.3028300289876
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GATES_02",
+        "label": "지옥의 개",
+        "color": "#7F8C8D",
+        "notes": "『실낙원』에서 죄의 자궁에서 끊임없이 태어나는 개들. 그리스 신화의 케르베로스와 혼동됨."
+      },
+      "position": {
+        "x": 899.0069798617171,
+        "y": 1021.2467019710103
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GATES_03",
+        "label": "죄",
+        "color": "#E74C3C",
+        "notes": "『실낙원』에서 사탄의 머리에서 태어난 그의 딸. 상반신은 여성, 하반신은 뱀의 모습."
+      },
+      "position": {
+        "x": 799.657229786226,
+        "y": 819.2660170239553
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GATES_04",
+        "label": "죽음",
+        "color": "#2C3E50",
+        "notes": "『실낙원』에서 죄와 사탄 사이에서 태어난 존재. 사탄의 아들이자 손자."
+      },
+      "position": {
+        "x": 706.1113331649739,
+        "y": 782.71709213707
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MICHAEL_01",
+        "label": "미카엘",
+        "color": "#3498DB",
+        "notes": "대천사. 사탄의 타락 당시 그와 싸운 천사장. 최후의 심판에서 사탄을 불못에 던질 존재."
+      },
+      "position": {
+        "x": 663.7562387572789,
+        "y": 584.1849374513121
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MICHAEL_02",
+        "label": "가브리엘",
+        "color": "#3498DB",
+        "notes": "대천사. 예수의 탄생을 알린 전령. 천국과 인간 세계를 연결하는 메신저."
+      },
+      "position": {
+        "x": 575.9298559679095,
+        "y": 368.81952780202874
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HUMAN_01",
+        "label": "아담",
+        "color": "#E67E22",
+        "notes": "데미우르고스가 물질로 빚어낸 최초의 인간. 그러나 소피아가 그에게 신성한 불꽃을 불어넣음."
+      },
+      "position": {
+        "x": 728.2224925989447,
+        "y": 670.4139086369387
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HUMAN_02",
+        "label": "이브",
+        "color": "#F39C12",
+        "notes": "아담에게서 분리된 여성적 원리. 아콘들의 간섭에도 불구하고 인간의 자유의지를 상징함."
+      },
+      "position": {
+        "x": 772.4023314515027,
+        "y": 511.5637621203833
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HUMAN_03",
+        "label": "신성한 불꽃",
+        "color": "#F1C40F",
+        "notes": "소피아가 인간에게 심은 플레로마의 빛. 모든 인간은 이 불꽃을 지니고 있으며, 영지를 통해 깨울 수 있음."
+      },
+      "position": {
+        "x": 569.7557833129761,
+        "y": 712.6773885184964
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HUMAN_04",
+        "label": "프네우마",
+        "color": "#F9E79F",
+        "notes": "인간의 가장 높은 부분. 플레로마에서 직접 유래한 신성한 호흡."
+      },
+      "position": {
+        "x": 600.4441253939073,
+        "y": 915.5857500539126
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HUMAN_05",
+        "label": "프시케",
+        "color": "#D35400",
+        "notes": "데미우르고스가 인간에게 부여한 생명의 원리. 프네우마를 육체에 묶어두는 역할."
+      },
+      "position": {
+        "x": 939.141780324886,
+        "y": 512.2493673678439
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HUMAN_06",
+        "label": "휠레",
+        "color": "#7F8C8D",
+        "notes": "데미우르고스가 창조한 인간의 물질적 껍질. 프네우마의 감옥이자, 아콘들이 통제하는 도구."
+      },
+      "position": {
+        "x": 864.8701253847116,
+        "y": 547.2265532294875
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GNOSIS_01",
+        "label": "영지",
+        "color": "#2ECC71",
+        "notes": "직관적이고 직접적인 신적 지식. 이 영지를 통해 인간은 자신이 플레로마에서 유래했음을 깨닫고 구원받음."
+      },
+      "position": {
+        "x": 466.0056991854195,
+        "y": 639.2250189816828
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GNOSIS_02",
+        "label": "소테르",
+        "color": "#27AE60",
+        "notes": "플레로마에서 물질계로 파견된 구원자. 예수, 프로메테우스 등이 이에 해당함."
+      },
+      "position": {
+        "x": 466.3226163070244,
+        "y": 281.99562990257715
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GNOSIS_03",
+        "label": "예수",
+        "color": "#F1C40F",
+        "notes": "영지주의에서 예수는 육체를 입은 환영이 아니라, 플레로마에서 직접 내려온 구원자로 해석됨."
+      },
+      "position": {
+        "x": 558.3195219084173,
+        "y": 462.2580840449771
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "GNOSIS_04",
+        "label": "소피아의 회개",
+        "color": "#E67E22",
+        "notes": "소피아가 자신의 실수를 깨닫고 플레로마로 귀환하는 과정."
+      },
+      "position": {
+        "x": 465.2113972293151,
+        "y": 393.73796172005984
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FATHER_01",
+        "label": "오리게네스",
+        "color": "#2ECC71",
+        "notes": "3세기 알렉산드리아 교부. 아포카타스타시스를 주장하며, 사탄도 결국 구원받을 수 있다고 봄."
+      },
+      "position": {
+        "x": 806.0288719966533,
+        "y": 1068.0426346473087
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FATHER_02",
+        "label": "아우구스티누스",
+        "color": "#27AE60",
+        "notes": "4~5세기 교부. 악을 '선의 결핍'으로 정의. 사탄의 타락을 자유의지의 오용으로 설명."
+      },
+      "position": {
+        "x": 797.179233458395,
+        "y": 887.0105249927433
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FATHER_03",
+        "label": "토마스 아퀴나스",
+        "color": "#2ECC71",
+        "notes": "13세기 스콜라 신학자. 『신학 대전』에서 악마의 본질과 죄를 체계적으로 분석."
+      },
+      "position": {
+        "x": 662.193437514103,
+        "y": 512.8605515477735
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FATHER_04",
+        "label": "이레네우스",
+        "color": "#27AE60",
+        "notes": "2세기 교부. 영지주의에 맞서 싸우며, 악의 기원을 인간의 자유의지에서 찾음."
+      },
+      "position": {
+        "x": 919.2187938047175,
+        "y": 864.4965441215298
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FATHER_05",
+        "label": "테르툴리아누스",
+        "color": "#2ECC71",
+        "notes": "2~3세기 북아프리카 교부. 영혼과 육체, 교회와 세상을 이분법적으로 구분."
+      },
+      "position": {
+        "x": 557.2438078070828,
+        "y": 541.2352373858446
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FATHER_06",
+        "label": "마르키온",
+        "color": "#E74C3C",
+        "notes": "2세기 이단자. 구약의 신과 신약의 신이 완전히 다르다고 주장하며 구약을 거부함."
+      },
+      "position": {
+        "x": 847.306485647679,
+        "y": 409.5096534072478
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MILTON_01",
+        "label": "존 밀턴",
+        "color": "#3498DB",
+        "notes": "17세기 영국 시인. 『실낙원』에서 반항적이고 비극적인 사탄의 이미지를 창조."
+      },
+      "position": {
+        "x": 378.9005566310699,
+        "y": 873.190540958388
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MILTON_02",
+        "label": "파우스트 전설",
+        "color": "#E67E22",
+        "notes": "악마와 계약한 학자의 이야기. 괴테의 『파우스트』와 마를로의 『파우스트 박사』에서 각색됨."
+      },
+      "position": {
+        "x": 251.64557053528804,
+        "y": 322.8877228837701
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MILTON_03",
+        "label": "메피스토펠레스",
+        "color": "#F39C12",
+        "notes": "파우스트 전설에 등장하는 악마. 교활하고 아이러니하며, 냉소적인 근대적 악마의 전형."
+      },
+      "position": {
+        "x": 471.42702078045227,
+        "y": 570.0302321896546
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "MILTON_04",
+        "label": "괴테",
+        "color": "#3498DB",
+        "notes": "18~19세기 독일의 거장. 『파우스트』에서 메피스토펠레스를 신과 내기하는 존재로 설정."
+      },
+      "position": {
+        "x": 285.45717605524044,
+        "y": 416.56394362975396
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RUSSELL_01",
+        "label": "제프리 버튼 러셀",
+        "color": "#2980B9",
+        "notes": "20세기 역사가. 『악의 역사』 4부작을 통해 악마 개념의 기원과 변천을 방대하게 추적."
+      },
+      "position": {
+        "x": 603.0953510484607,
+        "y": 970.6335977099953
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "WITCH_01",
+        "label": "마녀 사냥",
+        "color": "#C0392B",
+        "notes": "중세 후기와 근대 초기 유럽에서 악마와의 계약 혐의로 수십만 명이 처형된 역사적 사건."
+      },
+      "position": {
+        "x": 380.2241630949377,
+        "y": 1005.4180437463194
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "WITCH_02",
+        "label": "마녀 재판 피해자",
+        "color": "#C0392B",
+        "notes": "중세와 근대 초기 마녀 재판에서 처형된 수십만 명의 희생자들. 대부분은 사회적 약자였음."
+      },
+      "position": {
+        "x": 82.99615008268587,
+        "y": 1001.1100430344022
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "WITCH_03",
+        "label": "고발자",
+        "color": "#F39C12",
+        "notes": "마녀 재판에서 다른 사람을 악마와 계약했다고 고발한 자들. 구약의 사탄이 가졌던 '고발자' 역할을 인간이 수행함."
+      },
+      "position": {
+        "x": -120.71145230827223,
+        "y": 1024.0873428391149
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "WITCH_04",
+        "label": "구마사제",
+        "color": "#3498DB",
+        "notes": "악마를 쫓아내는 사제. 가톨릭 교회의 공식적인 구마 의식을 수행하는 존재."
+      },
+      "position": {
+        "x": 1076.7430772527953,
+        "y": 208.7072086401297
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "POPE_01",
+        "label": "교황",
+        "color": "#8E44AD",
+        "notes": "가톨릭 교회의 최고 지도자. 구마 의식의 궁극적 권한을 가짐."
+      },
+      "position": {
+        "x": 494.5755334150783,
+        "y": 1093.8175601542803
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "POPE_02",
+        "label": "주교",
+        "color": "#9B59B6",
+        "notes": "교구의 수장. 구마 사제를 특별히 임명할 권한을 가짐."
+      },
+      "position": {
+        "x": 390.2661716104873,
+        "y": 1141.22609569045
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "POPE_03",
+        "label": "구마 사제",
+        "color": "#2ECC71",
+        "notes": "주교에게 특별히 임명되어 악마와 직접 맞서는 사제. 교황청이 2008년부터 공식적으로 양성."
+      },
+      "position": {
+        "x": 377.5699277028997,
+        "y": 1262.0438016964063
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "POPE_04",
+        "label": "일반 사제",
+        "color": "#27AE60",
+        "notes": "세례, 미사, 고해성사 등 일반 성사를 집전하는 사제. 단순 구마는 가능하나 장엄 구마는 불가."
+      },
+      "position": {
+        "x": 271.94843059396817,
+        "y": 1179.1581365097923
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EXORCISM_01",
+        "label": "장엄 구마",
+        "color": "#E74C3C",
+        "notes": "Magnus Exorcismus. 악마에 빙의된 사람을 대상으로 하는 본격적인 구마 의식."
+      },
+      "position": {
+        "x": 312.7849583151774,
+        "y": 975.1857945685141
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EXORCISM_02",
+        "label": "준성사",
+        "color": "#F39C12",
+        "notes": "구마는 성사가 아닌 준성사에 속함. 전례서에 규정된 순서를 따르지 않아도 유효."
+      },
+      "position": {
+        "x": 1167.9044666100142,
+        "y": 429.2701745840267
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": true,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EXORCISM_03",
+        "label": "구마 예식서",
+        "color": "#D35400",
+        "notes": "교황청에서 펴낸 구마 의식의 공식 지침서. 1999년 개정됨."
+      },
+      "position": {
+        "x": 194.89343534218062,
+        "y": 1097.595864655423
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EXORCISM_04",
+        "label": "빙의 판별",
+        "color": "#C0392B",
+        "notes": "구마 의식의 첫 단계. 정신장애와 빙의를 구분하기 위해 의학적 검사가 선행되어야 함."
+      },
+      "position": {
+        "x": 25.213827317826638,
+        "y": 735.9257205372116
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "EXORCISM_05",
+        "label": "악마와의 대화",
+        "color": "#E74C3C",
+        "notes": "구마 의식 중 사제가 빙의된 자의 속에 있는 악마와 직접 대화하는 핵심 과정."
+      },
+      "position": {
+        "x": 300.2499884290479,
+        "y": 801.6482713094772
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRAYER_01",
+        "label": "성 미카엘 대천사 기도",
+        "color": "#3498DB",
+        "notes": "가장 대중적으로 알려진 구마 기도문. 'Sancte Michael Archangele, defende nos in praetio'로 시작."
+      },
+      "position": {
+        "x": 482.39911719761255,
+        "y": 1004.1411966029809
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRAYER_02",
+        "label": "주님의 기도",
+        "color": "#2980B9",
+        "notes": "구마 의식에서 핵심적으로 사용되는 기도문. 라틴어 'Pater Noster'로 불림."
+      },
+      "position": {
+        "x": 484.7189854700604,
+        "y": 869.9438969196732
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRAYER_03",
+        "label": "대영광송",
+        "color": "#F1C40F",
+        "notes": "구마 의식 중에 사용되는 찬미 기도. 'Gloria in excelsis Deo'로 시작."
+      },
+      "position": {
+        "x": 495.68406963347155,
+        "y": 928.6291206013204
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PRAYER_04",
+        "label": "성호경",
+        "color": "#F9E79F",
+        "notes": "모든 구마 의식의 시작과 끝을 장식하는 기본 기도."
+      },
+      "position": {
+        "x": 301.1155756220461,
+        "y": 1109.1913853165618
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RELIC_01",
+        "label": "십자가",
+        "color": "#D35400",
+        "notes": "구마 의식에서 가장 기본적인 성물. 예수 그리스도의 승리의 상징."
+      },
+      "position": {
+        "x": 371.47889638302763,
+        "y": 741.1491726439326
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RELIC_02",
+        "label": "성수",
+        "color": "#3498DB",
+        "notes": "축복받은 물. 영원한 생명과 죄의 씻음을 상징. 구마 중 악마에게 뿌려짐."
+      },
+      "position": {
+        "x": 413.3084659204271,
+        "y": 827.0266107693079
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RELIC_03",
+        "label": "묵주",
+        "color": "#8E44AD",
+        "notes": "구마 사제의 가장 강력한 무기 중 하나. 악마는 묵주를 두려워함."
+      },
+      "position": {
+        "x": 416.13251458824027,
+        "y": 774.2213539198897
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RELIC_04",
+        "label": "성상",
+        "color": "#9B59B6",
+        "notes": "성모상, 성인상 등. 축복을 통해 하느님의 은총을 전달하는 도구."
+      },
+      "position": {
+        "x": 370.88355032454336,
+        "y": 1093.2473163804195
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RELIC_05",
+        "label": "성가정 십자가",
+        "color": "#2ECC71",
+        "notes": "성가정을 상징하는 십자가. 가정의 수호와 축복을 위한 성물."
+      },
+      "position": {
+        "x": 483.36541870359133,
+        "y": 1219.785137749633
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STRATEGY_01",
+        "label": "은폐",
+        "color": "#7F8C8D",
+        "notes": "악마가 자신의 정체와 이름을 숨기는 전술."
+      },
+      "position": {
+        "x": 587.5000151813089,
+        "y": 862.9731679823565
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STRATEGY_02",
+        "label": "조롱",
+        "color": "#C0392B",
+        "notes": "악마가 사제의 신앙과 과거를 조롱하며 흔드는 전술."
+      },
+      "position": {
+        "x": 464.8257529864843,
+        "y": 737.4820504563162
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STRATEGY_03",
+        "label": "거짓말",
+        "color": "#E74C3C",
+        "notes": "악마가 자신의 약점을 숨기기 위해 거짓 정보를 제공하는 전술."
+      },
+      "position": {
+        "x": 663.3977080152174,
+        "y": 727.3218800825332
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STRATEGY_04",
+        "label": "폭력",
+        "color": "#C0392B",
+        "notes": "악마가 빙의자의 육체를 통해 폭력적인 행동을 보이는 전술."
+      },
+      "position": {
+        "x": 795.7724753016712,
+        "y": 723.7383047386309
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STRATEGY_05",
+        "label": "위장",
+        "color": "#7F8C8D",
+        "notes": "악마가 여러 악마가 빙의된 것처럼 위장하거나 퇴거하는 척하는 전술."
+      },
+      "position": {
+        "x": 506.28486989126185,
+        "y": 821.1146517011638
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STAGE_01",
+        "label": "1단계: 준비",
+        "color": "#F9E79F",
+        "notes": "구마 의식 전 사전 정화 및 준비 단계. 사제의 기도와 금식, 성물 준비."
+      },
+      "position": {
+        "x": 13.855970484179064,
+        "y": 806.0458738150129
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STAGE_02",
+        "label": "2단계: 판별",
+        "color": "#F1C40F",
+        "notes": "빙의 여부 판별 및 정신장애 배제. 의학적 검사와 악마와의 대화."
+      },
+      "position": {
+        "x": 82.99238121434215,
+        "y": 1079.1717152495864
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STAGE_03",
+        "label": "3단계: 본 의식",
+        "color": "#E67E22",
+        "notes": "본격적인 구마 의식 집전. 기도문 암송, 성수 뿌림, 십자가 제시."
+      },
+      "position": {
+        "x": 185.51342477848345,
+        "y": 1239.8607502957864
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STAGE_04",
+        "label": "4단계: 추방",
+        "color": "#E74C3C",
+        "notes": "악마의 이름을 밝히고, 예수 그리스도의 이름으로 퇴거를 명령하는 단계."
+      },
+      "position": {
+        "x": 197.99230803225836,
+        "y": 730.7798986309657
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STAGE_05",
+        "label": "5단계: 회복",
+        "color": "#2ECC71",
+        "notes": "구마 후 피해자의 영적·육체적 회복을 위한 기도와 보호."
+      },
+      "position": {
+        "x": 372.2833686634939,
+        "y": 681.0821615669788
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_01",
+        "label": "아넬리제 미헬",
+        "color": "#95A5A6",
+        "notes": "실제 구마 의식을 받은 독일인 여성. '엑소시즘 오브 에밀리 로즈'의 실제 인물."
+      },
+      "position": {
+        "x": 134.08356546546975,
+        "y": 760.7183302536506
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_02",
+        "label": "한국 구마 사제",
+        "color": "#95A5A6",
+        "notes": "한국에도 구마 사제가 활동 중이며, 정신과 의사가 환자를 의뢰하기도 함."
+      },
+      "position": {
+        "x": 309.55133381403147,
+        "y": 1410.4511062077468
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_03",
+        "label": "성직자 평복",
+        "color": "#34495E",
+        "notes": "수단(Soutane). 발꿈치까지 내려오는 긴 검은색 옷. 로만칼라(Roman Collar)가 달려 있음."
+      },
+      "position": {
+        "x": 370.3935085346208,
+        "y": 1485.7494060862387
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "REAL_04",
+        "label": "구마 복장",
+        "color": "#2C3E50",
+        "notes": "장엄 구마 시 착용하는 제의(영대, 중백의 등). 평복과는 구분됨."
+      },
+      "position": {
+        "x": -1.1723632954600092,
+        "y": 882.4419598822093
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ARTIFACT_01",
+        "label": "솔로몬의 반지",
+        "color": "#D35400",
+        "notes": "72악마를 통제하는 고대 유물. 데미우르고스가 인간에게 내린 첫 번째 유물."
+      },
+      "position": {
+        "x": 988.3000995761789,
+        "y": 387.975737605844
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ARTIFACT_02",
+        "label": "성배",
+        "color": "#F9E79F",
+        "notes": "예수의 피(또는 플레로마의 빛)를 담은 잔. 플레로마로 통하는 유일한 관문."
+      },
+      "position": {
+        "x": 564.5443418809296,
+        "y": 124.87379182944129
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ARTIFACT_03",
+        "label": "네크로노미콘",
+        "color": "#1A1A2E",
+        "notes": "러브크래프트가 창조한 가상의 금서. 고대 신과 악마의 지식을 담고 있음."
+      },
+      "position": {
+        "x": 590.7799502806935,
+        "y": 1075.4452499746444
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TEXT_01",
+        "label": "요한의 비밀서",
+        "color": "#8E44AD",
+        "notes": "가장 중요한 영지주의 문헌. 플레로마, 소피아, 데미우르고스의 서사를 담고 있음."
+      },
+      "position": {
+        "x": 772.2097467112267,
+        "y": 1480.319412745351
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TEXT_02",
+        "label": "도마복음",
+        "color": "#9B59B6",
+        "notes": "예수의 114개 어록을 모은 문헌. 영지를 통한 내면의 발견을 강조함."
+      },
+      "position": {
+        "x": 617.6244314522415,
+        "y": 1541.7370505313927
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TEXT_03",
+        "label": "나그함마디 문서",
+        "color": "#8E44AD",
+        "notes": "1945년 이집트에서 발견된 13권의 고대 문헌. 영지주의의 모든 주요 텍스트 포함."
+      },
+      "position": {
+        "x": 651.9289679731195,
+        "y": 1355.9189148987718
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HELL_01",
+        "label": "지옥",
+        "color": "#2C3E50",
+        "notes": "악마의 왕국이자 영혼이 심판받는 장소. 타르타로스, 게헨나, 하데스 등 다양한 이름."
+      },
+      "position": {
+        "x": 798.8020206065299,
+        "y": 933.9540031442186
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HELL_02",
+        "label": "구멍",
+        "color": "#1A1A2E",
+        "notes": "지옥의 가장 깊은 곳. 사탄이 최후의 심판 전에 갇히는 장소."
+      },
+      "position": {
+        "x": 965.1527756913965,
+        "y": 943.7612229699835
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HELL_03",
+        "label": "불못",
+        "color": "#E74C3C",
+        "notes": "요한계시록에서 사탄과 그의 추종자들이 최후에 던져지는 장소."
+      },
+      "position": {
+        "x": 651.8392723363265,
+        "y": 676.99771453781
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HELL_04",
+        "label": "아포카타스타시스",
+        "color": "#2ECC71",
+        "notes": "모든 피조물(사탄과 악마까지도)이 궁극적으로 회복될 것이라는 오리게네스의 가설."
+      },
+      "position": {
+        "x": 694.1020113449167,
+        "y": 1029.7985820334088
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "HELL_05",
+        "label": "지옥의 해체",
+        "color": "#7F8C8D",
+        "notes": "계몽주의와 합리주의 이후, 전통적인 지옥과 악마의 개념이 점차 해체되는 과정."
+      },
+      "position": {
+        "x": 684.1740699731334,
+        "y": 1143.6459123796767
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "RAGNAROK_01",
+        "label": "라그나로크",
+        "color": "#F39C12",
+        "notes": "북유럽 신화의 신들의 종말. 모든 것이 파괴되고 재창조됨."
+      },
+      "position": {
+        "x": 810.8588383838188,
+        "y": 1258.8429917636768
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DEMON_05",
+        "label": "유혹의 악마",
+        "color": "#F39C12",
+        "notes": "빙의보다는 유혹을 통해 인간을 타락시키는 악마. 더 교활하고 은밀하며, 일상 속에서 서서히 영혼을 갉아먹음."
+      },
+      "position": {
+        "x": 558.1489997176628,
+        "y": 627.9986027604517
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "WATCHER_01",
+        "label": "영계조약 감시자",
+        "color": "#1ABC9C",
+        "notes": "7대 가문의 후계자들로 구성된 초국가적 비밀 결사. 영계조약의 파기를 막는 것이 유일한 목적."
+      },
+      "position": {
+        "x": 595.2272109908979,
+        "y": 1201.9774909999915
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KSHAMAN_01",
+        "label": "무당",
+        "color": "#E67E22",
+        "notes": "한국 무속의 샤먼. 신과 소통하며 굿을 통해 퇴마를 집전함."
+      },
+      "position": {
+        "x": 700.15695798704,
+        "y": 936.2652703211054
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KSHAMAN_02",
+        "label": "굿",
+        "color": "#F1C40F",
+        "notes": "한국 무속의 퇴마 의식. 노래와 춤, 무구를 사용하여 악귀를 쫓고 복을 빎."
+      },
+      "position": {
+        "x": 68.21325590399604,
+        "y": 1158.0709703596365
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KSHAMAN_03",
+        "label": "신내림",
+        "color": "#F39C12",
+        "notes": "무당이 신을 맞이하는 과정. 강신무가 이에 해당하며, 영계와 직접 소통함."
+      },
+      "position": {
+        "x": 574.1748626949759,
+        "y": 261.1974287202569
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KSHAMAN_04",
+        "label": "복숭아나무 가지",
+        "color": "#D35400",
+        "notes": "한국 무속에서 악귀를 쫓는 강력한 정화 도구."
+      },
+      "position": {
+        "x": 120.99031566908461,
+        "y": 532.6078307601404
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KSHAMAN_05",
+        "label": "방울 (무속)",
+        "color": "#F9E79F",
+        "notes": "한국 무속에서 신을 청하고 악귀를 감지하는 데 사용되는 도구."
+      },
+      "position": {
+        "x": 339.9807729654107,
+        "y": 607.1741113175689
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "KSHAMAN_06",
+        "label": "바리공주",
+        "color": "#E67E22",
+        "notes": "한국 무속의 구원자 신화. 저승으로 간 부모를 구해내는 여신으로, 소테르와 동일시됨."
+      },
+      "position": {
+        "x": 323.90503397908395,
+        "y": 126.93053748557334
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TAO_01",
+        "label": "도사",
+        "color": "#1ABC9C",
+        "notes": "중국 도교의 퇴마 수행자. 부적, 주문, 도술을 사용하여 악령을 퇴치함."
+      },
+      "position": {
+        "x": 567.1661103375362,
+        "y": 1396.1880703172742
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TAO_02",
+        "label": "부적",
+        "color": "#2ECC71",
+        "notes": "도교 퇴마의 핵심 도구. 노란 종이에 붉은 잉크로 그려지며, 악귀를 봉인하거나 쫓는 힘을 가짐."
+      },
+      "position": {
+        "x": 165.79697026176441,
+        "y": 656.0905408053637
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TAO_03",
+        "label": "오행",
+        "color": "#27AE60",
+        "notes": "도교 우주의 기본 원리. 목, 화, 토, 금, 수의 상생상극으로 세계가 작동함."
+      },
+      "position": {
+        "x": 496.94949726290383,
+        "y": 37.533921430750745
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TAO_04",
+        "label": "음양",
+        "color": "#2980B9",
+        "notes": "도교의 이원론적 원리. 선과 악, 빛과 어둠의 대립과 조화."
+      },
+      "position": {
+        "x": 765.9106963989418,
+        "y": 637.3731588677994
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TAO_05",
+        "label": "강시",
+        "color": "#C0392B",
+        "notes": "중국 전설의 되살아난 시체. 퇴마의 주요 대상으로, 좀비와 유사하지만 점프로 이동함."
+      },
+      "position": {
+        "x": 1004.2642018290435,
+        "y": 766.8603430258679
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ONMYO_01",
+        "label": "음양사",
+        "color": "#9B59B6",
+        "notes": "일본의 관직 퇴마사. 천문, 점술, 주술을 담당하며, 오니를 퇴치함."
+      },
+      "position": {
+        "x": 457.7428400373396,
+        "y": 1388.071178115837
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ONMYO_02",
+        "label": "결계",
+        "color": "#8E44AD",
+        "notes": "일본 음양도의 방어술. 특정 공간을 보호하거나 악귀를 가두는 의식적 경계."
+      },
+      "position": {
+        "x": 1010.338464462717,
+        "y": 842.5292876489624
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ONMYO_03",
+        "label": "오니",
+        "color": "#E74C3C",
+        "notes": "일본의 요괴/악마. 사탄의 일본적 변형으로, 뿔과 송곳니를 가진 모습으로 묘사됨."
+      },
+      "position": {
+        "x": 522.2481575730881,
+        "y": 720.5733895966143
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ONMYO_04",
+        "label": "신토",
+        "color": "#F1C40F",
+        "notes": "일본 고유의 자연신앙. 플레로마의 다신론적 해석으로, 팔백만 신이 존재함."
+      },
+      "position": {
+        "x": 381.1097343328055,
+        "y": 34.22673968752411
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "PLEROMA_02",
+        "target": "PLEROMA_03",
+        "label": "발현",
+        "notes": "아르레토스가 에온으로 자신을 드러냄.",
+        "id": "9c675888-9bce-46b9-bc99-12c0d36b8dca"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PLEROMA_03",
+        "target": "SOPHIA_01",
+        "label": "분화",
+        "notes": "에온 중 최하위가 소피아임.",
+        "id": "2dc5a9b9-cfdd-4866-bcf8-199ae52d4575"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SOPHIA_01",
+        "target": "SOPHIA_02",
+        "label": "분리",
+        "notes": "소피아의 욕망이 아함모트를 낳음.",
+        "id": "aff9022c-bcb6-4fd0-bb41-77dbf0c4ea3f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SOPHIA_02",
+        "target": "DEMIURGE_01",
+        "label": "창조",
+        "notes": "아함모트가 데미우르고스를 낳음.",
+        "id": "d02124bf-c82b-4be2-ade9-9a73caa9cdaf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMIURGE_01",
+        "target": "ARCHON_01",
+        "label": "창조",
+        "notes": "데미우르고스가 아콘들을 창조함.",
+        "id": "1d264884-a99f-46fa-88c5-887900569c59"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ARCHON_01",
+        "target": "ARCHON_02",
+        "label": "통치",
+        "notes": "7명의 주요 아콘이 행성을 통치함.",
+        "id": "ca88b72d-a7cc-47e5-bf55-8af5b7520618"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ARCHON_01",
+        "target": "ARCHON_03",
+        "label": "군대",
+        "notes": "아콘들은 하급 영적 존재들을 거느림.",
+        "id": "860bfb53-6a6f-46de-8110-655d08edec65"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMIURGE_01",
+        "target": "HUMAN_01",
+        "label": "창조",
+        "notes": "데미우르고스가 아담을 물질로 빚어냄.",
+        "id": "37a89ef7-c516-4d75-81c7-a9692c213271"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SOPHIA_01",
+        "target": "HUMAN_01",
+        "label": "불어넣음",
+        "notes": "소피아가 아담에게 신성한 불꽃을 불어넣음.",
+        "id": "9845ca2b-d340-4792-8192-960c3ae61b0f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "HUMAN_01",
+        "target": "HUMAN_02",
+        "label": "분리",
+        "notes": "아담에서 이브가 분리됨.",
+        "id": "12e6ee5c-d994-45fd-9892-05d5b1d605d9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "HUMAN_01",
+        "target": "HUMAN_03",
+        "label": "내재",
+        "notes": "모든 인간은 신성한 불꽃을 지님.",
+        "id": "e23772ad-51c6-4e40-84d8-fa80e7ee6dbd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "HUMAN_03",
+        "target": "HUMAN_04",
+        "label": "동일",
+        "notes": "신성한 불꽃은 프네우마와 같음.",
+        "id": "be649709-ba09-4ca8-b4ce-241174ee6e62"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMIURGE_01",
+        "target": "HUMAN_05",
+        "label": "부여",
+        "notes": "데미우르고스가 프시케를 부여함.",
+        "id": "57d15cd2-cea0-4b2b-9026-6e2359f2275e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "HUMAN_01",
+        "target": "HUMAN_06",
+        "label": "구성",
+        "notes": "데미우르고스가 육체를 창조함.",
+        "id": "1613c133-4595-4b7f-8605-d7f4fff5d1f7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "HUMAN_05",
+        "target": "HUMAN_06",
+        "label": "결합",
+        "notes": "프시케가 프네우마를 육체에 묶음.",
+        "id": "80ebee2f-bdd8-4ca4-80f9-d9d46e357280"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GNOSIS_01",
+        "target": "HUMAN_03",
+        "label": "각성",
+        "notes": "영지를 통해 신성한 불꽃이 깨어남.",
+        "id": "93f8e184-9607-495e-9e8e-0e5daa5ae54b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GNOSIS_02",
+        "target": "GNOSIS_03",
+        "label": "화신",
+        "notes": "소테르가 예수로 화신함.",
+        "id": "5a10d594-9562-4f8c-a55a-fefe3ae8f9aa"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GNOSIS_03",
+        "target": "GNOSIS_01",
+        "label": "전파",
+        "notes": "예수가 영지를 전파함.",
+        "id": "172e3598-595c-41f6-a46b-cd8c486afa89"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SOPHIA_01",
+        "target": "GNOSIS_04",
+        "label": "회개",
+        "notes": "소피아가 자신의 실수를 깨닫고 회개함.",
+        "id": "3d63775f-bf5d-4abd-8eef-30203db2e4cc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GNOSIS_04",
+        "target": "PLEROMA_01",
+        "label": "귀환",
+        "notes": "소피아가 플레로마로 귀환함.",
+        "id": "b569a7ed-d819-4259-af3a-623686a0fee6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMIURGE_01",
+        "target": "YHWH_01",
+        "label": "동일시·대립",
+        "notes": "데미우르고스는 구약의 야훼와 동일시됨. 정통 신학은 분리함.",
+        "id": "305a6711-88fe-4fa1-a9c2-a68166bc070a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMIURGE_01",
+        "target": "SATAN_01",
+        "label": "동일시",
+        "notes": "데미우르고스는 사탄과 동일시됨.",
+        "id": "9ddf005d-cd73-4313-a073-872e556cbbd3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "YHWH_01",
+        "target": "SATAN_01",
+        "label": "창조·대립",
+        "notes": "유일신이 사탄을 창조했으나, 그는 대립함.",
+        "id": "747ca468-a911-4aea-88fc-7364dee9cb52"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "SATAN_02",
+        "label": "동일시",
+        "notes": "사탄은 루시퍼와 동일시됨.",
+        "id": "412f7dda-0a78-4631-9f90-2bbbf87d0373"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "SATAN_03",
+        "label": "지휘",
+        "notes": "사탄이 벨제붑을 부하로 거느림.",
+        "id": "bd8e17f8-4372-4373-9005-c7e23c36dbe0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "SATAN_04",
+        "label": "지휘",
+        "notes": "사탄이 벨리알을 부하로 거느림.",
+        "id": "b52b45a0-a01e-4df1-ad3d-58a0b7e45420"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "SATAN_06",
+        "label": "지휘",
+        "notes": "사탄이 타락한 천사들을 지휘함.",
+        "id": "719f0a6f-1f17-49fb-96ff-5f0b01cae8a4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "MICHAEL_01",
+        "label": "대립",
+        "notes": "사탄과 미카엘은 영원히 대립함.",
+        "id": "9501ed19-514f-484b-b0eb-61a169ad6bfb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMIURGE_01",
+        "target": "LEGION_02",
+        "label": "창조",
+        "notes": "데미우르고스가 72악마를 분리해냄.",
+        "id": "8975bd28-0073-4492-ba50-7e5725414e83"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "LEGION_02",
+        "target": "ARTIFACT_01",
+        "label": "통제",
+        "notes": "솔로몬의 반지가 72악마를 통제함.",
+        "id": "32092ac6-66aa-4f3e-b8b9-b7bff75b5ffe"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "GATES_03",
+        "label": "창조",
+        "notes": "사탄의 머리에서 죄가 태어남.",
+        "id": "bede8682-a17c-401a-b183-4e3c72efafca"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "GATES_04",
+        "label": "창조",
+        "notes": "사탄과 죄 사이에서 죽음이 태어남.",
+        "id": "cf99bcc2-52a5-46e3-b271-3e49ce12d96b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GATES_03",
+        "target": "GATES_04",
+        "label": "창조",
+        "notes": "죄가 죽음을 낳음.",
+        "id": "15a6fa19-a148-405d-9152-b627e9879185"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GATES_03",
+        "target": "GATES_02",
+        "label": "창조",
+        "notes": "죄의 자궁에서 지옥의 개들이 태어남.",
+        "id": "b98e5bf3-26ee-417d-99a5-f659db1cf1e7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GATES_03",
+        "target": "GATES_01",
+        "label": "수호",
+        "notes": "죄가 지옥문의 열쇠를 쥐고 지킴.",
+        "id": "f78983a6-9577-44ce-aec3-c93237852426"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GATES_01",
+        "target": "HELL_01",
+        "label": "연결",
+        "notes": "지옥문이 지옥으로 통하는 관문임.",
+        "id": "50f7393c-9202-42a7-b7f0-a497f7e84a0e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MICHAEL_01",
+        "target": "HELL_03",
+        "label": "집행",
+        "notes": "미카엘이 사탄을 불못에 던짐.",
+        "id": "cae8e107-c43e-47ab-9920-6703440738d2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "HELL_01",
+        "label": "통치",
+        "notes": "사탄이 지옥을 통치하나, 자신도 죄수임.",
+        "id": "6d886a2c-acbc-42aa-a315-c4bec9e40773"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "HELL_03",
+        "label": "종말",
+        "notes": "사탄이 최후에 불못에 던져짐.",
+        "id": "685ea15b-1290-4b74-99a6-8723991fb0ef"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FATHER_01",
+        "target": "HELL_04",
+        "label": "주장",
+        "notes": "오리게네스가 아포카타스타시스를 주장함.",
+        "id": "2690a350-8728-454b-bd3d-ed09461cc214"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FATHER_02",
+        "target": "SATAN_01",
+        "label": "해석",
+        "notes": "아우구스티누스가 사탄의 타락을 자유의지로 해석함.",
+        "id": "818370bf-74ae-44ee-8065-da9644b3dca4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FATHER_03",
+        "target": "SATAN_01",
+        "label": "분석",
+        "notes": "토마스 아퀴나스가 악마의 본질을 체계적으로 분석함.",
+        "id": "ba7011b9-b41b-4346-bdc2-6e6dafd11a29"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FATHER_02",
+        "target": "FATHER_01",
+        "label": "대립",
+        "notes": "아우구스티누스와 오리게네스는 악의 궁극적 운명에 대해 대립.",
+        "id": "0a005ffa-5089-4a9d-bffd-81f77595156a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FATHER_06",
+        "target": "DEMIURGE_01",
+        "label": "해석",
+        "notes": "마르키온이 데미우르고스를 구약의 신으로 해석함.",
+        "id": "5cea0c10-671e-4f2b-aae0-442046655887"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MILTON_01",
+        "target": "SATAN_01",
+        "label": "형상화",
+        "notes": "밀턴이 『실낙원』에서 반항적 사탄의 이미지를 창조함.",
+        "id": "462e812c-d0f4-4ac6-a87c-f65c8dc48d76"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MILTON_02",
+        "target": "MILTON_03",
+        "label": "등장",
+        "notes": "파우스트 전설에서 메피스토펠레스가 등장함.",
+        "id": "5b858bc8-40c2-44ad-944c-f2bb27013d53"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MILTON_04",
+        "target": "MILTON_03",
+        "label": "재해석",
+        "notes": "괴테가 『파우스트』에서 메피스토펠레스를 재해석함.",
+        "id": "0a343159-457b-4c26-9874-17738a3e18d4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RUSSELL_01",
+        "target": "HELL_05",
+        "label": "주제",
+        "notes": "지옥의 해체는 러셀 4권의 핵심 주제임.",
+        "id": "872492b2-f314-42bc-b415-55541968d736"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RUSSELL_01",
+        "target": "SATAN_01",
+        "label": "연구",
+        "notes": "러셀이 악의 역사를 통해 악마 개념의 변천을 추적함.",
+        "id": "42efeeb7-0666-45fb-8140-7e35ba7eb91a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RUSSELL_01",
+        "target": "WITCH_01",
+        "label": "연구",
+        "notes": "러셀이 마녀 사냥을 악마론의 중요한 사례로 연구함.",
+        "id": "2e9380fb-f3b6-456f-8369-8b441748278a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "WITCH_01",
+        "target": "WITCH_02",
+        "label": "희생자",
+        "notes": "마녀 사냥이 수많은 희생자를 만들어냄.",
+        "id": "0cd107c7-64c3-4616-b0cd-7e21da65c558"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "WITCH_02",
+        "target": "WITCH_03",
+        "label": "고발",
+        "notes": "고발자들이 마녀 재판에서 희생자들을 고발함.",
+        "id": "9f155ef7-8c5d-4569-9eca-1dc75a3e089a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "POPE_01",
+        "target": "POPE_02",
+        "label": "지휘",
+        "notes": "교황이 주교를 지휘함.",
+        "id": "5e367f3e-cae5-46a9-820f-8d2a2e0d60cf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "POPE_02",
+        "target": "POPE_03",
+        "label": "임명",
+        "notes": "주교가 구마 사제를 특별히 임명함.",
+        "id": "126116fc-2ea0-46af-b849-44527aa86e86"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "POPE_03",
+        "target": "EXORCISM_01",
+        "label": "집전",
+        "notes": "구마 사제가 장엄 구마 의식을 집전함.",
+        "id": "831f0bd9-4fb3-4678-ae5d-2ed29a63ef8b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "POPE_02",
+        "target": "EXORCISM_01",
+        "label": "허가",
+        "notes": "주교의 서면 허가가 장엄 구마의 선행 조건.",
+        "id": "0c5be429-e9fb-4338-a941-80557ae83c3f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "EXORCISM_03",
+        "label": "지침",
+        "notes": "구마 예식서에 따라 의식이 진행됨.",
+        "id": "6d948458-fd41-41b4-93ba-7cf05104aa2e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "EXORCISM_04",
+        "label": "선행",
+        "notes": "장엄 구마 전 빙의 판별이 선행됨.",
+        "id": "5226db4d-e74e-491a-b14f-9ad6209f8f8a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "EXORCISM_05",
+        "label": "포함",
+        "notes": "장엄 구마는 악마와의 대화 단계를 포함함.",
+        "id": "09a918c1-008d-4cb4-8128-b7ab7d8409a5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "PRAYER_01",
+        "label": "사용",
+        "notes": "장엄 구마에서 성 미카엘 대천사 기도가 사용됨.",
+        "id": "d7b4b727-4272-44ff-9182-9d25e0aa31e1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "PRAYER_02",
+        "label": "사용",
+        "notes": "장엄 구마에서 주님의 기도가 사용됨.",
+        "id": "d6bf3c08-4019-40b4-b895-7aeaa87845c9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "PRAYER_03",
+        "label": "사용",
+        "notes": "장엄 구마에서 대영광송이 사용됨.",
+        "id": "f725f0ce-b5fc-4abf-b564-81a75e8208fb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "PRAYER_04",
+        "label": "사용",
+        "notes": "성호경으로 의식이 시작되고 끝남.",
+        "id": "18bc64b3-38a9-4523-bb59-671c76837c29"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "RELIC_01",
+        "label": "사용",
+        "notes": "십자가가 구마 의식의 핵심 성물로 사용됨.",
+        "id": "ce723465-60c0-4b00-b1af-2ca912650f35"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "RELIC_02",
+        "label": "사용",
+        "notes": "성수가 구마 중 악마에게 뿌려짐.",
+        "id": "da4d714a-06c2-4468-b141-1e384fd6f096"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "RELIC_03",
+        "label": "사용",
+        "notes": "묵주가 구마 사제의 주요 무기로 사용됨.",
+        "id": "21d082f0-b60d-40db-8747-84de01d44129"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "RELIC_04",
+        "label": "사용",
+        "notes": "성상이 구마 중 피해자에게 제시됨.",
+        "id": "fe912d25-499f-4eff-8f8c-04c8bb517921"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "RELIC_05",
+        "label": "사용",
+        "notes": "성가정 십자가가 가정의 수호를 위해 사용됨.",
+        "id": "7e194924-bc9b-4fcc-8fd0-862d4ffeaa12"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "STAGE_01",
+        "label": "구성",
+        "notes": "구마 의식은 준비 단계로 시작됨.",
+        "id": "040d610e-2029-423f-b702-3c432c2c5e7f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "STAGE_02",
+        "label": "구성",
+        "notes": "구마 의식은 판별 단계를 거침.",
+        "id": "29831d3f-c333-4911-9b22-36d6c639874e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "STAGE_03",
+        "label": "구성",
+        "notes": "구마 의식의 핵심은 본 의식 단계.",
+        "id": "ea00742f-1535-40d8-aa73-e5c50ed5cd21"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "STAGE_04",
+        "label": "구성",
+        "notes": "구마 의식은 추방 명령으로 절정에 달함.",
+        "id": "b5c65863-87c6-4371-90d7-531bb56fe328"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "STAGE_05",
+        "label": "구성",
+        "notes": "구마 의식은 회복 단계로 마무리됨.",
+        "id": "8c101b42-1d65-4d4d-9d09-e5da58a9889f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "STRATEGY_01",
+        "label": "사용",
+        "notes": "악마가 은폐 전술로 자신의 정체를 숨김.",
+        "id": "ee1cd707-da9a-43f3-a031-0b38aa77c507"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "STRATEGY_02",
+        "label": "사용",
+        "notes": "악마가 조롱 전술로 사제를 흔듦.",
+        "id": "25eb5b54-325b-47bb-85ee-990eeabdeb9a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "STRATEGY_03",
+        "label": "사용",
+        "notes": "악마가 거짓말 전술로 혼란을 줌.",
+        "id": "614b8909-1cc8-4144-9f83-f8f85a012961"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "STRATEGY_04",
+        "label": "사용",
+        "notes": "악마가 폭력 전술로 의식을 방해함.",
+        "id": "30c52e1e-c795-4aa3-b654-c5483783c46f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "STRATEGY_05",
+        "label": "사용",
+        "notes": "악마가 위장 전술로 퇴거를 회피함.",
+        "id": "a654ff76-3a77-4723-b2c0-dfa958d2981f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RELIC_03",
+        "target": "SATAN_01",
+        "label": "약점",
+        "notes": "묵주는 악마가 두려워하는 무기임.",
+        "id": "e3d357d6-4e84-492b-b241-dfca8496c41c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RELIC_01",
+        "target": "SATAN_01",
+        "label": "약점",
+        "notes": "십자가는 악마가 두려워하는 상징임.",
+        "id": "3fe17c8f-37f1-438c-bec1-119d8546b8ae"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RELIC_02",
+        "target": "SATAN_01",
+        "label": "약점",
+        "notes": "성수는 악마에게 고통을 줌.",
+        "id": "45ce1920-bccf-4749-9b34-5f449d523dc2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PRAYER_01",
+        "target": "SATAN_01",
+        "label": "대적",
+        "notes": "성 미카엘 대천사 기도는 사탄을 대적함.",
+        "id": "47bcfcb0-c17e-4e4f-9732-2c4d6c636976"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PRAYER_02",
+        "target": "SATAN_01",
+        "label": "대적",
+        "notes": "주님의 기도는 악마를 퇴거시키는 핵심 기도.",
+        "id": "c82f70a8-27d1-49e6-9b52-357e7ca6030b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "POPE_03",
+        "target": "REAL_02",
+        "label": "실존",
+        "notes": "한국에도 구마 사제가 실제로 존재함.",
+        "id": "22a10c0e-5ffb-4f4e-99fe-c1d69ac4177e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "REAL_01",
+        "label": "실존",
+        "notes": "아넬리제 미헬은 실제 장엄 구마 의식을 받은 사례임.",
+        "id": "3d054fbd-91c5-4c03-a14f-03601437ca87"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "POPE_03",
+        "target": "REAL_03",
+        "label": "착용",
+        "notes": "구마 사제는 평소 수단과 로만칼라를 착용함.",
+        "id": "97e0b799-25dd-48fe-a2ef-814d612398ed"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "REAL_04",
+        "label": "착용",
+        "notes": "장엄 구마 시 사제는 제의를 착용함.",
+        "id": "6c30d472-c466-4843-a1d8-4f5091d389f0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ARTIFACT_02",
+        "target": "PLEROMA_01",
+        "label": "연결",
+        "notes": "성배가 플레로마로 통하는 관문임.",
+        "id": "45f997fb-87c2-4115-bdf5-087a6da5dba0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ARTIFACT_01",
+        "target": "LEGION_02",
+        "label": "통제",
+        "notes": "솔로몬의 반지가 72악마를 통제함.",
+        "id": "e5eb144e-d6ea-40b4-a904-bb6a62397172"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ARTIFACT_03",
+        "target": "SATAN_01",
+        "label": "연관",
+        "notes": "네크로노미콘은 현대 대중문화에서 사탄과 고대 신을 연결하는 금서.",
+        "id": "d95d8ca8-b1e3-4ee8-8847-27391280c85d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TEXT_01",
+        "target": "TEXT_03",
+        "label": "포함",
+        "notes": "요한의 비밀서는 나그함마디 문서에 포함됨.",
+        "id": "4c87cfd4-b5c6-4e84-ac9f-39624f9206b2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TEXT_02",
+        "target": "TEXT_03",
+        "label": "포함",
+        "notes": "도마복음은 나그함마디 문서에 포함됨.",
+        "id": "64047c7d-0700-404c-a02d-99729fe7ea55"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_06",
+        "target": "LEGION_01",
+        "label": "동일",
+        "notes": "타락한 천사들은 지옥의 군단과 동일시됨.",
+        "id": "dda494f1-617f-4671-93d7-93536e3ae705"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "HELL_04",
+        "target": "SATAN_01",
+        "label": "결말",
+        "notes": "아포카타스타시스는 사탄의 궁극적 회복을 주장함.",
+        "id": "1a017235-0f8d-4ffb-9098-755bd7296563"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "HELL_05",
+        "target": "HELL_01",
+        "label": "해체",
+        "notes": "근대 이후 지옥의 개념이 점차 해체됨.",
+        "id": "ebaac589-45c7-48b0-b91a-a93b2bb5a87a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RAGNAROK_01",
+        "target": "HELL_04",
+        "label": "유사",
+        "notes": "라그나로크는 북유럽판 아포카타스타시스로 볼 수 있음.",
+        "id": "463dd837-61dc-46d9-b200-d8264deba57e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMIURGE_01",
+        "target": "ARTIFACT_01",
+        "label": "창조",
+        "notes": "데미우르고스가 솔로몬의 반지의 원형을 남김.",
+        "id": "691b455f-839c-417b-9e9e-30769d7fbc18"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "HUMAN_04",
+        "target": "HELL_04",
+        "label": "해방",
+        "notes": "프네우마는 아포카타스타시스를 통해 해방됨.",
+        "id": "f332b9dd-bdcb-4fce-8328-14a358b59135"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SATAN_01",
+        "target": "DEMON_05",
+        "label": "파견",
+        "notes": "사탄이 유혹의 악마를 인간에게 파견하여 일상 속에서 타락시키게 함.",
+        "id": "fc8edd4a-1cd8-4f2e-acd7-2f543cb12385"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMON_05",
+        "target": "HUMAN_01",
+        "label": "유혹",
+        "notes": "유혹의 악마가 인간을 은밀하게 타락시키고, 빙의 없이도 영혼을 지배함.",
+        "id": "5d8c260e-bfc1-4a82-88b3-8ea9eb7405c1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMON_05",
+        "target": "STRATEGY_03",
+        "label": "전술",
+        "notes": "유혹의 악마는 거짓말과 유혹으로 인간을 서서히 무너뜨림.",
+        "id": "fde79983-38bf-4743-9328-7f6743891de4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "POPE_04",
+        "target": "EXORCISM_01",
+        "label": "제한",
+        "notes": "일반 사제는 장엄 구마를 집전할 수 없음.",
+        "id": "5ec54305-9a4c-4f87-bc99-f61cfd0e6dae"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "POPE_04",
+        "target": "WITCH_01",
+        "label": "역사",
+        "notes": "일반 사제들도 마녀 재판에서 고발자나 피해자가 되었음.",
+        "id": "34620e32-e78c-4f04-aa48-63af2433309c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RELIC_04",
+        "target": "PRAYER_01",
+        "label": "보조",
+        "notes": "성상은 기도문과 함께 사용되어 신성한 분위기를 조성함.",
+        "id": "d7091583-9718-4296-89cd-96b64ac535be"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "RELIC_05",
+        "target": "POPE_03",
+        "label": "축복",
+        "notes": "성가정 십자가는 구마 사제가 가정 방문 시 축복 도구로 사용됨.",
+        "id": "7d1dfc25-7fce-4e10-8337-99b1c925b159"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_01",
+        "target": "POPE_01",
+        "label": "권한",
+        "notes": "교황은 모든 구마 의식의 궁극적 권한을 가짐.",
+        "id": "c62bcbf1-1842-48ce-9461-415f472fc43b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_04",
+        "target": "REAL_01",
+        "label": "실패",
+        "notes": "아넬리제 미헬 사례에서 빙의 판별이 충분히 이루어지지 않은 논란이 있음.",
+        "id": "12362737-2aa9-4ccf-87c5-d7b9700fc663"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FATHER_05",
+        "target": "SATAN_01",
+        "label": "이원론",
+        "notes": "테르툴리아누스는 영혼과 육체를 이분법적으로 구분하며 사탄을 해석함.",
+        "id": "2588a4ce-990a-4f4b-aadf-3c930365259c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FATHER_04",
+        "target": "DEMIURGE_01",
+        "label": "반박",
+        "notes": "이레네우스가 영지주의의 데미우르고스 개념을 정통 교리로 반박함.",
+        "id": "c03c183b-e829-451a-8bd3-efe3f2198822"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PRAYER_03",
+        "target": "SATAN_01",
+        "label": "대적",
+        "notes": "대영광송은 하느님의 영광을 찬양하며 악마를 위축시킴.",
+        "id": "951958c4-eb5c-4aa8-9b35-fadb8beeedc8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STAGE_05",
+        "target": "GNOSIS_04",
+        "label": "유사",
+        "notes": "구마 후 회복 단계는 소피아가 회개하고 플레로마로 귀환하는 과정과 유사함.",
+        "id": "1a1ab7d9-229d-4053-936e-d9f6f31dd3c2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MICHAEL_02",
+        "target": "GNOSIS_03",
+        "label": "전령",
+        "notes": "가브리엘이 예수의 탄생을 알림.",
+        "id": "2a1b65f8-b287-4d1d-9aa7-ad40e6ebab8f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MILTON_03",
+        "target": "SATAN_01",
+        "label": "문학적 계승",
+        "notes": "메피스토펠레스는 밀턴의 사탄에서 영향을 받아 창조된 캐릭터.",
+        "id": "5505516c-af0a-45c8-9ae7-12d5fd86b556"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GATES_02",
+        "target": "LEGION_01",
+        "label": "연관",
+        "notes": "지옥의 개들은 지옥의 군단과 함께 지옥을 수호하는 존재들.",
+        "id": "d9d41250-3ca6-430b-a939-258df72faa64"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "SOPHIA_01",
+        "target": "GNOSIS_03",
+        "label": "영감",
+        "notes": "소피아가 예수에게 지혜를 불어넣음.",
+        "id": "edge_new_001"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DEMIURGE_01",
+        "target": "ARCHON_02",
+        "label": "통치권 부여",
+        "notes": "데미우르고스가 7대 아콘에게 각 행성의 통치권을 부여함.",
+        "id": "edge_new_002"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ARCHON_02",
+        "target": "HUMAN_01",
+        "label": "운명 좌우",
+        "notes": "7대 아콘이 인간의 운명을 좌우함.",
+        "id": "edge_new_003"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "EXORCISM_05",
+        "target": "GNOSIS_01",
+        "label": "연결",
+        "notes": "악마의 이름을 아는 것이 영지의 첫걸음.",
+        "id": "edge_new_004"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "WITCH_01",
+        "target": "POPE_02",
+        "label": "승인",
+        "notes": "주교들이 마녀 재판을 승인함.",
+        "id": "edge_new_005"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MILTON_01",
+        "target": "EXORCISM_01",
+        "label": "영향",
+        "notes": "밀턴의 사탄 이미지가 구마 의식의 긴장감에 영향.",
+        "id": "edge_new_006"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GATES_03",
+        "target": "HUMAN_01",
+        "label": "관련",
+        "notes": "죄(Sin)는 인간의 원죄 개념과 연결됨.",
+        "id": "edge_new_007"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "HELL_02",
+        "target": "HELL_01",
+        "label": "심연",
+        "notes": "지옥의 가장 깊은 곳.",
+        "id": "edge_new_008"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "MICHAEL_02",
+        "target": "MICHAEL_01",
+        "label": "동료",
+        "notes": "대천사 그룹.",
+        "id": "edge_new_009"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ARTIFACT_03",
+        "target": "TEXT_03",
+        "label": "연관",
+        "notes": "현대에 재발견된 금서.",
+        "id": "edge_new_010"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FATHER_04",
+        "target": "FATHER_01",
+        "label": "논쟁",
+        "notes": "교부들 간의 신학적 논쟁.",
+        "id": "edge_new_011"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STRATEGY_02",
+        "target": "SATAN_03",
+        "label": "특화",
+        "notes": "벨제붑이 조롱 전술을 특화함.",
+        "id": "edge_new_012"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STRATEGY_03",
+        "target": "SATAN_04",
+        "label": "특화",
+        "notes": "벨리알이 거짓말 전술을 특화함.",
+        "id": "edge_new_013"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KSHAMAN_01",
+        "target": "HUMAN_01",
+        "label": "매개",
+        "notes": "무당은 인간과 영계를 연결하는 매개자.",
+        "id": "edge_new_014"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KSHAMAN_02",
+        "target": "EXORCISM_01",
+        "label": "대응",
+        "notes": "한국 무속의 굿은 서양의 장엄 구마에 대응하는 의식.",
+        "id": "edge_new_015"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KSHAMAN_03",
+        "target": "GNOSIS_04",
+        "label": "유사",
+        "notes": "신내림은 소피아의 회개와 유사하게 신성과 접촉하는 과정.",
+        "id": "edge_new_016"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KSHAMAN_04",
+        "target": "RELIC_01",
+        "label": "대체",
+        "notes": "복숭아나무 가지는 동양의 십자가에 대응하는 성물.",
+        "id": "edge_new_017"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KSHAMAN_05",
+        "target": "RELIC_03",
+        "label": "대응",
+        "notes": "한국 무속의 방울은 서양의 묵주와 유사한 의식 도구.",
+        "id": "edge_new_018"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "KSHAMAN_06",
+        "target": "GNOSIS_02",
+        "label": "동일시",
+        "notes": "바리공주는 한국판 소테르(구원자)임.",
+        "id": "edge_new_019"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TAO_01",
+        "target": "POPE_03",
+        "label": "대응",
+        "notes": "도사는 중국의 구마 사제 역할을 함.",
+        "id": "edge_new_020"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TAO_02",
+        "target": "RELIC_01",
+        "label": "대체",
+        "notes": "도교 부적은 동양의 십자가에 대응하는 성물.",
+        "id": "edge_new_021"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TAO_03",
+        "target": "PLEROMA_01",
+        "label": "해석",
+        "notes": "도교의 오행은 플레로마의 동양적 해석.",
+        "id": "edge_new_022"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TAO_04",
+        "target": "SATAN_01",
+        "label": "관점",
+        "notes": "음양의 이원론은 사탄과 미카엘의 대립과 유사.",
+        "id": "edge_new_023"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TAO_05",
+        "target": "DEMIURGE_01",
+        "label": "창조물",
+        "notes": "강시는 데미우르고스가 창조한 결함 있는 존재.",
+        "id": "edge_new_024"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ONMYO_01",
+        "target": "POPE_03",
+        "label": "대응",
+        "notes": "음양사는 일본의 구마 사제 역할을 함.",
+        "id": "edge_new_025"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ONMYO_02",
+        "target": "GATES_01",
+        "label": "변형",
+        "notes": "일본의 결계는 지옥문의 동양적 변형.",
+        "id": "edge_new_026"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ONMYO_03",
+        "target": "SATAN_01",
+        "label": "변형",
+        "notes": "오니는 사탄의 일본적 변형.",
+        "id": "edge_new_027"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ONMYO_04",
+        "target": "PLEROMA_01",
+        "label": "해석",
+        "notes": "일본 신토는 플레로마의 다신론적 해석.",
+        "id": "edge_new_028"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "WATCHER_01",
+        "target": "POPE_01",
+        "label": "감시",
+        "notes": "영계조약 감시자가 교황을 포함한 모든 퇴마 조직을 감시함.",
+        "id": "edge_new_029"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "WATCHER_01",
+        "target": "KSHAMAN_01",
+        "label": "감시",
+        "notes": "영계조약 감시자가 한국 무속을 포함한 모든 퇴마 조직을 감시함.",
+        "id": "edge_new_030"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "WATCHER_01",
+        "target": "TAO_01",
+        "label": "감시",
+        "notes": "영계조약 감시자가 중국 도교를 포함한 모든 퇴마 조직을 감시함.",
+        "id": "edge_new_031"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "WATCHER_01",
+        "target": "ONMYO_01",
+        "label": "감시",
+        "notes": "영계조약 감시자가 일본 음양도를 포함한 모든 퇴마 조직을 감시함.",
+        "id": "edge_new_032"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  const cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: data,
+    style: [
+      { selector: 'node', style: { 
+        'label':'data(label)', 
+        'background-color':'data(color)',
+        'shape':'round-rectangle',
+        'width':'label', 'height':30, 'padding':'10px',
+        'border-width':2, 'border-color':'#333',
+        'text-valign':'center', 'text-halign':'center',
+        'color':'#fff', 'font-weight':'bold', 'font-size':14,
+        'text-outline-width':2, 'text-outline-color':'#000'
+      }},
+      { selector: 'edge', style: {
+        'label':'data(label)',
+        'curve-style':'bezier',
+        'line-color':'data(color)',
+        'width':2,
+        'target-arrow-shape':'triangle',
+        'target-arrow-color':'data(color)',
+        'font-size':11
+      }},
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true, fit: true, padding: 30 }
+  });
+
+  // ===== 툴팁 =====
+  const tooltip = document.getElementById('nodeTooltip');
+  const ttTitle = document.getElementById('ttTitle');
+  const ttNotes = document.getElementById('ttNotes');
+
+  function showTooltip(node) {
+    if (!node || node.length === 0) return;
+    const label = node.data('label') || node.id();
+    const notes = node.data('notes') || '';
+    ttTitle.textContent = label;
+    ttNotes.innerHTML = notes || '<span class="tt-empty">메모가 없습니다</span>';
+    const pos = node.renderedPosition();
+    const rect = cy.container().getBoundingClientRect();
+    let x = rect.left + pos.x - tooltip.offsetWidth / 2;
+    let y = rect.top + pos.y - 50 - tooltip.offsetHeight;
+    if (x < 10) x = 10;
+    if (y < 10) y = rect.top + pos.y + 20;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+    tooltip.style.display = 'block';
+  }
+
+  function hideTooltip() { tooltip.style.display = 'none'; }
+
+  cy.on('mouseover', 'node', function(evt) {
+    showTooltip(evt.target);
+    evt.target.style('border-width', '4px');
+    evt.target.style('border-color', '#4facfe');
+  });
+
+  cy.on('mouseout', 'node', function(evt) {
+    hideTooltip();
+    if (!evt.target.selected()) {
+      evt.target.style('border-width', '2px');
+      evt.target.style('border-color', '#333');
+    }
+  });
+
+  document.getElementById('nodeCount').textContent = cy.nodes().length;
+  document.getElementById('edgeCount').textContent = cy.edges().length;
+
+  setTimeout(() => {
+    document.getElementById('tip').classList.add('hidden');
+  }, 3000);
+
+  function toggleDark() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('viewerTheme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('viewerTheme', 'dark');
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if ((e.key === 'd' || e.key === 'D') && !e.ctrlKey && !e.metaKey) {
+      toggleDark();
+    }
+    if (e.key === 'Escape') hideTooltip();
+  });
+
+  const savedTheme = localStorage.getItem('viewerTheme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+
+  window.addEventListener('resize', function() { cy.fit(30); });
+</script>
+</body>
+</html>

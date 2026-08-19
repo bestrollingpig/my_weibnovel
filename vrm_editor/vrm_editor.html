@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VRM Texture Editor</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #ccc; height: 100vh; overflow: hidden; }
+
+/* ===== 상단 헤더 ===== */
+#header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  background: rgba(22, 33, 62, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #0f3460;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+#header .title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e94560;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+#header button {
+  background: #0f3460;
+  color: #ccc;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+#header button:hover { background: #1a4a7a; }
+#header button:disabled { opacity: .4; cursor: default; }
+#header button.primary { background: #e94560; }
+#header button.primary:hover { background: #ff6b81; }
+#header button.success { background: #2e7d32; }
+#header button.success:hover { background: #388e3c; }
+#header button.info { background: #0d47a1; }
+#header button.info:hover { background: #1565c0; }
+#header button.danger { background: #4a1a1a; }
+#header button.danger:hover { background: #6a1a1a; }
+#header .file-info {
+  font-size: 11px;
+  color: #888;
+  flex: 1;
+  min-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#header input[type="file"] { display: none; }
+
+/* ===== 메인 ===== */
+#mainArea {
+  position: fixed;
+  top: 52px; left: 0; right: 0; bottom: 0;
+  background: #0a0a0a;
+  z-index: 0;
+}
+#mainArea .viewer-wrap {
+  width: 100%;
+  height: 100%;
+}
+#mainArea .viewer-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+#mainArea .placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #555;
+  font-size: 16px;
+  text-align: center;
+  line-height: 2;
+  flex-direction: column;
+}
+#mainArea .placeholder .big { font-size: 48px; display: block; }
+#mainArea .placeholder .sub { font-size: 13px; color: #666; }
+
+/* ===== 하단 상태바 ===== */
+#statusBar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.85);
+  border-top: 1px solid #0f3460;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 12px;
+  font-size: 10px;
+  color: #888;
+}
+#statusBar .log-area {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#statusBar .log-area .entry { display: inline; }
+#statusBar .log-area .entry.info { color: #4fc3f7; }
+#statusBar .log-area .entry.ok { color: #81c784; }
+#statusBar .log-area .entry.err { color: #e57373; }
+#statusBar .status-right {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+#statusBar .status-right .badge {
+  color: #666;
+}
+#statusBar .status-right .badge.active { color: #4fc3f7; }
+
+/* ===== 텍스처 목록 (오른쪽 사이드) ===== */
+#textureSidebar {
+  position: fixed;
+  top: 52px;
+  right: 0;
+  width: 220px;
+  max-height: calc(100vh - 80px);
+  background: rgba(22, 33, 62, 0.88);
+  backdrop-filter: blur(8px);
+  border-left: 1px solid #0f3460;
+  z-index: 40;
+  padding: 8px 6px;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+#textureSidebar.open { transform: translateX(0); }
+#textureSidebar .tex-item {
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  border-radius: 3px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+#textureSidebar .tex-item:hover { background: #0f3460; }
+#textureSidebar .tex-item.selected { background: #e94560; color: #fff; }
+#textureSidebar .tex-item .size { color: #666; font-size: 9px; }
+#textureSidebar .tex-empty {
+  color: #555;
+  font-size: 11px;
+  text-align: center;
+  padding: 20px 0;
+}
+#textureSidebar .sidebar-title {
+  color: #888;
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 4px 8px 8px 8px;
+  border-bottom: 1px solid #0f3460;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+#textureSidebar .sidebar-title .close-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+}
+#textureSidebar .sidebar-title .close-btn:hover { color: #e94560; }
+
+/* ===== 도움말 패널 ===== */
+#helpPanel {
+  position: fixed;
+  bottom: 40px;
+  right: 16px;
+  width: 280px;
+  background: rgba(22, 33, 62, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid #0f3460;
+  border-radius: 10px;
+  padding: 14px 16px;
+  z-index: 60;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #aaa;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  transform: translateY(calc(100% + 20px));
+  transition: transform 0.3s ease;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+#helpPanel.open { transform: translateY(0); }
+#helpPanel .help-title {
+  color: #4fc3f7;
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+#helpPanel .help-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-size: 14px;
+}
+#helpPanel .help-close:hover { color: #e94560; }
+#helpPanel .help-step {
+  color: #888;
+  padding: 2px 0;
+}
+#helpPanel .help-step .highlight { color: #e94560; font-weight: 500; }
+#helpPanel .help-divider {
+  border: none;
+  border-top: 1px solid #0f3460;
+  margin: 8px 0;
+}
+#helpPanel .help-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+#helpPanel .help-links a {
+  color: #4fc3f7;
+  text-decoration: none;
+  font-size: 10px;
+  background: rgba(15, 52, 96, 0.4);
+  padding: 2px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 52, 96, 0.3);
+  transition: all 0.2s;
+}
+#helpPanel .help-links a:hover {
+  background: #0f3460;
+  border-color: #4fc3f7;
+}
+
+/* ===== 버튼 토글 ===== */
+#toggleTextureBtn {
+  position: fixed;
+  top: 60px;
+  right: 8px;
+  z-index: 45;
+  background: rgba(22, 33, 62, 0.8);
+  border: 1px solid #0f3460;
+  color: #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 10px;
+  cursor: pointer;
+}
+#toggleTextureBtn:hover { background: #0f3460; }
+
+/* ===== 스크롤바 ===== */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- 상단 헤더 -->
+<div id="header">
+  <span class="title">🎮 VRM Editor</span>
+  <button onclick="document.getElementById('vrmInput').click()">📂 VRM 열기</button>
+  <input type="file" id="vrmInput" accept=".vrm" onchange="openVRM(event)">
+  <button id="view3dBtn" disabled onclick="view3D()">3D 보기</button>
+  <button id="exportBtn" disabled onclick="exportAllTextures()" class="primary">📤 내보내기</button>
+  <button id="importBtn" disabled onclick="importAllTextures()" class="success">📥 불러오기</button>
+  <button id="saveBtn" disabled onclick="saveVRM()">💾 저장</button>
+  <button onclick="toggleHelp()" class="info">❓ 도움말</button>
+  <button onclick="resetAll()" class="danger">초기화</button>
+  <span class="file-info" id="fileName">파일 없음</span>
+</div>
+
+<!-- 메인 -->
+<div id="mainArea">
+  <div class="placeholder" id="mainPlaceholder">
+    <span class="big">🎨</span>
+    VRM 파일을 열어주세요<br>
+    <span class="sub">📤 내보내기로 텍스처 저장 → 외부 편집기 수정 → 📥 불러오기</span>
+  </div>
+  <div class="viewer-wrap" id="viewer3d" style="display:none;"></div>
+</div>
+
+<!-- 텍스처 목록 (오른쪽) -->
+<button id="toggleTextureBtn" onclick="toggleTextureSidebar()" style="display:none;">📋 텍스처</button>
+<div id="textureSidebar">
+  <div class="sidebar-title">
+    <span>📋 텍스처 목록</span>
+    <button class="close-btn" onclick="toggleTextureSidebar()">✕</button>
+  </div>
+  <div id="textureList"><div class="tex-empty">텍스처가 없습니다</div></div>
+</div>
+
+<!-- 도움말 패널 -->
+<div id="helpPanel">
+  <button class="help-close" onclick="toggleHelp()">✕</button>
+  <div class="help-title">📖 사용 가이드</div>
+  <div class="help-step">1. <span class="highlight">VRM 열기</span>로 파일 로드</div>
+  <div class="help-step">2. <span class="highlight">내보내기</span>로 폴더에 텍스처 저장</div>
+  <div class="help-step">3. 외부 편집기로 PNG 수정</div>
+  <div class="help-step">4. <span class="highlight">불러오기</span>로 VRM에 적용</div>
+  <div class="help-step">5. <span class="highlight">저장</span>으로 VRM 저장</div>
+  <hr class="help-divider">
+  <div class="help-title">🔗 추천 편집기</div>
+  <div class="help-links">
+    <a href="https://www.photopea.com/" target="_blank">🎨 Photopea</a>
+    <a href="https://www.adobe.com/products/photoshop.html" target="_blank">📷 Photoshop</a>
+    <a href="https://www.clipstudio.net/" target="_blank">✏️ Clip Studio</a>
+    <a href="https://www.gimp.org/" target="_blank">🖌️ GIMP</a>
+    <a href="https://krita.org/" target="_blank">🎨 Krita</a>
+    <a href="https://www.paint.net/" target="_blank">🖼️ Paint.NET</a>
+  </div>
+  <hr class="help-divider">
+  <div style="font-size:10px;color:#555;margin-top:4px;">
+    💡 텍스처는 우측 상단 <span style="color:#4fc3f7;">📋 텍스처</span> 버튼으로 목록 확인
+  </div>
+</div>
+
+<!-- 하단 상태바 -->
+<div id="statusBar">
+  <div class="log-area" id="logArea"></div>
+  <div class="status-right">
+    <span class="badge" id="texCountBadge">📄 0</span>
+    <span class="badge" id="statusBadge">● 준비</span>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 전역 변수
+// ============================================================
+let gltf, binData, textures = [], modified = false, fileName = '', dirHandle = null;
+let vrmData = null;
+let vrmViewerReady = false;
+let bufferViewsData = [];
+let lastViewerUrl = null;
+let selectedTextureIndex = -1;
+let viewerInitialized = false;
+
+// ============================================================
+// 로그 (상태바)
+// ============================================================
+function log(msg, type = 'info') {
+  const el = document.getElementById('logArea');
+  const d = document.createElement('span');
+  d.className = 'entry ' + type;
+  d.textContent = `[${new Date().toLocaleTimeString('ko-KR', {hour12:false})}] ${msg}  `;
+  el.appendChild(d);
+  // 최대 5개 유지
+  while (el.children.length > 5) el.removeChild(el.firstChild);
+}
+
+// ============================================================
+// 텍스처 사이드바
+// ============================================================
+function toggleTextureSidebar() {
+  const sb = document.getElementById('textureSidebar');
+  sb.classList.toggle('open');
+}
+
+function showTextureList() {
+  const container = document.getElementById('textureList');
+  const btn = document.getElementById('toggleTextureBtn');
+  const badge = document.getElementById('texCountBadge');
+
+  if (!textures || textures.length === 0) {
+    container.innerHTML = '<div class="tex-empty">텍스처가 없습니다</div>';
+    btn.style.display = 'none';
+    badge.textContent = '📄 0';
+    return;
+  }
+
+  btn.style.display = 'block';
+  badge.textContent = `📄 ${textures.length}`;
+
+  container.innerHTML = textures.map((tex, i) =>
+    `<div class="tex-item${i === selectedTextureIndex ? ' selected' : ''}" onclick="selectTexture(${i})">
+      <span>${tex.name}</span>
+      <span class="size">${(tex.data.length/1024).toFixed(0)}KB</span>
+    </div>`
+  ).join('');
+}
+
+function selectTexture(index) {
+  selectedTextureIndex = index;
+  showTextureList();
+  log(`📌 선택: ${textures[index].name}`, 'info');
+}
+
+// ============================================================
+// 도움말
+// ============================================================
+function toggleHelp() {
+  document.getElementById('helpPanel').classList.toggle('open');
+}
+
+// ============================================================
+// 3D Viewer (vrm-viewer)
+// ============================================================
+function view3D() {
+  if (!vrmData) { log('❌ 먼저 VRM 파일을 열어주세요', 'err'); return; }
+
+  const container = document.getElementById('viewer3d');
+  const placeholder = document.getElementById('mainPlaceholder');
+
+  // 메인 영역 전환
+  placeholder.style.display = 'none';
+  container.style.display = 'block';
+
+  if (!vrmViewerReady) {
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://cdn.jsdelivr.net/npm/vrm-viewer@0.0.6/dist/vrm-viewer.min.js';
+    script.onload = () => { vrmViewerReady = true; loadVRMViewer(container); };
+    script.onerror = () => {
+      log('❌ vrm-viewer 로드 실패', 'err');
+      container.innerHTML = '<div class="placeholder" style="height:100%;">❌ 3D 뷰어 로드 실패</div>';
+    };
+    document.head.appendChild(script);
+  } else {
+    loadVRMViewer(container);
+  }
+}
+
+function loadVRMViewer(container) {
+  if (lastViewerUrl) { URL.revokeObjectURL(lastViewerUrl); lastViewerUrl = null; }
+  try {
+    const blob = new Blob([vrmData]);
+    const url = URL.createObjectURL(blob);
+    lastViewerUrl = url;
+    container.innerHTML = `<vrm-viewer camera-controls src="${url}" style="width:100%;height:100%;"></vrm-viewer>`;
+    log('✅ 3D VRM 뷰어 로드 완료', 'ok');
+    document.getElementById('statusBadge').textContent = '● 3D 활성';
+    document.getElementById('statusBadge').className = 'badge active';
+  } catch (e) {
+    log('❌ 3D 뷰어 로드 실패: ' + e.message, 'err');
+  }
+}
+
+// ============================================================
+// texFileName
+// ============================================================
+function texFileName(tex) {
+  const safeName = String(tex.name).normalize('NFC')
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/\s+/g, '_').trim();
+  const img = gltf.images[tex.index];
+  const ext = (img && img.mimeType === "image/jpeg") ? ".jpg" : ".png";
+  return `${String(tex.index).padStart(4, '0')}_${safeName || 'texture'}${ext}`;
+}
+
+// ============================================================
+// rebuildBinaryFromBufferViews (GLB BIN 4바이트 정렬)
+// ============================================================
+function rebuildBinaryFromBufferViews() {
+  if (!bufferViewsData.length) return;
+  const aligned = bufferViewsData.map(chunk => Math.ceil(chunk.length / 4) * 4);
+  const totalLen = aligned.reduce((a, b) => a + b, 0);
+  const rebuilt = new Uint8Array(totalLen);
+  let offset = 0;
+  for (let i = 0; i < bufferViewsData.length; i++) {
+    const chunk = bufferViewsData[i];
+    rebuilt.set(chunk, offset);
+    const padLen = aligned[i] - chunk.length;
+    if (padLen > 0) rebuilt.fill(0, offset + chunk.length, offset + aligned[i]);
+    if (gltf.bufferViews && gltf.bufferViews[i]) {
+      gltf.bufferViews[i].byteOffset = offset;
+      gltf.bufferViews[i].byteLength = chunk.length;
+    }
+    offset += aligned[i];
+  }
+  binData = rebuilt;
+  if (gltf.buffers && gltf.buffers[0]) {
+    gltf.buffers[0].byteLength = rebuilt.length;
+  }
+}
+
+// ============================================================
+// buildVRM (GLB 4바이트 정렬)
+// ============================================================
+function buildVRM() {
+  if (bufferViewsData.length) rebuildBinaryFromBufferViews();
+  if (!gltf.buffers || !gltf.buffers.length) {
+    gltf.buffers = [{ byteLength: binData.length }];
+  }
+
+  const encoder = new TextEncoder();
+  const jsonBytes = encoder.encode(JSON.stringify(gltf));
+
+  const jsonAligned = Math.ceil(jsonBytes.length / 4) * 4;
+  const jsonChunk = new Uint8Array(jsonAligned);
+  jsonChunk.set(jsonBytes);
+  for (let i = jsonBytes.length; i < jsonAligned; i++) jsonChunk[i] = 0x20;
+
+  const binAligned = Math.ceil(binData.length / 4) * 4;
+  const binChunk = new Uint8Array(binAligned);
+  binChunk.set(binData);
+  for (let i = binData.length; i < binAligned; i++) binChunk[i] = 0;
+
+  const total = 12 + 8 + jsonAligned + 8 + binAligned;
+  const out = new Uint8Array(total);
+  const dv = new DataView(out.buffer);
+
+  dv.setUint32(0, 0x46546C67, true);
+  dv.setUint32(4, 2, true);
+  dv.setUint32(8, total, true);
+
+  let off = 12;
+  dv.setUint32(off, jsonAligned, true);
+  dv.setUint32(off + 4, 0x4E4F534A, true);
+  out.set(jsonChunk, off + 8);
+  off += 8 + jsonAligned;
+
+  dv.setUint32(off, binAligned, true);
+  dv.setUint32(off + 4, 0x004E4942, true);
+  out.set(binChunk, off + 8);
+
+  return out;
+}
+
+// ============================================================
+// openVRM
+// ============================================================
+function openVRM(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 1024 * 1024 * 512) {
+    alert("512MB 이상은 지원하지 않습니다.");
+    e.target.value = '';
+    return;
+  }
+
+  fileName = file.name;
+  document.getElementById('fileName').textContent = fileName;
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const buf = ev.target.result;
+      const dv = new DataView(buf);
+
+      if (dv.getUint32(0, true) !== 0x46546C67) throw new Error('VRM(GL B) 파일이 아닙니다');
+      const version = dv.getUint32(4, true);
+      if (version !== 2) throw new Error(`GLB Version ${version}은 지원하지 않습니다`);
+      const fileLength = dv.getUint32(8, true);
+      if (fileLength !== buf.byteLength) throw new Error("손상된 GLB 파일");
+
+      let offset = 12, jsonChunk = null, binChunk = null;
+      while (offset < buf.byteLength) {
+        const clen = dv.getUint32(offset, true);
+        const ctype = dv.getUint32(offset + 4, true);
+        if (ctype === 0x4E4F534A) {
+          jsonChunk = { start: offset + 8, length: clen };
+        } else if (ctype === 0x004E4942) {
+          binChunk = { start: offset + 8, length: clen };
+        } else {
+          log(`⚠️ Unknown Chunk: 0x${ctype.toString(16)}`, 'err');
+        }
+        offset += 8 + clen;
+      }
+      if (!jsonChunk) throw new Error('JSON Chunk를 찾을 수 없습니다');
+
+      const jsonBytes = new Uint8Array(buf, jsonChunk.start, jsonChunk.length);
+      gltf = JSON.parse(new TextDecoder().decode(jsonBytes));
+
+      binData = binChunk ? new Uint8Array(buf, binChunk.start, binChunk.length) : new Uint8Array(0);
+      vrmData = new Uint8Array(buf);
+
+      bufferViewsData = (gltf.bufferViews || []).map((bv) => {
+        const bo = bv.byteOffset || 0;
+        return binData.slice(bo, bo + bv.byteLength);
+      });
+
+      let skippedImages = 0;
+      textures = (gltf.images || []).map((img, i) => {
+        if (img.bufferView === undefined) {
+          if (img.uri) log(`ℹ️ 외부 이미지: ${img.uri} (편집 제외)`, 'info');
+          skippedImages++;
+          return null;
+        }
+        const bv = gltf.bufferViews[img.bufferView];
+        const data = bufferViewsData[img.bufferView];
+        if (!data || data.length === 0) { skippedImages++; return null; }
+        return {
+          index: i,
+          name: img.name || `Texture_${i}`,
+          bufferView: img.bufferView,
+          byteOffset: bv.byteOffset || 0,
+          byteLength: bv.byteLength,
+          data: data
+        };
+      }).filter(Boolean);
+
+      modified = false;
+      selectedTextureIndex = -1;
+
+      document.getElementById('saveBtn').disabled = false;
+      document.getElementById('exportBtn').disabled = false;
+      document.getElementById('importBtn').disabled = false;
+      document.getElementById('view3dBtn').disabled = false;
+
+      // 메인 화면 갱신
+      const placeholder = document.getElementById('mainPlaceholder');
+      placeholder.style.display = 'flex';
+      placeholder.innerHTML = `
+        <span class="big">✅</span>
+        ${file.name}<br>
+        <span class="sub">${textures.length}개 텍스처 로드됨</span>
+        <span class="sub" style="font-size:12px;color:#555;">🔄 "3D 보기"로 모델 확인</span>
+      `;
+      document.getElementById('viewer3d').style.display = 'none';
+
+      showTextureList();
+      document.getElementById('statusBadge').textContent = '● 로드됨';
+      document.getElementById('statusBadge').className = 'badge active';
+
+      log(`✅ ${file.name} - ${textures.length}개 텍스처`, 'ok');
+      if (skippedImages > 0) {
+        log(`⚠️ 외부/URI 참조 이미지 ${skippedImages}개는 편집 제외`, 'err');
+      }
+      log('📤 "내보내기"로 폴더에 저장하세요', 'info');
+
+    } catch (err) {
+      log('❌ 오류: ' + err.message, 'err');
+      alert('VRM 로드 실패: ' + err.message);
+    }
+  };
+  reader.onerror = () => { log('❌ 파일 읽기 실패', 'err'); };
+  reader.readAsArrayBuffer(file);
+  e.target.value = '';
+}
+
+// ============================================================
+// exportAllTextures
+// ============================================================
+async function exportAllTextures() {
+  if (!window.showDirectoryPicker) {
+    log('❌ 폴더 선택을 지원하지 않습니다. Chrome/Edge를 사용하세요.', 'err');
+    return;
+  }
+  try {
+    dirHandle = await window.showDirectoryPicker();
+  } catch (e) {
+    if (e.name !== 'AbortError') log('❌ 폴더 선택 실패: ' + e.message, 'err');
+    return;
+  }
+
+  let successCount = 0;
+  for (const tex of textures) {
+    if (!tex.data || tex.data.length === 0) {
+      log(`⚠️ 건너뜀: ${texFileName(tex)} (데이터 없음)`, 'err');
+      continue;
+    }
+    try {
+      const fh = await dirHandle.getFileHandle(texFileName(tex), { create: true });
+      const w = await fh.createWritable();
+      await w.write(tex.data);
+      await w.close();
+      successCount++;
+    } catch (e) {
+      log(`❌ ${texFileName(tex)} 저장 실패: ${e.message}`, 'err');
+    }
+  }
+  document.getElementById('fileName').textContent = fileName + ' (📂)';
+  log(`✅ 내보내기 완료: ${successCount}/${textures.length}개`, 'ok');
+  log('📂 외부 편집기로 PNG를 수정하세요', 'info');
+}
+
+// ============================================================
+// importAllTextures
+// ============================================================
+async function importAllTextures() {
+  if (!dirHandle) {
+    log('❌ 먼저 "내보내기"로 폴더를 선택하세요', 'err');
+    return;
+  }
+
+  const backupBufferViews = bufferViewsData.map(c => c.slice(0));
+  const backupTextures = textures.map(t => ({ data: t.data.slice(0), byteLength: t.byteLength }));
+
+  let replaced = 0, failed = 0;
+
+  for (let i = 0; i < textures.length; i++) {
+    const tex = textures[i];
+    const fname = texFileName(tex);
+    let fileHandle;
+    try {
+      fileHandle = await dirHandle.getFileHandle(fname);
+    } catch (e) { continue; }
+
+    try {
+      const file = await fileHandle.getFile();
+      if (file.size > 1024 * 1024 * 512) {
+        log(`❌ ${fname} - 512MB 초과`, 'err');
+        failed++; continue;
+      }
+
+      const arr = new Uint8Array(await file.arrayBuffer());
+
+      const png = arr[0] === 0x89 && arr[1] === 0x50 && arr[2] === 0x4E && arr[3] === 0x47;
+      const jpg = arr[0] === 0xFF && arr[1] === 0xD8;
+      if (!png && !jpg) {
+        log(`❌ ${fname} - 이미지 파일이 아닙니다`, 'err');
+        failed++; continue;
+      }
+
+      try {
+        const blob = new Blob([arr]);
+        const bitmap = await createImageBitmap(blob);
+        if (bitmap.width > 4096 || bitmap.height > 4096) {
+          log(`❌ ${fname} - 4096px 초과 (${bitmap.width}x${bitmap.height})`, 'err');
+          bitmap.close();
+          failed++; continue;
+        }
+        bitmap.close();
+      } catch (e) {
+        log(`❌ ${fname} - 디코딩 실패: ${e.message}`, 'err');
+        failed++; continue;
+      }
+
+      if (jpg) gltf.images[tex.index].mimeType = "image/jpeg";
+      else if (png) gltf.images[tex.index].mimeType = "image/png";
+
+      bufferViewsData[tex.bufferView] = arr;
+      tex.data = arr;
+      tex.byteLength = arr.length;
+      gltf.bufferViews[tex.bufferView].byteLength = arr.length;
+      replaced++;
+      log(`✅ ${fname} - ${(arr.length/1024).toFixed(1)}KB`, 'ok');
+
+    } catch (e) {
+      if (e.name !== 'NotFoundError') {
+        log(`❌ ${fname} - ${e.message}`, 'err');
+        failed++;
+      }
+    }
+  }
+
+  if (replaced > 0) {
+    modified = true;
+    document.getElementById('fileName').textContent = fileName + ' *';
+    log(`✅ 불러오기 완료: ${replaced}개 교체, ${failed}개 실패`, 'ok');
+    log('💾 "저장"으로 VRM을 저장하세요', 'info');
+
+    const newVRM = buildVRM();
+    vrmData = newVRM;
+    if (vrmViewerReady) loadVRMViewer(document.getElementById('viewer3d'));
+    showTextureList();
+  } else {
+    bufferViewsData = backupBufferViews;
+    textures.forEach((t, i) => {
+      if (backupTextures[i]) {
+        t.data = backupTextures[i].data;
+        t.byteLength = backupTextures[i].byteLength;
+      }
+    });
+    log('⚠️ 수정된 파일이 없습니다 (롤백됨)', 'err');
+  }
+}
+
+// ============================================================
+// saveVRM
+// ============================================================
+async function saveVRM() {
+  const now = new Date();
+  const ds = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+  const out = buildVRM();
+  const baseName = fileName.replace(/\.vrm$/i, '');
+  const vrmName = `${baseName}_${ds}.vrm`;
+
+  if (dirHandle) {
+    try {
+      try {
+        const old = await dirHandle.getFileHandle(vrmName);
+        const backup = await dirHandle.getFileHandle(`${baseName}_backup_${ds}.vrm`, { create: true });
+        const w = await backup.createWritable();
+        const oldData = await old.getFile();
+        await w.write(await oldData.arrayBuffer());
+        await w.close();
+        log(`📦 백업 생성 완료`, 'info');
+      } catch (e) {}
+
+      const fh = await dirHandle.getFileHandle(vrmName, { create: true });
+      const w = await fh.createWritable();
+      await w.write(out);
+      await w.close();
+      modified = false;
+      document.getElementById('fileName').textContent = fileName;
+      log(`✅ 저장 완료: ${vrmName}`, 'ok');
+      return;
+    } catch (e) {
+      log('⚠️ 폴더 저장 실패: ' + e.message, 'err');
+    }
+  }
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out]));
+  a.download = vrmName;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  modified = false;
+  log(`✅ 저장 완료: ${vrmName} (다운로드)`, 'ok');
+}
+
+// ============================================================
+// resetAll
+// ============================================================
+function resetAll() {
+  if (!confirm('초기화하시겠습니까?')) return;
+  if (lastViewerUrl) { URL.revokeObjectURL(lastViewerUrl); lastViewerUrl = null; }
+  gltf = null; binData = null; textures = []; bufferViewsData = [];
+  modified = false; fileName = ''; dirHandle = null; vrmData = null;
+  selectedTextureIndex = -1;
+  vrmViewerReady = false;
+
+  document.getElementById('viewer3d').style.display = 'none';
+  document.getElementById('viewer3d').innerHTML = '';
+  const placeholder = document.getElementById('mainPlaceholder');
+  placeholder.style.display = 'flex';
+  placeholder.innerHTML = `
+    <span class="big">🎨</span>
+    VRM 파일을 열어주세요<br>
+    <span class="sub">📤 내보내기로 텍스처 저장 → 외부 편집기 수정 → 📥 불러오기</span>
+  `;
+  document.getElementById('fileName').textContent = '파일 없음';
+  document.getElementById('textureList').innerHTML = '<div class="tex-empty">텍스처가 없습니다</div>';
+  document.getElementById('toggleTextureBtn').style.display = 'none';
+  document.getElementById('texCountBadge').textContent = '📄 0';
+  document.getElementById('statusBadge').textContent = '● 준비';
+  document.getElementById('statusBadge').className = 'badge';
+
+  ['saveBtn','exportBtn','importBtn','view3dBtn'].forEach(id => {
+    document.getElementById(id).disabled = true;
+  });
+  log('🔄 초기화됨', 'ok');
+  if (window.gc) try { window.gc(); } catch(e) {}
+}
+
+// ============================================================
+// 전역 노출
+// ============================================================
+window.openVRM = openVRM;
+window.view3D = view3D;
+window.exportAllTextures = exportAllTextures;
+window.importAllTextures = importAllTextures;
+window.saveVRM = saveVRM;
+window.resetAll = resetAll;
+window.toggleHelp = toggleHelp;
+window.toggleTextureSidebar = toggleTextureSidebar;
+window.selectTexture = selectTexture;
+
+// ============================================================
+// 시작
+// ============================================================
+log('VRM Texture Editor v3.0', 'ok');
+log('📂 VRM 열기 → 내보내기 → 외부 편집기 수정 → 불러오기 → 저장', 'info');
+log('❓ 도움말 버튼으로 편집기 링크 확인', 'info');
+</script>
+</body>
+</html>

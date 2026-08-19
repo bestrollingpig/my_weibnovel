@@ -1,0 +1,601 @@
+{
+  "nodes": [
+    {
+      "data": {
+        "id": "STC_01",
+        "label": "STC 01 오프닝",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "이야기의 시작"
+      },
+      "position": {
+        "x": 67.37386479355449,
+        "y": 24.241255899447797
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_02",
+        "label": "STC 02 테마",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "핵심 테마 제시"
+      },
+      "position": {
+        "x": 69.02945878348196,
+        "y": 127.72315396155392
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_03",
+        "label": "STC 03 세트업",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "일상과 결핍"
+      },
+      "position": {
+        "x": 69.58582514607853,
+        "y": 232.15499340026375
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_04",
+        "label": "STC 04 촉매",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "변화의 촉매"
+      },
+      "position": {
+        "x": 68.76382144830468,
+        "y": 334.32660749962025
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_05",
+        "label": "STC 05 고민",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "내적 갈등"
+      },
+      "position": {
+        "x": 69.09223409160005,
+        "y": 433.4634743836508
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_06",
+        "label": "STC 06 2막 진입",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "되돌릴 수 없는 선택"
+      },
+      "position": {
+        "x": 66.08404692495239,
+        "y": 537.91760945542
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_07",
+        "label": "STC 07 B스토리",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "정서적 성장"
+      },
+      "position": {
+        "x": 66.84056725730943,
+        "y": 638.9760686162097
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_08",
+        "label": "STC 08 즐거움",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "장르적 쾌감"
+      },
+      "position": {
+        "x": 65.00243830361705,
+        "y": 739.7184868988123
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_09",
+        "label": "STC 09 미드포인트",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "전환점"
+      },
+      "position": {
+        "x": 69.85832766925314,
+        "y": 843.9800013133897
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_10",
+        "label": "STC 10 압박",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "악당의 반격"
+      },
+      "position": {
+        "x": 68.59704632649374,
+        "y": 943.5564153384307
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_11",
+        "label": "STC 11 상실",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "모든 것을 잃다"
+      },
+      "position": {
+        "x": 69.69678916973588,
+        "y": 1048.599190562744
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_12",
+        "label": "STC 12 암흑기",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "내적 성찰"
+      },
+      "position": {
+        "x": 67.03649290674136,
+        "y": 1144.4886795062885
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_13",
+        "label": "STC 13 3막 진입",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "해결책 모색"
+      },
+      "position": {
+        "x": 73.58465658610265,
+        "y": 1246.0304250400973
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_14",
+        "label": "STC 14 피날레",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "최종 결전"
+      },
+      "position": {
+        "x": 71.3511497097064,
+        "y": 1353.3902924049282
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "STC_15",
+        "label": "STC 15 엔딩",
+        "color": "#ffaa00",
+        "image": "",
+        "notes": "변화된 세계"
+      },
+      "position": {
+        "x": 65.09550621224443,
+        "y": 1447.1326643473465
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "STC_01",
+        "target": "STC_02",
+        "label": "테마 암시",
+        "id": "3558000f-35ba-40f3-9be1-2b4bdd7d3a78"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_02",
+        "target": "STC_03",
+        "label": "일상 구축",
+        "id": "480ca818-b9a9-479f-b3ad-70bd87d5034a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_03",
+        "target": "STC_04",
+        "label": "외부 충격",
+        "id": "f8f3e766-4816-4030-b56a-716d29e73a88"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_04",
+        "target": "STC_05",
+        "label": "두려움",
+        "id": "c1c08a62-58c8-4c47-be22-e0d1a41c20a3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_05",
+        "target": "STC_06",
+        "label": "결단",
+        "id": "39565f0f-00cd-48b0-8447-911f57bbe298"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_06",
+        "target": "STC_07",
+        "label": "서브플롯",
+        "id": "2646195a-50ae-4c50-9a44-52bcb1637d43"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_07",
+        "target": "STC_08",
+        "label": "탐색",
+        "id": "682b0559-da16-4dd9-aa73-f98b69bacfe0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_08",
+        "target": "STC_09",
+        "label": "위험 고조",
+        "id": "37ab6d63-4535-42b3-b96d-95b7f3545fa9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_09",
+        "target": "STC_10",
+        "label": "반격",
+        "id": "6be77dbe-1d6c-4293-a9aa-36a555b59c86"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_10",
+        "target": "STC_11",
+        "label": "완전 상실",
+        "id": "92be6c9c-3c0c-49d9-a216-92fddc47bea0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_11",
+        "target": "STC_12",
+        "label": "성찰",
+        "id": "10de1895-4cda-4612-88f7-1ce02a7bea96"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_12",
+        "target": "STC_13",
+        "label": "재기",
+        "id": "f3cd1f2b-3316-4e06-b163-7e3bf3eb38ef"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_13",
+        "target": "STC_14",
+        "label": "최종 승부",
+        "id": "b48e2351-0468-4990-90c4-54ad9ad84df7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "STC_14",
+        "target": "STC_15",
+        "label": "마무리",
+        "id": "22a232ca-fed6-4cf5-9db0-31aebf8dee02"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+}

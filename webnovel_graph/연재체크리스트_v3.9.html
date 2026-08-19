@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 창작 통합 도구</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js" onerror="window.__cytoscapeLoadFailed = true;">
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      height: 100%;
+      background: #f6f8fc;
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      color: #1e293b;
+      overflow: hidden;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 6px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 30px;
+      padding: 3px 14px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.2s;
+      font-family: inherit;
+      backdrop-filter: blur(4px);
+    }
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .btn-primary {
+      background: #4f46e5;
+      border-color: #4f46e5;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #4338ca;
+    }
+    .btn-danger {
+      color: #fca5a5;
+      border-color: #ef4444;
+    }
+    .btn-danger:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+    .dark-toggle {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: 3px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 0.7rem;
+    }
+    .dark-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .main-split {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    .left-panel {
+      width: 45%;
+      overflow-y: auto;
+      background: #f6f8fc;
+      padding: 12px 16px;
+      border-right: 2px solid #e2e8f0;
+    }
+    .right-panel {
+      width: 55%;
+      background: #fafafa;
+      position: relative;
+    }
+    #cy {
+      width: 100%;
+      height: 100%;
+      background: #fafafa;
+    }
+
+    .checklist-wrap {
+      max-width: 100%;
+    }
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8faff;
+      border-radius: 10px;
+      padding: 4px 14px;
+      margin-bottom: 12px;
+      border: 1px solid #e9edf4;
+    }
+    .progress-bar {
+      flex: 1;
+      height: 5px;
+      background: #e2e8f0;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      transition: width 0.25s;
+    }
+    .progress-text {
+      font-size: 0.8rem;
+      font-weight: 600;
+      min-width: 40px;
+      text-align: right;
+    }
+    .progress-count {
+      font-size: 0.65rem;
+      color: #64748b;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1e293b;
+      padding: 6px 0 2px 0;
+      border-bottom: 2px solid #eef2f7;
+      margin-top: 4px;
+    }
+    .section-title:first-child {
+      margin-top: 0;
+    }
+    .section-title .range-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #4f46e5;
+      background: #eef2ff;
+      padding: 0 10px;
+      border-radius: 20px;
+      margin-left: 6px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 4px 0 4px 16px;
+      border-bottom: 1px solid #f1f4fa;
+      cursor: pointer;
+    }
+    .check-item:last-child {
+      border-bottom: none;
+    }
+    .check-item input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      margin-top: 2px;
+      accent-color: #22c55e;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .check-item .label-text {
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+    .check-item .hint {
+      display: block;
+      font-size: 0.6rem;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+    .check-item.done {
+      opacity: 0.7;
+    }
+    .check-item.done .label-text {
+      text-decoration: line-through;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 8px 0 4px;
+      padding-top: 8px;
+      border-top: 1px solid #e9edf4;
+    }
+    .save-status {
+      font-size: 0.65rem;
+      color: #64748b;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .save-status .ok {
+      color: #22c55e;
+    }
+    #fileInput {
+      display: none;
+    }
+
+    #nodeTooltip {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      pointer-events: none;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      max-width: 280px;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      font-family: 'Malgun Gothic', sans-serif;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      color: #333;
+    }
+    #nodeTooltip .tt-title {
+      font-weight: bold;
+      color: #667eea;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 2px;
+      margin-bottom: 2px;
+    }
+    #nodeTooltip .tt-notes {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.7rem;
+    }
+    #nodeTooltip .tt-empty {
+      color: #999;
+      font-style: italic;
+    }
+
+    [data-theme="dark"] body {
+      background: #0f0f1a;
+    }
+    [data-theme="dark"] .left-panel {
+      background: #0f0f1a;
+      border-right-color: #333355;
+    }
+    [data-theme="dark"] .right-panel {
+      background: #0f0f1a;
+    }
+    [data-theme="dark"] #cy {
+      background: #0f0f1a;
+    }
+    [data-theme="dark"] .checklist-wrap {
+      background: transparent;
+    }
+    [data-theme="dark"] .section-title {
+      color: #e0e0e0;
+      border-bottom-color: #333355;
+    }
+    [data-theme="dark"] .section-title .range-badge {
+      background: #2a2a55;
+      color: #a78bfa;
+    }
+    [data-theme="dark"] .check-item {
+      border-bottom-color: #2a2a44;
+      color: #e0e0e0;
+    }
+    [data-theme="dark"] .progress-wrap {
+      background: #1a1a2e;
+      border-color: #333355;
+    }
+    [data-theme="dark"] #nodeTooltip {
+      background: #1a1a2e;
+      border-color: #444466;
+      color: #e0e0e0;
+    }
+    [data-theme="dark"] #nodeTooltip .tt-title {
+      color: #bb86fc;
+      border-color: #444466;
+    }
+    [data-theme="dark"] #nodeTooltip .tt-empty {
+      color: #888;
+    }
+
+    @media (max-width: 700px) {
+      .main-split {
+        flex-direction: column;
+      }
+      .left-panel {
+        width: 100%;
+        height: 45%;
+        border-right: none;
+        border-bottom: 2px solid #e2e8f0;
+      }
+      .right-panel {
+        width: 100%;
+        height: 55%;
+      }
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 6px 20px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transition: 0.3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <h1>📚 창작 통합 도구</h1>
+      <div class="header-actions">
+        <button class="dark-toggle" onclick="toggleDarkMode()">🌙</button>
+        <span style="font-size:0.65rem;opacity:0.7;">D키 토글</span>
+        <button class="btn" id="downloadBtn" style="background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.4);">⬇️ 다운로드</button>
+      </div>
+    </header>
+
+    <div class="main-split">
+      <div class="left-panel">
+        <div class="checklist-wrap">
+          <div class="progress-wrap">
+            <span>📊</span>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <span class="progress-text" id="progressText">0%</span>
+            <span class="progress-count" id="progressCount">(0/0)</span>
+          </div>
+          <div id="checklistContainer"></div>
+          <div class="toolbar">
+            <button class="btn" id="saveBtn" style="background:#4f46e5;color:#fff;border-color:#4f46e5;">💾 저장</button>
+            <button class="btn" id="loadBtn" style="background:#f1f4fa;color:#1e293b;">📂 불러오기</button>
+            <button class="btn btn-danger" id="resetBtn" style="color:#ef4444;border-color:#ef4444;">초기화</button>
+          </div>
+          <div class="save-status" id="saveStatus">⏳ 자동 저장 중</div>
+          <input type="file" id="fileInput" accept="application/json">
+        </div>
+      </div>
+      <div class="right-panel">
+        <div id="cy"></div>
+        <div id="nodeTooltip">
+          <div class="tt-title" id="ttTitle">노드</div>
+          <div class="tt-notes" id="ttNotes"><span class="tt-empty">메모 없음</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ============================================================
+      // 1. 체크리스트 데이터 (range 포함)
+      // ============================================================
+      const STAGES = {
+        1: {
+          label: '① 일상의 파편',
+          range: '1~3화',
+          checks: [
+            { id: 's1_1', text: '평범한 일상 생생 묘사' },
+            { id: 's1_2', text: '감정 이입 가능한가' },
+            { id: 's1_3', text: '불안한 전조 심었는가' },
+            { id: 's1_4', text: '"설명보다 보여주기" 적용' },
+            { id: 's1_5', text: '"재미있다" 느낄 요소' }
+          ]
+        },
+        2: {
+          label: '② 균열',
+          range: '1~3화',
+          checks: [
+            { id: 's2_1', text: '"방해 요소" 등장' },
+            { id: 's2_2', text: '"계기적 사건" 발생' },
+            { id: 's2_3', text: '"왜?"라는 의문 심기' },
+            { id: 's2_4', text: '명확한 "목표" 드러내기' },
+            { id: 's2_5', text: '최소 하나의 떡밥 심기' }
+          ]
+        },
+        3: {
+          label: '③ 확장의 나선',
+          range: '4~10화',
+          checks: [
+            { id: 's3_1', text: '주제가 내면/관계로 확장' },
+            { id: 's3_2', text: '치명적 결함 드러내기' },
+            { id: 's3_3', text: '조연/빌런이 주인공을 돋보이게' },
+            { id: 's3_4', text: '호기심 계속 자극' },
+            { id: 's3_5', text: '심리 묘사가 행동 묘사보다 앞서기' }
+          ]
+        },
+        4: {
+          label: '④ 절정의 킬링파트',
+          range: '4~10화',
+          checks: [
+            { id: 's4_1', text: '모든 긴장 폭발' },
+            { id: 's4_2', text: '"아!" 하고 외칠 통찰' },
+            { id: 's4_3', text: '절단신공 적용' },
+            { id: 's4_4', text: '대화로 플롯 밀어붙이기' },
+            { id: 's4_5', text: '사건 한가운데로 즉시 진입' }
+          ]
+        },
+        5: {
+          label: '⑤ 수렴의 관',
+          range: '11~30화',
+          checks: [
+            { id: 's5_1', text: '모든 서브플롯이 주제로 모임' },
+            { id: 's5_2', text: '작품 전체 메시지 명확' },
+            { id: 's5_3', text: '오감(시청후미촉) 활용' },
+            { id: 's5_4', text: '강하고 역동적인 동사' },
+            { id: 's5_5', text: '비유로 감정 전달' }
+          ]
+        },
+        6: {
+          label: '⑥ 여운의 메아리',
+          range: '31~50화',
+          checks: [
+            { id: 's6_1', text: '주인공의 확실한 변화' },
+            { id: 's6_2', text: '다시 떠올리게 하는 장치' },
+            { id: 's6_3', text: '퇴고 체크리스트 점검' },
+            { id: 's6_4', text: '초고 쓰고 퇴고했는가' },
+            { id: 's6_5', text: '자문 질문에 답했는가' }
+          ]
+        },
+        7: {
+          label: '⑦ 열린 문',
+          range: '50화+',
+          checks: [
+            { id: 's7_1', text: '마지막 장면이 질문 던지기' },
+            { id: 's7_2', text: '독자의 상상력 자극' },
+            { id: 's7_3', text: '연재 주기 준비' },
+            { id: 's7_4', text: '제목·소개글·1화 기대 일치' },
+            { id: 's7_5', text: '인풋(트렌드7, 개성3) 반영' },
+            { id: 's7_6', text: '최소 250편 목표' },
+            { id: 's7_7', text: '완독률·이탈률 목표' }
+          ]
+        }
+      };
+
+      const DAILY_CHECKS = [
+        { id: 'd_hook1', text: '첫 3줄에 지난화 긴장 이어지는가' },
+        { id: 'd_hook2', text: '절단신공 적용' },
+        { id: 'd_plus', text: '+요소로 마무리' },
+        { id: 'd_active', text: '주인공 능동적 극복' },
+        { id: 'd_pace', text: '고구마↔사이다 밸런스' },
+        { id: 'd_cast', text: '등장인물 각자 존재 이유' },
+        { id: 'd_villain', text: '빌런 확신 있게 움직임' },
+        { id: 'd_dial1', text: '설명을 위한 대사 없는가' },
+        { id: 'd_dial2', text: '이름 불필요 반복 금지' },
+        { id: 'd_dial3', text: '성격에 맞는 대사' },
+        { id: 'd_desc', text: '묘사는 "연출"에만 사용' },
+        { id: 'd_explain', text: '불필요한 설명 제거' },
+        { id: 'd_ratio', text: '대화 vs 지문 비율 적절' },
+        { id: 'd_typo', text: '오탈자 확인' },
+        { id: 'd_fs', text: '3화 이상 방치된 떡밥 없는가' }
+      ];
+
+      const SENTENCE_CHECKS = [
+        { id: 'd_sentence1', text: '문장 흐름 자연스러운가' },
+        { id: 'd_sentence2', text: '글의 목적 명확한가' },
+        { id: 'd_sentence3', text: '중복·군더더기 없는가' },
+        { id: 'd_sentence4', text: '독자 시선에서 이해 쉬운가' },
+        { id: 'd_sentence5', text: '문장 길이·구조 다양성' },
+        { id: 'd_sentence6', text: '맞춤법·띄어쓰기 정확한가' },
+        { id: 'd_sentence7', text: '제목이 내용 반영하는가' }
+      ];
+
+      const GENRE_CHECKS = [
+        { id: 'g_knowledge', text: '지식 활용에 근거 있는가' },
+        { id: 'g_power', text: '먼치킨 행동이 설정 범위 내인가' },
+        { id: 'g_persona', text: '빙의 대상과 태도가 모순 없는가' },
+        { id: 'g_period', text: '호칭·관직·의복 등 시대 디테일 일관적인가' }
+      ];
+
+      // ============================================================
+      // 2. 모든 체크 항목 (평면 리스트)
+      // ============================================================
+      const CHECK_ITEMS = [];
+
+      for (let s = 1; s <= 7; s++) {
+        const stage = STAGES[s];
+        if (!stage) continue;
+        stage.checks.forEach(c => {
+          CHECK_ITEMS.push({
+            id: c.id,
+            label: c.text,
+            section: 'stage_' + s,
+            sectionLabel: stage.label,
+            sectionRange: stage.range
+          });
+        });
+      }
+
+      DAILY_CHECKS.forEach(c => {
+        CHECK_ITEMS.push({
+          id: c.id,
+          label: c.text,
+          section: 'daily',
+          sectionLabel: '📌 매화 공통',
+          sectionRange: '모든 화'
+        });
+      });
+
+      SENTENCE_CHECKS.forEach(c => {
+        CHECK_ITEMS.push({
+          id: c.id,
+          label: c.text,
+          section: 'sentence',
+          sectionLabel: '✍️ 문장 퇴고',
+          sectionRange: '모든 화'
+        });
+      });
+
+      GENRE_CHECKS.forEach(c => {
+        CHECK_ITEMS.push({
+          id: c.id,
+          label: c.text,
+          section: 'genre',
+          sectionLabel: '🎭 장르 특화',
+          sectionRange: '모든 화'
+        });
+      });
+
+      // ============================================================
+      // 3. 상태
+      // ============================================================
+      let checkStates = {};
+      const STORAGE_KEY = 'checklist_sync_final_v3';
+
+      CHECK_ITEMS.forEach(item => {
+        checkStates[item.id] = false;
+      });
+
+      // ============================================================
+      // 4. 그래프 데이터 (계층 구조 + 엣지 설명 포함)
+      // ============================================================
+      const CAT_IDS = ['STAGE_1', 'STAGE_2', 'STAGE_3', 'STAGE_4', 'STAGE_5', 'STAGE_6', 'STAGE_7', 'DAILY', 'SENTENCE',
+        'GENRE'
+      ];
+      const CAT_LABELS = {
+        'STAGE_1': '① 파편',
+        'STAGE_2': '② 균열',
+        'STAGE_3': '③ 확장',
+        'STAGE_4': '④ 킬링',
+        'STAGE_5': '⑤ 수렴',
+        'STAGE_6': '⑥ 여운',
+        'STAGE_7': '⑦ 열린문',
+        'DAILY': '📌 매화',
+        'SENTENCE': '✍️ 문장',
+        'GENRE': '🎭 장르'
+      };
+      // 각 카테고리별 range 정보 (엣지 설명에 사용)
+      const CAT_RANGE = {
+        'STAGE_1': '1~3화',
+        'STAGE_2': '1~3화',
+        'STAGE_3': '4~10화',
+        'STAGE_4': '4~10화',
+        'STAGE_5': '11~30화',
+        'STAGE_6': '31~50화',
+        'STAGE_7': '50화+',
+        'DAILY': '모든 화',
+        'SENTENCE': '모든 화',
+        'GENRE': '모든 화'
+      };
+
+      function buildGraphData() {
+        const nodes = [];
+        const edges = [];
+
+        // 루트
+        nodes.push({
+          data: {
+            id: 'ROOT_CHECKLIST',
+            label: '📚 체크리스트',
+            color: '#888',
+            notes: '전체 체크리스트 루트'
+          },
+          classes: 'node-cat'
+        });
+
+        // 카테고리
+        CAT_IDS.forEach(id => {
+          nodes.push({
+            data: {
+              id: id,
+              label: CAT_LABELS[id] || id,
+              color: '#888',
+              notes: '카테고리'
+            },
+            classes: 'node-cat'
+          });
+          edges.push({
+            data: {
+              id: 'edge_ROOT_' + id,
+              source: 'ROOT_CHECKLIST',
+              target: id,
+              label: '카테고리',
+              desc: `"${CAT_LABELS[id] || id}" 카테고리 (${CAT_RANGE[id] || ''})`
+            }
+          });
+        });
+
+        // 항목
+        CHECK_ITEMS.forEach(item => {
+          let parentId = '';
+          if (item.section === 'daily') parentId = 'DAILY';
+          else if (item.section === 'sentence') parentId = 'SENTENCE';
+          else if (item.section === 'genre') parentId = 'GENRE';
+          else if (item.section.startsWith('stage_')) {
+            const num = item.section.replace('stage_', '');
+            parentId = 'STAGE_' + num;
+          }
+
+          const label = item.label.length > 14 ? item.label.slice(0, 14) + '…' : item.label;
+
+          nodes.push({
+            data: {
+              id: item.id,
+              label: label,
+              baseLabel: label,
+              color: '#999',
+              notes: item.label
+            },
+            classes: 'node-unchecked'
+          });
+
+          // 엣지 설명: 카테고리명 + 항목명 + range
+          const catLabel = CAT_LABELS[parentId] || parentId;
+          const range = CAT_RANGE[parentId] || '';
+          edges.push({
+            data: {
+              id: 'edge_' + parentId + '_' + item.id,
+              source: parentId,
+              target: item.id,
+              label: '항목',
+              desc: `"${catLabel}" (${range})의 체크 항목: ${item.label}`
+            }
+          });
+        });
+
+        return { nodes, edges };
+      }
+
+      // ============================================================
+      // 5. 핵심: 체크 상태 변경 (리스트 ↔ 그래프 동기화)
+      // ============================================================
+      function setCheckState(id, isChecked) {
+        checkStates[id] = isChecked;
+
+        // 리스트 UI 업데이트
+        const listItem = document.querySelector(`.check-item[data-id="${id}"]`);
+        if (listItem) {
+          const cb = listItem.querySelector('input[type="checkbox"]');
+          if (cb) cb.checked = isChecked;
+          listItem.classList.toggle('done', isChecked);
+        }
+
+        // 그래프 노드 색상 업데이트
+        if (cy) {
+          const node = cy.getElementById(id);
+          if (node.length) {
+            node.removeClass('node-checked node-unchecked');
+            node.addClass(isChecked ? 'node-checked' : 'node-unchecked');
+            const base = node.data('baseLabel') || node.data('label');
+            node.data('label', isChecked ? '✅ ' + base : base);
+          }
+        }
+
+        updateProgress();
+        autoSaveTimerReset();
+      }
+
+      // ============================================================
+      // 6. 리스트 렌더링 (섹션 타이틀에 range 표시)
+      // ============================================================
+      function renderChecklist() {
+        const container = document.getElementById('checklistContainer');
+        if (!container) return;
+
+        const sectionOrder = [];
+        for (let s = 1; s <= 7; s++) sectionOrder.push('stage_' + s);
+        sectionOrder.push('daily', 'sentence', 'genre');
+
+        const sectionLabels = {
+          'stage_1': '① 일상의 파편',
+          'stage_2': '② 균열',
+          'stage_3': '③ 확장',
+          'stage_4': '④ 킬링',
+          'stage_5': '⑤ 수렴',
+          'stage_6': '⑥ 여운',
+          'stage_7': '⑦ 열린문',
+          'daily': '📌 매화 공통',
+          'sentence': '✍️ 문장 퇴고',
+          'genre': '🎭 장르 특화'
+        };
+
+        // range 정보는 CHECK_ITEMS의 sectionRange를 활용 (첫 항목의 range 사용)
+        const sectionRangeMap = {};
+        CHECK_ITEMS.forEach(item => {
+          if (!sectionRangeMap[item.section]) {
+            sectionRangeMap[item.section] = item.sectionRange || '';
+          }
+        });
+
+        let html = '';
+
+        sectionOrder.forEach(sectionKey => {
+          const items = CHECK_ITEMS.filter(item => item.section === sectionKey);
+          if (items.length === 0) return;
+
+          const range = sectionRangeMap[sectionKey] || '';
+          const rangeHtml = range ? `<span class="range-badge">${range}</span>` : '';
+
+          html += `<div class="section-title">${sectionLabels[sectionKey] || sectionKey} ${rangeHtml}</div>`;
+
+          items.forEach(item => {
+            const checked = checkStates[item.id] || false;
+            const doneClass = checked ? 'done' : '';
+            html += `
+              <div class="check-item ${doneClass}" data-id="${item.id}">
+                <input type="checkbox" ${checked ? 'checked' : ''} />
+                <div class="label-text">${item.label}</div>
+              </div>
+            `;
+          });
+        });
+
+        container.innerHTML = html;
+
+        // 리스트 체크박스 이벤트
+        container.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
+          cb.addEventListener('change', function() {
+            const item = this.closest('.check-item');
+            const id = item.dataset.id;
+            setCheckState(id, this.checked);
+          });
+        });
+
+        updateProgress();
+        setTimeout(() => {
+          if (cy) updateAllNodeColors();
+        }, 300);
+      }
+
+      // ============================================================
+      // 7. 모든 노드 색상 일괄 업데이트
+      // ============================================================
+      function updateAllNodeColors() {
+        if (!cy) return;
+        CHECK_ITEMS.forEach(item => {
+          const node = cy.getElementById(item.id);
+          if (node.length) {
+            const isChecked = checkStates[item.id] || false;
+            node.removeClass('node-checked node-unchecked');
+            node.addClass(isChecked ? 'node-checked' : 'node-unchecked');
+            const base = node.data('baseLabel') || node.data('label');
+            node.data('label', isChecked ? '✅ ' + base : base);
+          }
+        });
+      }
+
+      // ============================================================
+      // 8. 진행률
+      // ============================================================
+      function updateProgress() {
+        const total = CHECK_ITEMS.length;
+        let done = 0;
+        CHECK_ITEMS.forEach(item => {
+          if (checkStates[item.id]) done++;
+        });
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = pct + '%';
+        document.getElementById('progressCount').textContent = `(${done}/${total})`;
+      }
+
+      // ============================================================
+      // 9. 그래프 초기화
+      // ============================================================
+      let cy = null;
+
+      function initGraph() {
+        if (cy) {
+          cy.resize();
+          cy.fit();
+          updateAllNodeColors();
+          return;
+        }
+
+        if (typeof cytoscape === 'undefined' || window.__cytoscapeLoadFailed) {
+          console.error('cytoscape 라이브러리 로드 실패');
+          const cyEl = document.getElementById('cy');
+          if (cyEl) {
+            cyEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:20px;text-align:center;color:#ef4444;font-size:0.85rem;">⚠️ 그래프 라이브러리(cytoscape)를 불러오지 못했습니다.<br>인터넷 연결 또는 광고 차단 프로그램을 확인한 뒤 새로고침 해주세요.<br>(unpkg.com 접속이 차단되어 있으면 그래프와 노드 색상 변경이 동작하지 않습니다)</div>';
+          }
+          showToast('⚠️ 그래프 라이브러리 로드 실패');
+          return;
+        }
+
+        try {
+          const graphData = buildGraphData();
+          cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: graphData,
+            style: [{
+              selector: 'node',
+              style: {
+                'label': 'data(label)',
+                'background-color': 'data(color)',
+                'shape': 'round-rectangle',
+                'width': 'label',
+                'height': 26,
+                'padding': '6px',
+                'border-width': 2,
+                'border-color': '#666',
+                'text-valign': 'center',
+                'text-halign': 'center',
+                'color': '#fff',
+                'font-weight': 'bold',
+                'font-size': 10,
+                'text-outline-width': 2,
+                'text-outline-color': '#000',
+                'transition-property': 'background-color, border-color',
+                'transition-duration': '0.3s'
+              }
+            }, {
+              selector: 'node.node-checked',
+              style: { 'background-color': '#22c55e', 'border-color': '#22c55e' }
+            }, {
+              selector: 'node.node-unchecked',
+              style: { 'background-color': '#999', 'border-color': '#666' }
+            }, {
+              selector: 'node.node-cat',
+              style: { 'background-color': '#888', 'border-color': '#666' }
+            }, {
+              selector: 'node.node-hover',
+              style: { 'border-width': 3, 'border-color': '#4facfe' }
+            }, {
+              selector: 'node:selected',
+              style: { 'border-width': 3, 'border-color': '#FFD700' }
+            }, {
+              selector: 'edge',
+              style: {
+                'width': 1.5,
+                'line-color': '#888',
+                'target-arrow-shape': 'none',
+                'curve-style': 'bezier',
+                'opacity': 0.4,
+                'label': 'data(label)',
+                'font-size': 7,
+                'color': '#94a3b8',
+                'text-opacity': 0.85,
+                'text-rotation': 'autorotate',
+                'text-margin-y': -6
+              }
+            }, {
+              selector: 'edge:selected',
+              style: { 'opacity': 1, 'line-color': '#aaa' }
+            }, {
+              selector: 'edge.hover-highlight',
+              style: { 'opacity': 1, 'width': 2.5, 'line-color': '#4facfe', 'color': '#4facfe', 'font-weight': 'bold' }
+            }],
+            layout: { name: 'cose', animate: true, fit: true, padding: 40 }
+          });
+
+          // 그래프 노드 클릭 이벤트 (항목 노드만)
+          cy.on('click', 'node', function(evt) {
+            const node = evt.target;
+            const id = node.id();
+            const isItem = CHECK_ITEMS.some(item => item.id === id);
+            if (!isItem) return;
+            const current = checkStates[id] || false;
+            setCheckState(id, !current);
+          });
+
+          // 툴팁 (노드 + 엣지)
+          const tooltip = document.getElementById('nodeTooltip');
+          const ttTitle = document.getElementById('ttTitle');
+          const ttNotes = document.getElementById('ttNotes');
+
+          cy.on('mouseover', 'node', function(evt) {
+            const node = evt.target;
+            const label = node.data('label') || node.id();
+            const notes = node.data('notes') || '';
+            ttTitle.textContent = label;
+            ttNotes.innerHTML = notes || '<span class="tt-empty">메모 없음</span>';
+            const pos = node.renderedPosition();
+            const rect = cy.container().getBoundingClientRect();
+            let x = rect.left + pos.x - tooltip.offsetWidth / 2;
+            let y = rect.top + pos.y - 50 - tooltip.offsetHeight;
+            if (x < 10) x = 10;
+            if (y < 10) y = rect.top + pos.y + 20;
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+            tooltip.style.display = 'block';
+            node.addClass('node-hover');
+          });
+
+          cy.on('mouseout', 'node', function(evt) {
+            tooltip.style.display = 'none';
+            evt.target.removeClass('node-hover');
+          });
+
+          cy.on('mouseover', 'edge', function(evt) {
+            const edge = evt.target;
+            const srcLabel = edge.source().data('label') || edge.source().id();
+            const tgtLabel = edge.target().data('label') || edge.target().id();
+            const desc = edge.data('desc') || '';
+            ttTitle.textContent = srcLabel + ' → ' + tgtLabel;
+            ttNotes.innerHTML = desc || '<span class="tt-empty">관계 설명 없음</span>';
+            const rect = cy.container().getBoundingClientRect();
+            let x = evt.originalEvent.clientX - tooltip.offsetWidth / 2;
+            let y = evt.originalEvent.clientY - 20 - tooltip.offsetHeight;
+            if (x < 10) x = 10;
+            if (y < 10) y = evt.originalEvent.clientY + 20;
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+            tooltip.style.display = 'block';
+            edge.addClass('hover-highlight');
+          });
+
+          cy.on('mouseout', 'edge', function(evt) {
+            tooltip.style.display = 'none';
+            evt.target.removeClass('hover-highlight');
+          });
+
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') tooltip.style.display = 'none';
+          });
+
+          window.addEventListener('resize', function() {
+            if (cy) cy.resize();
+          });
+
+          setTimeout(() => {
+            updateAllNodeColors();
+          }, 200);
+        } catch (err) {
+          console.error('initGraph 오류:', err);
+          const cyEl = document.getElementById('cy');
+          if (cyEl) {
+            cyEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:20px;text-align:center;color:#ef4444;font-size:0.85rem;">⚠️ 그래프 초기화 중 오류가 발생했습니다</div>';
+          }
+          showToast('⚠️ 그래프 초기화 오류');
+        }
+      }
+
+      // ============================================================
+      // 10. 저장 / 불러오기 / 초기화
+      // ============================================================
+      function saveChecklist() {
+        const data = { version: '1.0', exportedAt: new Date().toISOString(), checks: checkStates };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '연재체크리스트_' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('💾 저장 완료');
+      }
+
+      function loadChecklist() { document.getElementById('fileInput').click(); }
+
+      function handleFileSelected(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (data.checks && typeof data.checks === 'object') {
+              const newStates = {};
+              CHECK_ITEMS.forEach(item => {
+                newStates[item.id] = data.checks[item.id] || false;
+              });
+              checkStates = newStates;
+              renderChecklist();
+              showToast('📂 불러오기 완료');
+            } else {
+              showToast('⚠️ 잘못된 파일 형식');
+            }
+          } catch (err) {
+            showToast('⚠️ 파일 파싱 오류');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      }
+
+      function resetChecklist() {
+        if (!confirm('모든 체크를 해제할까요?')) return;
+        CHECK_ITEMS.forEach(item => { checkStates[item.id] = false; });
+        renderChecklist();
+        showToast('🔄 초기화 완료');
+      }
+
+      // ============================================================
+      // 11. 자동 저장
+      // ============================================================
+      let autoTimer = null;
+
+      function autoSaveTimerReset() {
+        if (autoTimer) clearTimeout(autoTimer);
+        autoTimer = setTimeout(() => {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(checkStates));
+            document.getElementById('saveStatus').innerHTML = '<span class="ok">✅ 자동 저장됨</span>';
+          } catch (e) {}
+        }, 3000);
+      }
+
+      // ============================================================
+      // 12. 토스트
+      // ============================================================
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(el._hide);
+        el._hide = setTimeout(() => el.classList.remove('show'), 2500);
+      }
+
+      // ============================================================
+      // 13. 다크모드
+      // ============================================================
+      function toggleDarkMode() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('viewerTheme', 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('viewerTheme', 'dark');
+        }
+        if (cy) { setTimeout(() => { cy.resize();
+            cy.fit(); }, 100); }
+      }
+      document.addEventListener('keydown', function(e) {
+        if ((e.key === 'd' || e.key === 'D') && !e.ctrlKey && !e.metaKey) toggleDarkMode();
+      });
+
+      const savedTheme = localStorage.getItem('viewerTheme');
+      if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+
+      // ============================================================
+      // 14. 다운로드 (자기 자신)
+      // ============================================================
+      function downloadSelf() {
+        const clone = document.documentElement.cloneNode(true);
+        const downloadBtn = clone.querySelector('#downloadBtn');
+        if (downloadBtn) downloadBtn.remove();
+        const cyClone = clone.querySelector('#cy');
+        if (cyClone) cyClone.innerHTML = '';
+        const tooltipClone = clone.querySelector('#nodeTooltip');
+        if (tooltipClone) tooltipClone.style.display = 'none';
+        const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '창작통합도구.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('⬇️ 다운로드 완료');
+      }
+
+      // ============================================================
+      // 15. 초기화
+      // ============================================================
+      function init() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const data = JSON.parse(saved);
+            if (data && typeof data === 'object') {
+              CHECK_ITEMS.forEach(item => {
+                checkStates[item.id] = data.checks[item.id] || false;
+              });
+            }
+          }
+        } catch (e) {}
+
+        renderChecklist();
+        setTimeout(function() {
+          initGraph();
+        }, 300);
+
+        document.getElementById('saveBtn').addEventListener('click', saveChecklist);
+        document.getElementById('loadBtn').addEventListener('click', loadChecklist);
+        document.getElementById('resetBtn').addEventListener('click', resetChecklist);
+        document.getElementById('fileInput').addEventListener('change', handleFileSelected);
+        document.getElementById('downloadBtn').addEventListener('click', downloadSelf);
+
+        window.addEventListener('beforeunload', function() {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(checkStates)); } catch (e) {}
+        });
+
+        console.log('✅ 창작 통합 도구 로드 완료');
+        console.log('📋 체크 항목 수:', CHECK_ITEMS.length);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+    })();
+  </script>
+</body>
+</html>

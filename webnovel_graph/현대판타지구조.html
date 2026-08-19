@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세계관 그래프</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Malgun Gothic',sans-serif;
+      background:#f0f0f0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.2em; text-shadow:1px 1px 0 #000; }
+    .dark-toggle {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      color:#fff;
+      padding:6px 12px;
+      border-radius:20px;
+      cursor:pointer;
+    }
+    .dark-toggle:hover { background:rgba(255,255,255,0.3); }
+
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .left-panel {
+      width:220px;
+      background:#fff;
+      padding:12px;
+      overflow-y:auto;
+      border-right:2px solid #ddd;
+    }
+    .graph-area {
+      flex:1;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+    }
+    .cy-wrapper {
+      position:relative;
+      flex:1;
+      width:100%;
+      height:100%;
+      border:2px solid #ddd;
+      border-radius:8px;
+      background:#fafafa;
+    }
+    #cy {
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+    }
+
+    .panel-section {
+      margin-bottom:12px;
+      padding:10px;
+      background:#f9f9f9;
+      border-radius:6px;
+      border:1px solid #e0e0e0;
+    }
+    .panel-section h3 {
+      font-size:0.9em;
+      margin-bottom:6px;
+      color:#667eea;
+      border-bottom:1px solid #667eea;
+      padding-bottom:3px;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:5px;
+      margin:3px 0;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+    }
+    input[readonly] {
+      background:#e9ecef;
+      color:#495057;
+      cursor:not-allowed;
+    }
+    textarea {
+      width:100%;
+      padding:5px;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.85em;
+      resize:vertical;
+      min-height:60px;
+    }
+    button {
+      width:100%;
+      padding:6px;
+      margin:3px 0;
+      border:none;
+      border-radius:3px;
+      font-size:0.8em;
+      cursor:pointer;
+      font-weight:bold;
+      color:#fff;
+      text-shadow:1px 1px 0 #000;
+    }
+    button:active { transform:scale(0.97); }
+    .btn-primary { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .btn-success { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+    .btn-info { background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); }
+    .btn-danger { background:linear-gradient(135deg,#ff5f6d 0%,#ffc371 100%); }
+
+    .help-text { font-size:0.7em; color:#888; margin-top:3px; padding:4px; background:#fff; border-radius:3px; }
+    .connection-tools { display:flex; gap:4px; margin-bottom:3px; }
+    .connection-tools button { padding:3px; font-size:0.7em; margin:0; }
+
+    .info-badge {
+      display:block;
+      padding:4px 8px;
+      background:#667eea;
+      color:#fff;
+      border-radius:3px;
+      font-size:0.75em;
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .notes-display {
+      padding:6px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:3px;
+      font-size:0.8em;
+      min-height:40px;
+      white-space:pre-wrap;
+      margin-top:4px;
+    }
+    .file-select-wrapper { display:flex; gap:4px; align-items:center; }
+    .file-select-wrapper button { width:auto; padding:4px 8px; margin:0; }
+    .file-select-wrapper input[type="file"] { display:none; }
+
+    [data-theme="dark"] {
+      background:#0f0f1a;
+      color:#e0e0e0;
+    }
+    [data-theme="dark"] .left-panel {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .panel-section {
+      background:#16213e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea {
+      background:#2d2d4e;
+      color:#e0e0e0;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .help-text {
+      background:#2d2d4e;
+      color:#aaaaaa;
+    }
+    [data-theme="dark"] .notes-display {
+      background:#2d2d4e;
+      border-color:#444466;
+    }
+    [data-theme="dark"] .cy-wrapper {
+      background:#1a1a2e;
+      border-color:#444466;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🌐 세계관 그래프</h1>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+</header>
+
+<div class="main-container">
+  <div class="left-panel">
+    <div class="panel-section">
+      <h3>📂 데이터</h3>
+      <div class="file-select-wrapper">
+        <input type="file" id="fileInput" accept=".json" onchange="uploadJSON(event)">
+        <button class="btn-info" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
+      </div>
+      <button class="btn-success" onclick="downloadJSON()">💾 JSON 다운로드</button>
+    </div>
+
+    <div class="panel-section">
+      <h3>➕ 노드</h3>
+      <input type="text" id="newNode" placeholder="노드 이름">
+      <button class="btn-primary" onclick="addNode()">노드 추가</button>
+      <div class="help-text">💡 빈 공간 더블클릭</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>🔗 엣지</h3>
+      <div class="connection-tools">
+        <button class="btn-info" onclick="clearEdgeInputs()">초기화</button>
+        <button class="btn-info" onclick="swapEdgeInputs()">교체</button>
+      </div>
+      <input type="text" id="edgeSrc" placeholder="출발 노드" readonly style="background:#e3f2fd;">
+      <input type="text" id="edgeTgt" placeholder="도착 노드" readonly style="background:#ffebee;">
+      <input type="text" id="edgeLbl" placeholder="라벨">
+      <button class="btn-primary" onclick="addEdge()">엣지 추가</button>
+      <div class="help-text">💡 노드 클릭 시 자동 입력</div>
+    </div>
+
+    <div class="panel-section">
+      <h3>📝 노드 정보</h3>
+      <div class="info-badge" id="nodeInfo">노드를 클릭하세요</div>
+      <div class="notes-display" id="nodeNotes">선택한 노드의 메모가 여기에 표시됩니다</div>
+      <button class="btn-danger" onclick="deleteSelected()" style="margin-top:4px;">🗑️ 삭제 (Del)</button>
+    </div>
+  </div>
+
+  <div class="graph-area">
+    <div class="cy-wrapper">
+      <div id="cy"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const initialData = {
+  "nodes": [
+    {
+      "data": {
+        "id": "GENRE_MODERN_FANTASY",
+        "label": "현대판타지",
+        "color": "#FF6B35",
+        "notes": "현대 사회를 배경으로 초자연적 현상, 이능력, 게임화된 세계관이 결합된 장르. 문피아 최고 인기 장르로, '회귀', '시스템', '헌터', '던전' 등의 하위 클리셰가 복합적으로 작용함."
+      },
+      "position": {
+        "x": 314.2275740106586,
+        "y": 837.8894859177284
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CORE_REGRESSION",
+        "label": "회귀",
+        "color": "#FFD93D",
+        "notes": "주인공이 죽음 또는 절망적인 순간 이후 과거의 특정 시점으로 돌아가는 클리셰. 미래 정보를 활용해 실수를 교정하고, 복수하며, 압도적인 성장을 이룸. 대표작: '재벌집 막내아들', '독립일기', 'SSS급 죽어야 사는 헌터'"
+      },
+      "position": {
+        "x": 235.47173074401263,
+        "y": 647.4739410204967
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CORE_SYSTEM",
+        "label": "게임 시스템",
+        "color": "#FFD93D",
+        "notes": "현실 세계에 갑자기 게임 인터페이스(능력치, 스킬, 퀘스트, 인벤토리, 상점)가 부착되는 클리셰. 주인공만 시스템을 보거나, 전 인류에게 부여되기도 함. 대표작: '전지적 독자 시점', '버그란 이런 것이다', '나 혼자만 레벨업'"
+      },
+      "position": {
+        "x": 443.5281387351072,
+        "y": 692.2579249987928
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CORE_HUNTER",
+        "label": "헌터",
+        "color": "#FFD93D",
+        "notes": "차원문(게이트)이 열리고 몬스터가 출현하는 세계에서, 각성자(헌터)가 몬스터를 사냥하고 수익을 창출하는 클리셰. S~F급 등급 체계가 존재하며, 헌터 길드가 주요 사회 조직으로 기능함. 대표작: '나 혼자만 레벨업', '서울역 드루이드'"
+      },
+      "position": {
+        "x": 313.3773446694656,
+        "y": 1068.688404054206
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CORE_DUNGEON_TOWER",
+        "label": "던전/탑",
+        "color": "#FFD93D",
+        "notes": "정체 모를 탑 또는 던전이 출현하고, 층별로 도전하며 성장하는 구조. 각 층마다 보스, 퍼즐, 보상, 생존 조건이 존재함. 탑의 정상에 도달하면 소원이 이루어진다는 설정이 자주 등장. 대표작: '탑 오브 갓', '던전 디펜스', 'SSS급 헌터'"
+      },
+      "position": {
+        "x": 211.89643975282902,
+        "y": 938.616594232777
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_MUNCHKIN",
+        "label": "먼치킨",
+        "color": "#FFB347",
+        "notes": "압도적인 능력치와 성장 속도, 희귀 스킬로 적들을 쓸어버리는 강자 캐릭터. 독자에게 대리 만족과 쾌감을 제공하는 핵심 요소. 회귀자의 미래 정보, 시스템 버그, 숨겨진 클래스 등으로 구현됨."
+      },
+      "position": {
+        "x": 200.79901329969826,
+        "y": 537.2559109497853
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_DARK_PAST",
+        "label": "암흑 과거",
+        "color": "#FFB347",
+        "notes": "주인공이 과거에 배신, 죽음, 추방, 가족 상실, 멸망 등을 겪음. 회귀의 주요 동기이자 복수의 원동력이 됨. 독자의 감정적 몰입과 응원을 유도."
+      },
+      "position": {
+        "x": 305.7364367371603,
+        "y": 452.8453266137704
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_UNDERDOG",
+        "label": "약자/추방자 출발",
+        "color": "#FFB347",
+        "notes": "주인공이 최하위 등급(F급, E급), 타고난 능력 없음, 길드에서 추방됨, 무능력자로 낙인찍힌 상태에서 시작. 이후 회귀나 각성으로 역전 성공. 성장 드라마의 기본 공식."
+      },
+      "position": {
+        "x": 202.41005774031296,
+        "y": 341.1579437132839
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_KNOWLEDGE_ADVANTAGE",
+        "label": "선지식/미래 정보",
+        "color": "#FFB347",
+        "notes": "회귀자가 과거의 경험을 통해 미래에 일어날 사건, 숨겨진 아이템, 약점, 인물들의 정체 등을 알고 있음. 이를 활용해 압도적인 이점을 확보."
+      },
+      "position": {
+        "x": 132.9228984840932,
+        "y": 775.3700143934046
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_ACADEMY",
+        "label": "아카데미/초능력 학교",
+        "color": "#FFB347",
+        "notes": "초능력자나 헌터를 양성하는 특수 교육 기관을 배경으로 한 성장 이야기. 라이벌, 교사, 시험, 축제, 등급 평가 등 학원물 클리셰와 결합. 대표작: '마법고등학교 탑'"
+      },
+      "position": {
+        "x": 192.18565611821808,
+        "y": 72.46718460916127
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_GUILD",
+        "label": "길드/조직",
+        "color": "#FFB347",
+        "notes": "헌터나 능력자들이 소속된 집단. 길드장, 부길드장, 길드원, 길드전, 랭킹 경쟁 등 사회적 관계망과 정치적 갈등을 형성. 주인공이 길드를 창설하거나 기존 길드에 합류하는 전개."
+      },
+      "position": {
+        "x": 397.99986176752805,
+        "y": 1226.659586555924
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "TROPE_RAID",
+        "label": "레이드/보스전",
+        "color": "#FFB347",
+        "notes": "던전이나 게이트에서 다수의 헌터가 협력하여 강력한 보스 몬스터를 공격하는 대규모 전투. 주인공의 활약이 두드러지는 백색의 장면."
+      },
+      "position": {
+        "x": 189.59330896438638,
+        "y": 1101.1850305149044
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_LEVEL",
+        "label": "레벨/등급 체계",
+        "color": "#4ECDC4",
+        "notes": "S/A/B/C/D/E/F급 또는 1~999레벨로 능력을 수치화. 독자가 주인공의 성장을 직관적으로 느낄 수 있게 하며, 상대방의 등급을 통해 긴장감을 조성."
+      },
+      "position": {
+        "x": 346.05962408941605,
+        "y": 643.0537916989231
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_STAT",
+        "label": "능력치",
+        "color": "#4ECDC4",
+        "notes": "힘(STR), 민첩(DEX), 지능(INT), 체력(CON), 행운(LUK) 등의 전형적인 RPG 능력치. 레벨업 시 분배하여 성장의 재미를 제공."
+      },
+      "position": {
+        "x": 414.7698472118249,
+        "y": 847.3527534082699
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_SKILL",
+        "label": "스킬/마법",
+        "color": "#4ECDC4",
+        "notes": "획득 가능한 다양한 능력들. 희귀 등급(전설, 유물, 고유), 합성, 진화, 습득 조건 등의 시스템으로 수집 욕구를 자극."
+      },
+      "position": {
+        "x": 433.1050338517208,
+        "y": 525.9341194337835
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_INVENTORY",
+        "label": "인벤토리/아이템",
+        "color": "#4ECDC4",
+        "notes": "게임 시스템의 기본 요소. 무기, 방어구, 포션, 소비 아이템, 제작 재료 등을 보관. 무게 제한이나 슬롯 제한이 존재하기도 함."
+      },
+      "position": {
+        "x": 548.7544037897981,
+        "y": 487.0681694636507
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_QUEST",
+        "label": "퀘스트/미션",
+        "color": "#4ECDC4",
+        "notes": "시스템이 부여하는 과제. 주간/일간 퀘스트, 숨겨진 퀘스트, 연쇄 퀘스트, 메인 퀘스트 등으로 구성. 완료 시 경험치, 아이템, 스킬 등의 보상 제공."
+      },
+      "position": {
+        "x": 562.1776306251506,
+        "y": 698.3699972412962
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_GATE",
+        "label": "게이트/차원문",
+        "color": "#4ECDC4",
+        "notes": "현실과 던전/이세계를 연결하는 관문. 일정 간격으로 출현하며, 내부의 몬스터를 사냥하거나 특정 조건을 완료해야 봉인 가능. 등급(저~고)에 따라 난이도가 구분됨."
+      },
+      "position": {
+        "x": 416.8448152115994,
+        "y": 1037.2071441683674
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ELEMENT_AWAKENING",
+        "label": "각성",
+        "color": "#4ECDC4",
+        "notes": "평범한 인간이 갑자기 초능력이나 헌터 능력을 얻는 사건. 특정 나이, 특정 사건, 시스템 접속 등을 계기로 발생. 각성 등급이 향후 성장의 기준이 됨."
+      },
+      "position": {
+        "x": 308.9070411195433,
+        "y": 959.6513097460796
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_REGRESSOR",
+        "label": "회귀자",
+        "color": "#FF6B6B",
+        "notes": "과거로 돌아온 주인공. 미래 정보를 알고 있어 압도적인 우위를 점함. 냉철하고 계산적이며 감정 표현에 인색한 성격이 많으나, 소중한 사람에게는 깊은 충성심을 보임."
+      },
+      "position": {
+        "x": 100.31070579935712,
+        "y": 593.5402764013604
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_SYSTEM_HOST",
+        "label": "시스템 보유자",
+        "color": "#FF6B6B",
+        "notes": "게임 시스템을 가진 주인공. 타인에게는 보이지 않는 UI를 통해 독점적인 혜택을 누림. 퀘스트 수행과 보상 획득으로 타인보다 압도적으로 빠르게 성장."
+      },
+      "position": {
+        "x": 507.716411548014,
+        "y": 889.3672914465683
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_S_RANKER",
+        "label": "S급 능력자",
+        "color": "#FF6B6B",
+        "notes": "최상위 등급의 능력자. 세계관 내에서 전설적인 존재로 취급되며 국가적 자산으로 관리됨. 주인공의 목표이자 동료 또는 라이벌이 됨."
+      },
+      "position": {
+        "x": 295.86460459024784,
+        "y": 1208.4786122901623
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_VILLAIN_REGRESSOR",
+        "label": "악의 회귀자",
+        "color": "#FF6B6B",
+        "notes": "주인공과 동일하게 회귀했으나 적대적인 입장. 주인공의 미래 정보를 알고 있어 위협적인 존재. 주인공보다 먼저 회귀하여 이미 많은 것을 바꿔놓았을 가능성이 있음."
+      },
+      "position": {
+        "x": 21.375054476435857,
+        "y": 744.5399971393741
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_GUILD_MASTER",
+        "label": "길드장",
+        "color": "#FF6B6B",
+        "notes": "길드를 이끄는 리더. 주인공이 길드를 창설할 경우 이 포지션을 차지하게 됨. 권력, 자금, 인재 영입, 대외 관계 등을 총괄."
+      },
+      "position": {
+        "x": 309.5885151780209,
+        "y": 1352.2662328302613
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CHARACTER_WHITE_CANE",
+        "label": "백색의 조력자",
+        "color": "#FF6B6B",
+        "notes": "주인공의 든든한 서포터. 치유 능력자, 현명한 현자, 기술자, 정보원 등 다양한 포지션. 주인공이 회귀 전에 잃은 인물이라면 더 강한 감동을 줌."
+      },
+      "position": {
+        "x": 651.7834196300533,
+        "y": 46.452321039718115
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "GENRE_MODERN_FANTASY",
+        "target": "CORE_REGRESSION",
+        "label": "핵심",
+        "id": "aeeb42df-1730-4611-80ce-dd1bae8d31ad"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GENRE_MODERN_FANTASY",
+        "target": "CORE_SYSTEM",
+        "label": "핵심",
+        "id": "14b25eb7-ee7c-48fc-a21d-2e0a129ed2f0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GENRE_MODERN_FANTASY",
+        "target": "CORE_HUNTER",
+        "label": "핵심",
+        "id": "7d51f625-ffcf-4523-a0d8-ddb36768b58f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "GENRE_MODERN_FANTASY",
+        "target": "CORE_DUNGEON_TOWER",
+        "label": "핵심",
+        "id": "5bc6935a-e238-46dc-95ad-c1457fe7028f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_REGRESSION",
+        "target": "TROPE_DARK_PAST",
+        "label": "동기",
+        "id": "f2503f49-dab7-4e87-8c51-681974fc82c8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_REGRESSION",
+        "target": "TROPE_KNOWLEDGE_ADVANTAGE",
+        "label": "핵심 능력",
+        "id": "46bca542-9987-4166-9f7f-7b071a75f16d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_REGRESSION",
+        "target": "TROPE_MUNCHKIN",
+        "label": "결과",
+        "id": "410bf8f4-f5d3-44dd-8622-f7ba24e31ecf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_REGRESSION",
+        "target": "CHARACTER_REGRESSOR",
+        "label": "주인공",
+        "id": "9b13c6d6-ee54-474b-a439-81d8332cea0d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_SYSTEM",
+        "target": "ELEMENT_LEVEL",
+        "label": "구성",
+        "id": "03d419bf-762a-487e-83f8-da3ddcecb9cc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_SYSTEM",
+        "target": "ELEMENT_STAT",
+        "label": "구성",
+        "id": "6cf7308a-833a-4c49-88ac-ea9cc7aad275"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_SYSTEM",
+        "target": "ELEMENT_SKILL",
+        "label": "구성",
+        "id": "d8db41f4-cf4a-4b78-b779-0f4080917aab"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_SYSTEM",
+        "target": "ELEMENT_INVENTORY",
+        "label": "구성",
+        "id": "4c6d960f-7c54-427a-ac0e-b0c5b4452b20"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_SYSTEM",
+        "target": "ELEMENT_QUEST",
+        "label": "구성",
+        "id": "4b8afae6-7849-4752-b7e5-9093538a77c5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_SYSTEM",
+        "target": "CHARACTER_SYSTEM_HOST",
+        "label": "주인공",
+        "id": "a524b98d-4845-4cb5-9061-b45fae51ee2a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_HUNTER",
+        "target": "ELEMENT_GATE",
+        "label": "등장",
+        "id": "44f4687b-b94d-4e92-bda0-9848e3f4bc73"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_HUNTER",
+        "target": "ELEMENT_AWAKENING",
+        "label": "전제",
+        "id": "f35844a5-42b0-48d1-9f6c-a19da626322b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_HUNTER",
+        "target": "TROPE_GUILD",
+        "label": "조직",
+        "id": "66916079-3ded-427a-aacb-e46edf3c206e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_HUNTER",
+        "target": "TROPE_RAID",
+        "label": "주요 활동",
+        "id": "6f1082dd-6c96-4d12-aa3f-0794f1c979e5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_HUNTER",
+        "target": "CHARACTER_S_RANKER",
+        "label": "최상위",
+        "id": "7a27614f-f833-423e-9c46-cffe4bfaf114"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CORE_DUNGEON_TOWER",
+        "target": "TROPE_RAID",
+        "label": "장소",
+        "id": "a0390895-1edc-4f9a-bf01-62ac1873377b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_DARK_PAST",
+        "target": "TROPE_UNDERDOG",
+        "label": "출발점",
+        "id": "7803d69a-6c40-4efb-8727-298ac93b9a6e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_UNDERDOG",
+        "target": "TROPE_MUNCHKIN",
+        "label": "역전",
+        "id": "ec461bbb-b38d-4b43-9167-fe2c38d733cf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_MUNCHKIN",
+        "target": "ELEMENT_LEVEL",
+        "label": "과시",
+        "id": "aa3fcb85-10ca-4954-8f4b-aa455548d914"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_KNOWLEDGE_ADVANTAGE",
+        "target": "CHARACTER_VILLAIN_REGRESSOR",
+        "label": "위협",
+        "id": "cedadc8c-ed75-4cd1-bc2c-729fe5ea0779"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_GUILD",
+        "target": "CHARACTER_GUILD_MASTER",
+        "label": "리더",
+        "id": "f9032a16-9b95-4091-a50b-faea3c6565a8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "TROPE_ACADEMY",
+        "target": "TROPE_UNDERDOG",
+        "label": "배경",
+        "id": "66e3faa4-e501-45a0-ad07-033ebda3b2a7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_REGRESSOR",
+        "target": "CHARACTER_VILLAIN_REGRESSOR",
+        "label": "대립",
+        "id": "02d35ea7-65b9-45cc-87e3-ed7e9d363bdf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_REGRESSOR",
+        "target": "TROPE_KNOWLEDGE_ADVANTAGE",
+        "label": "보유",
+        "id": "7a8f7c2c-61c6-41ae-bce5-67f266124a1a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_SYSTEM_HOST",
+        "target": "ELEMENT_QUEST",
+        "label": "수행",
+        "id": "a8c6ba6e-1a48-4238-9158-469aba1e98bf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CHARACTER_S_RANKER",
+        "target": "CHARACTER_GUILD_MASTER",
+        "label": "역할",
+        "id": "bd59a47e-e18a-45d1-a961-747cf6217fc2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+};
+
+  let cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: initialData,
+    style: [
+      { selector: 'node', style: { 'label':'data(label)', 'background-color':'data(color)', 'shape':'round-rectangle', 'width':'label', 'height':28, 'padding':'8px', 'border-width':2, 'border-color':'#333', 'text-valign':'center', 'text-halign':'center', 'color':'#fff', 'font-weight':'bold', 'font-size':13, 'text-outline-width':2, 'text-outline-color':'#000' } },
+      { selector: 'edge', style: { 'label':'data(label)', 'curve-style':'bezier', 'line-color':'#999', 'width':2, 'target-arrow-shape':'triangle', 'target-arrow-color':'#999', 'font-size':11 } },
+      { selector: 'node:selected', style: { 'border-width':4, 'border-color':'#FFD700' } },
+      { selector: 'edge:selected', style: { 'width':4, 'line-color':'#FFD700', 'target-arrow-color':'#FFD700' } }
+    ],
+    layout: { name: 'cose', animate: true }
+  });
+
+  let selectedId = null;
+  const edgeSrcInput = document.getElementById('edgeSrc');
+  const edgeTgtInput = document.getElementById('edgeTgt');
+  const nodeInfo = document.getElementById('nodeInfo');
+  const nodeNotes = document.getElementById('nodeNotes');
+
+  function addNode() {
+    const id = document.getElementById('newNode').value.trim();
+    if (!id) { alert('이름을 입력하세요!'); return; }
+    if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+    const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+    cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('newNode').value='';
+  }
+
+  function addEdge() {
+    const src=edgeSrcInput.value.trim(), tgt=edgeTgtInput.value.trim(), lbl=document.getElementById('edgeLbl').value.trim();
+    if (!src||!tgt) { alert('노드를 선택하세요!'); return; }
+    if (cy.getElementById(src).length===0 || cy.getElementById(tgt).length===0) { alert('노드가 없습니다!'); return; }
+    cy.add({ data:{ id:src+"_"+tgt+"_"+Date.now(), source:src, target:tgt, label:lbl||"", notes:"" } });
+    cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+    document.getElementById('edgeLbl').value='';
+  }
+
+  function clearEdgeInputs() { edgeSrcInput.value=''; edgeTgtInput.value=''; document.getElementById('edgeLbl').value=''; }
+  function swapEdgeInputs() { const t=edgeSrcInput.value; edgeSrcInput.value=edgeTgtInput.value; edgeTgtInput.value=t; }
+
+  function deleteSelected() {
+    const selected = cy.$(':selected');
+    if (selected.length === 0) { alert('삭제할 요소를 선택하세요.'); return; }
+    if (confirm('삭제하시겠습니까?')) {
+      cy.remove(selected);
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = document.activeElement.tagName.toUpperCase();
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        deleteSelected();
+      }
+    }
+  });
+
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const id = node.id();
+    
+    if (edgeSrcInput.value === '') {
+      edgeSrcInput.value = id;
+    } else if (edgeTgtInput.value === '' && edgeSrcInput.value !== id) {
+      edgeTgtInput.value = id;
+    }
+    
+    nodeInfo.textContent = '📌 ' + (node.data('label') || id);
+    nodeNotes.textContent = node.data('notes') || '메모 없음';
+    selectedId = id;
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      nodeInfo.textContent = '노드를 클릭하세요';
+      nodeNotes.textContent = '선택한 노드의 메모가 여기에 표시됩니다';
+    }
+  });
+
+  cy.on('dbltap', function(evt) {
+    if (evt.target === cy) {
+      const pos = evt.position;
+      const name = prompt('새 노드 이름:');
+      if (name && name.trim()) {
+        const id = name.trim();
+        if (cy.getElementById(id).length > 0) { alert('이미 존재합니다!'); return; }
+        const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+        cy.add({ data:{ id, label:id, color:colors[Math.floor(Math.random()*colors.length)], notes:"" }, position:{ x:pos.x, y:pos.y } });
+        cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run();
+      }
+    }
+  });
+
+  function downloadJSON() {
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cy.json().elements, null, 2));
+    a.download = "graph_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function uploadJSON(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        let els = [];
+        if (Array.isArray(data)) els = data;
+        else if (data.nodes || data.edges) els = [...(data.nodes||[]), ...(data.edges||[])];
+        else if (data.elements) els = Array.isArray(data.elements) ? data.elements : [...(data.elements.nodes||[]), ...(data.elements.edges||[])];
+        if (els.length) { cy.elements().remove(); cy.add(els); cy.layout({ name: 'cose', animate: true, fit: true, padding: 30 }).run(); alert('성공!'); }
+        else alert('데이터 없음');
+      } catch(err) { alert('오류: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>

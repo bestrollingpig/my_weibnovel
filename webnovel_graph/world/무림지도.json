@@ -1,0 +1,3609 @@
+{
+  "nodes": [
+    {
+      "data": {
+        "id": "DO_HEBEI",
+        "label": "하북성",
+        "color": "#1A237E",
+        "notes": "중국 화북(華北)지방 북부에 있는 성. 면적 20만 km2. 인구 약 6334만(1994). 성도(省都)는 석가장[石家莊:石家庄]. 화북평야 북부에서 내몽고[內蒙古]고원 남동부에 걸친 지역을 차지한다. 서경(書經)의 <우공편(禹貢篇)>에 나오는 기주(冀州)에 해당하기 때문에 지성[冀省]이라고도 한다. 청대(淸代)에는 직례성[直隷省]이라고 불렀고, 신해혁명(辛亥革命) 후 1928년 허베이성이라고 고쳤으며, 공산정권 수립 후 찰합이[察哈爾]·열하[熱河]의 두 지역을 성의 일부에 편입하였다. 한족(漢族) 외에 후이족[回族]·몽골족이 약간 살고 있다. 내몽고 고원의 일부를 구성하는 장북[張北] 고원·선화[宣化] 분지·지산[冀山] 산지·태행[太行] 산지·하북[河北] 평원의 5개 지형구로 나뉘는데, 연산[燕山]산맥의 능선 위를 만리장성이 뻗어 있고 그 안팎을 남북 교통로가 통과한다. 동쪽 사면이 급경사를 이루는 태행산맥에도 산서성[山西省]에 이르는 태행팔경[太行八]이라는 통로가 나 있다. 하북 평원은 화북평야의 일부로, 대부분이 해하 수계[海河水系:白河·永定河·大淸河·子牙河·衛河 등]의 유역이다. 이들의 여러 하천은 천진[天津] 부근에서 합류하여 해하강이라 부른다. 대륙성 기후를 이루어 여름에는 기온이 높아지나 연평균강수량이 500 mm 내외에 불과하다. 상품작물은 목화 생산이 전국 제1이고, 그 밖에 땅콩·참깨·잎담배를 비롯하여, 산록지대에서는 복숭아·사과·포도·대추 등 과수재배가 성하다. 장베이 고원에는 훌륭한 목야지가 많고 해안의 다구[大沽] 부근은 제염의 중심지로 창루염[長蘆鹽]으로 알려진 소금을 산출한다. 광산자원은 옌산산맥·타이항산맥 산록부에 석탄과 철이 매장되어 있는데, 룽옌[龍煙]·우안[武安]의 철, 카이롼[開灤]·징싱[井陘]·펑펑[峰峰]의 탄전이 유명하다. 제2차 세계대전 전에는 톈진·탕산[唐山]에 외국 자본으로 운영되는 약간의 공장이 있을 뿐이었으나, 그 후 급격한 발전을 이룩하였다. 톈진·탕산의 중화학 공업 및 스자좌(기계·면방직)·한단[邯鄲:제철·방직]·바오딩[保定:필름] 등 신흥공업도시의 발전이 뚜렷하다. 도로·내륙수로도 발달하였으며, 톈진은 중국 북부지역 최대의 무역항이자 내륙수운의 집중 지점이다. 장자커우[張家口]는 네이멍구 자치구와의 교역 중심지이다. 승덕[承德]와 진황도[秦皇島]의 북대하[北戴河]는 휴양지로서 유명하다. 하북성은 관광지로서 그리 매력적인 곳은 아니지만 꼭 들러볼 만한 곳이 있다. 만리장성이 시작되는 동쪽의 산해관, 청나라 황제의 피서별장이 있는 승덕 등이 그곳이다. 무협 배경: 북경(北京)이 위치한 곳으로 황실과 직접 연결된 중요 지역. 개방(丐幇)의 본거지인 대명부(大名府)가 있음. 당대 하북도, 송대 하북로, 명·청대 직례성/북직례에 해당."
+      },
+      "position": {
+        "x": 575.2007765523017,
+        "y": 874.3857898873522
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_HENAN",
+        "label": "하남성",
+        "color": "#1A237E",
+        "notes": "중국 화북 지방 중부, 황하(黃河) 중·하류에 있는 성. 면적 16만 7000km2. 인구 약 9256만(1995). 성도는 정저우[鄭州]. 중국 문명 발상지 중 하나로 역대 수도가 많았던 곳. 중원(中原)이라고도 불림. 소림사(少林寺)가 위치한 숭산(嵩山)이 있음. 북송의 수도 개봉(開封)이 위치. 무협 배경: 무림 정파의 핵심 지역. 당대 하남도, 송대 하남로, 원대 하남江北行省, 명·청대 하남성에 해당."
+      },
+      "position": {
+        "x": 846.3606734227989,
+        "y": 980.4844187499365
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_SHANDONG",
+        "label": "산동성",
+        "color": "#1A237E",
+        "notes": "중국 동부, 화북 평원 동부, 산둥반도에 있는 성. 면적 15만 3000km2. 인구 약 9071만(1995). 성도는 지난[濟南]. 공자와 맹자의 고향으로 유교의 발상지. 산둥반도는 황해와 발해에 둘러싸여 있음. 무협 배경: 오대세가 중 황보세가(皇甫世家)가 제남부(濟南府)에 위치. 당대 산동도, 송대 산동로, 명·청대 산동성에 해당."
+      },
+      "position": {
+        "x": 885.7625020946716,
+        "y": 1227.9364795625322
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_SHANXI",
+        "label": "산서성",
+        "color": "#1A237E",
+        "notes": "중국 화북 지방 서부, 황하 중류, 태행산맥 서쪽에 있는 성. 면적 15만 6000km2. 인구 약 3077만(1995). 성도는 타이위안[太原]. 산서성은 '산서(山西)'라는 이름처럼 태행산맥 서쪽에 위치. 황토고원의 동부를 차지하며 지세가 높고 험준함. 무협 배경: 화산파(華山派)가 위치한 화산(華山)과 종남산(終南山)의 고묘파(古墓派), 전진교(全眞敎)가 위치. 당대 하동도, 송대 하동로, 명·청대 산서성에 해당."
+      },
+      "position": {
+        "x": 360.262018579998,
+        "y": 745.8679601787143
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_SHAANXI",
+        "label": "섬서성",
+        "color": "#1A237E",
+        "notes": "중국 화북 지방 서부, 황하 중류에 있는 성. 면적 19만 5000km2. 인구 약 3513만(1995). 성도는 시안[西安]. 진(秦) · 한(漢) · 당(唐) 등 중국 역사상 가장 번성했던 왕조의 수도였던 장안(長安)이 위치. 실크로드의 기점. 무협 배경: 당나라 수도 장안(長安) 위치. 당대 관내도, 송대 영흥로, 명·청대 섬서성에 해당."
+      },
+      "position": {
+        "x": 236.47547733668887,
+        "y": 518.3355580321531
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_GANSU",
+        "label": "감숙성",
+        "color": "#1A237E",
+        "notes": "중국 서북부, 황하 상류에 있는 성. 면적 45만 4000km2. 인구 약 2438만(1995). 성도는 란저우[蘭州]. 간쑤성은 실크로드의 중요한 구간으로 둔황(敦煌)의 막고굴(莫高窟)이 유명함. 무협 배경: 공동파(崆峒派)가 위치한 공동산(崆峒山)이 평량부(平涼府)에 있음. 당대 농우도(隴右道), 송대 진봉로(秦鳳路), 명·청대 감숙성에 해당."
+      },
+      "position": {
+        "x": 367.59173746774695,
+        "y": 1009.8147165645121
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_QINGHAI",
+        "label": "청해성",
+        "color": "#1A237E",
+        "notes": "중국 서북부, 청장고원 북동부에 있는 성. 면적 72만 2000km2. 인구 약 474만(1995). 성도는 시닝[西寧]. 티베트 고원의 일부로 해발이 높고 지형이 험준함. 무협 배경: 곤륜파(崑崙派)가 위치한 곤륜산(崑崙山)이 있음. 당대 토번(吐蕃) 지역, 송대 토번, 명·청대 청해성에 해당."
+      },
+      "position": {
+        "x": 350.85191576682837,
+        "y": 1089.7928693415622
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_SICHUAN",
+        "label": "사천성",
+        "color": "#1A237E",
+        "notes": "중국 서남부, 쓰촨분지에 있는 성. 면적 48만 8000km2. 인구 약 1억 1130만(1995). 성도는 청두[成都]. '천부지국(天府之國)'이라 불리는 비옥한 땅. 삼국시대 촉한(蜀漢)의 수도였던 성도(成都)가 위치. 무협 배경: 아미파(峨眉派)의 아미산(峨眉山), 청성파(靑城派)의 청성산(靑城山), 당문(唐門)의 성도부(成都府)가 모두 위치. 당대 검남도(劍南道), 송대 익주로(益州路), 명·청대 사천성에 해당."
+      },
+      "position": {
+        "x": 377.41293731944415,
+        "y": 1181.8003234709993
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_YUNNAN",
+        "label": "운남성",
+        "color": "#1A237E",
+        "notes": "중국 서남부, 윈난고원에 있는 성. 면적 39만 4000km2. 인구 약 3980만(1995). 성도는 쿤밍[昆明]. 중국 소수민족이 가장 많이 사는 지역. 무협 배경: 점창파(點蒼派)가 위치한 점창산(點蒼山)이 대리부(大理府)에 있음. 대리국(大理國)의 영향권. 당대 검남도, 송대 대리국, 명·청대 운남성에 해당."
+      },
+      "position": {
+        "x": 443.64506676037524,
+        "y": 1291.7050284010827
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_HUBEI",
+        "label": "호북성",
+        "color": "#1A237E",
+        "notes": "중국 중부, 창장(장강) 중류에 있는 성. 면적 18만 6000km2. 인구 약 5772만(1995). 성도는 우한[武漢]. 창장이 성의 남부를 가로지르며 많은 호수와 수로가 발달함. 무협 배경: 무당파(武當派)가 위치한 무당산(武當山)이 균현(均縣)에 있음. 제갈세가(諸葛世家)의 양양부(襄陽府)와 모용세가(慕容世家)의 장사부(長沙府)도 위치. 당대 산남동도(山南東道), 송대 형호북로(荊湖北路), 명·청대 호북성에 해당."
+      },
+      "position": {
+        "x": 622.2004082328716,
+        "y": 1184.359531498498
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_HUNAN",
+        "label": "호남성",
+        "color": "#1A237E",
+        "notes": "중국 중남부, 창강(장강) 중류 남쪽에 있는 성. 면적 21만 1800km2. 인구 약 6355만(1995). 성도는 창사[長沙]. 동정호(洞庭湖)가 위치한 수향(水鄕) 지역. 무협 배경: 모용세가(慕容世家)가 장사부(長沙府)에 위치. 당대 산남서도(山南西道), 송대 형호남로(荊湖南路), 명·청대 호남성에 해당."
+      },
+      "position": {
+        "x": 741.1257318277451,
+        "y": 1431.0776388026409
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_ZHEJIANG",
+        "label": "절강성",
+        "color": "#1A237E",
+        "notes": "중국 동부, 저장성 연안에 있는 성. 면적 10만 2000km2. 인구 약 4216만(1995). 성도는 항저우[杭州]. 남송의 수도 임안(臨安)이 위치한 곳으로, 서호(西湖)가 유명함. 무협 배경: 남궁세가(南宮世家)가 건업부(建業府)에 위치. 남송 수도 임안부(臨安府)가 있음. 당대 강남동도(江南東道), 송대 양절로(兩浙路), 명·청대 절강성에 해당."
+      },
+      "position": {
+        "x": 823.5318552905683,
+        "y": 1367.9539265899018
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_JIANGSU",
+        "label": "강소성",
+        "color": "#1A237E",
+        "notes": "중국 동부, 양쯔강 하류에 있는 성. 면적 10만 2600km2. 인구 약 7064만(1995). 성도는 난징[南京]. 삼국시대 오(吳)나라의 수도였던 건업(建業)이 위치. 무협 배경: 남궁세가(南宮世家)가 건업부(建業府)에 위치. 모산파(茅山派)의 모산(茅山)이 있음. 당대 강남동도, 송대 양절로, 명·청대 강소성에 해당."
+      },
+      "position": {
+        "x": 986.0638901132827,
+        "y": 1302.7966757082281
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_JIANGXI",
+        "label": "강서성",
+        "color": "#1A237E",
+        "notes": "중국 동남부, 창장 중류 남쪽에 있는 성. 면적 16만 7000km2. 인구 약 4016만(1995). 성도는 난창[南昌]. 포양호(鄱陽湖)가 위치한 수향 지역. 무협 배경: 도교의 성지 중 하나인 용호산(龍虎山)이 위치. 당대 강남서도(江南西道), 송대 강남서로(江南西路), 명·청대 강서성에 해당."
+      },
+      "position": {
+        "x": 785.7466605418531,
+        "y": 1792.16509036574
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_FUJIAN",
+        "label": "복건성",
+        "color": "#1A237E",
+        "notes": "중국 동남부, 푸젠성 연안에 있는 성. 면적 12만 4000km2. 인구 약 3160만(1995). 성도는 푸저우[福州]. 다산 지형으로 해안선이 복잡함. 무협 배경: 복건성은 남방 무림의 주요 거점 중 하나. 당대 강남동도, 송대 복건로(福建路), 명·청대 복건성에 해당."
+      },
+      "position": {
+        "x": 879.643466896827,
+        "y": 1920.5726918292876
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_GUANGDONG",
+        "label": "광동성",
+        "color": "#1A237E",
+        "notes": "중국 남부, 주강(珠江) 하류에 있는 성. 면적 17만 8000km2. 인구 약 6788만(1995). 성도는 광저우[廣州]. 중국 최남단의 번영한 지역. 무협 배경: 남방 무림의 중심지 중 하나. 당대 영남도(嶺南道), 송대 광남동로(廣南東路), 명·청대 광동성에 해당."
+      },
+      "position": {
+        "x": 927.2831630331693,
+        "y": 1682.3851027506598
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_GUANGXI",
+        "label": "광서성",
+        "color": "#1A237E",
+        "notes": "중국 남부, 주강 상류에 있는 성. 면적 23만 6000km2. 인구 약 4603만(1995). 성도는 난닝[南寧]. 중국의 소수민족 자치구 중 하나. 무협 배경: 당대 영남도, 송대 광남서로(廣南西路), 명·청대 광서성에 해당."
+      },
+      "position": {
+        "x": 785.2482223468252,
+        "y": 1592.6690491601346
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_ANHUI",
+        "label": "안휘성",
+        "color": "#1A237E",
+        "notes": "중국 동부, 창강(장강)과 회하(淮河) 사이에 있는 성. 면적 13만 9000km2. 인구 약 6067만(1995). 성도는 허페이[合肥]. 당대 강남동도, 송대 강남동로, 명·청대 안휘성에 해당."
+      },
+      "position": {
+        "x": 976.2274718358291,
+        "y": 894.4110564093729
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DO_SHAANXI_GANSU",
+        "label": "섬서·감숙 지역",
+        "color": "#1A237E",
+        "notes": "중국 서북부 지역. 실크로드의 관문. 당대 관내도와 농우도, 송대 영흥로와 진봉로에 해당. 무협 배경: 화산파와 공동파의 영향권이 겹치는 지역."
+      },
+      "position": {
+        "x": 158.6451906603524,
+        "y": 1955.261073326396
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PERIOD_HAN",
+        "label": "한나라",
+        "color": "#8D6E63",
+        "notes": "BC 202~AD 220. 삼국시대 이전의 통일 왕조. 주(州)-군(郡)-현(縣) 3단계 행정체계. 무협 배경: 삼국지 이전 시대의 배경"
+      },
+      "position": {
+        "x": 1454.6377463739693,
+        "y": 5.3930290245806445
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PERIOD_TANG",
+        "label": "당나라",
+        "color": "#8D6E63",
+        "notes": "618~907. 도(道)-주(州)-현(縣) 3단계 행정체계. 10도에서 15도로 확장. 무협 배경: 가장 많이 활용되는 시대"
+      },
+      "position": {
+        "x": 1396.6875542159212,
+        "y": 112.3616765657411
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PERIOD_SONG",
+        "label": "송나라",
+        "color": "#8D6E63",
+        "notes": "960~1279. 로(路)-부(府)/주(州)-현(縣) 3단계. 도를 로(路)로 개칭. 무협 배경: 사조영웅전, 신조협려 등"
+      },
+      "position": {
+        "x": 1507.601050183567,
+        "y": 276.7599594558978
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PERIOD_YUAN",
+        "label": "원나라",
+        "color": "#8D6E63",
+        "notes": "1271~1368. 성(省)-로(路)-부(府)-주(州)-현(縣) 5단계. 행성제도 도입. 무협 배경: 의천도룡기"
+      },
+      "position": {
+        "x": 1542.6158045914226,
+        "y": 247.56220524497544
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PERIOD_MING",
+        "label": "명나라",
+        "color": "#8D6E63",
+        "notes": "1368~1644. 성(布政司)-부(府)-주(州)-현(縣) 4단계. 금의위, 동창, 서창 설치. 무협 배경: 소오강호, 의천도룡기(후반부)"
+      },
+      "position": {
+        "x": 1688.142710821217,
+        "y": 211.47939450374867
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "PERIOD_QING",
+        "label": "청나라",
+        "color": "#8D6E63",
+        "notes": "1644~1912. 성(省)-부(府)-주(州)-현(縣) 4단계. 직례성, 강소성 등 현재와 유사한 명칭 사용. 무협 배경: 녹정기, 보검기"
+      },
+      "position": {
+        "x": 1754.1519805642438,
+        "y": 79.04896230833495
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAPITAL_CHANGAN",
+        "label": "장안(長安)",
+        "color": "#FFD700",
+        "notes": "당나라 수도. 섬서성(관내도) 소재. 대명궁(大明宮) 위치. 무협 배경의 주요 무대. 현대의 시안(西安). 13개 왕조의 수도였던 역사적 도시."
+      },
+      "position": {
+        "x": 215.3487847464674,
+        "y": 388.2566835637458
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAPITAL_KAIFENG",
+        "label": "개봉(開封)",
+        "color": "#FFD700",
+        "notes": "북송 수도. 하남성(하남도) 소재. 동경(東京)으로 불림. 포청천의 개봉부(開封府)가 유명. 무협 배경의 주요 무대."
+      },
+      "position": {
+        "x": 752.1598428754721,
+        "y": 1044.3474774464137
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAPITAL_LINAN",
+        "label": "임안(臨安)",
+        "color": "#FFD700",
+        "notes": "남송 수도. 절강성(양절로) 소재. 항주(杭州)로 유명. 서호(西湖)가 있는 관광 도시. 무협 배경의 주요 무대."
+      },
+      "position": {
+        "x": 879.6420583147033,
+        "y": 1516.853569699457
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAPITAL_BEIJING",
+        "label": "북경(北京)",
+        "color": "#FFD700",
+        "notes": "명·청 수도. 하북성(직례성) 소재. 자금성(紫禁城) 위치. 금의위, 동창, 서창 등 황실 기관이 집중된 곳. 현대의 북경."
+      },
+      "position": {
+        "x": 634.3033502208785,
+        "y": 786.8295195384393
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_SHAOLIN",
+        "label": "소림사",
+        "color": "#FF6B6B",
+        "notes": "하남성 등봉현 숭산 소재. 북위 효문제 19년(495년) 인도 승려 발타(跋陀)가 창건. 달마(達摩)가 527년 내한하여 면벽 9년 후 전설적인 무공을 남김. 무림 태산북두(泰山北斗)로 불리며 정파의 핵심. 대표 무공: 역근경(易筋經), 18나한공(十八羅漢功), 72절기(七十二絕技). 대표 인물: 달마대사, 혜가(慧可), 13승왕(十三棍僧). 주요 사건: 13승왕의 당 태종 구출. 상징물: 대환단(大還丹), 녹옥불장(綠玉佛杖)."
+      },
+      "position": {
+        "x": 1105.1412134796797,
+        "y": 944.1673276491807
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_WUDANG",
+        "label": "무당파",
+        "color": "#4CAF50",
+        "notes": "호북성 균현 무당산 소재. 장삼봉(張三峰)이 창시한 도교 문파. 태극권(太極拳)과 태극검법(太極劍法)의 종주. 정파의 핵심으로 도교 무림의 중심. 대표 무공: 태극권, 태극검법, 제운종(梯雲縱). 대표 인물: 장삼봉. 도교의 음양 태극 문양을 상징으로 함."
+      },
+      "position": {
+        "x": 730.8658605645062,
+        "y": 1215.7750753190257
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_HUASHAN",
+        "label": "화산파",
+        "color": "#FF9800",
+        "notes": "섬서성 화음현 화산 소재. 검법으로 유명한 정파. 독고구검(獨孤九劍)의 전설을 간직한 문파. 대표 무공: 독고구검, 자하신공(紫霞神功). 대표 인물: 영호충(令狐沖), 독고구패(獨孤求敗). 정파이면서도 자유분방한 성향."
+      },
+      "position": {
+        "x": 123.89714870368897,
+        "y": 544.7926052610554
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_EMEI",
+        "label": "아미파",
+        "color": "#E91E63",
+        "notes": "사천성 아미현 아미산 소재. 곽양(郭襄)이 창시한 비구니 문파. 정파. 여성 무림인들의 주요 거점. 대표 무공: 아미검법(峨眉劍法). 대표 인물: 곽양, 멸절사태(滅絶師太). 불교 문파로 소림사와 함께 불교 무림의 양대 산맥."
+      },
+      "position": {
+        "x": 362.04983270948264,
+        "y": 1405.1621536716875
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_QINGCHENG",
+        "label": "청성파",
+        "color": "#8BC34A",
+        "notes": "사천성 청성군 청성산 소재. 도교 문파. 정파. 검법 특기. 대표 무공: 청성검법(靑城劍法). 사천 무림의 주요 세력 중 하나."
+      },
+      "position": {
+        "x": 236.43275834420078,
+        "y": 1195.232139237271
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_KUNLUN",
+        "label": "곤륜파",
+        "color": "#9C27B0",
+        "notes": "청해성 곤륜산 소재. 도교 문파. 정파. 서북 변경의 무림 세력. 대표 무공: 곤륜검법(崑崙劍法), 곤륜장법(崑崙掌法). 신화 속 곤륜산을 배경으로 한 신비로운 문파."
+      },
+      "position": {
+        "x": 254.77697134030032,
+        "y": 1072.5933984567973
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_DIANCANG",
+        "label": "점창파",
+        "color": "#00BCD4",
+        "notes": "운남성 대리부 점창산 소재. 검법 특기. 정파. 남방 무림의 주요 세력. 대표 무공: 점창검법(點蒼劍法). 대리국(大理國)의 배경과 함께하는 남방 무림의 중심."
+      },
+      "position": {
+        "x": 434.12382557019805,
+        "y": 1346.107770603846
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_KONGTONG",
+        "label": "공동파",
+        "color": "#795548",
+        "notes": "감숙성 평량부 공동산 소재. 정파와 사파의 중간 성향. 대표 무공: 공동검법(崆峒劍法), 공동권법(崆峒拳法). 서북 변경의 무림 세력으로 중립적 성격이 강함."
+      },
+      "position": {
+        "x": 362.8931504235381,
+        "y": 906.8745082642457
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_GAIBANG",
+        "label": "개방",
+        "color": "#607D8B",
+        "notes": "전국 각지 분포. 거지 집단. 천하제일방(天下第一幇). 정파. 대표 무공: 강룡십팔장(降龍十八掌), 타구봉법(打狗棒法). 대표 인물: 홍칠공(洪七公), 황용(黃蓉). 본거지는 하북성 대명부. 전국에 분점을 둔 최대 규모의 무림 조직."
+      },
+      "position": {
+        "x": 486.42972447039006,
+        "y": 1006.3862832038728
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_MAKYO",
+        "label": "명교",
+        "color": "#F44336",
+        "notes": "페르시아 조로아스터교 계열. 사파 성향. 원말 명나라 건국에 기여. 대표 무공: 건곤대나이(乾坤大挪移), 성화령신공(聖火令神功). 대표 인물: 장무기(張無忌). 상징물: 성화령(聖火令). 전국 각지에 세력을 펼친 거대 조직."
+      },
+      "position": {
+        "x": 1881.569429033534,
+        "y": 84.79584889906475
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_NAMGUNG",
+        "label": "남궁세가",
+        "color": "#3F51B5",
+        "notes": "오대세가(五大世家) 중 하나. 강남 지역(강소성 건업부). 정파. 대표 무공: 천뢰제왕신공(天雷帝王神功), 창궁대연신공(蒼穹大衍神功), 제왕검형(帝王劍形). 강남 무림의 핵심 세력 중 하나."
+      },
+      "position": {
+        "x": 1034.4684912231553,
+        "y": 1392.1278103565514
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_JEGAL",
+        "label": "제갈세가",
+        "color": "#3F51B5",
+        "notes": "오대세가(五大世家) 중 하나. 호북성 양양부 소재. 정파. 신기제갈(神機諸葛). 진법(陣法)과 역리(易理)로 유명. 대표 무공: 제갈진법(諸葛陣法), 팔진도(八陣圖). 삼국지 제갈량의 후예로 알려짐."
+      },
+      "position": {
+        "x": 543.4500825742484,
+        "y": 1256.3063826282419
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_HWANGBO",
+        "label": "황보세가",
+        "color": "#3F51B5",
+        "notes": "오대세가(五大世家) 중 하나. 산동성 제남부 소재. 정파. 권법 특기. 대표 무공: 황보권법(皇甫拳法), 황보내공(皇甫內功). 산동 무림의 대표 세력."
+      },
+      "position": {
+        "x": 1030.3994138750068,
+        "y": 1183.9236222395805
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_MOYONG",
+        "label": "모용세가",
+        "color": "#3F51B5",
+        "notes": "오대세가(五大世家) 중 하나. 호남성 장사부 소재. 연나라 왕족 후예. 정파와 사파 중간 성향. 두뇌 회전이 빠르고 책략에 능함. 대표 무공: 모용검법(慕容劍法), 이화접목(以花接木). 오호십육국 시대 연나라 왕족의 후손."
+      },
+      "position": {
+        "x": 620.6204898241739,
+        "y": 1463.1358226947934
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_DANGMUN",
+        "label": "당문",
+        "color": "#FF5722",
+        "notes": "오대세가(五大世家) 중 하나. 사천성 성도부 소재. 독과 암기로 유명. 정파와 사파 중간 성향. 대표 무공: 폭우이화침(暴雨梨花針), 만천화우(滿天花雨), 만독불침지체(萬毒不侵之體). 사천 무림의 숨은 실세."
+      },
+      "position": {
+        "x": 149.98686024556164,
+        "y": 1265.2112119226076
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_SEOLSAN",
+        "label": "설산파",
+        "color": "#B3E5FC",
+        "notes": "서역 대설산 소재. 사파. 대표 무공: 설산검법(雪山劍法), 백자재(白子齋). 설원(雪原)을 배경으로 한 신비로운 문파."
+      },
+      "position": {
+        "x": 267.8808041013335,
+        "y": 1947.2508127469378
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_GOMYO",
+        "label": "고묘파",
+        "color": "#CE93D8",
+        "notes": "종남산 고묘 소재. 정파. 대표 무공: 옥녀소심검법(玉女素心劍法), 빙백은침(冰魄銀針). 대표 인물: 양과(楊過), 소용녀(小龍女), 임조영(林朝英). 여성 고수들의 문파로 고묘(古墓)를 본거지로 함. 신조협려의 배경."
+      },
+      "position": {
+        "x": 415.78640887329465,
+        "y": 310.8975096414609
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_SOYO",
+        "label": "소요파",
+        "color": "#80DEEA",
+        "notes": "은둔 문파. 정파와 사파 중간 성향. 대표 무공: 북명신공(北冥神功), 능파미보(凌波微步), 천산육양장(天山六陽掌). 은둔하면서도 전설적인 고수들이 많음. 천룡팔부의 주요 배경 문파."
+      },
+      "position": {
+        "x": 58.35572810120389,
+        "y": 361.012887627724
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_JEOJIN",
+        "label": "전진교",
+        "color": "#81C784",
+        "notes": "종남산 소재. 도교 문파. 정파. 대표 무공: 선천공(先天功), 전진검법(全眞劍法). 대표 인물: 왕중양(王重陽), 전진칠자(全眞七子). 도교 무림의 대표 세력 중 하나. 사조영웅전의 배경."
+      },
+      "position": {
+        "x": 346.43309757609256,
+        "y": 577.6481809306567
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_SEONGSUK",
+        "label": "성숙파",
+        "color": "#FF8A65",
+        "notes": "사파. 독공(毒功) 특기. 대표 무공: 화공대법(化功大法), 성숙독공(星宿毒功). 사파의 대표 세력 중 하나."
+      },
+      "position": {
+        "x": 354.7839672474919,
+        "y": 1773.7567519852696
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_HANGANG",
+        "label": "한강수로",
+        "color": "#4DD0E1",
+        "notes": "장강 수로 패거리. 정파와 사파 중간. 수운(水運)을 통제하는 세력. 대표 무공: 수로권법(水路拳法), 장강검법(長江劍法)."
+      },
+      "position": {
+        "x": 148.37616507459924,
+        "y": 1761.9780041159934
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "FACTION_NOKLIM",
+        "label": "녹림",
+        "color": "#8D6E63",
+        "notes": "산적 집단. 각지에 분포. 사파. 대표 무공: 녹림도법(綠林刀法), 산채권법(山寨拳法). 정부와 대립하는 산적 무리들의 총칭."
+      },
+      "position": {
+        "x": 434.12389851943163,
+        "y": 2009.6272557332088
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ROYAL_GEUMUIWI",
+        "label": "금의위",
+        "color": "#FFD700",
+        "notes": "명나라 황실 첩보 기관. 황제 직속. 무림인 감시 및 암살이 주요 임무. 고위 무림인들로 구성. 동창(東廠)과 경쟁 관계. 명나라 초기 주원장(朱元璋)이 설립."
+      },
+      "position": {
+        "x": 698.6567218367846,
+        "y": 570.5246405796959
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ROYAL_DONGCHANG",
+        "label": "동창",
+        "color": "#FFD700",
+        "notes": "명나라 환관 첩보 기관. 금의위와 대립. 황제 직속. 환관들이 운영. 명나라 성조 영락제(永樂帝)가 설립."
+      },
+      "position": {
+        "x": 468.36593472541864,
+        "y": 752.9200760825277
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ROYAL_SEOCHANG",
+        "label": "서창",
+        "color": "#FFD700",
+        "notes": "명나라 환관 첩보 기관. 동창보다 강력. 황제 직속. 명나라 헌종 성화제(成化帝)가 설립."
+      },
+      "position": {
+        "x": 581.4902961155334,
+        "y": 666.3102933481933
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ROYAL_EORIM",
+        "label": "어림군",
+        "color": "#FFD700",
+        "notes": "황실 근위대. 황궁 호위. 무림 고수들이 포진. 황제 직속 경호 부대."
+      },
+      "position": {
+        "x": 814.1532791741008,
+        "y": 701.4727809871559
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ROYAL_YUKBU",
+        "label": "육부",
+        "color": "#FFD700",
+        "notes": "이호예병형공(吏戶禮兵刑工). 중앙 행정 기관. 이부: 인사, 호부: 재정, 예부: 의례, 병부: 군사, 형부: 법률, 공부: 건설."
+      },
+      "position": {
+        "x": 722.9775849707205,
+        "y": 853.1073846081918
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ROYAL_DOCHALWON",
+        "label": "도찰원",
+        "color": "#FFD700",
+        "notes": "감찰 기관. 전국에 감찰어사를 파견하여 관리들을 감시. 막강한 권력을 휘둘렀으며, 무협지에서는 황실의 비밀 기관이나 압제 기관으로 등장."
+      },
+      "position": {
+        "x": 751.2248688539269,
+        "y": 615.068253395136
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "ROYAL_HANLIMWON",
+        "label": "한림원",
+        "color": "#FFD700",
+        "notes": "황제 직속 기관. 문서 작성, 역사 편찬, 황실 교육 등을 담당. 무림 고수들이 관료로 진출하는 경로 중 하나."
+      },
+      "position": {
+        "x": 519.5425714423714,
+        "y": 591.5075052351704
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SHAOLIN_MA1",
+        "label": "역근경",
+        "color": "#FFCDD2",
+        "notes": "달마가 전했다는 전설의 내공 심법. 실제로는 명대 말기(1642년) 천태산 자응도인 종형이 편찬. 소림사 최고 비급. '기혈의 유통과 근골 개조'가 핵심. 소림 72절기의 기초."
+      },
+      "position": {
+        "x": 1060.1081061218254,
+        "y": 787.7485153181711
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SHAOLIN_MA2",
+        "label": "18나한공",
+        "color": "#FFCDD2",
+        "notes": "선인공수(仙人拱手), 패왕거정(霸王擧鼎), 좌우삽화(左右揷花) 등 18수. 소림 내공의 기본 틀."
+      },
+      "position": {
+        "x": 1160.4491344010182,
+        "y": 728.695766563352
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SHAOLIN_MA3",
+        "label": "72절기",
+        "color": "#FFCDD2",
+        "notes": "염화지(拈花指), 반야장(般若掌), 금강지(金剛指) 등 72가지 절기. 각 절기는 상응하는 불법으로 무력화해야 완성 가능."
+      },
+      "position": {
+        "x": 1371.127705280983,
+        "y": 776.540556285042
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SHAOLIN_CH1",
+        "label": "달마대사",
+        "color": "#FFCDD2",
+        "notes": "석가모니 28대 제자. 남천축 향지국 왕자. 527년 내한. 숭산 오유봉에서 면벽 9년. 역근경·세수경 전설. 소림 무공의 상징적 창시자."
+      },
+      "position": {
+        "x": 994.4139182321702,
+        "y": 1040.3000323186147
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SHAOLIN_CH2",
+        "label": "혜가",
+        "color": "#FFCDD2",
+        "notes": "달마의 제자. 중국 선종 2대 조사. 좌절(左臂)을 베는 극진한 구도 정신. 달마로부터 이심전심으로 법통 계승."
+      },
+      "position": {
+        "x": 1229.13456397708,
+        "y": 1053.4201940220453
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SHAOLIN_EV1",
+        "label": "13승왕 구당",
+        "color": "#FFCDD2",
+        "notes": "당 태종 이세민 구출. 소림사 사원지 및 승병 조직 허가 획득. 소림 무공 발전의 분수령."
+      },
+      "position": {
+        "x": 1353.5907890468284,
+        "y": 903.2736364707971
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SHAOLIN_IT1",
+        "label": "장경각",
+        "color": "#FFCDD2",
+        "notes": "소림사 무공 비급과 불경 보관소. 약 5만종 30만권 장서. 소설 속에서는 소림 최고의 비밀이자 외부 침입의 주요 타깃."
+      },
+      "position": {
+        "x": 1097.6914257727883,
+        "y": 1059.7262492758352
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SHAOLIN_IT2",
+        "label": "대환단",
+        "color": "#FFCDD2",
+        "notes": "소림사 최고의 영약. 무림제일의 성약. 내공 증진 및 중상 치료에 탁월."
+      },
+      "position": {
+        "x": 1272.980250215614,
+        "y": 961.4298471462961
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_WUDANG_MA1",
+        "label": "태극권",
+        "color": "#C8E6C9",
+        "notes": "장삼봉이 창안한 내가권법. 남작미(攬雀尾), 단편(單鞭) 등. 도교 음양론 기반."
+      },
+      "position": {
+        "x": 803.5012085345644,
+        "y": 1271.6181362898121
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_WUDANG_MA2",
+        "label": "태극검법",
+        "color": "#C8E6C9",
+        "notes": "환두월(還頭月), 대괴성(大魁星) 등. 검을 곧게 세우고 원을 그리는 특징."
+      },
+      "position": {
+        "x": 933.7305689542476,
+        "y": 1133.6831711441503
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_WUDANG_CH1",
+        "label": "장삼봉",
+        "color": "#C8E6C9",
+        "notes": "무당파 창시자. 태극권과 태극검법 창안. 도교의 고수. 원말 명초 인물."
+      },
+      "position": {
+        "x": 689.2702171446551,
+        "y": 1328.1889453031492
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_HUASHAN_MA1",
+        "label": "독고구검",
+        "color": "#FFE0B2",
+        "notes": "총결식(總決式), 파검식(破劍式), 파도식(破刀式) 등 9식. 독고구패(獨孤求敗)가 창안."
+      },
+      "position": {
+        "x": 47.78202619748445,
+        "y": 614.4880101100647
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_HUASHAN_CH1",
+        "label": "영호충",
+        "color": "#FFE0B2",
+        "notes": "화산파 대제자. 소오강호의 주인공. 독고구검 계승자."
+      },
+      "position": {
+        "x": 73.26587548241855,
+        "y": 634.5663716157288
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_GAIBANG_MA1",
+        "label": "강룡십팔장",
+        "color": "#CFD8DC",
+        "notes": "항룡유회(亢龍有悔), 비룡재천(飛龍在天) 등 18장. 천하제일 강한 장법."
+      },
+      "position": {
+        "x": 670.6687383324271,
+        "y": 1058.0109343339784
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_GAIBANG_MA2",
+        "label": "타구봉법",
+        "color": "#CFD8DC",
+        "notes": "36로(三十六路) 타구봉법. 구두로만 전수. 개방 장문인의 상징."
+      },
+      "position": {
+        "x": 456.6868528613651,
+        "y": 1079.1057706650392
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_GAIBANG_CH1",
+        "label": "홍칠공",
+        "color": "#CFD8DC",
+        "notes": "북개(北丐). 강룡십팔장 전수자. 개방 전임 방주. 무림 오절 중 한 명."
+      },
+      "position": {
+        "x": 456.9384887050687,
+        "y": 966.1691653987089
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_MAKYO_MA1",
+        "label": "건곤대나이",
+        "color": "#FFCDD2",
+        "notes": "명교 대표 무공. 힘을 역이용하는 기묘한 운용법. 상대의 공격을 돌려주는 기술."
+      },
+      "position": {
+        "x": 1861.7515785225137,
+        "y": 94.21665376872572
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_MAKYO_CH1",
+        "label": "장무기",
+        "color": "#FFCDD2",
+        "notes": "명교 교주. 의천도룡기 주인공. 건곤대나이 계승자. 무림 최고 고수."
+      },
+      "position": {
+        "x": 1867.343060748547,
+        "y": 120.66687104283699
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SOYO_MA1",
+        "label": "북명신공",
+        "color": "#B2DFDB",
+        "notes": "소요파 내공. 타인의 내력을 흡수하는 신공. 자신의 내공으로 전환."
+      },
+      "position": {
+        "x": 135.63326586215834,
+        "y": 254.8122553148229
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_SOYO_MA2",
+        "label": "능파미보",
+        "color": "#B2DFDB",
+        "notes": "소요파 신법. 천하제일 경공. 물결 위를 걷는 듯한 몸놀림."
+      },
+      "position": {
+        "x": 70.34752142142786,
+        "y": 425.7173144839977
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_JEOJIN_MA1",
+        "label": "선천공",
+        "color": "#C8E6C9",
+        "notes": "전진교 최고 내공. 도교의 선천 기운을 내공화."
+      },
+      "position": {
+        "x": 508.66532731552155,
+        "y": 417.9054788023582
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_JEOJIN_CH1",
+        "label": "왕중양",
+        "color": "#C8E6C9",
+        "notes": "전진교 창시자. 중신통(中神通). 무림 오절 중 최고."
+      },
+      "position": {
+        "x": 473.03206827907746,
+        "y": 415.8120633987863
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_NAMGUNG_MA1",
+        "label": "천뢰제왕신공",
+        "color": "#C5CAE9",
+        "notes": "남궁세가 최고 내공. 천둥과 번개처럼 강력한 내력."
+      },
+      "position": {
+        "x": 1150.6024593856587,
+        "y": 1562.231403632797
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_NAMGUNG_MA2",
+        "label": "창궁대연신공",
+        "color": "#C5CAE9",
+        "notes": "남궁세가 내공. 창공 같은 넓은 내력."
+      },
+      "position": {
+        "x": 1191.4149784574693,
+        "y": 1421.8454230368527
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_DANGMUN_MA1",
+        "label": "폭우이화침",
+        "color": "#FFCCBC",
+        "notes": "당문 대표 암기. 비처럼 쏟아지는 바늘. 광범위 공격."
+      },
+      "position": {
+        "x": 122.18942873204338,
+        "y": 1161.2789603148642
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_DANGMUN_MA2",
+        "label": "만천화우",
+        "color": "#FFCCBC",
+        "notes": "당문 암기술. 하늘을 가득 채우는 화살. 회피 불가."
+      },
+      "position": {
+        "x": 142.62671031238054,
+        "y": 1346.5038191519773
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_EMEI_MA1",
+        "label": "아미검법",
+        "color": "#F48FB1",
+        "notes": "아미파 대표 검법. 불교의 자비로움과 여성의 유연함을 담음."
+      },
+      "position": {
+        "x": 357.0361720178042,
+        "y": 1478.343646070289
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_EMEI_CH1",
+        "label": "곽양",
+        "color": "#F48FB1",
+        "notes": "아미파 창시자. 사조영웅전 곽정과 황용의 딸."
+      },
+      "position": {
+        "x": 259.90376752858754,
+        "y": 1403.2723349842531
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_GOMYO_MA1",
+        "label": "옥녀소심검법",
+        "color": "#E1BEE7",
+        "notes": "고묘파 대표 검법. 여성적인 유연함이 특징."
+      },
+      "position": {
+        "x": 348.3933280730426,
+        "y": 51.039199839765274
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_GOMYO_CH1",
+        "label": "양과",
+        "color": "#E1BEE7",
+        "notes": "신조협려 주인공. 절검과 현철중검 사용. 고묘파 전설적 인물."
+      },
+      "position": {
+        "x": 335.60837223079943,
+        "y": 287.7860120058272
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "DETAIL_GOMYO_CH2",
+        "label": "소용녀",
+        "color": "#E1BEE7",
+        "notes": "고묘파. 옥녀소심검법 계승자. 양과의 연인."
+      },
+      "position": {
+        "x": 469.4087900685683,
+        "y": 237.58770941333066
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "주요지명 이름 유례",
+        "label": "주요지명 이름 유례",
+        "color": "#ea6666",
+        "notes": "하북 (河北)\t황하(黃河)의 북쪽\t\n하남 (河南)\t황하(黃河)의 남쪽\n\n산동 (山東)\t태행산맥 동쪽 .\n산서 (山西)\t태행산맥 서쪽.",
+        "image": ""
+      },
+      "position": {
+        "x": 601.7664808330798,
+        "y": -142.24949819590486
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "다른지명유례",
+        "label": "다른지명유례",
+        "color": "#4facfe",
+        "notes": "섬서 (陕西)\t섬원(陕原)이라는 지명의 서쪽\t\n허난성에 있던 ‘섬원’을 기준으로 서쪽에 있다는 뜻.\n\n호북 (湖北)\t동정호(洞庭湖)의 북쪽\n호남 (湖南)\t동정호(洞庭湖)의 남쪽\n\n강소 (江苏)\t강녕(江宁)과 소주(苏州)의 앞 글자\t청나라 시대 두 도시의 이름을 합쳐서 만든 방식.\n\n안휘 (安徽)\t안경(安庆)과 휘주(徽州)의 앞 글자\n\n절강 (浙江)\t지역 내 첸탕강(钱塘江)의 옛 이름\t‘절강(浙江)’",
+        "image": ""
+      },
+      "position": {
+        "x": 599.822647957568,
+        "y": -106.5568431672178
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "약칭(省称)의 유래",
+        "label": "약칭(省称)의 유래",
+        "color": "#43e97b",
+        "notes": "하북\t冀 (기)\t고대 ‘기주(冀州)’\n하남\t豫 (예)\t고대 ‘예주(豫州)’\n산동\t魯 (노)\t춘추시대 ‘노(魯)나라’\n산서\t晉 (진)\t춘추시대 ‘진(晉)나라’\n섬서\t秦 (진)\t춘추전국시대 ‘진(秦)나라’\n호북\t鄂 (악)\t고대 ‘악주(鄂州)’\n호남\t湘 (상)\t‘상강(湘江)’\n광동\t粵 (월)\t고대 ‘월(越)족’\n사천\t蜀 (촉)\t고대 ‘촉(蜀)나라’\n복건\t閩 (민)\t고대 ‘민(閩)족’\n",
+        "image": ""
+      },
+      "position": {
+        "x": 723.9733945530644,
+        "y": -111.37447758926614
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "DO_HEBEI",
+        "target": "DO_SHANXI",
+        "label": "연결",
+        "id": "9b5d3d16-a142-431b-83c3-c0257584c5b2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HEBEI",
+        "target": "DO_HENAN",
+        "label": "연결",
+        "id": "7b0c2cae-ec71-46dc-99a6-ff04da66dc62"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SHANXI",
+        "target": "DO_SHAANXI",
+        "label": "연결",
+        "id": "921250d0-2756-4c5f-92ca-40b25c4bcd98"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SHANXI",
+        "target": "DO_GANSU",
+        "label": "연결",
+        "id": "a5690405-23ea-4cfe-9013-d0cc5588f9e5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HENAN",
+        "target": "DO_SHANDONG",
+        "label": "연결",
+        "id": "188d9753-e684-49cd-b570-ecff5ea842df"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HENAN",
+        "target": "DO_HUBEI",
+        "label": "연결",
+        "id": "dfa29f7b-6dab-4913-adca-0bcdfd99bd92"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HENAN",
+        "target": "DO_ANHUI",
+        "label": "연결",
+        "id": "b72319fe-1c0c-44b1-a180-4b6e322c9c9a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SHANDONG",
+        "target": "DO_JIANGSU",
+        "label": "연결",
+        "id": "6c196dfa-b87f-4efe-bcc1-3f05fd287016"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_JIANGSU",
+        "target": "DO_ZHEJIANG",
+        "label": "연결",
+        "id": "c30cee82-f5e8-4468-8fa0-9c514f9c5d57"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HUBEI",
+        "target": "DO_ZHEJIANG",
+        "label": "연결",
+        "id": "65092c50-a794-41f4-84d2-f3b07b43b2d5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HUBEI",
+        "target": "DO_HUNAN",
+        "label": "연결",
+        "id": "e350cea5-4515-4f61-95ae-32b290854429"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HUBEI",
+        "target": "DO_SICHUAN",
+        "label": "연결",
+        "id": "e6d5bcb2-5b0e-45bd-b8fe-e197dc910279"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_GANSU",
+        "target": "DO_QINGHAI",
+        "label": "연결",
+        "id": "1713faf9-638f-48ad-aac5-ec7592879243"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_GANSU",
+        "target": "DO_SICHUAN",
+        "label": "연결",
+        "id": "e1f29712-2eba-43ef-b351-b5f6a6e77219"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SICHUAN",
+        "target": "DO_YUNNAN",
+        "label": "연결",
+        "id": "151e72ba-63c2-4c08-8a62-14a601c03fdc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SICHUAN",
+        "target": "DO_QINGHAI",
+        "label": "연결",
+        "id": "5ce735d2-a291-4ae2-afe3-29b923cbf3c6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_JIANGXI",
+        "target": "DO_FUJIAN",
+        "label": "연결",
+        "id": "27899ba7-af99-405d-aad5-10c82b2903cf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_JIANGXI",
+        "target": "DO_GUANGDONG",
+        "label": "연결",
+        "id": "0079e75d-102c-4f56-99e5-5c0aba00f2ad"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HUNAN",
+        "target": "DO_GUANGXI",
+        "label": "연결",
+        "id": "441a122a-b491-4034-ad75-ac38d84de705"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_GUANGXI",
+        "target": "DO_GUANGDONG",
+        "label": "연결",
+        "id": "1265eb60-2ab8-444d-bb20-2679f34bfd1b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PERIOD_HAN",
+        "target": "PERIOD_TANG",
+        "label": "계승",
+        "id": "ff123c44-6201-4e3a-ab28-87ee6d9dd094"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PERIOD_TANG",
+        "target": "PERIOD_SONG",
+        "label": "계승",
+        "id": "27d9b832-0b0e-4ef1-9ace-c35943c858e6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PERIOD_SONG",
+        "target": "PERIOD_YUAN",
+        "label": "계승",
+        "id": "84412696-e8b5-4ac6-bd56-4c5d33ec25b1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PERIOD_YUAN",
+        "target": "PERIOD_MING",
+        "label": "계승",
+        "id": "d7ad2964-59ff-4f70-a967-b5bc2184b25d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "PERIOD_MING",
+        "target": "PERIOD_QING",
+        "label": "계승",
+        "id": "fbda5db2-0431-44bd-b2f1-0aa1a0ab3d63"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_CHANGAN",
+        "target": "DO_SHAANXI",
+        "label": "위치",
+        "id": "ae6a3901-e01a-4283-a50b-d9eb152c795e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_KAIFENG",
+        "target": "DO_HENAN",
+        "label": "위치",
+        "id": "511cebb1-165c-4c47-94c6-037ab74ce356"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_LINAN",
+        "target": "DO_ZHEJIANG",
+        "label": "위치",
+        "id": "486a910c-e076-4a88-a0e9-e894b69ffb74"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_BEIJING",
+        "target": "DO_HEBEI",
+        "label": "위치",
+        "id": "10217738-305a-4da5-832e-fb6f1d77abe0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HEBEI",
+        "target": "CAPITAL_BEIJING",
+        "label": "포함",
+        "id": "b8f75ed2-2152-46ec-a8dd-07826701523f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_BEIJING",
+        "target": "ROYAL_GEUMUIWI",
+        "label": "소속",
+        "id": "b9849ead-5da4-4ebd-be72-f5e0c09574b7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_BEIJING",
+        "target": "ROYAL_DONGCHANG",
+        "label": "소속",
+        "id": "3b60163b-2614-4f15-8474-0002f8dcf7d0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_BEIJING",
+        "target": "ROYAL_SEOCHANG",
+        "label": "소속",
+        "id": "ecedb0ec-e9db-45b4-8b1f-9cee1ac717d2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_BEIJING",
+        "target": "ROYAL_EORIM",
+        "label": "소속",
+        "id": "cb36aa62-3746-4f30-a230-5589a5b36446"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_BEIJING",
+        "target": "ROYAL_YUKBU",
+        "label": "소속",
+        "id": "135fec56-bb0c-487b-b0ec-abf2c7ae1f58"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_BEIJING",
+        "target": "ROYAL_DOCHALWON",
+        "label": "소속",
+        "id": "47bc81dd-859a-49e5-963a-1de69eec4193"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAPITAL_BEIJING",
+        "target": "ROYAL_HANLIMWON",
+        "label": "소속",
+        "id": "1d363d57-0274-48fe-b849-ebbb01c59284"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HENAN",
+        "target": "CAPITAL_KAIFENG",
+        "label": "포함",
+        "id": "50017c94-cb25-4a0b-959a-83fdb5847e24"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_ZHEJIANG",
+        "target": "CAPITAL_LINAN",
+        "label": "포함",
+        "id": "701186ac-ca3a-4187-8a08-0bc7ee923cdd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SHAANXI",
+        "target": "CAPITAL_CHANGAN",
+        "label": "포함",
+        "id": "0aff2059-fde2-4667-8632-a3057226bb4b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HENAN",
+        "target": "FACTION_SHAOLIN",
+        "label": "위치",
+        "id": "0c7ad465-7051-4898-b64e-941f11249321"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HUBEI",
+        "target": "FACTION_WUDANG",
+        "label": "위치",
+        "id": "1cd4eec6-5ad3-4ef7-80b2-dab0c64c2881"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SHAANXI",
+        "target": "FACTION_HUASHAN",
+        "label": "위치",
+        "id": "47930824-96bd-4600-8f5a-4329f2950689"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SICHUAN",
+        "target": "FACTION_EMEI",
+        "label": "위치",
+        "id": "fd373ac2-8499-429e-b9a8-fa243b5466f1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SICHUAN",
+        "target": "FACTION_QINGCHENG",
+        "label": "위치",
+        "id": "26887c88-b69a-4f97-ac83-4c14de114b4d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_QINGHAI",
+        "target": "FACTION_KUNLUN",
+        "label": "위치",
+        "id": "bd544330-a7ea-44eb-9bf2-52eee31870ec"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_YUNNAN",
+        "target": "FACTION_DIANCANG",
+        "label": "위치",
+        "id": "7672259a-0099-41e6-89ae-4701b5f20633"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_GANSU",
+        "target": "FACTION_KONGTONG",
+        "label": "위치",
+        "id": "9e48b098-5e89-45fc-9e00-bccc95965de3"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HEBEI",
+        "target": "FACTION_GAIBANG",
+        "label": "본거지",
+        "id": "7d920396-9761-4f9f-a223-55314453be2f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_JIANGSU",
+        "target": "FACTION_NAMGUNG",
+        "label": "위치",
+        "id": "e625c82d-aaa6-4ec3-97ea-345fce2a824c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HUBEI",
+        "target": "FACTION_JEGAL",
+        "label": "위치",
+        "id": "be6b135a-cca0-4d2f-a6b8-89e076ea1100"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SHANDONG",
+        "target": "FACTION_HWANGBO",
+        "label": "위치",
+        "id": "a4c7c2f2-8151-4310-92dd-d907e654bec5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_HUNAN",
+        "target": "FACTION_MOYONG",
+        "label": "위치",
+        "id": "94ed509a-b494-4323-b92f-2c238812c840"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SICHUAN",
+        "target": "FACTION_DANGMUN",
+        "label": "위치",
+        "id": "5377fd4e-5fcc-4d61-8070-96dba4b1ebe4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SHAANXI",
+        "target": "FACTION_GOMYO",
+        "label": "위치",
+        "id": "134cb272-dd09-4880-8b89-2f474f051fe9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SHAANXI",
+        "target": "FACTION_JEOJIN",
+        "label": "위치",
+        "id": "ca23c9ec-61cc-4829-aae1-196cebe3b976"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "DO_SHAANXI",
+        "target": "FACTION_SOYO",
+        "label": "위치",
+        "id": "ea1e913e-6879-47a7-a025-32fe67f0d8fe"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SHAOLIN",
+        "target": "DETAIL_SHAOLIN_MA1",
+        "label": "무공",
+        "id": "3a5ee7c4-8758-408b-9ef6-d0b809b761a8"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SHAOLIN",
+        "target": "DETAIL_SHAOLIN_MA2",
+        "label": "무공",
+        "id": "413b23eb-c268-499c-9c84-c32eed94c444"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SHAOLIN",
+        "target": "DETAIL_SHAOLIN_MA3",
+        "label": "무공",
+        "id": "c37c90ab-4e54-4d14-a841-36333b0e35e0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SHAOLIN",
+        "target": "DETAIL_SHAOLIN_CH1",
+        "label": "인물",
+        "id": "7411f89c-01da-4940-a451-490f2ceb756e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SHAOLIN",
+        "target": "DETAIL_SHAOLIN_CH2",
+        "label": "인물",
+        "id": "346aeb47-e37e-4c97-9858-08aa864b58ce"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SHAOLIN",
+        "target": "DETAIL_SHAOLIN_EV1",
+        "label": "사건",
+        "id": "f5792289-ad6a-4bc5-b774-d45d5cbd8348"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SHAOLIN",
+        "target": "DETAIL_SHAOLIN_IT1",
+        "label": "아이템",
+        "id": "f8a920d6-dfa3-4455-8e5b-cbfc73c66d50"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SHAOLIN",
+        "target": "DETAIL_SHAOLIN_IT2",
+        "label": "아이템",
+        "id": "b1728733-e376-4ffa-be7c-c8c43024e7fa"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_WUDANG",
+        "target": "DETAIL_WUDANG_MA1",
+        "label": "무공",
+        "id": "7c6a9ed1-8696-47b8-99f3-ab03e447ace1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_WUDANG",
+        "target": "DETAIL_WUDANG_MA2",
+        "label": "무공",
+        "id": "7222c49f-892f-4a74-8482-3759235351dc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_WUDANG",
+        "target": "DETAIL_WUDANG_CH1",
+        "label": "인물",
+        "id": "c7115213-ab2e-478f-aac4-e41cb028ffe2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_HUASHAN",
+        "target": "DETAIL_HUASHAN_MA1",
+        "label": "무공",
+        "id": "de4faefa-4b88-4a35-a023-9ccddf748360"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_HUASHAN",
+        "target": "DETAIL_HUASHAN_CH1",
+        "label": "인물",
+        "id": "e0f9d4b1-a431-4a8e-b6aa-126cce2320bd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_GAIBANG",
+        "target": "DETAIL_GAIBANG_MA1",
+        "label": "무공",
+        "id": "25c7799b-d16c-4047-b366-d0926c676dbc"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_GAIBANG",
+        "target": "DETAIL_GAIBANG_MA2",
+        "label": "무공",
+        "id": "5485b6ab-4592-405a-bd13-dc6787e54ad2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_GAIBANG",
+        "target": "DETAIL_GAIBANG_CH1",
+        "label": "인물",
+        "id": "16f30172-ce90-4582-bbc2-1fab0d98d200"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_MAKYO",
+        "target": "DETAIL_MAKYO_MA1",
+        "label": "무공",
+        "id": "04fd7372-8138-4c93-ba32-b8855d9bc567"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_MAKYO",
+        "target": "DETAIL_MAKYO_CH1",
+        "label": "인물",
+        "id": "b558ac8f-32a6-4c39-811c-0563a74b4d0b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_GOMYO",
+        "target": "DETAIL_GOMYO_MA1",
+        "label": "무공",
+        "id": "93d57a59-8087-4cc1-bfca-f748765d6596"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_GOMYO",
+        "target": "DETAIL_GOMYO_CH1",
+        "label": "인물",
+        "id": "e10d9ebd-e01f-4a98-b1e9-109b2a2de383"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_GOMYO",
+        "target": "DETAIL_GOMYO_CH2",
+        "label": "인물",
+        "id": "a1f45257-9621-42b2-b4e7-80ab3fb3d7f2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SOYO",
+        "target": "DETAIL_SOYO_MA1",
+        "label": "무공",
+        "id": "6564cde9-ae01-45c6-8b4a-3fa98eb87821"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_SOYO",
+        "target": "DETAIL_SOYO_MA2",
+        "label": "무공",
+        "id": "ba9bf1da-18b2-4a36-9ef2-8b3d48b129b2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_JEOJIN",
+        "target": "DETAIL_JEOJIN_MA1",
+        "label": "무공",
+        "id": "3918d12d-c999-45d9-9c49-fb9065676e88"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_JEOJIN",
+        "target": "DETAIL_JEOJIN_CH1",
+        "label": "인물",
+        "id": "60bcf00c-0884-4035-a012-221d054ba2d5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_NAMGUNG",
+        "target": "DETAIL_NAMGUNG_MA1",
+        "label": "무공",
+        "id": "174d1cbb-a919-463c-887a-44a8ee199697"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_NAMGUNG",
+        "target": "DETAIL_NAMGUNG_MA2",
+        "label": "무공",
+        "id": "29a750ea-ccfd-43e3-a619-4d48bdb8f81a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_DANGMUN",
+        "target": "DETAIL_DANGMUN_MA1",
+        "label": "무공",
+        "id": "b8c75b58-ac1e-44d3-8bee-2d5b8a947a8e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_DANGMUN",
+        "target": "DETAIL_DANGMUN_MA2",
+        "label": "무공",
+        "id": "3f03a36e-d6b6-4612-bdfc-85f0ccfa6ce4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_EMEI",
+        "target": "DETAIL_EMEI_MA1",
+        "label": "무공",
+        "id": "a6ecc0c1-bc98-4de6-899b-8997941e9794"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "FACTION_EMEI",
+        "target": "DETAIL_EMEI_CH1",
+        "label": "인물",
+        "id": "e69d2db8-1adf-45fc-a528-19915531962f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+}
