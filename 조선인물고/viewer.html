@@ -106,6 +106,7 @@
                 <div class="tab" data-tab="geo" onclick="switchTab('geo')">📍 지명</div>
                 <div class="tab" data-tab="terms" onclick="switchTab('terms')">📚 용어</div>
                 <div class="tab" data-tab="timeline" onclick="switchTab('timeline')">📅 연대기</div>
+                <div class="tab" data-tab="dict" onclick="switchTab('dict')">📖 사전</div>
             </div>
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="검색어 입력...">
@@ -136,6 +137,7 @@
         let geoData = null;
         let termsData = null;
         let timelineData = null;
+        let dictData = null;
         
         // Wikipedia cache
         const wikiCache = new Map();
@@ -304,7 +306,7 @@
         }
         
         function tabLabel(tab) {
-            const labels = { geo: '지명', terms: '용어', timeline: '연대기' };
+            const labels = { geo: '지명', terms: '용어', timeline: '연대기', dict: '사전' };
             return labels[tab] || tab;
         }
         
@@ -316,6 +318,8 @@
                 termsData = await fetchAllTerms();
             } else if (tab === 'timeline' && !timelineData) {
                 timelineData = await fetchJSONGz('history_timeline.json.gz');
+            } else if (tab === 'dict' && !dictData) {
+                dictData = await fetchJSONGz('history_dictionary.json.gz');
             }
         }
         
@@ -401,7 +405,15 @@
                 data = timelineData;
                 if (data && Array.isArray(data.data)) {
                     results = q ? data.data.filter(d => 
-                        (d.title || '').includes(q) || (d.period || '').includes(q)
+                        (d.title || '').includes(q) || (d.date_text || '').includes(q)
+                    ) : data.data.slice(0, 100);
+                    results = results.slice(0, 200);
+                }
+            } else if (tab === 'dict') {
+                data = dictData;
+                if (data && Array.isArray(data.data)) {
+                    results = q ? data.data.filter(d => 
+                        (d.name || '').includes(q) || (d.name_hanja || '').includes(q) || (d.type || '').includes(q) || (d.content || '').includes(q)
                     ) : data.data.slice(0, 100);
                     results = results.slice(0, 200);
                 }
@@ -432,11 +444,20 @@
                             <div class="data-info">${item.period ? `시대: ${item.period}` : ''} ${item.category ? `| 분류: ${item.category}` : ''}</div>
                             ${item.description ? `<div class="data-desc">${escapeHtml(item.description)}</div>` : ''}
                         </div>`;
+                } else if (tab === 'dict') {
+                    return `
+                        <div class="data-item">
+                            <h2>${item.name || ''} ${item.name_hanja ? `<span style="font-size:0.9rem;color:#888;">(${item.name_hanja})</span>` : ''}</h2>
+                            ${item.summary ? `<div class="data-desc" style="color:#555;margin-bottom:8px;">${escapeHtml(item.summary)}</div>` : ''}
+                            <div class="data-info">${item.type ? `유형: ${item.type}` : ''}</div>
+                            ${item.subtitle ? `<div style="font-weight:bold;margin-top:12px;">${escapeHtml(item.subtitle)}</div>` : ''}
+                            ${item.content ? `<div class="data-desc">${escapeHtml(item.content)}</div>` : ''}
+                        </div>`;
                 } else {
                     return `
                         <div class="data-item">
-                            <h2>${item.title || ''}</h2>
-                            <div class="data-info">${item.period ? `시대: ${item.period}` : ''} ${item.start_date ? `| ${item.start_date}` : ''}${item.end_date ? ` ~ ${item.end_date}` : ''}</div>
+                            <h2>${item.date ? `<span style="color:#a0522d;">${item.date}</span> ` : ''}${item.lunar ? `[${item.lunar}] ` : ''}${item.title || ''}</h2>
+                            ${item.date_text ? `<div class="data-info">${item.date_text}</div>` : ''}
                             ${item.content ? `<div class="data-desc">${escapeHtml(item.content)}</div>` : ''}
                         </div>`;
                 }
