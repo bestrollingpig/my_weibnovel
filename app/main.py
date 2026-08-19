@@ -16,6 +16,7 @@ from app.popularity import record as record_search
 from app.popularity import today as popularity_today
 from app.popularity import top as top_searches
 from app.rss import search_by_terms
+from app.wikipedia import search_by_terms as search_wikipedia
 
 load_dotenv()
 
@@ -220,6 +221,8 @@ async def search_materials(
     includeRss: bool = Query(True, description="Google뉴스 포함 여부"),
     includePapers: bool = Query(False, description="KCI 논문 검색 포함 여부 (논문명 부분일치, 응답이 느림)"),
     paperTerms: int = Query(2, ge=0, le=4, description="KCI 논문 검색에 사용할 검색어 개수"),
+    includeWiki: bool = Query(True, description="한국어 위키백과 요약 포함 여부 (개념·배경 지식)"),
+    wikiTerms: int = Query(2, ge=0, le=4, description="위키백과 검색에 사용할 검색어 개수"),
     sort: str = Query("relevance", pattern="^(relevance|recent|cited|source)$", description="정렬: relevance(관련도) / recent(최신순) / cited(인용순, 논문) / source(소스별)"),
 ):
     target = find_material(genre, material)
@@ -235,6 +238,7 @@ async def search_materials(
     rss_count = 0
     paper_count = 0
     paper_error = ""
+    wiki_count = 0
     async with httpx.AsyncClient(timeout=30.0) as client:
         if includeKci:
             first = await _fetch_page(client, pageNo, recordCnt)
@@ -264,6 +268,10 @@ async def search_materials(
                     results.append({**paper, "dataSource": "KCI 논문"})
             except HTTPException:
                 paper_error = "KCI 논문 API 일시 오류로 건너뛰었습니다. 다른 소스 결과는 정상입니다."
+        if includeWiki:
+            for wiki_article in await search_wikipedia(client, target["searchTerms"], wikiTerms):
+                wiki_count += 1
+                results.append({**wiki_article, "dataSource": "위키백과"})
 
     _sort_results(results, sort)
     record_search(genre, material, genre_obj["name"], target["name"])
@@ -279,6 +287,7 @@ async def search_materials(
         "rssCount": rss_count,
         "paperCount": paper_count,
         "paperError": paper_error,
+        "wikiCount": wiki_count,
         "totalCount": len(results),
         "results": results,
     }

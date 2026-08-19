@@ -49,9 +49,11 @@
   .src-kci { background: #e7f6ee; color: #1a7f46; }
   .src-rss { background: #eef3ff; color: #3d5cc7; }
   .src-paper { background: #fdf0e3; color: #b05a1f; }
+  .src-wiki { background: #efeff5; color: #5a5a6e; }
   [data-theme="dark"] .src-kci { background: #1d3a2b; color: #6fd39a; }
   [data-theme="dark"] .src-rss { background: #232f4d; color: #8fb0ff; }
   [data-theme="dark"] .src-paper { background: #3d2d1a; color: #f0a469; }
+  [data-theme="dark"] .src-wiki { background: #34343f; color: #b9b9c9; }
   .tag { background: var(--tag-bg); color: var(--tag-text); padding: 2px 8px; border-radius: 10px; font-size: 11px; }
   .empty { text-align: center; color: var(--subtle); padding: 30px 0; font-size: 14px; }
   .loading-text { text-align: center; color: var(--accent); padding: 30px 0; }
@@ -121,10 +123,12 @@
       </select>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="kciOnly"> KCI 보도자료만 보기</label>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#7a5bd6;"><input type="checkbox" id="paperOn"> KCI 논문 포함 (인용·초록, 응답 느림)</label>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="wikiOn" checked> 위키백과 포함 (개념·배경)</label>
     </div>
     <div id="sourceNote">
       <span class="src-kci">KCI 보도자료</span> = 대학·기관 1차 자료
       · <span class="src-paper">KCI 논문</span> = 학술논문 메타데이터 (연구 트렌드·전문 개념)
+      · <span class="src-wiki">위키백과</span> = 개념·배경 지식 요약
       · <span class="src-rss">Google뉴스</span> = 언론사 기사
     </div>
     <div id="resultList"><div class="empty">장르와 소재를 선택하면 기사가 여기에 표시됩니다.</div></div>
@@ -290,7 +294,7 @@ $("paperNextBtn").addEventListener("click", () => searchPapers(paperPage + 1));
 function cardHtml(r) {
   const isKci = r.dataSource === "KCI 보도자료";
   const isPaper = r.dataSource === "KCI 논문";
-  const srcClass = isKci ? "src-kci" : (isPaper ? "src-paper" : "src-rss");
+  const srcClass = isKci ? "src-kci" : (isPaper ? "src-paper" : (r.dataSource === "위키백과" ? "src-wiki" : "src-rss"));
   const tags = (r.matchedTerms || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
   let extra = "";
   if (isPaper) {
@@ -299,8 +303,8 @@ function cardHtml(r) {
     if (r.orteYn === "Y") bits.push("원문 공개");
     if (r.doi) bits.push("DOI " + escapeHtml(r.doi));
     if (bits.length) extra += `<div class="paper-meta">${bits.join(" · ")}</div>`;
-    if (r.abstract) extra += `<div class="paper-abs">${escapeHtml(r.abstract.length > 180 ? r.abstract.slice(0, 180) + "…" : r.abstract)}</div>`;
   }
+  if (r.abstract) extra += `<div class="paper-abs">${escapeHtml(r.abstract.length > 180 ? r.abstract.slice(0, 180) + "…" : r.abstract)}</div>`;
   return `<div class="card">
     <a href="${escapeHtml(r.newsUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.newsTitle)}</a>
     <div class="meta">
@@ -328,7 +332,8 @@ async function search(materialId, materialName, btn) {
     const sort = $("sortSel").value;
     const includeRss = $("kciOnly").checked ? "false" : "true";
     const includePapers = $("paperOn").checked ? "true" : "false";
-    const url = `/api/search?genre=${encodeURIComponent(activeGenre)}&material=${encodeURIComponent(materialId)}&maxPages=3&recordCnt=100&rssTerms=3&sort=${encodeURIComponent(sort)}&includeRss=${includeRss}&includePapers=${includePapers}&paperTerms=2`;
+    const includeWiki = $("wikiOn").checked ? "true" : "false";
+    const url = `/api/search?genre=${encodeURIComponent(activeGenre)}&material=${encodeURIComponent(materialId)}&maxPages=3&recordCnt=100&rssTerms=3&sort=${encodeURIComponent(sort)}&includeRss=${includeRss}&includePapers=${includePapers}&paperTerms=2&includeWiki=${includeWiki}`;
     const res = await fetch(url);
     if (!res.ok) {
       const err = await res.json();
@@ -337,7 +342,7 @@ async function search(materialId, materialName, btn) {
     const data = await res.json();
     $("resultInfo").innerHTML =
       `<span class="badge">${escapeHtml(data.material)}</span>` +
-      `<span class="counts">${escapeHtml(data.materialDesc)} · 보도자료 ${data.kciCount}건 / 논문 ${data.paperCount}건 / 뉴스 ${data.rssCount}건</span>` +
+      `<span class="counts">${escapeHtml(data.materialDesc)} · 보도자료 ${data.kciCount}건 / 논문 ${data.paperCount}건 / 위키백과 ${data.wikiCount}건 / 뉴스 ${data.rssCount}건</span>` +
       (data.paperError ? `<span class="counts" style="color:#b05a1f;">${escapeHtml(data.paperError)}</span>` : "");
     if (data.results.length === 0) {
       $("resultList").innerHTML = '<div class="empty">이 소재에 맞는 기사를 찾지 못했습니다.</div>';
@@ -345,10 +350,12 @@ async function search(materialId, materialName, btn) {
     }
     const pressItems = data.results.filter(r => r.dataSource === "KCI 보도자료");
     const paperItems = data.results.filter(r => r.dataSource === "KCI 논문");
+    const wikiItems = data.results.filter(r => r.dataSource === "위키백과");
     const newsItems = data.results.filter(r => r.dataSource === "Google뉴스");
     $("resultList").innerHTML =
       renderGroup("KCI 보도자료 (공식 1차 자료)", pressItems.length, pressItems) +
       renderGroup("KCI 논문 (연구 자료)", paperItems.length, paperItems) +
+      renderGroup("위키백과 (개념·배경 지식)", wikiItems.length, wikiItems) +
       renderGroup("Google뉴스", newsItems.length, newsItems);
     loadPopular();
   } catch (e) {
@@ -365,6 +372,9 @@ $("kciOnly").addEventListener("change", () => {
   if (lastSearch) search(lastSearch.materialId, lastSearch.materialName, lastSearch.btn);
 });
 $("paperOn").addEventListener("change", () => {
+  if (lastSearch) search(lastSearch.materialId, lastSearch.materialName, lastSearch.btn);
+});
+$("wikiOn").addEventListener("change", () => {
   if (lastSearch) search(lastSearch.materialId, lastSearch.materialName, lastSearch.btn);
 });
 
