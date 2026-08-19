@@ -37,6 +37,8 @@
   .loading-text { text-align: center; color: #5b4bd6; padding: 30px 0; }
   .sortbar { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: #666; }
   .sortbar select { padding: 5px 8px; border: 1px solid #d8d9e0; border-radius: 6px; background: #fff; font-size: 13px; }
+  #sourceNote { margin-top: 8px; font-size: 12px; color: #888; }
+  #sourceNote .src-kci, #sourceNote .src-rss { font-weight: 600; }
   footer { text-align: center; color: #aaa; font-size: 12px; padding: 20px; }
 </style>
 </head>
@@ -68,6 +70,10 @@
         <option value="recent">최신순</option>
         <option value="source">소스별 (KCI → 뉴스)</option>
       </select>
+    </div>
+    <div id="sourceNote">
+      <span class="src-kci">KCI 보도자료</span> = 대학·기관이 직접 발행한 1차 자료 (일반 검색에 잘 안 잡히는 원천)
+      · <span class="src-rss">Google뉴스</span> = 언론사 기사
     </div>
     <div id="resultList"><div class="empty">장르와 소재를 선택하면 기사가 여기에 표시됩니다.</div></div>
   </section>
