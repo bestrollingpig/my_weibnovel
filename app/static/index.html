@@ -39,6 +39,8 @@
   .sortbar select { padding: 5px 8px; border: 1px solid #d8d9e0; border-radius: 6px; background: #fff; font-size: 13px; }
   #sourceNote { margin-top: 8px; font-size: 12px; color: #888; }
   #sourceNote .src-kci, #sourceNote .src-rss { font-weight: 600; }
+  .group-head { display: flex; align-items: center; gap: 8px; margin: 14px 0 6px; }
+  .group-head .badge { background: #eef0ff; color: #5b4bd6; font-size: 12px; padding: 3px 10px; border-radius: 12px; }
   footer { text-align: center; color: #aaa; font-size: 12px; padding: 20px; }
 </style>
 </head>
@@ -60,6 +62,12 @@
     <h2>2. 소재 선택</h2>
     <div class="materials" id="materials"></div>
   </section>
+  <section id="kciSection" style="display:none;">
+    <h2>3. KCI 보도자료 전체 보기 <span style="font-weight:normal;font-size:12px;color:#888;">(대학·기관 1차 자료, 일반 검색에 안 잡히는 원천)</span></h2>
+    <input type="text" id="kciFilter" placeholder="제목·기관 검색어 입력 (예: 대학, 연구소)" style="width:100%;padding:8px 10px;border:1px solid #d8d9e0;border-radius:8px;font-size:13px;margin-bottom:10px;">
+    <div id="kciList" class="empty">불러오는 중...</div>
+    <div id="kciCount" style="font-size:12px;color:#888;margin-top:8px;"></div>
+  </section>
   <section>
     <h2>검색 결과</h2>
     <div id="resultInfo"></div>
@@ -68,8 +76,8 @@
       <select id="sortSel">
         <option value="relevance">관련도순</option>
         <option value="recent">최신순</option>
-        <option value="source">소스별 (KCI → 뉴스)</option>
       </select>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="kciOnly"> KCI 보도자료만 보기</label>
     </div>
     <div id="sourceNote">
       <span class="src-kci">KCI 보도자료</span> = 대학·기관이 직접 발행한 1차 자료 (일반 검색에 잘 안 잡히는 원천)
@@ -135,6 +143,71 @@ function escapeHtml(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+let kciItems = [];
+
+async function loadKci() {
+  $("kciSection").style.display = "block";
+  try {
+    const res = await fetch("/api/press?recordCnt=100");
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "KCI 조회 실패");
+    }
+    kciItems = (await res.json()).items || [];
+    $("kciFilter").value = "";
+    renderKci("");
+  } catch (e) {
+    $("kciList").innerHTML = `<div class="empty">KCI 조회 실패: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderKci(query) {
+  const q = query.trim();
+  const list = kciItems.filter(it =>
+    !q || (it.newsTitle || "").includes(q) || (it.pressName || "").includes(q)
+  );
+  $("kciCount").textContent = `전체 ${kciItems.length}건 · 표시 ${list.length}건`;
+  if (list.length === 0) {
+    $("kciList").innerHTML = '<div class="empty">조건에 맞는 보도자료가 없습니다.</div>';
+    return;
+  }
+  $("kciList").innerHTML = list.map(it => `<div class="card">
+    <a href="${escapeHtml(it.newsUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(it.newsTitle)}</a>
+    <div class="meta">
+      <span class="badge src-kci">KCI 보도자료</span>
+      <span>${escapeHtml(it.pressName || "")}</span>
+      <span>${escapeHtml(it.writeDate || "")}</span>
+    </div>
+  </div>`).join("");
+}
+
+let kciTimer = null;
+$("kciFilter").addEventListener("input", e => {
+  clearTimeout(kciTimer);
+  kciTimer = setTimeout(() => renderKci(e.target.value), 200);
+});
+
+function cardHtml(r) {
+  const isKci = r.dataSource === "KCI 보도자료";
+  const srcClass = isKci ? "src-kci" : "src-rss";
+  const tags = (r.matchedTerms || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+  return `<div class="card">
+    <a href="${escapeHtml(r.newsUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.newsTitle)}</a>
+    <div class="meta">
+      <span class="badge ${srcClass}">${escapeHtml(r.dataSource)}</span>
+      <span>${escapeHtml(r.pressName || "")}</span>
+      <span>${escapeHtml(r.writeDate || "")}</span>
+      ${tags}
+    </div>
+  </div>`;
+}
+
+function renderGroup(title, count, items) {
+  if (count === 0) return "";
+  return `<div class="group-head"><span class="badge">${escapeHtml(title)}</span><span class="counts">${count}건</span></div>` +
+    items.map(cardHtml).join("");
+}
+
 async function search(materialId, materialName, btn) {
   btn.classList.add("loading");
   lastSearch = { materialId, materialName, btn };
@@ -142,7 +215,8 @@ async function search(materialId, materialName, btn) {
   $("resultList").innerHTML = '<div class="loading-text">기사를 찾고 있습니다...</div>';
   try {
     const sort = $("sortSel").value;
-    const url = `/api/search?genre=${encodeURIComponent(activeGenre)}&material=${encodeURIComponent(materialId)}&maxPages=3&recordCnt=100&rssTerms=3&sort=${encodeURIComponent(sort)}`;
+    const includeRss = $("kciOnly").checked ? "false" : "true";
+    const url = `/api/search?genre=${encodeURIComponent(activeGenre)}&material=${encodeURIComponent(materialId)}&maxPages=3&recordCnt=100&rssTerms=3&sort=${encodeURIComponent(sort)}&includeRss=${includeRss}`;
     const res = await fetch(url);
     if (!res.ok) {
       const err = await res.json();
@@ -156,20 +230,11 @@ async function search(materialId, materialName, btn) {
       $("resultList").innerHTML = '<div class="empty">이 소재에 맞는 기사를 찾지 못했습니다.</div>';
       return;
     }
-    $("resultList").innerHTML = data.results.map(r => {
-      const isKci = r.dataSource === "KCI 보도자료";
-      const srcClass = isKci ? "src-kci" : "src-rss";
-      const tags = (r.matchedTerms || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
-      return `<div class="card">
-        <a href="${escapeHtml(r.newsUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.newsTitle)}</a>
-        <div class="meta">
-          <span class="badge ${srcClass}">${escapeHtml(r.dataSource)}</span>
-          <span>${escapeHtml(r.pressName || "")}</span>
-          <span>${escapeHtml(r.writeDate || "")}</span>
-          ${tags}
-        </div>
-      </div>`;
-    }).join("");
+    const kciItems = data.results.filter(r => r.dataSource === "KCI 보도자료");
+    const newsItems = data.results.filter(r => r.dataSource !== "KCI 보도자료");
+    $("resultList").innerHTML =
+      renderGroup("KCI 보도자료 (공식 1차 자료)", kciItems.length, kciItems) +
+      renderGroup("Google뉴스", newsItems.length, newsItems);
     loadPopular();
   } catch (e) {
     $("resultList").innerHTML = `<div class="empty">오류: ${escapeHtml(e.message)}</div>`;
@@ -181,9 +246,13 @@ async function search(materialId, materialName, btn) {
 $("sortSel").addEventListener("change", () => {
   if (lastSearch) search(lastSearch.materialId, lastSearch.materialName, lastSearch.btn);
 });
+$("kciOnly").addEventListener("change", () => {
+  if (lastSearch) search(lastSearch.materialId, lastSearch.materialName, lastSearch.btn);
+});
 
 loadGenres();
 loadPopular();
+loadKci();
 </script>
 </body>
 </html>

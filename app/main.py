@@ -193,7 +193,7 @@ async def search_materials(
     pageNo: int = Query(1, ge=1, description="시작 페이지 번호"),
     maxPages: int = Query(3, ge=1, le=10, description="KCI에서 가져올 페이지 수"),
     recordCnt: int = Query(10, ge=1, le=100, description="한 페이지 결과 수"),
-rssTerms: int = Query(3, ge=0, le=6, description="RSS에서 검색할 검색어 개수 (0이면 RSS 미사용)"),
+    rssTerms: int = Query(3, ge=0, le=6, description="RSS에서 검색할 검색어 개수 (0이면 RSS 미사용)"),
     includeKci: bool = Query(True, description="KCI 보도자료 포함 여부"),
     includeRss: bool = Query(True, description="Google뉴스 포함 여부"),
     sort: str = Query("relevance", pattern="^(relevance|recent|source)$", description="정렬: relevance(관련도) / recent(최신순) / source(소스별)"),
@@ -204,8 +204,6 @@ rssTerms: int = Query(3, ge=0, le=6, description="RSS에서 검색할 검색어 
     genre_obj = next((g for g in MATERIALS["genres"] if g["id"] == genre), None)
     if includeKci:
         _require_key()
-    if target is None:
-        raise HTTPException(status_code=404, detail=f"소재를 찾을 수 없습니다: {genre}/{material}")
 
     results = []
     searched = 0
