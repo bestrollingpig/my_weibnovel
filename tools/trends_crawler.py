@@ -37,8 +37,11 @@ RE_TITLE = re.compile(r'<a\s+href="(/novel/detail\.series\?productNo=\d+)"[^>]*>
 RE_SCORE = re.compile(r'<em\s+class="score_num">([\d.]+)</em>')
 RE_AUTHOR = re.compile(r'<span\s+class="author">([^<]+)</span>')
 RE_ELLIPSIS = re.compile(r'<span\s+class="ellipsis">([^<]*)</span>')
+RE_FREE = re.compile(r'<span\s+class="free_info[^"]*">\s*<span>([^<]+)</span>(?:\s*<span\s+class="date_remain">([^<]+)</span>)?')
 RE_STRIP_TAG = re.compile(r"<[^>]+>")
 RE_SPACE = re.compile(r"\s+")
+RE_EP_PREFIX = re.compile(r"총(\d+)(화|권|부)/(완결|미완결)")
+RE_EP_TAIL = re.compile(r"[\(（](\d+)(화|권)/(완결|미완결)[\)）]?$")
 
 
 def fetch(url: str) -> str:
@@ -58,6 +61,7 @@ def parse_series_items(html: str, source_label: str) -> list[dict]:
             continue
         path, title = title_m.groups()
         title = RE_SPACE.sub(" ", title).strip()
+        ep_tail = RE_EP_TAIL.search(title)
         title = re.sub(r"[\(（]?\d+[화권]/(?:완결|미완결)[\)）]?$", "", title).strip()
         if not title:
             continue
@@ -65,7 +69,14 @@ def parse_series_items(html: str, source_label: str) -> list[dict]:
         score_m = RE_SCORE.search(block)
         author_m = RE_AUTHOR.search(block)
         ellipsis = [RE_SPACE.sub("", e) for e in RE_ELLIPSIS.findall(block)]
-        episode = next((e for e in ellipsis if "화" in e), "")
+        episode_ell = next((e for e in ellipsis if "화" in e), "")
+        free_m = RE_FREE.search(block)
+        ep_count = ep_unit = status = None
+        m = RE_EP_PREFIX.search(episode_ell)
+        if m:
+            ep_count, ep_unit, status = int(m.group(1)), m.group(2), m.group(3)
+        elif ep_tail:
+            ep_count, ep_unit, status = int(ep_tail.group(1)), ep_tail.group(2), ep_tail.group(3)
         items.append(
             {
                 "platform": "네이버 시리즈",
@@ -77,7 +88,12 @@ def parse_series_items(html: str, source_label: str) -> list[dict]:
                 "url": "https://series.naver.com" + path,
                 "author": (author_m.group(1) if author_m else "").strip(),
                 "score": float(score_m.group(1)) if score_m else None,
-                "episode_info": episode,
+                "episode_info": episode_ell,
+                "episode_count": ep_count,
+                "episode_unit": ep_unit,
+                "status": status,
+                "free_info": (free_m.group(1).strip() if free_m else "") or "",
+                "free_remain": (free_m.group(2).strip() if free_m and free_m.group(2) else "") or "",
                 "is_new": 'ico ico_update' in block,
             }
         )

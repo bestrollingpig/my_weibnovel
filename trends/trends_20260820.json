@@ -1,5 +1,5 @@
 {
- "collected_at": "2026-08-20 12:59:42",
+ "collected_at": "2026-08-20 13:32:34",
  "sources": [
   "naver_series_genre_fantasy",
   "naver_series_genre_martial",
@@ -20,6 +20,11 @@
     "author": "백원도둑놈",
     "score": 8.5,
     "episode_info": "총250화/미완결",
+    "episode_count": 250,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "100화 무료",
+    "free_remain": "2일 남음",
     "is_new": true
    },
    {
@@ -33,6 +38,11 @@
     "author": "갈고리걸림",
     "score": 8.5,
     "episode_info": "총102화/미완결",
+    "episode_count": 102,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "84일 남음",
     "is_new": true
    },
    {
@@ -46,6 +56,11 @@
     "author": "글소리",
     "score": 8.6,
     "episode_info": "총104화/미완결",
+    "episode_count": 104,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "83일 남음",
     "is_new": true
    },
    {
@@ -59,6 +74,11 @@
     "author": "몽쉐르",
     "score": 9.7,
     "episode_info": "총291화/미완결",
+    "episode_count": 291,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "100화 무료",
+    "free_remain": "2일 남음",
     "is_new": true
    },
    {
@@ -72,6 +92,11 @@
     "author": "한성윤",
     "score": 9.7,
     "episode_info": "총169화/미완결",
+    "episode_count": 169,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "33일 남음",
     "is_new": true
    },
    {
@@ -85,6 +110,11 @@
     "author": "흠박",
     "score": 9.5,
     "episode_info": "총176화/미완결",
+    "episode_count": 176,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "12일 남음",
     "is_new": true
    },
    {
@@ -98,6 +128,11 @@
     "author": "디월스",
     "score": 9.6,
     "episode_info": "총235화/완결",
+    "episode_count": 235,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "100화 무료",
+    "free_remain": "2일 남음",
     "is_new": false
    },
    {
@@ -111,6 +146,11 @@
     "author": "장영훈",
     "score": 9.9,
     "episode_info": "총896화/미완결",
+    "episode_count": 896,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "74일 남음",
     "is_new": false
    },
    {
@@ -124,6 +164,11 @@
     "author": "비가",
     "score": 8.6,
     "episode_info": "총1958화/미완결",
+    "episode_count": 1958,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "4일 남음",
     "is_new": true
    },
    {
@@ -137,6 +182,11 @@
     "author": "오두리리",
     "score": 9.2,
     "episode_info": "총188화/미완결",
+    "episode_count": 188,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "84일 남음",
     "is_new": true
    },
    {
@@ -150,6 +200,11 @@
     "author": "언행일치",
     "score": 9.4,
     "episode_info": "총128화/미완결",
+    "episode_count": 128,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "50화 무료",
+    "free_remain": "8일 남음",
     "is_new": false
    },
    {
@@ -163,6 +218,11 @@
     "author": "성하",
     "score": 9.8,
     "episode_info": "총121화/미완결",
+    "episode_count": 121,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "5화 무료",
+    "free_remain": "5일 남음",
     "is_new": false
    },
    {
@@ -176,6 +236,11 @@
     "author": "적설목",
     "score": 8.9,
     "episode_info": "총1067화/완결",
+    "episode_count": 1067,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "27화 무료",
+    "free_remain": "178일 남음",
     "is_new": false
    },
    {
@@ -189,6 +254,11 @@
     "author": "맠엘라하",
     "score": 9.7,
     "episode_info": "총300화/완결",
+    "episode_count": 300,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "25화 무료",
+    "free_remain": "155일 남음",
     "is_new": false
    },
    {
@@ -202,6 +272,11 @@
     "author": "서공(書工)",
     "score": 8.8,
     "episode_info": "총259화/완결",
+    "episode_count": 259,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "50화 무료",
+    "free_remain": "3일 남음",
     "is_new": false
    },
    {
@@ -215,6 +290,11 @@
     "author": "지갑송",
     "score": 9.9,
     "episode_info": "총258화/미완결",
+    "episode_count": 258,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "50화 무료",
+    "free_remain": "2일 남음",
     "is_new": true
    },
    {
@@ -228,6 +308,11 @@
     "author": "여우사초",
     "score": 9.7,
     "episode_info": "총122화/미완결",
+    "episode_count": 122,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "77일 남음",
     "is_new": false
    },
    {
@@ -241,6 +326,11 @@
     "author": "소울풍",
     "score": 9.9,
     "episode_info": "총1068화/미완결",
+    "episode_count": 1068,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "68일 남음",
     "is_new": true
    },
    {
@@ -254,6 +344,11 @@
     "author": "기계처럼",
     "score": 8.9,
     "episode_info": "총150화/미완결",
+    "episode_count": 150,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "50화 무료",
+    "free_remain": "8일 남음",
     "is_new": false
    },
    {
@@ -267,6 +362,11 @@
     "author": "장상사",
     "score": 9.7,
     "episode_info": "총350화/완결",
+    "episode_count": 350,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "20화 무료",
+    "free_remain": "9일 남음",
     "is_new": false
    }
   ],
@@ -282,6 +382,11 @@
     "author": "sahas",
     "score": 10.0,
     "episode_info": "",
+    "episode_count": 187,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "45화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -295,6 +400,11 @@
     "author": "반해",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 1,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -308,6 +418,11 @@
     "author": "야누스",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 1,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -321,6 +436,11 @@
     "author": "아침안개",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 166,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "37화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -334,6 +454,11 @@
     "author": "김사장",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 2,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -347,6 +472,11 @@
     "author": "모순정",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 72,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "3화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -360,6 +490,11 @@
     "author": "리첼리토",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 1,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -373,6 +508,11 @@
     "author": "슐로",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 2,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -386,6 +526,11 @@
     "author": "온리온",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 3,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -399,6 +544,11 @@
     "author": "모순정",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 3,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -412,6 +562,11 @@
     "author": "강하",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 2,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -425,6 +580,11 @@
     "author": "블랙라엘",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 83,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "3화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -438,6 +598,11 @@
     "author": "김사장",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 61,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "3화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -451,6 +616,11 @@
     "author": "심차은",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 2,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -464,6 +634,11 @@
     "author": "윤말희",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 3,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "1권 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -477,6 +652,11 @@
     "author": "한종려",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 64,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "3화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -490,6 +670,11 @@
     "author": "심차은",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 62,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "3화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -503,6 +688,11 @@
     "author": "밤무드",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 3,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -516,6 +706,11 @@
     "author": "달구",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 1,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -529,6 +724,11 @@
     "author": "세르비11",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 1,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -542,6 +742,11 @@
     "author": "유은",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 5,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -555,6 +760,11 @@
     "author": "이재인",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 1,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -568,6 +778,11 @@
     "author": "은물결",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 2,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -581,6 +796,11 @@
     "author": "박로세",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 3,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -594,10 +814,33 @@
     "author": "미친머리앤",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 3,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    }
   ],
   "naver_series_genre_fantasy": [
+   {
+    "platform": "네이버 시리즈",
+    "list": "장르:202",
+    "rank": null,
+    "move": "",
+    "title": "조선인이 총독부에 독을 풀었다",
+    "product_no": "14336968",
+    "url": "https://series.naver.com/novel/detail.series?productNo=14336968",
+    "author": "황투",
+    "score": 9.8,
+    "episode_info": "",
+    "episode_count": 172,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "28일 남음",
+    "is_new": true
+   },
    {
     "platform": "네이버 시리즈",
     "list": "장르:202",
@@ -609,6 +852,11 @@
     "author": "디다트",
     "score": 9.5,
     "episode_info": "",
+    "episode_count": 182,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "76일 남음",
     "is_new": true
    },
    {
@@ -622,6 +870,11 @@
     "author": "목마",
     "score": 9.4,
     "episode_info": "",
+    "episode_count": 193,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "52일 남음",
     "is_new": true
    },
    {
@@ -635,6 +888,11 @@
     "author": "크라툰",
     "score": 9.0,
     "episode_info": "",
+    "episode_count": 165,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "42일 남음",
     "is_new": true
    },
    {
@@ -648,6 +906,11 @@
     "author": "박천상",
     "score": 8.8,
     "episode_info": "",
+    "episode_count": 162,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -661,6 +924,11 @@
     "author": "연꽃맨",
     "score": 9.4,
     "episode_info": "",
+    "episode_count": 112,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "50화 무료",
+    "free_remain": "8일 남음",
     "is_new": false
    },
    {
@@ -674,6 +942,11 @@
     "author": "별군",
     "score": 8.3,
     "episode_info": "",
+    "episode_count": 139,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "30일 남음",
     "is_new": true
    },
    {
@@ -687,6 +960,11 @@
     "author": "칼튼90",
     "score": 8.4,
     "episode_info": "",
+    "episode_count": 159,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "26화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -700,6 +978,11 @@
     "author": "아르케",
     "score": 8.4,
     "episode_info": "",
+    "episode_count": 175,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "42일 남음",
     "is_new": true
    },
    {
@@ -713,6 +996,11 @@
     "author": "비도",
     "score": 9.9,
     "episode_info": "",
+    "episode_count": 523,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "84일 남음",
     "is_new": true
    },
    {
@@ -726,6 +1014,11 @@
     "author": "딥블랙",
     "score": 9.1,
     "episode_info": "",
+    "episode_count": 154,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "31일 남음",
     "is_new": true
    },
    {
@@ -739,6 +1032,11 @@
     "author": "리슝",
     "score": 7.6,
     "episode_info": "",
+    "episode_count": 196,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -752,6 +1050,11 @@
     "author": "조휘",
     "score": 9.6,
     "episode_info": "",
+    "episode_count": 145,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -765,6 +1068,11 @@
     "author": "에이리쟝",
     "score": 9.9,
     "episode_info": "",
+    "episode_count": 147,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -778,6 +1086,11 @@
     "author": "슈타인호프",
     "score": 9.6,
     "episode_info": "",
+    "episode_count": 2838,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "69화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -791,6 +1104,11 @@
     "author": "폭오내",
     "score": 9.2,
     "episode_info": "",
+    "episode_count": 116,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "79일 남음",
     "is_new": true
    },
    {
@@ -804,6 +1122,11 @@
     "author": "팔팔공",
     "score": 7.7,
     "episode_info": "",
+    "episode_count": 102,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -817,6 +1140,11 @@
     "author": "적백赤白",
     "score": 8.9,
     "episode_info": "",
+    "episode_count": 138,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -830,6 +1158,11 @@
     "author": "문백경",
     "score": 9.6,
     "episode_info": "",
+    "episode_count": 479,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "177일 남음",
     "is_new": true
    },
    {
@@ -843,6 +1176,11 @@
     "author": "김주광",
     "score": 8.4,
     "episode_info": "",
+    "episode_count": 320,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -856,6 +1194,11 @@
     "author": "우유폐인",
     "score": 9.4,
     "episode_info": "",
+    "episode_count": 109,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -869,6 +1212,11 @@
     "author": "자몽친구감귤",
     "score": 8.8,
     "episode_info": "",
+    "episode_count": 58,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "18화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -882,6 +1230,11 @@
     "author": "제임즈",
     "score": 8.4,
     "episode_info": "",
+    "episode_count": 128,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "15화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -895,6 +1248,11 @@
     "author": "환등",
     "score": 9.7,
     "episode_info": "",
+    "episode_count": 167,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -908,20 +1266,12 @@
     "author": "컵라면.",
     "score": 9.7,
     "episode_info": "",
+    "episode_count": 167,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "25화 무료",
+    "free_remain": "",
     "is_new": true
-   },
-   {
-    "platform": "네이버 시리즈",
-    "list": "장르:202",
-    "rank": null,
-    "move": "",
-    "title": "천재 공돌이 마린이 헌터로 각성했다",
-    "product_no": "14557262",
-    "url": "https://series.naver.com/novel/detail.series?productNo=14557262",
-    "author": "이휘황",
-    "score": 3.5,
-    "episode_info": "",
-    "is_new": false
    }
   ],
   "naver_series_genre_martial": [
@@ -936,6 +1286,11 @@
     "author": "진이현",
     "score": 9.9,
     "episode_info": "",
+    "episode_count": 227,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "6화 무료",
+    "free_remain": "43일 남음",
     "is_new": true
    },
    {
@@ -949,6 +1304,11 @@
     "author": "백서하",
     "score": 9.8,
     "episode_info": "",
+    "episode_count": 381,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "3화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -962,6 +1322,11 @@
     "author": "성혜림",
     "score": 9.6,
     "episode_info": "",
+    "episode_count": 175,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "5화 무료",
+    "free_remain": "32일 남음",
     "is_new": true
    },
    {
@@ -975,6 +1340,11 @@
     "author": "이야기꾼",
     "score": 9.7,
     "episode_info": "",
+    "episode_count": 83,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "5화 무료",
+    "free_remain": "4일 남음",
     "is_new": false
    },
    {
@@ -988,6 +1358,11 @@
     "author": "머스캣",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 82,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "3화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1001,6 +1376,11 @@
     "author": "도토리씨",
     "score": 9.2,
     "episode_info": "",
+    "episode_count": 151,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "5화 무료",
+    "free_remain": "74일 남음",
     "is_new": true
    },
    {
@@ -1014,6 +1394,11 @@
     "author": "디키탈리스",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 31,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "1화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1027,6 +1412,11 @@
     "author": "머스캣",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 3,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1040,6 +1430,11 @@
     "author": "여행자a",
     "score": 9.8,
     "episode_info": "",
+    "episode_count": 217,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "5화 무료",
+    "free_remain": "",
     "is_new": true
    },
    {
@@ -1053,6 +1448,11 @@
     "author": "라율",
     "score": 8.1,
     "episode_info": "",
+    "episode_count": 126,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "5화 무료",
+    "free_remain": "83일 남음",
     "is_new": true
    },
    {
@@ -1066,6 +1466,11 @@
     "author": "이김하나",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 1,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1079,6 +1484,11 @@
     "author": "윤멜리",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 140,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "5화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1092,6 +1502,11 @@
     "author": "금빛로맨",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 139,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "5화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1105,6 +1520,11 @@
     "author": "금빛로맨",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 4,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1118,6 +1538,11 @@
     "author": "류호영",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 5,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1131,6 +1556,11 @@
     "author": "맨디",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 6,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1144,6 +1574,11 @@
     "author": "김꽃분",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 145,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "5화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1157,6 +1592,11 @@
     "author": "은홍결",
     "score": 8.8,
     "episode_info": "",
+    "episode_count": 103,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "3화 무료",
+    "free_remain": "97일 남음",
     "is_new": true
    },
    {
@@ -1170,6 +1610,11 @@
     "author": "바가지",
     "score": 9.8,
     "episode_info": "",
+    "episode_count": 80,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "5화 무료",
+    "free_remain": "151일 남음",
     "is_new": false
    },
    {
@@ -1183,6 +1628,11 @@
     "author": "바나나맛아이스크림",
     "score": 9.9,
     "episode_info": "",
+    "episode_count": 84,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "5화 무료",
+    "free_remain": "147일 남음",
     "is_new": false
    },
    {
@@ -1196,6 +1646,11 @@
     "author": "윤재희",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 223,
+    "episode_unit": "화",
+    "status": "완결",
+    "free_info": "5화 무료",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1209,6 +1664,11 @@
     "author": "호라담",
     "score": 9.6,
     "episode_info": "",
+    "episode_count": 145,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "6화 무료",
+    "free_remain": "67일 남음",
     "is_new": true
    },
    {
@@ -1222,6 +1682,11 @@
     "author": "블랙시안",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 1,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1235,6 +1700,11 @@
     "author": "송지누",
     "score": 0.0,
     "episode_info": "",
+    "episode_count": 4,
+    "episode_unit": "권",
+    "status": "완결",
+    "free_info": "",
+    "free_remain": "",
     "is_new": false
    },
    {
@@ -1248,6 +1718,11 @@
     "author": "끼끼와빼끼",
     "score": 9.4,
     "episode_info": "",
+    "episode_count": 145,
+    "episode_unit": "화",
+    "status": "미완결",
+    "free_info": "3화 무료",
+    "free_remain": "41일 남음",
     "is_new": true
    }
   ]

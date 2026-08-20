@@ -106,6 +106,33 @@ def analyze(days: int = 7) -> dict | None:
         it for no, it in ranked_by_no.items() if prev is None or no not in prev_rank_by_no
     ]
 
+    pacing = []
+    if prev:
+        for no, it in ranked_by_no.items():
+            old = prev_rank_by_no.get(no)
+            if old is None:
+                continue
+            now_n = it.get("episode_count")
+            old_n = old.get("episode_count")
+            if (
+                isinstance(now_n, int)
+                and isinstance(old_n, int)
+                and it.get("episode_unit") == "화"
+                and now_n >= 0
+            ):
+                pacing.append(
+                    {
+                        "title": it.get("title", ""),
+                        "author": it.get("author", ""),
+                        "now_rank": it.get("rank"),
+                        "added": now_n - old_n,
+                        "prev_chapters": old_n,
+                        "now_chapters": now_n,
+                    }
+                )
+        pacing.sort(key=lambda p: p["added"], reverse=True)
+        pacing = pacing[:10]
+
     unique = _unique_items(items)
     prev_unique = _unique_items(prev_items)
 
@@ -146,6 +173,7 @@ def analyze(days: int = 7) -> dict | None:
         "risers": risers[:10],
         "fallers": fallers[:10],
         "new_entries": new_entries[:10],
+        "pacing": pacing,
         "keywords": keywords,
         "new_keywords": new_keywords,
         "latest_titles": sorted(

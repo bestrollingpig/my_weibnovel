@@ -157,6 +157,7 @@
       <h2>웹소설 랭킹 트렌드 <span style="font-weight:normal;font-size:12px;color:var(--muted);">(네이버 시리즈 TOP 20, 매일 자동 수집)</span></h2>
       <div id="trendInfo"></div>
       <div id="trendKw" style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;"></div>
+      <div id="trendPacing"></div>
       <div id="trendRisers"></div>
       <div id="trendNew"></div>
       <div id="trendTitles"></div>
@@ -223,6 +224,11 @@ function renderTrends(d) {
     (d.prev_date ? ` · 이전: ${d.prev_date}` : "") +
     ` · TOP20 + 장르별 리스트 · 유니크 ${d.total_unique}작품 · 스냅샷 ${d.snapshot_count}일치</div>` + noCompare;
   $("trendKw").innerHTML = kw || "";
+  $("trendPacing").innerHTML = d.snapshot_count < 2 ? "" : `
+    <h3 style="font-size:1rem;margin:18px 0 8px;">연재 리듬 — 화수 증가 TOP (${d.latest_date} vs ${d.prev_date})</h3>
+    <div class="trend-item">${
+      d.pacing.map(p => `<div><b>${p.title}</b> +${p.added}화 (${p.prev_chapters}→${p.now_chapters}화) · ${p.now_rank}위</div>`).join("")
+    }</div>`;
   $("trendRisers").innerHTML = d.snapshot_count < 2 ? "" : `
     <h3 style="font-size:1rem;margin:18px 0 8px;">랭킹 상승 TOP (${d.latest_date} vs ${d.prev_date})</h3>
     <div class="trend-item">${
@@ -233,10 +239,11 @@ function renderTrends(d) {
     <div class="trend-item">${
       d.new_entries.map(r => `<div><b>${r.title}</b> (${r.rank}위 진입) · ${r.author} · ⭐${r.score ?? "-"}</div>`).join("")
     }</div>`;
+  $("trendNew").insertAdjacentHTML("afterend", "");
   $("trendTitles").innerHTML = `
     <h3 style="font-size:1rem;margin:18px 0 8px;">금일 TOP 20</h3>
     <div class="trend-item">${
-      d.latest_titles.map(r => `<div><span class="rank-no">${r.rank}.</span> ${r.title} <span style="color:var(--muted);">· ${r.author} · ⭐${r.score ?? "-"}</span></div>`).join("")
+      d.latest_titles.map(r => `<div><span class="rank-no">${r.rank}.</span> ${r.title} <span style="color:var(--muted);">· ${r.author} · ⭐${r.score ?? "-"}${r.free_info ? ` · 🎁${r.free_info}${r.free_remain ? `(${r.free_remain})` : ""}` : ""}${r.episode_info ? ` · ${r.episode_info}` : ""}</span></div>`).join("")
     }</div>`;
 }
 
