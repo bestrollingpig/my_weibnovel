@@ -1,5 +1,5 @@
 {
- "collected_at": "2026-08-20 13:32:34",
+ "collected_at": "2026-08-20 13:35:21",
  "sources": [
   "naver_series_genre_fantasy",
   "naver_series_genre_martial",
@@ -25,7 +25,9 @@
     "status": "미완결",
     "free_info": "100화 무료",
     "free_remain": "2일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 1800,
+    "comment_raw": "1.8천"
    },
    {
     "platform": "네이버 시리즈",
@@ -43,7 +45,9 @@
     "status": "미완결",
     "free_info": "25화 무료",
     "free_remain": "84일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 347,
+    "comment_raw": "347"
    },
    {
     "platform": "네이버 시리즈",
@@ -61,7 +65,9 @@
     "status": "미완결",
     "free_info": "25화 무료",
     "free_remain": "83일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 230,
+    "comment_raw": "230"
    },
    {
     "platform": "네이버 시리즈",
@@ -79,7 +85,9 @@
     "status": "미완결",
     "free_info": "100화 무료",
     "free_remain": "2일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 24000,
+    "comment_raw": "2.4만"
    },
    {
     "platform": "네이버 시리즈",
@@ -97,7 +105,9 @@
     "status": "미완결",
     "free_info": "25화 무료",
     "free_remain": "33일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 5000,
+    "comment_raw": "5천"
    },
    {
     "platform": "네이버 시리즈",
@@ -115,7 +125,9 @@
     "status": "미완결",
     "free_info": "25화 무료",
     "free_remain": "12일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 3000,
+    "comment_raw": "3천"
    },
    {
     "platform": "네이버 시리즈",
@@ -133,7 +145,9 @@
     "status": "완결",
     "free_info": "100화 무료",
     "free_remain": "2일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 3700,
+    "comment_raw": "3.7천"
    },
    {
     "platform": "네이버 시리즈",
@@ -151,7 +165,9 @@
     "status": "미완결",
     "free_info": "25화 무료",
     "free_remain": "74일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 164000,
+    "comment_raw": "16.4만"
    },
    {
     "platform": "네이버 시리즈",
@@ -169,7 +185,9 @@
     "status": "미완결",
     "free_info": "25화 무료",
     "free_remain": "4일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 1430000,
+    "comment_raw": "143만"
    },
    {
     "platform": "네이버 시리즈",
@@ -187,7 +205,9 @@
     "status": "미완결",
     "free_info": "25화 무료",
     "free_remain": "84일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 888,
+    "comment_raw": "888"
    },
    {
     "platform": "네이버 시리즈",
@@ -205,7 +225,9 @@
     "status": "미완결",
     "free_info": "50화 무료",
     "free_remain": "8일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 507,
+    "comment_raw": "507"
    },
    {
     "platform": "네이버 시리즈",
@@ -223,7 +245,9 @@
     "status": "미완결",
     "free_info": "5화 무료",
     "free_remain": "5일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 156,
+    "comment_raw": "156"
    },
    {
     "platform": "네이버 시리즈",
@@ -241,7 +265,9 @@
     "status": "완결",
     "free_info": "27화 무료",
     "free_remain": "178일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 21000,
+    "comment_raw": "2.1만"
    },
    {
     "platform": "네이버 시리즈",
@@ -259,7 +285,9 @@
     "status": "완결",
     "free_info": "25화 무료",
     "free_remain": "155일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 3500,
+    "comment_raw": "3.5천"
    },
    {
     "platform": "네이버 시리즈",
@@ -277,7 +305,9 @@
     "status": "완결",
     "free_info": "50화 무료",
     "free_remain": "3일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 1500,
+    "comment_raw": "1.5천"
    },
    {
     "platform": "네이버 시리즈",
@@ -295,7 +325,9 @@
     "status": "미완결",
     "free_info": "50화 무료",
     "free_remain": "2일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 12000,
+    "comment_raw": "1.2만"
    },
    {
     "platform": "네이버 시리즈",
@@ -313,7 +345,9 @@
     "status": "미완결",
     "free_info": "25화 무료",
     "free_remain": "77일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 1600,
+    "comment_raw": "1.6천"
    },
    {
     "platform": "네이버 시리즈",
@@ -331,7 +365,9 @@
     "status": "미완결",
     "free_info": "25화 무료",
     "free_remain": "68일 남음",
-    "is_new": true
+    "is_new": true,
+    "comment_total": 72000,
+    "comment_raw": "7.2만"
    },
    {
     "platform": "네이버 시리즈",
@@ -349,7 +385,9 @@
     "status": "미완결",
     "free_info": "50화 무료",
     "free_remain": "8일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 186,
+    "comment_raw": "186"
    },
    {
     "platform": "네이버 시리즈",
@@ -367,7 +405,9 @@
     "status": "완결",
     "free_info": "20화 무료",
     "free_remain": "9일 남음",
-    "is_new": false
+    "is_new": false,
+    "comment_total": 1300,
+    "comment_raw": "1.3천"
    }
   ],
   "naver_series_genre_romance": [

@@ -133,6 +133,21 @@ def analyze(days: int = 7) -> dict | None:
         pacing.sort(key=lambda p: p["added"], reverse=True)
         pacing = pacing[:10]
 
+    comment_top = sorted(
+        (it for no, it in ranked_by_no.items() if it.get("comment_total") is not None),
+        key=lambda it: it["comment_total"],
+        reverse=True,
+    )[:10]
+    comment_top = [
+        {
+            "title": it.get("title", ""),
+            "author": it.get("author", ""),
+            "rank": it.get("rank"),
+            "comment_total": it["comment_total"],
+        }
+        for it in comment_top
+    ]
+
     unique = _unique_items(items)
     prev_unique = _unique_items(prev_items)
 
@@ -174,6 +189,7 @@ def analyze(days: int = 7) -> dict | None:
         "fallers": fallers[:10],
         "new_entries": new_entries[:10],
         "pacing": pacing,
+        "comment_top": comment_top,
         "keywords": keywords,
         "new_keywords": new_keywords,
         "latest_titles": sorted(

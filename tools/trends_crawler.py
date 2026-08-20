@@ -23,6 +23,8 @@ UA = {
 }
 
 SERIES_TOP100 = "https://series.naver.com/novel/top100List.series"
+SERIES_DETAIL = "https://series.naver.com/novel/detail.series?productNo={no}"
+RE_COMMENT_COUNT = re.compile(r'<span id="commentCount">([^<]+)</span>')
 # (key, 표시명, genreCode)
 GENRE_SOURCES = [
     ("romance", "로맨스", 201),
@@ -105,6 +107,33 @@ def fetch_genre(code: int) -> list[dict]:
     return parse_series_items(fetch(url), f"장르:{code}")
 
 
+def parse_count(text: str) -> int | None:
+    """'1.8천'/'23만'/1,234 같은 집계 표기를 정수로 변환."""
+    t = (text or "").strip().replace(",", "").replace(" ", "")
+    if not t:
+        return None
+    m = re.match(r"^([\d.]+)(천|만|억)$", t)
+    if m:
+        units = {"천": 1000, "만": 10000, "억": 100000000}
+        return int(float(m.group(1)) * units[m.group(2)])
+    if t.isdigit():
+        return int(t)
+    return None
+
+
+def fetch_comment_count(product_no: str) -> tuple[int | None, str]:
+    """상세 페이지에서 공개 집계인 댓글 수를 가져옵니다."""
+    try:
+        html = fetch(SERIES_DETAIL.format(no=product_no))
+        m = RE_COMMENT_COUNT.search(html)
+        if m:
+            raw = RE_SPACE.sub("", m.group(1))
+            return parse_count(raw), raw
+    except Exception:  # noqa: BLE001
+        pass
+    return None, ""
+
+
 def main() -> int:
     collected = {}
     errors = []
@@ -112,6 +141,10 @@ def main() -> int:
         items = parse_series_items(fetch(SERIES_TOP100), "TOP 100")
         if len(items) == 0:
             raise RuntimeError("TOP100에서 항목을 파싱하지 못했습니다.")
+        for it in items[:20]:
+            count, raw = fetch_comment_count(it["product_no"])
+            it["comment_total"] = count
+            it["comment_raw"] = raw
         collected["naver_series_top100"] = items
     except Exception as exc:  # noqa: BLE001
         errors.append(f"naver_series_top100: {exc}")
