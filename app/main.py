@@ -16,6 +16,7 @@ from app.popularity import record as record_search
 from app.popularity import today as popularity_today
 from app.popularity import top as top_searches
 from app.rss import search_by_terms
+from app.trends import analyze as analyze_trends
 from app.wikipedia import search_by_terms as search_wikipedia
 
 load_dotenv()
@@ -207,6 +208,16 @@ async def papers_page(
     _require_key()
     async with httpx.AsyncClient(timeout=30.0) as client:
         return await search_papers_page(client, SERVICE_KEY, keyword, pageNo, recordCnt)
+
+
+@app.get("/api/trends")
+async def trends_report(
+    days: int = Query(7, ge=1, le=30, description="최근 N일 스냅샷 범위"),
+):
+    report = analyze_trends(days)
+    if report is None:
+        raise HTTPException(status_code=404, detail="수집된 트렌드 스냅샷이 없습니다. GitHub Actions 수집을 확인하세요.")
+    return report
 
 
 @app.get("/api/search")
