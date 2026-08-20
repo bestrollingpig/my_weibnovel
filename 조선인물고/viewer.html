@@ -83,6 +83,14 @@
         .search-result { padding: 12px 14px; cursor: pointer; border-radius: 4px; transition: background 0.2s; margin-bottom: 4px; }
         .search-result:hover { background: #3d3d3d; }
         
+        .person-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+        .person-card { background: #fff; border: 1px solid #e8dfd4; border-radius: 8px; padding: 14px 16px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+        .person-card:hover { border-color: #ffd700; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .person-name { font-weight: 600; font-size: 1rem; color: #1a1a1a; }
+        .person-hanja { color: #666; font-size: 0.85rem; margin-top: 3px; font-family: 'Noto Serif KR', serif; }
+        .person-cat { color: #888; font-size: 0.75rem; margin-top: 6px; }
+        .back-link { color: #2980b9; cursor: pointer; text-decoration: underline; }
+        
         .empty-note { text-align: center; color: #888; padding: 40px; font-size: 0.9rem; }
         
         @media (max-width: 1024px) {
@@ -142,6 +150,11 @@
         // 페이지네이션 (더 보기)
         let visibleCount = 100;
         const PAGE_STEP = 100;
+
+        // 인물 탭 선택 상태
+        let currentPeopleCat = null;
+        let currentPeopleList = [];
+        let currentPeopleMode = '';
         
         // Wikipedia cache
         const wikiCache = new Map();
@@ -292,15 +305,15 @@
         function switchTab(tab) {
             currentTab = tab;
             visibleCount = PAGE_STEP;
+            currentPeopleCat = null;
+            currentPeopleList = [];
+            currentPeopleMode = '';
             document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
             searchInput.value = '';
             
             if (tab === 'people') {
                 renderCategories();
-                mainContent.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>인물 데이터 로딩...</p></div>`;
-                if (allEntries.length > 0) {
-                    mainContent.innerHTML = `<div class="empty-note">좌측 목록에서 인물을 선택하세요</div>`;
-                }
+                renderPeopleEmpty();
             } else {
                 categoryList.innerHTML = '';
                 mainContent.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>${tabLabel(tab)} 데이터 로딩 중...</p></div>`;
@@ -477,7 +490,11 @@
         
         function loadMore() {
             visibleCount += PAGE_STEP;
-            renderTabData(currentTab, searchInput.value.trim().toLowerCase());
+            if (currentTab === 'people') {
+                renderPeopleList(currentPeopleCat, currentPeopleList, currentPeopleMode);
+            } else {
+                renderTabData(currentTab, searchInput.value.trim().toLowerCase());
+            }
         }
         
         // Render categories (people tab)
@@ -488,37 +505,55 @@
                 const catDiv = document.createElement('div');
                 catDiv.className = 'category';
                 catDiv.innerHTML = `
-                    <div class="category-title" data-category="${cat}">
+                    <div class="category-title" data-category="${cat}" onclick="showCategoryEntries('${cat.replace(/'/g, "\\'")}')">
                         ${cat} (${entries.length})
-                    </div>
-                    <div class="entry-list" id="list-${cat.replace(/\s+/g, '-')}">
-                        ${entries.map(e => `
-                            <div class="entry-item" data-id="${e.id}">
-                                <div class="name">${e.name}${e.reading ? ' (' + e.reading + ')' : ''}${e.hanjaName ? ' [' + e.hanjaName + ']' : ''}</div>
-                                <div class="sub">${e.title}</div>
-                            </div>
-                        `).join('')}
                     </div>
                 `;
                 categoryList.appendChild(catDiv);
             });
-            
-            document.querySelectorAll('.category-title').forEach(el => {
-                el.addEventListener('click', () => {
-                    const list = el.nextElementSibling;
-                    list.classList.toggle('open');
-                    el.classList.toggle('active');
-                });
-            });
-            
-            document.querySelectorAll('.entry-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    const id = el.dataset.id;
-                    showEntry(id);
-                    document.querySelectorAll('.entry-item').forEach(e => e.classList.remove('active'));
-                    el.classList.add('active');
-                });
-            });
+        }
+
+        function renderPeopleEmpty() {
+            mainContent.innerHTML = `<div class="empty-note">좌측 카테고리를 선택하거나 검색어를 입력하세요</div>`;
+        }
+
+        function goBackToList() {
+            renderPeopleList(currentPeopleCat, currentPeopleList, currentPeopleMode);
+        }
+
+        function showCategoryEntries(cat) {
+            currentPeopleCat = cat;
+            currentPeopleList = categories[cat] || [];
+            currentPeopleMode = '';
+            visibleCount = PAGE_STEP;
+            renderPeopleList(cat, currentPeopleList, '');
+        }
+
+        function renderPeopleList(cat, list, mode) {
+            const total = list.length;
+            if (total === 0) {
+                mainContent.innerHTML = `<div class="empty-note">결과가 없습니다</div>`;
+                return;
+            }
+            const slice = list.slice(0, visibleCount);
+            const cards = slice.map(e => `
+                <div class="person-card" onclick="showEntry('${e.id}')">
+                    <div class="person-name">${e.name}${e.reading ? ' (' + e.reading + ')' : ''}</div>
+                    ${e.hanjaName ? `<div class="person-hanja">${e.hanjaName}</div>` : ''}
+                    <div class="person-cat">${e.category}</div>
+                </div>
+            `).join('');
+
+            const header = [];
+            if (cat) header.push(`<span class="back-link" onclick="renderPeopleEmpty()">← 목록으로</span>`);
+            if (mode) header.push(`'<b>${escapeHtml(mode)}</b>' 검색 결과`);
+
+            mainContent.innerHTML = `
+                <div class="data-panel">
+                    <div style="margin-bottom:20px;color:#888;font-size:0.9rem;">${header.join(' ')} 총 ${total}명 (${Math.min(visibleCount, total)}명 표시)</div>
+                    <div class="person-grid">${cards}</div>
+                    ${visibleCount < total ? `<div style="text-align:center;margin:30px 0;"><button onclick="loadMore()" style="padding:12px 40px;background:#ffd700;color:#2d2d2d;border:none;border-radius:6px;font-size:1rem;cursor:pointer;font-weight:600;">더 보기 (${total - visibleCount}명 남음)</button></div>` : ''}
+                </div>`;
         }
         
         // Show entry
@@ -541,6 +576,7 @@
             
             mainContent.innerHTML = `
                 <div class="entry-header">
+                    ${currentTab === 'people' && (currentPeopleCat || currentPeopleMode) ? `<div style="margin-bottom:15px;"><span class="back-link" onclick="goBackToList()">← 목록으로</span></div>` : ''}
                     <h1 class="entry-title">${entry.name}</h1>
                     ${entry.reading ? `<div class="entry-title-reading">${entry.reading}</div>` : ''}
                     ${entry.hanjaName ? `<div class="entry-title-hanja">${entry.hanjaName}</div>` : ''}
@@ -617,17 +653,26 @@
                 }
                 
                 const q = query.toLowerCase();
-                document.querySelectorAll('.entry-item').forEach(item => {
-                    const name = item.querySelector('.name').textContent.toLowerCase();
-                    const title = item.querySelector('.sub').textContent.toLowerCase();
-                    const match = name.includes(q) || title.includes(q);
-                    item.style.display = match || !q ? '' : 'none';
-                });
+                if (!q) {
+                    currentPeopleCat = null;
+                    currentPeopleList = [];
+                    currentPeopleMode = '';
+                    renderPeopleEmpty();
+                    return;
+                }
                 
-                document.querySelectorAll('.category').forEach(cat => {
-                    const visible = cat.querySelectorAll('.entry-item:not([style*="none"])').length;
-                    cat.style.display = visible > 0 || !q ? '' : 'none';
-                });
+                const results = allEntries.filter(e =>
+                    (e.name || '').toLowerCase().includes(q) ||
+                    (e.reading || '').toLowerCase().includes(q) ||
+                    (e.hanjaName || '').toLowerCase().includes(q) ||
+                    (e.category || '').toLowerCase().includes(q) ||
+                    (e.title || '').toLowerCase().includes(q)
+                );
+                currentPeopleCat = null;
+                currentPeopleList = results;
+                currentPeopleMode = query;
+                mainContent.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>검색 중...</p></div>`;
+                renderPeopleList(null, results, query);
             });
         }
         
