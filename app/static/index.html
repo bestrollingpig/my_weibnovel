@@ -100,10 +100,12 @@
     <div class="materials" id="materials"></div>
   </section>
   <section id="kciSection" style="display:none;">
-    <h2>3. KCI 보도자료 전체 보기 <span style="font-weight:normal;font-size:12px;color:var(--muted);">(대학·기관 1차 자료, 일반 검색에 안 잡히는 원천)</span></h2>
-    <input type="text" id="kciFilter" placeholder="제목·기관 검색어 입력 (예: 대학, 연구소)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:10px;">
-    <div id="kciList" class="empty">불러오는 중...</div>
-    <div id="kciCount" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+    <h2 id="kciToggle" onclick="toggleKciBrowse()" style="cursor:pointer;">3. KCI 보도자료 전체 보기 <span id="kciCaret">▶</span> <span style="font-weight:normal;font-size:12px;color:var(--muted);">(대학·기관 1차 자료, 클릭하여 펼치기)</span></h2>
+    <div id="kciBody" style="display:none;">
+      <input type="text" id="kciFilter" placeholder="제목·기관 검색어 입력 (예: 대학, 연구소)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:10px;">
+      <div id="kciList" class="empty">불러오는 중...</div>
+      <div id="kciCount" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+    </div>
   </section>
   <section id="paperSection" style="display:none;">
     <h2>KCI 논문 검색 <span style="font-weight:normal;font-size:12px;color:var(--muted);">(연구 트렌드·전문 개념, 180만+ 논문 메타데이터)</span></h2>
@@ -234,6 +236,13 @@ function escapeHtml(s) {
 }
 
 let kciItems = [];
+let kciExpanded = false;
+
+function toggleKciBrowse() {
+  kciExpanded = !kciExpanded;
+  $("kciBody").style.display = kciExpanded ? "" : "none";
+  $("kciCaret").textContent = kciExpanded ? "▼" : "▶";
+}
 
 async function loadKci() {
   $("kciSection").style.display = "block";
