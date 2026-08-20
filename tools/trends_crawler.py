@@ -23,6 +23,12 @@ UA = {
 }
 
 SERIES_TOP100 = "https://series.naver.com/novel/top100List.series"
+# (key, 표시명, genreCode)
+GENRE_SOURCES = [
+    ("romance", "로맨스", 201),
+    ("fantasy", "판타지", 202),
+    ("martial", "무협", 207),
+]
 
 RE_LI = re.compile(r"<li>(.*?)</li>", re.S)
 RE_RANK = re.compile(r'<em\s+class="no\d*">(\d+)</em>')
@@ -41,17 +47,18 @@ def fetch(url: str) -> str:
         return resp.read().decode("utf-8", errors="replace")
 
 
-def parse_series_top100(html: str) -> list[dict]:
+def parse_series_items(html: str, source_label: str) -> list[dict]:
     items = []
     for block in RE_LI.findall(html):
         if "score_num" not in block and "top_num" not in block:
             continue
         title_m = RE_TITLE.search(block)
         rank_m = RE_RANK.search(block)
-        if not title_m or not rank_m:
+        if not title_m:
             continue
         path, title = title_m.groups()
         title = RE_SPACE.sub(" ", title).strip()
+        title = re.sub(r"[\(（]?\d+[화권]/(?:완결|미완결)[\)）]?$", "", title).strip()
         if not title:
             continue
         product_no = re.search(r"productNo=(\d+)", path)
@@ -62,7 +69,8 @@ def parse_series_top100(html: str) -> list[dict]:
         items.append(
             {
                 "platform": "네이버 시리즈",
-                "rank": int(rank_m.group(1)),
+                "list": source_label,
+                "rank": int(rank_m.group(1)) if rank_m else None,
                 "move": RE_SPACE.sub("", RE_MOVE.search(block).group(1)) if RE_MOVE.search(block) else "",
                 "title": title,
                 "product_no": product_no.group(1) if product_no else "",
@@ -76,17 +84,31 @@ def parse_series_top100(html: str) -> list[dict]:
     return items
 
 
+def fetch_genre(code: int) -> list[dict]:
+    url = f"https://series.naver.com/novel/categoryProductList.series?categoryTypeCode=genre&genreCode={code}"
+    return parse_series_items(fetch(url), f"장르:{code}")
+
+
 def main() -> int:
     collected = {}
     errors = []
     try:
-        html = fetch(SERIES_TOP100)
-        items = parse_series_top100(html)
+        items = parse_series_items(fetch(SERIES_TOP100), "TOP 100")
         if len(items) == 0:
             raise RuntimeError("TOP100에서 항목을 파싱하지 못했습니다.")
         collected["naver_series_top100"] = items
     except Exception as exc:  # noqa: BLE001
         errors.append(f"naver_series_top100: {exc}")
+
+    for key, label, code in GENRE_SOURCES:
+        try:
+            items = fetch_genre(code)
+            if items:
+                collected[f"naver_series_genre_{key}"] = items
+            else:
+                errors.append(f"genre_{key}({label}): 항목 없음")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"genre_{key}({label}): {exc}")
 
     if not collected:
         print("모든 소스 수집 실패:", errors, file=sys.stderr)

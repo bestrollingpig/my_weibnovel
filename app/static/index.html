@@ -73,6 +73,8 @@
   .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
   .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
   .kw-chip { background: rgba(122, 91, 214, .12); color: var(--btn-text); border: 1px solid rgba(122, 91, 214, .35); padding: 4px 12px; border-radius: 16px; font-size: 13px; }
+  .kw-up { color: var(--up, #1e8e3e); font-style: normal; }
+  .kw-new { color: #fff; background: var(--accent); border-radius: 8px; padding: 0 6px; font-style: normal; font-size: 10px; vertical-align: middle; }
   .trend-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; line-height: 2; font-size: 14px; }
   .row-up { color: var(--up, #1e8e3e); }
   .rank-no { display: inline-block; min-width: 28px; color: var(--muted); }
@@ -209,14 +211,17 @@ async function loadTrends() {
 }
 
 function renderTrends(d) {
-  const kw = d.keywords.map(k => `<span class="kw-chip">${k.word} <b>${k.count}</b></span>`).join("");
+  const kw = d.keywords.map(k => `<span class="kw-chip">${k.word} <b>${k.count}</b>` +
+    (k.delta > 0 ? ` <i class="kw-up">▲${k.delta}</i>` : "") +
+    (d.prev_date && k.prev_count === 0 ? ` <i class="kw-new">NEW</i>` : "") +
+    `</span>`).join("");
   const noCompare = d.snapshot_count < 2
     ? `<div class="empty" style="margin:8px 0;">스냅샷이 ${d.snapshot_count}일치입니다 — 내일 자동 수집되면 순위 상승·신규 진입이 표시됩니다</div>`
     : "";
   $("trendInfo").innerHTML =
     `<div style="font-size:13px;color:var(--muted);">최근 수집: ${d.latest_date}` +
     (d.prev_date ? ` · 이전: ${d.prev_date}` : "") +
-    ` · ${d.total_items}작품 · 스냅샷 ${d.snapshot_count}일치</div>` + noCompare;
+    ` · TOP20 + 장르별 리스트 · 유니크 ${d.total_unique}작품 · 스냅샷 ${d.snapshot_count}일치</div>` + noCompare;
   $("trendKw").innerHTML = kw || "";
   $("trendRisers").innerHTML = d.snapshot_count < 2 ? "" : `
     <h3 style="font-size:1rem;margin:18px 0 8px;">랭킹 상승 TOP (${d.latest_date} vs ${d.prev_date})</h3>
