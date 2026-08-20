@@ -209,6 +209,16 @@ curl "https://<서비스명>.onrender.com/api/press?pageNo=1&recordCnt=10"
 
 브라우저/JS에서도 CORS 허용이라 그대로 호출할 수 있습니다.
 
+## 웹소설 랭킹 트렌드 수집 (GitHub Actions)
+
+`tools/trends_crawler.py`가 매일 오전 1시(UTC, 한국 10시)에 **네이버 시리즈 웹소설 TOP 20** 랭킹을 수집해 `trends/trends_YYYYMMDD.json`으로 커밋합니다 (stdlib만 사용, 일 1회 요청).
+
+- 수집 항목: 순위·순위변동·제목·작가·별점·연재정보(화수/완결)·신규 에피소드 여부·작품URL
+- 소스 상태: 네이버 시리즈(서버렌더링, 정상) / 카카오페이지(403 차단), 조아라(SPA), 문피아(JS 셸) → 추후 대응 예정
+- 수동 실행: GitHub 저장소 Actions 탭 → `trends` → Run workflow
+
+이후 단계: 일별 스냅샷을 누적해 **제목 키워드 빈도 변화·순위 상승작·장르 점유율** 트렌드를 서비스 트렌드 탭에 표시할 예정.
+
 ## 오류 코드
 
 KCI API 에러는 HTTP 상태코드로 변환되어 반환됩니다.
