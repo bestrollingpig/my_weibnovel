@@ -53,6 +53,7 @@ MUNPIA_SECTIONS = [
     ("best_free", "무료 베스트", "today"),
     ("best_paid", "유료 베스트", "plsa.eachtoday"),
     ("bestseller", "베스트셀러", "plsa.bestseller"),
+    ("prefer", "선호작 베스트", "prefer"),
 ]
 MUNPIA_GENRE_KO = {
     "heroism": "무협", "fantasy": "판타지", "newfantasy": "신판타지",
