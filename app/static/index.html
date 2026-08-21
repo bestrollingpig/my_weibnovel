@@ -278,7 +278,7 @@ function renderTrends(d) {
   $("trendTitles").innerHTML = `
     <h3 style="font-size:1rem;margin:18px 0 8px;">금일 순위${d.source_label ? ` — ${d.source_label}` : " (리스트별 1위~)"}</h3>
     <div class="trend-item">${
-      d.latest_titles.map(r => `<div><span class="rank-no">${r.rank}.</span> ${r.title} <span style="color:var(--muted);">· ${r.author} · ⭐${r.score ?? "-"}${r.free_info ? ` · 🎁${r.free_info}${r.free_remain ? `(${r.free_remain})` : ""}` : ""}${r.episode_info ? ` · ${r.episode_info}` : ""}</span></div>`).join("")
+      d.latest_titles.map(r => `<div><span class="rank-no">${r.rank}.</span> ${r.title} <span style="color:var(--muted);">· ${r.author} · ⭐${r.score ?? "-"}${r.genre ? ` · ${r.genre}` : ""}${r.views_total ? ` · 👁${r.views_total.toLocaleString()}` : ""}${r.free_info ? ` · 🎁${r.free_info}${r.free_remain ? `(${r.free_remain})` : ""}` : ""}${r.episode_info || r.episode_count ? ` · ${r.episode_info || `${r.episode_count}화/${r.status}`}` : ""}</span></div>`).join("")
     }</div>`;
 }
 

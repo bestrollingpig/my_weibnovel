@@ -2,7 +2,9 @@
 """웹소설 플랫폼 랭킹 일일 수집기 (stdlib만 사용).
 
 GitHub Actions에서 매일 실행되어 trends/ 디렉터리에 YYYYMMDD.json으로 저장.
-소스: 네이버 시리즈 웹소설 TOP 100 (서버 렌더링 페이지).
+소스:
+  - 네이버 시리즈 웹소설 TOP 100·장르별 (서버 렌더링 페이지)
+  - 문피아 베스트 (mm.munpia.com 공개 AJAX JSON: 무료/유료/베스트셀러, 각 30위)
 """
 import json
 import re
@@ -44,6 +46,20 @@ RE_STRIP_TAG = re.compile(r"<[^>]+>")
 RE_SPACE = re.compile(r"\s+")
 RE_EP_PREFIX = re.compile(r"총(\d+)(화|권|부)/(완결|미완결)")
 RE_EP_TAIL = re.compile(r"[\(（](\d+)(화|권)/(완결|미완결)[\)）]?$")
+
+MUNPIA_AJAX = "https://mm.munpia.com/?ajx=1&menu=best&action=list&section={sec}&page={page}"
+# (소스 키 접미, 표시명, AJAX section 코드)
+MUNPIA_SECTIONS = [
+    ("best_free", "무료 베스트", "today"),
+    ("best_paid", "유료 베스트", "plsa.eachtoday"),
+    ("bestseller", "베스트셀러", "plsa.bestseller"),
+]
+MUNPIA_GENRE_KO = {
+    "heroism": "무협", "fantasy": "판타지", "newfantasy": "신판타지",
+    "romance": "로맨스", "romfantasy": "로판", "romancefantasy": "로판",
+    "modern": "현대물", "drama": "드라마", "mystery": "미스터리",
+    "alternative": "대체역사", "sf": "SF", "lightnovel": "라노벨", "etc": "기타",
+}
 
 
 def fetch(url: str) -> str:
@@ -107,6 +123,56 @@ def fetch_genre(label: str, code: int) -> list[dict]:
     return parse_series_items(fetch(url), label)
 
 
+def _to_int(v) -> int | None:
+    try:
+        return int(str(v).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def fetch_munpia(section: str, label: str, pages: int = 3) -> list[dict]:
+    """mm.munpia.com 공개 AJAX JSON에서 베스트 목록을 수집합니다 (집계 숫자만 저장)."""
+    out: list[dict] = []
+    seen: set[str] = set()
+    for page in range(1, pages + 1):
+        payload = json.loads(fetch(MUNPIA_AJAX.format(sec=section, page=page)))
+        entries = payload.get("list") or []
+        if not entries:
+            break
+        for e in entries:
+            srl = str(e.get("nvSrl") or "")
+            title = RE_SPACE.sub(" ", str(e.get("nvTitle") or "")).strip()
+            if not srl or not title or srl in seen:
+                continue
+            seen.add(srl)
+            genre_code = str(e.get("nvGnMain") or "").strip()
+            finished = str(e.get("nvOptFinish") or "").strip() == "1"
+            rank = _to_int(e.get("nsrRank"))
+            out.append(
+                {
+                    "platform": "문피아",
+                    "list": label,
+                    "rank": rank if rank and rank >= 1 else len(out) + 1,
+                    "move": "",
+                    "title": title,
+                    "product_no": f"mp_{srl}",
+                    "url": f"https://www.munpia.com/novel/detail/{srl}",
+                    "author": RE_SPACE.sub(" ", str(e.get("nvAuthor") or "")).strip(),
+                    "score": None,
+                    "genre": MUNPIA_GENRE_KO.get(genre_code, genre_code),
+                    "episode_count": _to_int(e.get("nvSumEntry")),
+                    "episode_unit": "화",
+                    "status": "완결" if finished else "미완결",
+                    "views_total": _to_int(e.get("nvSumHit")),
+                    "good_total": _to_int(e.get("nvSumGood")),
+                    "prefer_total": _to_int(e.get("nvSumPrefer")),
+                    "comment_total": _to_int(e.get("nvSumComment")),
+                    "is_new": False,
+                }
+            )
+    return out
+
+
 def parse_count(text: str) -> int | None:
     """'1.8천'/'23만'/1,234 같은 집계 표기를 정수로 변환."""
     t = (text or "").strip().replace(",", "").replace(" ", "")
@@ -158,6 +224,16 @@ def main() -> int:
                 errors.append(f"genre_{key}({label}): 항목 없음")
         except Exception as exc:  # noqa: BLE001
             errors.append(f"genre_{key}({label}): {exc}")
+
+    for key, label, sec in MUNPIA_SECTIONS:
+        try:
+            mitems = fetch_munpia(sec, label)
+            if len(mitems) >= 10:
+                collected[f"munpia_{key}"] = mitems
+            else:
+                errors.append(f"munpia_{key}({label}): {len(mitems)}건만 수집")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"munpia_{key}({label}): {exc}")
 
     if not collected:
         print("모든 소스 수집 실패:", errors, file=sys.stderr)
