@@ -92,6 +92,7 @@
     <button class="tab-btn active" data-tab="search" onclick="switchTab('search')">소재 검색</button>
     <button class="tab-btn" data-tab="trend" onclick="switchTab('trend')">웹소설 트렌드</button>
     <button class="tab-btn" data-tab="joseon" onclick="switchTab('joseon')">조선인물고</button>
+    <button class="tab-btn" data-tab="engine" onclick="switchTab('engine')">스토리 엔진</button>
   </div>
   <div id="searchTab">
   <section>
@@ -177,6 +178,13 @@
       <iframe id="joseonFrame" style="width:100%;height:75vh;border:1px solid var(--border);border-radius:10px;background:#fff;" loading="lazy"></iframe>
     </section>
   </div>
+  <div id="engineTab" style="display:none;">
+    <section>
+      <h2>STORY ENGINE — 캐릭터·관계·서사 설계 도구</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;">MBTI 256조합 · 혈액형 · 별자리/12지 자동계산 · Big5/DISC/애착유형 · 9축 성격 슬라이더 · 서사공식(욕망→변화) · 150명 캐릭터 매트릭스. 독립 앱을 임베드했으며 작업 내용은 이 탭 안에서 저장·초기화됩니다.</p>
+      <iframe id="engineFrame" style="width:100%;height:85vh;border:1px solid var(--border);border-radius:10px;background:#080c14;" loading="lazy"></iframe>
+    </section>
+  </div>
 </main>
 <footer>자료 출처: 한국연구재단 KCI 보도자료 · Google뉴스 RSS / "이 기사에 ○○소재로 쓰세요"는 검색어 매칭 결과일 뿐, 사실 여부를 보장하지 않습니다.</footer>
 <script>
@@ -194,10 +202,14 @@ function switchTab(name) {
   $("searchTab").style.display = name === "search" ? "" : "none";
   $("trendTab").style.display = name === "trend" ? "" : "none";
   $("joseonTab").style.display = name === "joseon" ? "" : "none";
+  $("engineTab").style.display = name === "engine" ? "" : "none";
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
   if (name === "trend" && !trendLoaded) loadTrends();
   if (name === "joseon" && !$("joseonFrame").src) {
     $("joseonFrame").src = "https://bestrollingpig.github.io/my_weibnovel/%EC%A1%B0%EC%84%A0%EC%9D%B8%EB%AC%BC%EA%B3%A0/viewer";
+  }
+  if (name === "engine" && !$("engineFrame").src) {
+    $("engineFrame").src = "/static/story-engine.html";
   }
 }
 

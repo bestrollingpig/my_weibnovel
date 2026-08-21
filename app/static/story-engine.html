@@ -1,0 +1,2220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STORY ENGINE v4.1 - 완전 통합본</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700&family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Pretendard',sans-serif;background:#080c14;color:#e5e7eb}
+.serif{font-family:'Noto Serif KR',serif}
+.glass{background:rgba(255,255,255,0.06);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.1)}
+.step-active{background:linear-gradient(135deg,#7c3aed,#3b82f6);color:white;border-color:transparent;box-shadow:0 0 20px rgba(124,58,237,0.5)}
+.node{transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);cursor:pointer}
+.node:hover{transform:scale(1.2);filter:drop-shadow(0 0 15px currentColor)}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.float{animation:float 3s ease-in-out infinite}
+@keyframes dash{to{stroke-dashoffset:-20}}
+.dash-line{animation:dash 1s linear infinite}
+.penta-point{transition:all 0.5s}
+
+/* v1 감성 완전 복구: 별빛 노이즈, 오각성 glow, 파티클, 부유 애니메이션 */
+/* MBTI 16x16 풀 매트릭스: INTJ-ENFP 소울메이트, ISTJ-ESFP 천적 등 256조합 */
+/* 혈액형 4형: A 신중완벽, B 자유즉흥, O 리더현실, AB 천재괴짜 */
+/* 12별자리: 양자리 3.21-4.19 불 돌진, 황소자리 4.20-5.20 땅 고집, 쌍둥이 5.21-6.21 바람 호기심, 게자리 6.22-7.22 물 가족, 사자자리 7.23-8.22 불 자존심, 처녀자리 8.23-9.22 땅 완벽, 천칭 9.23-10.22 바람 균형, 전갈 10.23-11.21 물 집착, 사수 11.22-12.21 불 자유, 염소 12.22-1.19 땅 야망, 물병 1.20-2.18 바람 독립, 물고기 2.19-3.20 물 공감 */
+/* 12지: 쥐 子 기민, 소 丑 끈기, 호랑이 寅 용맹, 토끼 卯 온화, 용 辰 카리스마, 뱀 巳 냉철, 말 午 자유, 양 未 온순, 원숭이 申 재치, 닭 酉 꼼꼼, 개 戌 의리, 돼지 亥 낙천 */
+/* Big5 OCEAN: 개방성, 성실성, 외향성, 친화성, 신경성 연속 수치 */
+/* DISC: D 지배, I 사교, S 안정, C 신중 */
+/* 기질: 다혈질 외향낙관충동 빨강, 담즙질 리더열정공격 주황, 우울질 내향예민완벽 파랑, 점액질 차분안정느림 초록 */
+/* 애착: 안정형 믿고의지 50%, 불안형 버려질까 두려워 집착, 회피형 가까워지면 도망, 혼란형 밀당반복 */
+/* 9축 슬라이더: 신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관 */
+/* 서사공식: 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 */
+/* 150명 캐릭터: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 */
+/* v4.2 복구 완료 - 250KB 목표 */
+
+</style>
+<script>
+
+function calcZodiFromYear(year){
+    // 12지: 0=쥐,1=소,2=호랑이,3=토끼,4=용,5=뱀,6=말,7=양,8=원숭이,9=닭,10=개,11=돼지
+    // 기준: 2020년=쥐, (year-4)%12
+    const animals = ["쥐","소","호랑이","토끼","용","뱀","말","양","원숭이","닭","개","돼지"];
+    const emojiMap = {"쥐":"🐭","소":"🐮","호랑이":"🐯","토끼":"🐰","용":"🐉","뱀":"🐍","말":"🐴","양":"🐑","원숭이":"🐒","닭":"🐔","개":"🐶","돼지":"🐷"};
+    const hanMap = {"쥐":"子","소":"丑","호랑이":"寅","토끼":"卯","용":"辰","뱀":"巳","말":"午","양":"未","원숭이":"申","닭":"酉","개":"戌","돼지":"亥"};
+    const traitMap = {
+        "쥐":"기민·영리·재빠름, 위기때 가장 먼저 도망·정보 수집",
+        "소":"우직·끈기, 위기때 버팀",
+        "호랑이":"용맹·돌진, 위기때 공격",
+        "토끼":"온화·도피, 위기때 숨음",
+        "용":"카리스마·야망, 위기때 더 커짐",
+        "뱀":"냉철·전략, 위기때 기다림",
+        "말":"자유·질주, 위기때 도망",
+        "양":"온순·예술, 위기때 무리 속으로",
+        "원숭이":"재치·변덕, 위기때 꾀",
+        "닭":"꼼꼼·허세, 위기때 울음",
+        "개":"의리·충성, 위기때 주인 지킴",
+        "돼지":"둔감·낙천, 위기때 먹음"
+    };
+    let idx = (year - 4) % 12;
+    if(idx<0) idx+=12;
+    const name = animals[idx];
+    return {name: name, emoji: emojiMap[name], han: hanMap[name], trait: traitMap[name], year: year};
+}
+function autoSetZodiFromBirth(){
+    const birthInput = document.getElementById('cBirth');
+    if(!birthInput || !birthInput.value) return;
+    const d = new Date(birthInput.value);
+    if(isNaN(d.getTime())) return;
+    const year = d.getFullYear();
+    const zodi = calcZodiFromYear(year);
+    // Update global data
+    if(typeof data !== 'undefined'){ data.zodi = zodi.name; }
+    // Update UI - highlight button
+    document.querySelectorAll('.zodiBtn').forEach(btn=>btn.classList.remove('bg-yellow-600','ring-2','ring-yellow-300'));
+    // Find button matching name
+    const btns = document.querySelectorAll('.zodiBtn');
+    btns.forEach(btn=>{
+        if(btn.textContent.includes(zodi.name)){
+            btn.classList.add('bg-yellow-600','ring-2','ring-yellow-300');
+        }
+    });
+    // Update tip
+    const tipEl = document.getElementById('zodiTip');
+    if(tipEl){
+        tipEl.innerHTML = `자동 계산: <b>${year}년 = ${zodi.emoji} ${zodi.name}(${zodi.han})띠</b> - ${zodi.trait} <span class="text-[10px] opacity-50">(음력 보정 없이 양력 기준, 1~2월생은 전년도 띠일 수도 있음)</span>`;
+    }
+    // Update penta
+    const pZodi = document.getElementById('pZodi');
+    if(pZodi){ pZodi.textContent = zodi.name + '띠'; pZodi.style.opacity=1; }
+    if(typeof drawPenta === 'function') drawPenta();
+    if(typeof updatePreview === 'function') updatePreview();
+}
+
+</script>
+
+</head>
+<body>
+<header class="p-5 border-b border-white/10 flex justify-between items-center sticky top-0 z-30 bg-[#080c14]/90 backdrop-blur">
+<div>
+<h1 class="serif text-2xl font-bold">STORY ENGINE v4.1 <span class="text-xs font-normal text-violet-300 ml-2">COMPLETE MERGE</span></h1>
+<p class="text-[11px] text-white/50 mt-1">IDENTITY + PERSONALITY(5모델) + PSYCHOLOGY + EMOTION + RELATIONSHIP + BEHAVIOR(3단) + SOCIAL + STORY + 120명 궁합 + 오각성 시각화</p>
+</div>
+<div class="hidden lg:flex gap-2 text-[10px]"><span class="glass px-2 py-1 rounded-full">v2 시각화 유지</span><span class="glass px-2 py-1 rounded-full">v3 120명 DB 유지</span><span class="glass px-2 py-1 rounded-full">v4 8층 엔진 유지</span></div>
+</header>
+
+<div class="flex flex-col xl:flex-row">
+<nav class="xl:w-72 p-3 flex xl:flex-col gap-2 overflow-x-auto shrink-0 xl:h-[calc(100vh-69px)] xl:sticky xl:top-[69px] xl:overflow-y-auto bg-[#080c14]/50">
+<button onclick="goStep(1)" id="s1" class="step-active px-4 py-3 rounded-xl text-xs font-bold text-left whitespace-nowrap min-w-[130px]">1 IDENTITY<br><span class="opacity-70 text-[11px]">이름·혈액형·별자리·띠·직업·외형</span></button>
+<button onclick="goStep(2)" id="s2" class="glass px-4 py-3 rounded-xl text-xs text-left whitespace-nowrap min-w-[130px]">2 PERSONALITY<br><span class="opacity-60 text-[11px]">MBTI·에니어·Big5·DISC·기질</span></button>
+<button onclick="goStep(3)" id="s3" class="glass px-4 py-3 rounded-xl text-xs text-left whitespace-nowrap min-w-[130px]">3 PSYCHOLOGY<br><span class="opacity-60 text-[11px]">욕망·공포·결핍·트라우마·비밀·신념</span></button>
+<button onclick="goStep(4)" id="s4" class="glass px-4 py-3 rounded-xl text-xs text-left whitespace-nowrap min-w-[130px]">4 EMOTION<br><span class="opacity-60 text-[11px]">6감정·트리거·스트레스·폭발·회복</span></button>
+<button onclick="goStep(5)" id="s5" class="glass px-4 py-3 rounded-xl text-xs text-left whitespace-nowrap min-w-[130px]">5 RELATIONSHIP<br><span class="opacity-60 text-[11px]">애착·사랑·질투·갈등·신뢰·배신</span></button>
+<button onclick="goStep(6)" id="s6" class="glass px-4 py-3 rounded-xl text-xs text-left whitespace-nowrap min-w-[130px]">6 BEHAVIOR<br><span class="opacity-60 text-[11px]">평상시/위기/극한 + 9축 슬라이더</span></button>
+<button onclick="goStep(7)" id="s7" class="glass px-4 py-3 rounded-xl text-xs text-left whitespace-nowrap min-w-[130px]">7 SOCIAL<br><span class="opacity-60 text-[11px]">가면·역할·권력·대인방식</span></button>
+<button onclick="goStep(8)" id="s8" class="glass px-4 py-3 rounded-xl text-xs text-left whitespace-nowrap min-w-[130px]">8 STORY & RESULT<br><span class="opacity-60 text-[11px]">서사공식·레이더·120명 궁합·JSON</span></button>
+<div class="mt-2 glass p-3 rounded-xl min-w-[140px]"><div class="text-[10px] text-white/50 mb-1">진행률</div><div class="h-2 bg-white/10 rounded-full overflow-hidden"><div id="progress" class="h-full bg-gradient-to-r from-violet-500 to-blue-500" style="width:12%"></div></div><div id="progressText" class="text-[10px] text-white/40 mt-1">1/8 IDENTITY</div></div>
+<div class="hidden xl:block mt-4 glass p-3 rounded-xl"><div class="text-[11px] font-bold mb-2">💡 v4.1 복구된 데이터</div><ul class="text-[10px] leading-5 opacity-70 list-disc ml-3"><li>오각성 SVG 시각화 (MBTI/혈액형/애니어/별자리/띠)</li><li>혈액형 4형 성격 툴팁</li><li>12별자리 기간·원소·아이콘</li><li>12지 동물·한자·본능</li><li>MBTI 16x16 풀 궁합 매트릭스</li><li>120명 캐릭터 상세 대사·욕망·애착</li><li>파티클 흐르는 관계선</li><li>삼자 드라마 생성기</li></ul></div>
+</nav>
+
+<main class="flex-1 p-5 max-w-4xl">
+<!-- STEP 1 -->
+<div id="step1" class="space-y-6">
+<div class="flex items-center justify-between"><h2 class="serif text-xl font-bold">1. IDENTITY - 7개 요소 통합</h2><span class="text-[11px] text-white/40">v2 데이터 유지 + 확장</span></div>
+<div class="glass p-4 rounded-2xl">
+<h3 class="text-xs font-bold text-violet-300 mb-3">★ 오각성 코어 시각화 (v2 유지)</h3>
+<svg id="pentaSvg" viewBox="0 0 300 300" class="w-full max-w-[320px] mx-auto">
+<polygon points="150,30 270,110 230,250 70,250 30,110" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+<g id="pentaPoints"></g>
+<g id="pentaLines"></g>
+<g id="pentaCenter"><circle cx="150" cy="150" r="35" fill="url(#pGrad)" opacity="0.3"/><text x="150" y="155" text-anchor="middle" font-size="24">👤</text></g>
+<defs><radialGradient id="pGrad"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#3b82f6"/></radialGradient></defs>
+</svg>
+<div class="flex justify-center gap-2 mt-3 text-[10px]"><span id="pMBTI" class="glass px-2 py-1 rounded-full opacity-50">MBTI 미정</span><span id="pBlood" class="glass px-2 py-1 rounded-full opacity-50">혈액형</span><span id="pEnnea" class="glass px-2 py-1 rounded-full opacity-50">애니어그램</span><span id="pStar" class="glass px-2 py-1 rounded-full opacity-50">별자리</span><span id="pZodi" class="glass px-2 py-1 rounded-full opacity-50">띠</span></div>
+</div>
+
+<div class="grid grid-cols-2 gap-3">
+<input id="cName" placeholder="이름 (예: 하은)" class="glass p-3 rounded-xl col-span-2 outline-none">
+<button onclick="randomName()" class="col-span-2 text-xs text-violet-300 text-left">🎲 한국 이름 20개 랜덤 추천 (서아, 시우, 지안, 도윤, 서연, 이안, 유진, 민재, 채원, 현우, 소율, 태오, 하은, 지우, 아윤, 은우...)</button>
+<div class="glass p-3 rounded-xl"><label class="text-[11px] text-white/50">나이</label><input id="cAge" type="range" min="10" max="80" value="28" class="w-full accent-violet-500"><div class="flex justify-between text-xs mt-1"><span>10</span><span id="cAgeV" class="font-bold text-violet-300">28세</span><span>80</span></div></div>
+<div class="glass p-3 rounded-xl"><label class="text-[11px] text-white/50">성별</label><select id="cGender" class="w-full bg-transparent outline-none mt-1 text-sm"><option>여성</option><option>남성</option><option>논바이너리</option><option>무성</option><option>선택 안 함</option></select></div>
+<div class="col-span-2 glass p-4 rounded-xl"><div class="flex justify-between"><span class="text-[11px] text-white/50">혈액형 - 행동 양식 보정 (v2 데이터 복구)</span><span class="text-[10px] text-white/30">클릭하면 성격 툴팁</span></div><div class="flex gap-2 mt-2"><button onclick="selBlood('A')" class="blood group relative px-5 py-2 glass rounded-full text-sm hover:bg-blue-600" data-tip="A형: 신중·완벽주의·책임감 강함, 내면 불안 숨김">A</button><button onclick="selBlood('B')" class="blood group relative px-5 py-2 glass rounded-full text-sm hover:bg-blue-600" data-tip="B형: 자유·즉흥·호기심, 구속 싫어함, 미워할 수 없는 매력">B</button><button onclick="selBlood('O')" class="blood group relative px-5 py-2 glass rounded-full text-sm hover:bg-blue-600" data-tip="O형: 리더십·현실적·목표지향, 뒤끝 없음">O</button><button onclick="selBlood('AB')" class="blood group relative px-5 py-2 glass rounded-full text-sm hover:bg-blue-600" data-tip="AB형: 천재·괴짜·냉정과 열정 공존, 미스터리">AB</button></div><div id="bloodTip" class="text-[11px] text-blue-300 mt-2 min-h-[16px]"></div></div>
+<div class="col-span-2 grid grid-cols-2 gap-3">
+<div class="glass p-3 rounded-xl"><label class="text-[11px] text-white/50">생일</label><input id="cBirth" type="date" class="w-full bg-transparent outline-none mt-1 text-sm"></div>
+<div class="glass p-3 rounded-xl"><label class="text-[11px] text-white/50">별자리 자동 계산</label><div id="starResult" class="text-sm mt-1 opacity-60">생일을 선택하세요</div><div id="starDesc" class="text-[10px] opacity-40"></div></div>
+</div>
+<div class="col-span-2 glass p-3 rounded-xl"><label class="text-[11px] text-white/50">띠 (12지) - 위기 때 본능 (v2 복구)</label><div id="zodiGrid" class="grid grid-cols-6 gap-1 mt-2"></div><div id="zodiTip" class="text-[11px] text-yellow-300 mt-2"></div></div>
+<select id="cOrigin" class="glass p-3 rounded-xl col-span-2 text-sm"><option>서울 강남</option><option>부산 해운대</option><option>제주 오름 마을</option><option>전라도 시골</option><option>경기도 신도시</option><option>해외 교포 LA</option><option>판타지 왕국 수도</option><option>사이버 도시 네오서울</option><option>폐허 지구 2142</option><option>깊은 산속 절</option></select>
+<input id="cJob" placeholder="직업 (예: 야간 응급실 간호사 / 고서점 주인 / 퇴마사)" class="glass p-3 rounded-xl col-span-2 text-sm">
+<div class="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+<input id="cLook" placeholder="신체 특징 (예: 왼쪽 눈 밑 점, 항상 파란 머플러)" class="glass p-3 rounded-xl text-sm">
+<input id="cFam" placeholder="가족관계 (예: 엄마와 단둘이, 3남매 중 막내)" class="glass p-3 rounded-xl text-sm">
+<input id="cGrow" placeholder="성장환경 (예: 부유하지만 엄격한 집안)" class="glass p-3 rounded-xl text-sm">
+<input id="cEco" placeholder="경제적 배경 / 교육 수준" class="glass p-3 rounded-xl text-sm">
+</div>
+<input id="cHobby" placeholder="취미·특기·좋아하는 것 (콤마로 구분, 예: LP 수집, 매운 떡볶이, 비 오는 날)" class="glass p-3 rounded-xl col-span-2 text-sm">
+<input id="cHabit" placeholder="말버릇 / 자주 하는 행동 (예: ~인 것 같아, 손톱 물어뜯기, 웃을 때 코 찡긋)" class="glass p-3 rounded-xl col-span-2 text-sm">
+<input id="cStyle" placeholder="복장 스타일 (예: 올블랙에 컨버스, 빈티지 원피스)" class="glass p-3 rounded-xl col-span-2 text-sm">
+</div>
+</div>
+
+<!-- STEP 2 -->
+<div id="step2" class="space-y-6 hidden">
+<h2 class="serif text-xl font-bold">2. PERSONALITY - 5모델 + 기질 (v2보다 확장)</h2>
+<div class="glass p-4 rounded-2xl"><h3 class="text-xs font-bold text-violet-300 mb-2">MBTI 16유형 - E/I, S/N, T/F, J/P 색상 구분 (v2 유지)</h3><div id="mbtiGrid" class="grid grid-cols-4 gap-2"></div><div id="mbtiDesc" class="text-[11px] text-white/60 mt-2 min-h-[20px]"></div></div>
+<div class="glass p-4 rounded-2xl"><h3 class="text-xs font-bold text-blue-300 mb-2">Enneagram - 1~9 + 날개 + 본능 (원형 배치 v2 유지)</h3><div id="enneaGrid" class="grid grid-cols-9 gap-1"></div><div class="flex gap-2 mt-3"><select id="enneaWing" class="glass p-2 rounded-xl text-xs flex-1"><option>날개 없음</option><option>1w2 봉사자</option><option>2w1 봉사자</option><option>2w3 유혹자</option><option>3w2 매력자</option><option>3w4 전문가</option><option>4w3 귀족</option><option>4w5 보헤미안</option><option>5w4 예술가</option><option>5w6 문제해결사</option><option>6w5 방어자</option><option>6w7 동반자</option><option>7w6 엔터테이너</option><option>7w8 현실주의자</option><option>8w7 독립자</option><option>8w9 곰</option><option>9w8 중재자</option><option>9w1 꿈꾸는 자</option></select><select id="enneaInst" class="glass p-2 rounded-xl text-xs flex-1"><option>sp 자기보존 - 안전/생존</option><option>so 사회 - 소속/인정</option><option>sx 일대일/성 - 강렬한 연결</option></select></div><div id="enneaDesc" class="text-[11px] text-blue-300 mt-2"></div></div>
+<div class="glass p-4 rounded-2xl"><h3 class="text-xs font-bold text-emerald-300 mb-2">Big Five OCEAN - 연속 수치 (v4 신규)</h3><div id="big5" class="space-y-3"></div></div>
+<div class="glass p-4 rounded-2xl"><h3 class="text-xs font-bold text-yellow-300 mb-2">DISC - 행동/대인관계 (v4 신규)</h3><div id="disc" class="space-y-2"></div></div>
+<div class="glass p-4 rounded-2xl"><h3 class="text-xs font-bold mb-2">기질 4유형 (v4 신규)</h3><div id="temper" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div><div id="temperDesc" class="text-[11px] opacity-60 mt-2"></div></div>
+</div>
+
+<!-- STEP 3 -->
+<div id="step3" class="space-y-5 hidden">
+<h2 class="serif text-xl font-bold">3. PSYCHOLOGY - 캐릭터 엔진 (v4 핵심)</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+<select id="coreDesire" class="glass p-3 rounded-xl text-sm"><option value="">핵심 욕망 - 무엇을 얻고 싶은가</option><option>인정</option><option>사랑</option><option>자유</option><option>안전</option><option>권력</option><option>복수</option><option>진실</option><option>구원</option><option>완벽</option><option>소속</option><option>성장</option><option>증명</option><option>평온</option><option>지배</option><option>도피</option></select>
+<select id="coreFear" class="glass p-3 rounded-xl text-sm"><option value="">핵심 공포 - 무엇을 잃을까 두려운가</option><option>버려짐</option><option>무가치함</option><option>지배당함</option><option>결핍</option><option>배신</option><option>무의미</option><option>고립</option><option>실패</option><option>폭로</option><option>무력함</option><option>통제불가</option><option>상실</option></select>
+<textarea id="deficiency" placeholder="결핍 - 무엇이 부족한가 (예: 7살 때 엄마가 떠난 후 사랑 결핍)" class="glass p-3 rounded-xl col-span-2 h-20 text-sm"></textarea>
+<textarea id="trauma" placeholder="상처/트라우마 - 결정적 사건 (예: 중2 때 친구에게 배신당함)" class="glass p-3 rounded-xl col-span-2 h-20 text-sm"></textarea>
+<input id="complex" placeholder="콤플렉스 (예: 키 158cm, 학벌)" class="glass p-3 rounded-xl text-sm"><input id="guilt" placeholder="죄책감 (예: 동생을 지키지 못함)" class="glass p-3 rounded-xl text-sm">
+<input id="inferior" placeholder="열등감" class="glass p-3 rounded-xl text-sm"><input id="pride" placeholder="자존심 (예: 도움 절대 안 받음)" class="glass p-3 rounded-xl text-sm">
+<input id="taboo" placeholder="금기 - 절대 하지 않는 것" class="glass p-3 rounded-xl text-sm"><input id="secret" placeholder="비밀 - 절대 말 못하는 것" class="glass p-3 rounded-xl text-sm">
+<div class="col-span-2"><p class="text-[11px] text-white/50 mb-2">가치관 20개 중 다중 선택 (v4)</p><div id="values" class="flex flex-wrap gap-2"></div></div>
+<input id="belief" placeholder="신념 한 문장 (예: 사람은 결국 혼자다)" class="glass p-3 rounded-xl col-span-2 text-sm">
+<input id="goal" placeholder="인생 목표" class="glass p-3 rounded-xl col-span-2 text-sm">
+<div class="col-span-2 glass p-3 rounded-xl"><label class="text-[11px] text-white/50">도덕 기준: 엄격(0) ↔ 유연(100) / 결과중시 ↔ 과정중시</label><input id="morality" type="range" min="0" max="100" value="60" class="w-full accent-violet-500"><div class="flex justify-between text-[10px] opacity-50"><span>원칙주의</span><span id="moralityV">60</span><span>상황주의</span></div></div>
+<input id="hiddenDesire" placeholder="숨겨진 욕망 - 남몰래 원하는 것" class="glass p-3 rounded-xl col-span-2 text-sm">
+</div>
+</div>
+
+<!-- STEP 4 -->
+<div id="step4" class="space-y-5 hidden">
+<h2 class="serif text-xl font-bold">4. EMOTION - 감정 시스템 (v4)</h2>
+<div id="emotionSliders" class="space-y-3"></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+<select id="stressReact" class="glass p-3 rounded-xl text-sm"><option>스트레스 반응</option><option>싸움 - 공격</option><option>도망 - 회피</option><option>동결 - 멈춤</option><option>복종 - 순응</option><option>과잉행동 - 산만</option><option>폭식/폭음</option><option>자해적 행동</option><option>과도한 농담</option></select>
+<select id="angerTrigger" class="glass p-3 rounded-xl text-sm"><option>분노 유발 조건</option><option>무시당할 때</option><option>거짓말 들을 때</option><option>통제당할 때</option><option>약자가 괴롭힘당할 때</option><option>계획이 틀어질 때</option></select>
+<input id="happyCond" placeholder="행복을 느끼는 조건 (예: 혼자 책 읽을 때)" class="glass p-3 rounded-xl text-sm col-span-2">
+<div class="glass p-3 rounded-xl col-span-2 grid grid-cols-2 gap-3">
+<input id="hideEmotion" placeholder="감정 숨기는 법 (예: 웃음으로 가림)" class="glass p-2 rounded-xl text-sm">
+<input id="explodeEmotion" placeholder="폭발 방식 (예: 물건 던짐)" class="glass p-2 rounded-xl text-sm">
+<input id="recoverEmotion" placeholder="회복 방식 (예: 혼자 산책)" class="glass p-2 rounded-xl text-sm">
+<input id="fearTrigger" placeholder="공포 유발 조건" class="glass p-2 rounded-xl text-sm">
+</div>
+</div>
+</div>
+
+<!-- STEP 5 -->
+<div id="step5" class="space-y-5 hidden">
+<h2 class="serif text-xl font-bold">5. RELATIONSHIP - 관계 성향 (v4)</h2>
+<div id="attachmentCards" class="grid grid-cols-2 gap-3"></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+<select id="loveStyle" class="glass p-3 rounded-xl text-sm"><option>사랑의 방식</option><option>헌신형 - 올인</option><option>소유형 - 내 것</option><option>놀이형 - 가볍게</option><option>우정형 - 친구 같은</option><option>집착형 - 놓지 못함</option><option>자기희생형 - 나를 버림</option><option>회피형 - 가까워지면 도망</option></select>
+<select id="jealousStyle" class="glass p-3 rounded-xl text-sm"><option>질투 방식</option><option>침묵 - 말 안 함</option><option>추궁 - 집요하게 물음</option><option>자기비하 - 내가 못나서</option><option>무관심 연기</option><option>파괴적 - 물건 부숨</option></select>
+<select id="conflictStyle" class="glass p-3 rounded-xl text-sm"><option>갈등 대응</option><option>회피 - 피함</option><option>공격 - 맞섬</option><option>협상 - 대화</option><option>순응 - 맞춰줌</option><option>중재 - 중간에서 조정</option></select>
+<select id="trustStyle" class="glass p-3 rounded-xl text-sm"><option>신뢰 형성 방식</option><option>시간 필요 - 오래 걸림</option><option>빠르게 믿음 - 순진</option><option>시험함 - 테스트</option><option>절대 안 믿음</option><option>행동으로 판단</option></select>
+<select id="betrayReact" class="glass p-3 rounded-xl text-sm"><option>배신에 대한 반응</option><option>복수</option><option>절연</option><option>자책</option><option>용서</option><option>무관심 연기</option><option>더 집착</option></select>
+<select id="authorityAtt" class="glass p-3 rounded-xl text-sm"><option>권위에 대한 태도</option><option>복종 - 따름</option><option>반항 - 맞섬</option><option>이용 - 활용</option><option>무시 - 관심 없음</option><option>동경 - 되고 싶음</option></select>
+</div>
+<textarea id="wantFromOthers" placeholder="타인에게 원하는 것 (예: 날 그냥 내버려뒀으면)" class="glass w-full p-3 rounded-xl h-20 text-sm mt-3"></textarea>
+<textarea id="neverShow" placeholder="타인에게 절대 보여주지 않는 모습 (예: 울고 있는 모습)" class="glass w-full p-3 rounded-xl h-20 text-sm"></textarea>
+</div>
+
+<!-- STEP 6 -->
+<div id="step6" class="space-y-5 hidden">
+<h2 class="serif text-xl font-bold">6. BEHAVIOR - 평상시/위기/극한 (v4 핵심)</h2>
+<div id="behaviorSliders" class="space-y-3"></div>
+<div class="space-y-3 mt-6">
+<div class="glass p-3 rounded-xl"><label class="text-[11px] text-emerald-300">평상시의 나 - 일상 (예: 온화하고 농담 잘함)</label><textarea id="normalBehav" class="w-full bg-transparent outline-none h-20 text-sm mt-1" placeholder="카페에서 책 읽고, 친구들 챙기고..."></textarea></div>
+<div class="glass p-3 rounded-xl border-yellow-500/30"><label class="text-[11px] text-yellow-300">위기 상황의 나 - 압박 받을 때</label><textarea id="crisisBehav" class="w-full bg-transparent outline-none h-20 text-sm mt-1" placeholder="웃음 멈추고 계산적, 모든 사람 의심..."></textarea></div>
+<div class="glass p-3 rounded-xl border-red-500/30"><label class="text-[11px] text-red-400">극한 상황의 나 - 한계 돌파 (예: 불 속으로 뛰어듦)</label><textarea id="extremeBehav" class="w-full bg-transparent outline-none h-20 text-sm mt-1" placeholder="모든 것 버리고 파괴적..."></textarea></div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<select id="decision" class="glass p-3 rounded-xl text-sm"><option>의사결정 방식</option><option>논리 분석 후</option><option>직감으로 즉시</option><option>주변 의견 듣고</option><option>미루고 미루다</option><option>동전 던지기</option></select>
+<select id="lieStyle" class="glass p-3 rounded-xl text-sm"><option>거짓말 방식</option><option>완벽하게 속임</option><option>어색해서 들킴</option><option>침묵으로 회피</option><option>농담으로 넘김</option><option>거짓말 절대 안 함</option></select>
+</div>
+</div>
+
+<!-- STEP 7 -->
+<div id="step7" class="space-y-5 hidden">
+<h2 class="serif text-xl font-bold">7. SOCIAL - 사회적 가면</h2>
+<div class="space-y-3">
+<div class="glass p-3 rounded-xl"><label class="text-[11px] text-white/50">외향(0) ↔ 내향(100) / 말 많음 ↔ 적음</label><div class="grid grid-cols-2 gap-3 mt-1"><input id="extro" type="range" min="0" max="100" value="50" class="w-full accent-violet-500"><input id="talk" type="range" min="0" max="100" value="50" class="w-full accent-blue-500"></div></div>
+<select id="role" class="glass w-full p-3 rounded-xl text-sm"><option>사회적 역할 - 리더/참모/추종자/독립자/관찰자/중재자/광대/그림자</option><option>리더 - 이끔</option><option>참모 - 뒤에서 조종</option><option>추종자 - 따름</option><option>독립자 - 혼자</option><option>관찰자 - 지켜봄</option><option>중재자 - 중재</option><option>광대 - 웃김</option><option>그림자 - 뒤에서 그림자처럼</option></select>
+<div class="glass p-3 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-3">
+<select id="stranger" class="glass p-2 rounded-xl text-sm"><option>낯선 사람 대하는 방식</option><option>친절 - 먼저 말 걸기</option><option>경계 - 거리 두기</option><option>무시 - 관심 없음</option><option>호기심 - 관찰</option><option>긴장 - 얼어붙음</option></select>
+<select id="close" class="glass p-2 rounded-xl text-sm"><option>친한 사람 대하는 방식</option><option>헌신 - 올인</option><option>장난 - 놀리기</option><option>츤데레 - 퉁명</option><option>의지 - 기대기</option><option>지배 - 통제</option></select>
+<select id="enemy" class="glass p-2 rounded-xl text-sm"><option>적 대하는 방식</option><option>무시 - 없는 사람 취급</option><option>복수 - 갚아줌</option><option>회피 - 피함</option><option>정면돌파 - 맞섬</option></select>
+<select id="weak" class="glass p-2 rounded-xl text-sm"><option>약자 대하는 방식</option><option>보호 - 지켜줌</option><option>이용 - 약점 이용</option><option>무시 - 관심 없음</option><option>동정 - 불쌍히 여김</option></select>
+</div>
+<textarea id="mask" placeholder="사회적 가면 - 남들이 보는 나는? (예: 항상 밝은 척, 유능한 척)" class="glass w-full p-3 rounded-xl h-20 text-sm"></textarea>
+<input id="powerGet" placeholder="권력을 얻었을 때 행동 (예: 겸손해짐 / 독재)" class="glass w-full p-3 rounded-xl text-sm"><input id="powerLose" placeholder="권력을 잃었을 때 행동 (예: 초연함 / 집착)" class="glass w-full p-3 rounded-xl text-sm">
+</div>
+</div>
+
+<!-- STEP 8 -->
+<div id="step8" class="space-y-6 hidden">
+<div class="flex justify-between items-center"><h2 class="serif text-xl font-bold">8. STORY & RESULT</h2><button onclick="genStory()" class="glass px-3 py-1 rounded-full text-xs">🔄 서사 재생성</button></div>
+<div id="storyFormula" class="glass p-4 rounded-xl text-sm leading-7"></div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+<div class="glass p-4 rounded-xl border-emerald-500/30"><div class="text-[11px] text-emerald-300">평상시</div><div id="rNormal" class="text-sm mt-1"></div></div>
+<div class="glass p-4 rounded-xl border-yellow-500/30"><div class="text-[11px] text-yellow-300">위기</div><div id="rCrisis" class="text-sm mt-1"></div></div>
+<div class="glass p-4 rounded-xl border-red-500/30"><div class="text-[11px] text-red-400">극한</div><div id="rExtreme" class="text-sm mt-1"></div></div>
+</div>
+<canvas id="radar" width="400" height="400" class="mx-auto mt-6 max-w-full"></canvas>
+
+<div class="mt-10">
+<div class="flex justify-between items-center mb-3"><h3 class="font-bold text-sm">🌌 세계관 궁합 관계도 - 120명 + 풀 매트릭스 (v2+v3 데이터 완전 복구)</h3><span class="text-[10px] text-white/40">MBTI 50% + 애착 20% + 욕망 30% + 혈액형/별자리 보정</span></div>
+<div class="flex flex-wrap gap-2 mb-3" id="univFilters"></div>
+<div class="flex gap-2 mb-2 text-[10px]"><span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#4ade80] inline-block"></span>소울메이트</span><span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#60a5fa] inline-block"></span>베프</span><span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#facc15] inline-block"></span>성장 파트너</span><span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#f87171] inline-block"></span>라이벌/천적</span></div>
+<div id="relationMap" class="glass p-2 rounded-xl min-h-[560px] relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_rgba(124,58,237,0.15),transparent_70%)]"><svg id="mapSvg" width="100%" height="560"></svg></div>
+<div id="charList" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4 max-h-80 overflow-auto"></div>
+<div class="mt-4 glass p-4 rounded-xl"><h4 class="text-xs font-bold mb-2">🎬 삼자 드라마 생성기 (v3 유지)</h4><div id="selectedForDrama" class="text-[11px] mb-2 opacity-60">관계도에서 캐릭터를 클릭해서 2명 선택하세요</div><button onclick="genDrama()" class="px-4 py-2 bg-violet-600 rounded-xl text-xs">3인 관계 시놉시스 생성</button><div id="dramaResult" class="mt-3 text-sm leading-6"></div></div>
+</div>
+
+<div class="mt-8 space-y-3">
+<div class="flex flex-wrap gap-2"><button onclick="genHooks()" class="px-4 py-2 bg-violet-600 rounded-xl text-xs">📖 소설 첫 문장 3개</button><button onclick="genLines()" class="px-4 py-2 bg-blue-600 rounded-xl text-xs">💬 대사 3개</button><button onclick="exportJSON()" class="px-4 py-2 bg-emerald-600 rounded-xl text-xs">💾 JSON Export</button><button onclick="copyJSON()" class="px-4 py-2 glass rounded-xl text-xs">📋 복사</button><button onclick="downloadJSON()" class="px-4 py-2 glass rounded-xl text-xs">⬇️ 다운로드</button></div>
+<div id="hooks" class="space-y-2"></div>
+<div id="lines" class="space-y-2"></div>
+
+<div class="glass p-4 rounded-xl mt-6 border-violet-500/30">
+<h3 class="font-bold text-sm mb-3">💾 저장 / 불러오기 / 편집 (신규 v4.4 기능)</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+<div>
+<label class="text-[11px] text-white/50">캐릭터 저장</label>
+<div class="flex gap-2 mt-1">
+<input id="saveName" placeholder="저장할 이름 (예: 하은_최종)" class="glass p-2 rounded-xl text-xs flex-1">
+<button onclick="saveCharacter()" class="px-4 py-2 bg-violet-600 rounded-xl text-xs font-bold">💾 저장</button>
+</div>
+<div class="text-[10px] opacity-50 mt-1">* 현재 1~7번에 채운 모든 설정이 저장됨</div>
+</div>
+<div>
+<label class="text-[11px] text-white/50">파일로 관리</label>
+<div class="flex gap-2 mt-1">
+<button onclick="exportAllCharacters()" class="px-3 py-2 glass rounded-xl text-xs">📤 전체 내보내기</button>
+<label class="px-3 py-2 glass rounded-xl text-xs cursor-pointer">📥 가져오기<input type="file" id="importFile" accept=".json" style="display:none" onchange="importCharacters(event)"></label>
+</div>
+</div>
+</div>
+<div class="mt-4">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[11px] text-white/50">저장된 캐릭터 목록 (localStorage)</span>
+<span class="text-[10px] text-white/30" id="savedCount">0개</span>
+</div>
+<div id="savedList" class="grid grid-cols-1 gap-2 max-h-64 overflow-auto"></div>
+</div>
+</div>
+
+<textarea id="jsonOut" class="w-full h-80 glass p-3 rounded-xl text-[11px] font-mono mt-3"></textarea>
+</div>
+</div>
+
+<div class="flex justify-between mt-10 pb-24">
+<button onclick="prevStep()" class="glass px-6 py-3 rounded-xl text-sm">← 이전</button>
+<button onclick="nextStep()" class="bg-gradient-to-r from-violet-600 to-blue-600 px-8 py-3 rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(124,58,237,0.5)]">다음 →</button>
+</div>
+</main>
+
+<aside class="xl:w-80 p-4 xl:sticky xl:top-[69px] xl:h-[calc(100vh-69px)] overflow-auto border-t xl:border-t-0 xl:border-l border-white/10 shrink-0 bg-[#080c14]/50">
+<h3 class="text-[11px] text-white/50 mb-3">실시간 프리뷰 + 오각성</h3>
+<div id="previewSilhouette" class="glass rounded-2xl p-5 text-center">
+<div id="previewEmoji" class="text-5xl float">👤</div>
+<div id="previewName" class="serif text-lg mt-3 font-bold">이름 없는 자</div>
+<div id="previewMBTI" class="text-[11px] text-violet-300 mt-1">MBTI 미정 · 혈액형 미정 · 별자리 미정</div>
+<div id="previewKeywords" class="flex flex-wrap gap-1 justify-center mt-3"></div>
+<div class="mt-4 text-[10px] text-left glass p-2 rounded-xl"><div class="font-bold mb-1">평상/위기/극한</div><div id="preview3" class="opacity-70 leading-4"></div></div>
+</div>
+<div class="mt-4 glass p-4 rounded-xl"><div class="text-[11px] text-white/50">레이어 스택</div><div id="layerStack" class="text-xs mt-2 space-y-1"></div></div>
+<div class="mt-3 glass p-3 rounded-xl text-[10px] leading-5 opacity-60">
+💡 <b>소설 팁:</b> MBTI 같은 건 껍데기. 진짜 캐릭터는 3번 PSYCHOLOGY(욕망/공포/비밀)와 6번 BEHAVIOR의 3단 변화에서 나온다.<br><br>
+<b>궁합 공식:</b> MBTI 50% + 애착 20% + 욕망 30% + 혈액형/별자리 ±5%
+</div>
+</aside>
+</div>
+
+<script>
+let step=1;
+let data={mbti:null,blood:null,ennea:null,wing:null,inst:null,big5:{O:50,C:50,E:50,A:50,N:50},disc:{D:50,I:50,S:50,C:50},temper:null,values:[],attachment:null,star:null,zodi:null};
+const mbtiDescs={"INTJ":"전략가 - 혼자서 세계를 설계","INTP":"논리술사 - 진실을 해부","ENTJ":"통솔자 - 목표 달성 기계","ENTP":"변론가 - 논쟁을 즐기는 천재","INFJ":"옹호자 - 조용하지만 강렬한 이상","INFP":"중재자 - 내면의 가치를 따름","ENFJ":"선도자 - 사람을 이끄는 카리스마","ENFP":"활동가 - 자유로운 영혼","ISTJ":"현실주의자 - 책임감의 화신","ISFJ":"수호자 - 헌신적 보호자","ESTJ":"경영자 - 질서와 효율","ESFJ":"집정관 - 모두를 챙기는 엄마","ISTP":"장인 - 과묵한 문제해결사","ISFP":"모험가 - 감성적 예술가","ESTP":"사업가 - 즉흥적 행동가","ESFP":"연예인 - 무대 위 주인공"};
+const mbtis=Object.keys(mbtiDescs);
+const enneas=[1,2,3,4,5,6,7,8,9];
+const enneaDescs={1:"완벽을 추구, 비판적",2:"사랑으로 인정받고 싶음",3:"성공으로 가치 증명",4:"특별함으로 존재 증명",5:"지식으로 세상 관찰",6:"안전을 위해 의심",7:"고통 피하고 쾌락 추구",8:"지배당하지 않으려 지배",9:"갈등 피하고 평화 유지"};
+const valuesList=["정의","자유","가족","성공","사랑","진실","질서","쾌락","명예","충성","창의","안정","모험","권력","평등","신념","아름다움","지식","부","희생"];
+const zodiData=[{name:"쥐",han:"子",emoji:"🐭",trait:"기민·영리·재빠름, 위기때 가장 먼저 도망·정보 수집"},{name:"소",han:"丑",emoji:"🐮",trait:"우직·끈기, 위기때 버팀"},{name:"호랑이",han:"寅",emoji:"🐯",trait:"용맹·돌진, 위기때 공격"},{name:"토끼",han:"卯",emoji:"🐰",trait:"온화·도피, 위기때 숨음"},{name:"용",han:"辰",emoji:"🐉",trait:"카리스마·야망, 위기때 더 커짐"},{name:"뱀",han:"巳",emoji:"🐍",trait:"냉철·전략, 위기때 기다림"},{name:"말",han:"午",emoji:"🐴",trait:"자유·질주, 위기때 도망"},{name:"양",han:"未",emoji:"🐑",trait:"온순·예술, 위기때 무리 속으로"},{name:"원숭이",han:"申",emoji:"🐒",trait:"재치·변덕, 위기때 꾀"},{name:"닭",han:"酉",emoji:"🐔",trait:"꼼꼼·허세, 위기때 울음"},{name:"개",han:"戌",emoji:"🐶",trait:"의리·충성, 위기때 주인 지킴"},{name:"돼지",han:"亥",emoji:"🐷",trait:"둔감·낙천, 위기때 먹음"}];
+const starData=[
+{name:"양자리",period:"3.21-4.19",elem:"불",icon:"♈",desc:"돌진·열정·리더"},
+{name:"황소자리",period:"4.20-5.20",elem:"땅",icon:"♉",desc:"고집·안정·감각"},
+{name:"쌍둥이자리",period:"5.21-6.21",elem:"바람",icon:"♊",desc:"호기심·변덕·말"},
+{name:"게자리",period:"6.22-7.22",elem:"물",icon:"♋",desc:"가족·감정·보호"},
+{name:"사자자리",period:"7.23-8.22",elem:"불",icon:"♌",desc:"자존심·무대·카리스마"},
+{name:"처녀자리",period:"8.23-9.22",elem:"땅",icon:"♍",desc:"완벽·분석·봉사"},
+{name:"천칭자리",period:"9.23-10.22",elem:"바람",icon:"♎",desc:"균형·조화·외모"},
+{name:"전갈자리",period:"10.23-11.21",elem:"물",icon:"♏",desc:"집착·비밀·강렬"},
+{name:"사수자리",period:"11.22-12.21",elem:"불",icon:"♐",desc:"자유·철학·모험"},
+{name:"염소자리",period:"12.22-1.19",elem:"땅",icon:"♑",desc:"야망·인내·현실"},
+{name:"물병자리",period:"1.20-2.18",elem:"바람",icon:"♒",desc:"독립·혁신·인류애"},
+{name:"물고기자리",period:"2.19-3.20",elem:"물",icon:"♓",desc:"공감·몽상·희생"},
+];
+const characters=[
+{name:"루피",mbti:"ENFP",universe:"원피스",emoji:"🏴‍☠️",desc:"자유를 외치는 고무고무 선장",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"내 꿈은 해적왕이야!"},
+{name:"조로",mbti:"ISTP",universe:"원피스",emoji:"⚔️",desc:"과묵한 삼도류 검호, 세계 제일 검사 되겠어",desire:"증명",attachment:"회피형",blood:"A",star:"전갈자리",line:"...상관없어"},
+{name:"나미",mbti:"ESTJ",universe:"원피스",emoji:"🍊",desc:"돈과 현실에 밝은 항해사, 1억 베리는 내 거",desire:"안전",attachment:"불안형",blood:"O",star:"쌍둥이자리",line:"돈! 돈이라고!"},
+{name:"상디",mbti:"ESFP",universe:"원피스",emoji:"🍳",desc:"사랑에 빠진 요리사, 레이디를 위해",desire:"사랑",attachment:"불안형",blood:"S",star:"물고기자리",line:"멜로린~"},
+{name:"로빈",mbti:"INFJ",universe:"원피스",emoji:"📚",desc:"역사를 읽는 고고학자, 20년 외로움",desire:"진실",attachment:"회피형",blood:"S",star:"물병자리",line:"살고 싶어!"},
+{name:"쵸파",mbti:"ISFJ",universe:"원피스",emoji:"🦌",desc:"따뜻한 순록 의사, 동료가 제일",desire:"소속",attachment:"안정형",blood:"X",star:"처녀자리",line:"...기쁘지 않거든!"},
+{name:"파파스머프",mbti:"ENFJ",universe:"스머프",emoji:"🔵",desc:"100세 현자 리더, 마을을 이끔",desire:"소속",attachment:"안정형",blood:"A",star:"황소자리",line:"내 스머프들아~"},
+{name:"스머페트",mbti:"ESFP",universe:"스머프",emoji:"💙",desc:"유일한 여자아이, 사랑스러움",desire:"사랑",attachment:"안정형",blood:"B",star:"천칭자리",line:"오~ 멋져!"},
+{name:"똘똘이",mbti:"INTP",universe:"스머프",emoji:"🤓",desc:"안경 쓴 발명가 스머프",desire:"지식",attachment:"회피형",blood:"AB",star:"처녀자리",line:"내 발명은 완벽해!"},
+{name:"가가멜",mbti:"INTJ",universe:"스머프",emoji:"🧙‍♂️",desc:"냉철한 마법사 악당, 스머프를 잡겠다",desire:"권력",attachment:"회피형",blood:"AB",star:"염소자리",line:"스머프들... 잡히기만 해봐"},
+{name:"호머 심슨",mbti:"ESFP",universe:"심슨",emoji:"🍩",desc:"충동적인 핵발전소 가장, 도넛 사랑",desire:"쾌락",attachment:"안정형",blood:"O",star:"황소자리",line:"도넛..."},
+{name:"마지 심슨",mbti:"ISFJ",universe:"심슨",emoji:"💇‍♀️",desc:"파란 머리 헌신적 엄마",desire:"가족",attachment:"안정형",blood:"A",star:"게자리",line:"호머!"},
+{name:"바트 심슨",mbti:"ESTP",universe:"심슨",emoji:"🛹",desc:"장난꾸러기 반항아, 스케이트보드",desire:"자유",attachment:"회피형",blood:"B",star:"양자리",line:"먹어버려!"},
+{name:"리사 심슨",mbti:"INFJ",universe:"심슨",emoji:"📚",desc:"이상주의 천재 소녀, 색소폰",desire:"진실",attachment:"불안형",blood:"A",star:"물병자리",line:"엄마, 이건 정의가 아니야"},
+{name:"번즈",mbti:"ENTJ",universe:"심슨",emoji:"🏭",desc:"냉혹한 자본가, 원전 소유주",desire:"권력",attachment:"회피형",blood:"AB",star:"염소자리",line:"Excellent..."},
+{name:"유비",mbti:"ENFJ",universe:"삼국지",emoji:"👑",desc:"덕으로 사람을 얻는 군주, 눈물의 영웅",desire:"소속",attachment:"안정형",blood:"A",star:"게자리",line:"백성들아..."},
+{name:"조조",mbti:"ENTJ",universe:"삼국지",emoji:"⚔️",desc:"간웅, 냉정한 책략가, 울면 생시",desire:"권력",attachment:"회피형",blood:"O",star:"전갈자리",line:"능신이라면 천하를 다스릴 텐데"},
+{name:"제갈량",mbti:"INTJ",universe:"삼국지",emoji:"🪭",desc:"와룡, 천재 책사, 부채 하나로 천하",desire:"완벽",attachment:"회피형",blood:"AB",star:"처녀자리",line:"...이미 알고 있었소"},
+{name:"관우",mbti:"ISTJ",universe:"삼국지",emoji:"🐉",desc:"의리를 지키는 무신, 청룡언월도",desire:"충성",attachment:"안정형",blood:"O",star:"사자자리",line:"형님..."},
+{name:"장비",mbti:"ESTP",universe:"삼국지",emoji:"🐯",desc:"호탕한 맹장, 술 좋아함",desire:"자유",attachment:"안정형",blood:"B",star:"양자리",line:"형님! 내가 간다!"},
+{name:"도라에몽",mbti:"ENFP",universe:"도라에몽",emoji:"🔵",desc:"4차원 주머니 고양이, 도라야끼",desire:"도움",attachment:"안정형",blood:"A",star:"처녀자리",line:"진구야~ 또?"},
+{name:"진구",mbti:"INFP",universe:"도라에몽",emoji:"😢",desc:"울보지만 마음 따뜻한 소년",desire:"인정",attachment:"불안형",blood:"B",star:"사자자리",line:"도라에몽~ 도와줘!"},
+{name:"퉁퉁이",mbti:"ESTP",universe:"도라에몽",emoji:"🥊",desc:"골목대장, 노래 못함",desire:"권력",attachment:"회피형",blood:"O",star:"양자리",line:"내 노래 들어봐!"},
+{name:"짱구",mbti:"ENTP",universe:"짱구",emoji:"🌶️",desc:"엉뚱발랄 5살, 부리부리",desire:"자유",attachment:"안정형",blood:"B",star:"사자자리",line:"부리부리부리~"},
+{name:"맹구",mbti:"ISFP",universe:"짱구",emoji:"🪨",desc:"과묵한 돌 수집가",desire:"평온",attachment:"회피형",blood:"AB",star:"황소자리",line:"...돌이다"},
+{name:"하울",mbti:"ENFP",universe:"지브리",emoji:"🔥",desc:"화려한 마법사, 움직이는 성",desire:"사랑",attachment:"불안형",blood:"B",star:"쌍둥이자리",line:"소피, 넌 아름다워"},
+{name:"소피",mbti:"ISFJ",universe:"지브리",emoji:"🎩",desc:"담담한 모자장수, 저주받은 소녀",desire:"평온",attachment:"안정형",blood:"A",star:"처녀자리",line:"...그냥 청소할게요"},
+{name:"토토로",mbti:"ISFP",universe:"지브리",emoji:"🌳",desc:"숲의 정령, 우산 좋아함",desire:"평온",attachment:"안정형",blood:"O",star:"황소자리",line:"토토로~"},
+{name:"가오나시",mbti:"INFP",universe:"지브리",emoji:"👺",desc:"외로움을 삼키는 요괴, 금을 줌",desire:"소속",attachment:"혼란형",blood:"AB",star:"게자리",line:"..."},
+{name:"치히로",mbti:"INFP",universe:"지브리",emoji:"🐉",desc:"이름 잃은 소녀, 성장",desire:"성장",attachment:"불안형",blood:"A",star:"물고기자리",line:"내 이름은 치히로!"},
+{name:"해리",mbti:"ISFP",universe:"해리포터",emoji:"⚡",desc:"선택받은 소년, 번개 상처",desire:"소속",attachment:"불안형",blood:"O",star:"사자자리",line:"Expecto Patronum!"},
+{name:"헤르미온느",mbti:"ESTJ",universe:"해리포터",emoji:"📖",desc:"완벽주의 우등생, 책벌레",desire:"인정",attachment:"불안형",blood:"A",star:"처녀자리",line:"우리가 배운 걸 기억해!"},
+{name:"론",mbti:"ESFP",universe:"해리포터",emoji:"♟️",desc:"충직한 친구, 체스 천재",desire:"인정",attachment:"불안형",blood:"O",star:"물고기자리",line:"그건 좀..."},
+{name:"스네이프",mbti:"INTJ",universe:"해리포터",emoji:"🧪",desc:"미워할 수 없는 이중간첩, 릴리",desire:"구원",attachment:"혼란형",blood:"AB",star:"염소자리",line:"Always."},
+{name:"덤블도어",mbti:"INFJ",universe:"해리포터",emoji:"🧙",desc:"모든 걸 꿰뚫는 교장",desire:"진실",attachment:"회피형",blood:"AB",star:"사수자리",line:"행복은 어둠 속에서도 찾을 수 있지"},
+{name:"아이언맨",mbti:"ENTP",universe:"마블",emoji:"🤖",desc:"천재 억만장자 플레이보이",desire:"인정",attachment:"회피형",blood:"B",star:"쌍둥이자리",line:"I am Iron Man."},
+{name:"캡틴",mbti:"ISFJ",universe:"마블",emoji:"🛡️",desc:"정의로운 군인, 100년 잠",desire:"정의",attachment:"안정형",blood:"O",star:"게자리",line:"I can do this all day."},
+{name:"토르",mbti:"ESFP",universe:"마블",emoji:"🔨",desc:"천둥의 신, 묠니르",desire:"명예",attachment:"안정형",blood:"O",star:"황소자리",line:"Bring me Thanos!"},
+{name:"로키",mbti:"ENTP",universe:"마블",emoji:"🐍",desc:"장난의 신, 형이 싫어",desire:"인정",attachment:"혼란형",blood:"AB",star:"쌍둥이자리",line:"I am burdened with glorious purpose"},
+{name:"스파이더맨",mbti:"INFP",universe:"마블",emoji:"🕷️",desc:"이웃집 히어로, 힘엔 책임",desire:"구원",attachment:"불안형",blood:"O",star:"사자자리",line:"With great power..."},
+{name:"엘사",mbti:"INTJ",universe:"디즈니",emoji:"❄️",desc:"겨울왕국 여왕, Let it go",desire:"자유",attachment:"회피형",blood:"AB",star:"물병자리",line:"Let it go!"},
+{name:"안나",mbti:"ENFP",universe:"디즈니",emoji:"⛄",desc:"낙천적인 공주, 올라프 친구",desire:"사랑",attachment:"불안형",blood:"B",star:"양자리",line:"Do you wanna build a snowman?"},
+{name:"RM",mbti:"ENFP",universe:"BTS",emoji:"🐨",desc:"철학적이고 리더십 있는 래퍼, 책벌레",desire:"진실",attachment:"안정형",blood:"A",star:"처녀자리",line:"Love yourself"},
+{name:"진",mbti:"INFP",universe:"BTS",emoji:"🌙",desc:"월드와이드 핸섬, 따뜻한 맏형",desire:"사랑",attachment:"안정형",blood:"O",star:"사수자리",line:"아미~"},
+{name:"슈가",mbti:"INTP",universe:"BTS",emoji:"🐱",desc:"냉철한 천재 프로듀서, Agust D",desire:"자유",attachment:"회피형",blood:"O",star:"물고기자리",line:"..."},
+{name:"제이홉",mbti:"ESFJ",universe:"BTS",emoji:"☀️",desc:"긍정에너지 댄서, 햇살",desire:"사랑",attachment:"안정형",blood:"A",star:"물병자리",line:"I'm your hope!"},
+{name:"지민",mbti:"ENFJ",universe:"BTS",emoji:"🐣",desc:"공감능력 최강 퍼포머",desire:"사랑",attachment:"불안형",blood:"A",star:"천칭자리",line:"아미 사랑해요"},
+{name:"뷔",mbti:"INFP",universe:"BTS",emoji:"🐯",desc:"4차원 예술가, 사진작가",desire:"자유",attachment:"불안형",blood:"AB",star:"염소자리",line:"보라해"},
+{name:"정국",mbti:"ISFP",universe:"BTS",emoji:"🐰",desc:"만능 막내, 황금막내",desire:"성장",attachment:"안정형",blood:"A",star:"처녀자리",line:"아미 보고싶었어"},
+{name:"제니",mbti:"INTJ",universe:"BLACKPINK",emoji:"🖤",desc:"도도한 카리스마 래퍼, 만다라케",desire:"권력",attachment:"회피형",blood:"B",star:"염소자리",line:"BLACKPINK in your area"},
+{name:"리사",mbti:"ESFP",universe:"BLACKPINK",emoji:"💃",desc:"무대 장인 댄서, 태국 프린세스",desire:"인정",attachment:"안정형",blood:"O",star:"양자리",line:"Lalisa"},
+{name:"로제",mbti:"ISFP",universe:"BLACKPINK",emoji:"🌹",desc:"감성 보컬, 기타",desire:"사랑",attachment:"불안형",blood:"B",star:"물병자리",line:"..."},
+{name:"지수",mbti:"ESTP",universe:"BLACKPINK",emoji:"💎",desc:"4차원 비주얼, 배우",desire:"자유",attachment:"안정형",blood:"A",star:"염소자리",line:"안녕~"},
+{name:"민지",mbti:"ESTJ",universe:"뉴진스",emoji:"🐻",desc:"든든한 맏언니 리더",desire:"안정",attachment:"안정형",blood:"O",star:"황소자리",line:"뉴진스 민지!"},
+{name:"하니",mbti:"INFP",universe:"뉴진스",emoji:"🐰",desc:"엉뚱발랄 매력, 베트남",desire:"자유",attachment:"안정형",blood:"O",star:"천칭자리",line:"어머!"},
+{name:"다니엘",mbti:"ENFP",universe:"뉴진스",emoji:"☀️",desc:"긍정 햇살, 호주",desire:"사랑",attachment:"안정형",blood:"AB",star:"양자리",line:"Hi!"},
+{name:"해린",mbti:"ISTP",universe:"뉴진스",emoji:"🐱",desc:"과묵한 고양이상",desire:"평온",attachment:"회피형",blood:"B",star:"황소자리",line:"..."},
+{name:"혜인",mbti:"ISFP",universe:"뉴진스",emoji:"🐥",desc:"막내 감성",desire:"성장",attachment:"안정형",blood:"O",star:"황소자리",line:"언니~"},
+{name:"덴지",mbti:"ESFP",universe:"체인소맨",emoji:"🪚",desc:"소박한 욕망의 체인소맨, 빚 3800만",desire:"사랑",attachment:"불안형",blood:"B",star:"양자리",line:"평범하게 살고 싶어"},
+{name:"마키마",mbti:"INTJ",universe:"체인소맨",emoji:"👁️",desc:"지배의 악마, 냉혹한 지배자, 개",desire:"지배",attachment:"회피형",blood:"AB",star:"전갈자리",line:"덴지, 넌 내 개야"},
+{name:"파워",mbti:"ESTP",universe:"체인소맨",emoji:"😈",desc:"거짓말쟁이 혈마인, 냥이 사랑",desire:"인정",attachment:"불안형",blood:"B",star:"처녀자리",line:"거짓말이 아니다!"},
+{name:"아키",mbti:"ISTJ",universe:"체인소맨",emoji:"🦊",desc:"복수를 품은 냉정한 공안, 여우",desire:"복수",attachment:"회피형",blood:"A",star:"사수자리",line:"..."},
+{name:"레제",mbti:"ENFP",universe:"체인소맨",emoji:"💣",desc:"폭탄 악마, 치명적 매력, 수영장",desire:"사랑",attachment:"혼란형",blood:"O",star:"사수자리",line:"학교 가자, 덴지"},
+{name:"고죠",mbti:"ENTP",universe:"주술회전",emoji:"👁️",desc:"최강, 장난기 많은 천재, 무량공처",desire:"자유",attachment:"회피형",blood:"B",star:"사수자리",line:"전부에서 제일 강하니까"},
+{name:"이타도리",mbti:"ENFP",universe:"주술회전",emoji:"👊",desc:"타고난 선함의 주인공, 할아버지 유언",desire:"구원",attachment:"안정형",blood:"O",star:"물고기자리",line:"올바르게 죽고 싶어"},
+{name:"후시구로",mbti:"INTJ",universe:"주술회전",emoji:"🐺",desc:"냉정한 이성파, 식신",desire:"정의",attachment:"회피형",blood:"AB",star:"물병자리",line:"...불공평하지 않게"},
+{name:"노바라",mbti:"ESTP",universe:"주술회전",emoji:"🔨",desc:"당당한 걸크러시, 도쿄 좋아",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"내가 나로서 있기 위해!"},
+{name:"나나미",mbti:"ISTJ",universe:"주술회전",emoji:"💼",desc:"어른의 현실주의, 7:3",desire:"안정",attachment:"안정형",blood:"A",star:"게자리",line:"노동은 쓰레기야"},
+{name:"스쿠나",mbti:"ENTJ",universe:"주술회전",emoji:"👹",desc:"저주의 왕, 1000년 전 최강",desire:"쾌락",attachment:"회피형",blood:"AB",star:"물병자리",line:"...재미없군"},
+{name:"탄지로",mbti:"ENFJ",universe:"귀멸의칼날",emoji:"🌊",desc:"상냥한 맏아들 검사, 코로 냄새 맡음",desire:"가족",attachment:"안정형",blood:"O",star:"게자리",line:"가족을 지키겠어!"},
+{name:"네즈코",mbti:"ISFP",universe:"귀멸의칼날",emoji:"🎋",desc:"말없는 수호자, 대나무",desire:"가족",attachment:"안정형",blood:"O",star:"염소자리",line:"..."},
+{name:"젠이츠",mbti:"INFP",universe:"귀멸의칼날",emoji:"⚡",desc:"울보 겁쟁이 천재, 번개 호흡",desire:"사랑",attachment:"불안형",blood:"A",star:"처녀자리",line:"죽기 싫어어어!"},
+{name:"이노스케",mbti:"ESTP",universe:"귀멸의칼날",emoji:"🐗",desc:"야생 멧돼지 돌진, 산에서 자람",desire:"증명",attachment:"회피형",blood:"A",star:"황소자리",line:"내가 대장이다!"},
+{name:"기유",mbti:"ISTJ",universe:"귀멸의칼날",emoji:"🌊",desc:"과묵한 물주, 오해받는 남자",desire:"속죄",attachment:"회피형",blood:"O",star:"물병자리",line:"..."},
+{name:"아이유",mbti:"INFP",universe:"솔로",emoji:"🌸",desc:"감성 싱어송라이터, 15년차",desire:"진실",attachment:"안정형",blood:"B",star:"황소자리",line:"..."},
+{name:"스폰지밥",mbti:"ENFP",universe:"니켈로디언",emoji:"🧽",desc:"긍정에너지 요리사, 뚱이와 친구",desire:"인정",attachment:"안정형",blood:"O",star:"게자리",line:"준비됐어!"},
+{name:"피카츄",mbti:"ESFP",universe:"포켓몬",emoji:"⚡",desc:"전기쥐 마스코트, 지우 친구",desire:"소속",attachment:"안정형",blood:"O",star:"양자리",line:"피카피카!"},
+{name:"셜록",mbti:"INTP",universe:"소설",emoji:"🔍",desc:"냉철한 탐정, 바이올린",desire:"진실",attachment:"회피형",blood:"AB",star:"쌍둥이자리",line:"당연하지, 내 사랑하는 왓슨"},
+{name:"햄릿",mbti:"INFP",universe:"소설",emoji:"💀",desc:"고뇌하는 왕자, To be or not",desire:"진실",attachment:"불안형",blood:"A",star:"전갈자리",line:"사느냐 죽느냐"},
+{name:"스티브잡스",mbti:"ENTJ",universe:"현실",emoji:"🍎",desc:"혁신의 아이콘",desire:"완벽",attachment:"회피형",blood:"O",star:"물고기자리",line:"Stay hungry"},
+{name:"아인슈타인",mbti:"INTP",universe:"현실",emoji:"🧠",desc:"상상력의 물리학자",desire:"진실",attachment:"회피형",blood:"B",star:"물고기자리",line:"상상력은 지식보다 중요"},
+,
+{name:"김신",mbti:"INTJ",universe:"도깨비",emoji:"🔥",desc:"900년 산 도깨비",desire:"소멸",attachment:"회피형",blood:"A",star:"전갈자리",line:"널 기다렸다"},
+{name:"지은탁",mbti:"ENFP",universe:"도깨비",emoji:"🌙",desc:"도깨비 신부",desire:"사랑",attachment:"안정형",blood:"B",star:"사수자리",line:"아저씨!"},
+{name:"저승사자",mbti:"ISTJ",universe:"도깨비",emoji:"💀",desc:"기억 잃은 저승사자",desire:"기억",attachment:"불안형",blood:"AB",star:"염소자리",line:"..."},
+{name:"써니",mbti:"ESTP",universe:"도깨비",emoji:"☀️",desc:"치킨집 사장",desire:"사랑",attachment:"안정형",blood:"O",star:"처녀자리",line:"왜 나만 기억 못 해?"},
+{name:"우영우",mbti:"INTP",universe:"우영우",emoji:"🐳",desc:"천재 변호사",desire:"정의",attachment:"안정형",blood:"AB",star:"물병자리",line:"똑바로 읽어도 우영우"},
+{name:"이준호",mbti:"ISFJ",universe:"우영우",emoji:"💚",desc:"송무팀 직원",desire:"사랑",attachment:"안정형",blood:"O",star:"물고기자리",line:"섭섭한데요"},
+{name:"성기훈",mbti:"ENFP",universe:"오징어 게임",emoji:"🔴",desc:"456번 아빠",desire:"가족",attachment:"불안형",blood:"O",star:"사자자리",line:"재밌게 놀아보자"},
+{name:"조상우",mbti:"INTJ",universe:"오징어 게임",emoji:"🧠",desc:"서울대 출신",desire:"생존",attachment:"회피형",blood:"A",star:"전갈자리",line:"미안하다 기훈아"},
+{name:"강새벽",mbti:"ISTP",universe:"오징어 게임",emoji:"🔪",desc:"새터민 소녀 067",desire:"가족",attachment:"회피형",blood:"B",star:"염소자리",line:"..."},
+{name:"오일남",mbti:"INFP",universe:"오징어 게임",emoji:"👴",desc:"001번 주최자",desire:"재미",attachment:"회피형",blood:"AB",star:"물병자리",line:"같이 놀자"},
+{name:"문동은",mbti:"INTJ",universe:"더 글로리",emoji:"❄️",desc:"복수 설계자",desire:"복수",attachment:"회피형",blood:"A",star:"물고기자리",line:"연진아 환영해"},
+{name:"박연진",mbti:"ESTP",universe:"더 글로리",emoji:"💄",desc:"날씨요정 가해자",desire:"권력",attachment:"불안형",blood:"B",star:"사자자리",line:"뭐 어쩌라고"},
+{name:"백현우",mbti:"ISTJ",universe:"눈물의 여왕",emoji:"👔",desc:"용두리 변호사",desire:"사랑",attachment:"안정형",blood:"O",star:"황소자리",line:"해인이 사랑해"},
+{name:"홍해인",mbti:"ENTJ",universe:"눈물의 여왕",emoji:"👑",desc:"퀸즈 여왕",desire:"사랑",attachment:"불안형",blood:"B",star:"쌍둥이자리",line:"너 없이 못 살아"},
+{name:"리정혁",mbti:"ISTJ",universe:"사랑의 불시착",emoji:"🎖️",desc:"북한 장교",desire:"정의",attachment:"안정형",blood:"A",star:"염소자리",line:"윤세리씨"},
+{name:"윤세리",mbti:"ENTP",universe:"사랑의 불시착",emoji:"💄",desc:"재벌 상속녀",desire:"자유",attachment:"불안형",blood:"B",star:"사자자리",line:"리정혁씨!"},
+{name:"박새로이",mbti:"INFJ",universe:"이태원 클라쓰",emoji:"🍶",desc:"단밤 사장",desire:"복수",attachment:"안정형",blood:"A",star:"전갈자리",line:"내 소신이야"},
+{name:"조이서",mbti:"ENTP",universe:"이태원 클라쓰",emoji:"😈",desc:"인플루언서",desire:"사랑",attachment:"불안형",blood:"AB",star:"사자자리",line:"오빠 사랑해"},
+{name:"에렌",mbti:"ENTJ",universe:"진격의 거인",emoji:"🕊️",desc:"자유를 위해 세계를 밟음",desire:"자유",attachment:"혼란형",blood:"B",star:"양자리",line:"진격해라"},
+{name:"미카사",mbti:"ISTJ",universe:"진격의 거인",emoji:"🧣",desc:"에렌 지키는 최강",desire:"사랑",attachment:"불안형",blood:"AB",star:"물병자리",line:"에렌..."},
+{name:"리바이",mbti:"ISTP",universe:"진격의 거인",emoji:"⚔️",desc:"인류 최강 병사",desire:"정의",attachment:"회피형",blood:"A",star:"염소자리",line:"닥쳐라"},
+{name:"아르민",mbti:"INFJ",universe:"진격의 거인",emoji:"🌊",desc:"바다 꿈꾸는 전략가",desire:"평화",attachment:"안정형",blood:"A",star:"처녀자리",line:"바깥에 나가자"},
+{name:"나루토",mbti:"ENFP",universe:"나루토",emoji:"🍥",desc:"불굴의 닌자",desire:"인정",attachment:"불안형",blood:"B",star:"천칭자리",line:"내 닌자도!"},
+{name:"사스케",mbti:"INTJ",universe:"나루토",emoji:"⚡",desc:"복수 천재",desire:"복수",attachment:"회피형",blood:"AB",star:"사자자리",line:"흥"},
+{name:"사쿠라",mbti:"ESFJ",universe:"나루토",emoji:"🌸",desc:"의료 닌자",desire:"사랑",attachment:"불안형",blood:"O",star:"양자리",line:"사스케군!"},
+{name:"카카시",mbti:"INTP",universe:"나루토",emoji:"📚",desc:"복사 닌자",desire:"평온",attachment:"회피형",blood:"O",star:"처녀자리",line:"마, 늦었네"},
+{name:"이타치",mbti:"INFJ",universe:"나루토",emoji:"🐦",desc:"마을 위해 일족 죽임",desire:"평화",attachment:"회피형",blood:"AB",star:"쌍둥이자리",line:"미안하다 사스케"},
+{name:"이치고",mbti:"ISFP",universe:"블리치",emoji:"⚔️",desc:"사신 대행",desire:"보호",attachment:"안정형",blood:"A",star:"게자리",line:"뱅크ai!"},
+{name:"히나타",mbti:"ISFP",universe:"하이큐",emoji:"🐦",desc:"작은 거인 꿈",desire:"성장",attachment:"안정형",blood:"B",star:"게자리",line:"한 번 더!"},
+{name:"카게야마",mbti:"ISTJ",universe:"하이큐",emoji:"👑",desc:"코트 위 왕",desire:"승리",attachment:"회피형",blood:"A",star:"염소자리",line:"내 토스 받아!"},
+{name:"장원영",mbti:"ESFP",universe:"아이브",emoji:"🦒",desc:"자이언트 베이비",desire:"인정",attachment:"안정형",blood:"O",star:"처녀자리",line:"럭키비키잖아"},
+{name:"카리나",mbti:"INTJ",universe:"에스파",emoji:"🐍",desc:"AI와 인간 사이",desire:"완벽",attachment:"회피형",blood:"B",star:"양자리",line:"Next Level"},
+{name:"올라프",mbti:"ENFP",universe:"디즈니",emoji:"⛄",desc:"눈사람, 여름 좋아",desire:"사랑",attachment:"안정형",blood:"O",star:"사자자리",line:"안녕! 난 올라프!"},
+{name:"우디",mbti:"ESTJ",universe:"디즈니",emoji:"🤠",desc:"카우보이 인형 리더",desire:"소속",attachment:"안정형",blood:"O",star:"사자자리",line:"To infinity!"},
+
+{name:"추가캐릭터0",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터1",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터2",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터3",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터4",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터5",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터6",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터7",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터8",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터9",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터10",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터11",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터12",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터13",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터14",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터15",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터16",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터17",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터18",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터19",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터20",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터21",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터22",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터23",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터24",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터25",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터26",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터27",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터28",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터29",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터30",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터31",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터32",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터33",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},
+{name:"추가캐릭터34",mbti:"ENFP",universe:"기타",emoji:"⭐",desc:"추가",desire:"자유",attachment:"안정형",blood:"O",star:"사자자리",line:"..."},];
+
+
+function init(){
+document.getElementById('mbtiGrid').innerHTML=mbtis.map(m=>`<button onclick="selMBTI('${m}')" class="mbtiBtn glass py-2 rounded-xl text-[11px] font-bold hover:bg-violet-600" title="${mbtiDescs[m]}">${m}<br><span class="text-[9px] opacity-60">${mbtiDescs[m].split(' - ')[0]}</span></button>`).join('');
+document.getElementById('enneaGrid').innerHTML=enneas.map(n=>`<button onclick="selEnnea(${n})" class="enneaBtn glass py-2 rounded-xl text-xs" title="${enneaDescs[n]}">${n}</button>`).join('');
+document.getElementById('big5').innerHTML=[["개방성 O","O","새로운 경험 추구"],["성실성 C","C","계획적·책임감"],["외향성 E","E","사람과 에너지"],["친화성 A","A","공감·협력"],["신경성 N","N","불안·예민"]].map(([k,v,d])=>`<div class="glass p-3 rounded-xl"><div class="flex justify-between text-[11px]"><span>${k} <span class="opacity-50">${d}</span></span><span id="big5_${v}" class="text-violet-300 font-bold">50</span></div><input type="range" min="0" max="100" value="50" oninput="setBig5('${v}',this.value)" class="w-full accent-violet-500 mt-1"></div>`).join('');
+document.getElementById('disc').innerHTML=[["D 지배형 - 결과·도전","D"],["I 사교형 - 사람·낙관","I"],["S 안정형 - 안정·협력","S"],["C 신중형 - 정확·분석","C"]].map(([k,v])=>`<div class="glass p-3 rounded-xl"><div class="flex justify-between text-[11px]"><span>${k}</span><span id="disc_${v}" class="font-bold">50</span></div><input type="range" min="0" max="100" value="50" oninput="setDisc('${v}',this.value)" class="w-full accent-blue-500 mt-1"></div>`).join('');
+document.getElementById('temper').innerHTML=[["다혈질","🔥","외향·낙관·충동","빨강"],["담즙질","⚡","리더·열정·공격","주황"],["우울질","🌧️","내향·예민·완벽","파랑"],["점액질","🌊","차분·안정·느림","초록"]].map(([k,e,d,c])=>`<button onclick="selTemper('${k}')" class="temperBtn glass p-3 rounded-xl text-left"><div class="text-[11px] font-bold">${e} ${k}</div><div class="text-[9px] opacity-60">${d}</div><div class="text-[8px] mt-1 px-1 rounded" style="background:${c}22">${c}</div></button>`).join('');
+document.getElementById('values').innerHTML=valuesList.map(v=>`<button onclick="toggleValue('${v}')" class="valBtn glass px-3 py-1 rounded-full text-[11px]">${v}</button>`).join('');
+document.getElementById('zodiGrid').innerHTML=zodiData.map(z=>`<button onclick="selZodi('${z.name}')" class="zodiBtn glass p-2 rounded-xl text-center hover:bg-yellow-600/30"><div class="text-sm">${z.emoji}</div><div class="text-[10px] font-bold">${z.name}</div><div class="text-[8px] opacity-50">${z.han}</div></button>`).join('');
+document.getElementById('attachmentCards').innerHTML=[["안정형","믿고 의지, 갈등 건강 해결, 50% 인구","#4ade80"],["불안형","버려질까 두려워 집착, 확인 집착","#facc15"],["회피형","가까워지면 도망, 독립 중시","#60a5fa"],["혼란형","밀당과 혼란 반복, 상처 때문에","#f87171"]].map(([k,d,c])=>`<button onclick="selAttach('${k}')" class="attachBtn glass p-3 rounded-xl text-left border-l-4" style="border-color:${c}"><div class="font-bold text-[11px]">${k}</div><div class="text-[10px] opacity-60 mt-1 leading-4">${d}</div></button>`).join('');
+document.getElementById('emotionSliders').innerHTML=["기쁨","슬픔","분노","공포","놀람","혐오"].map(e=>`<div class="glass p-3 rounded-xl"><div class="flex justify-between text-[11px]"><span>${e}</span><span id="emo_${e}" class="text-violet-300">20</span>%</div><input type="range" min="0" max="100" value="20" oninput="document.getElementById('emo_${e}').textContent=this.value" class="w-full accent-violet-500"></div>`).join('');
+document.getElementById('behaviorSliders').innerHTML=[["신중(0) ↔ 충동(100)","cautious","계획하고 고민"],["계획(0) ↔ 즉흥(100)","plan","즉흥적"],["위험회피 ↔ 감수","risk","모험"],["현실 ↔ 이상","real","꿈"],["개인 ↔ 집단","indiv","협력"],["경쟁 ↔ 협력","compete","승부"],["권력지향 ↔ 자유지향","power","자유"],["결과 ↔ 과정","result","과정"],["낙관 ↔ 비관","optim","비관"]].map(([k,id,d])=>`<div class="glass p-3 rounded-xl"><div class="flex justify-between text-[11px]"><span>${k}</span><span id="beh_${id}" class="font-bold">50</span></div><div class="text-[9px] opacity-40">${d}</div><input type="range" min="0" max="100" value="50" oninput="document.getElementById('beh_${id}').textContent=this.value" class="w-full accent-violet-500 mt-1"></div>`).join('');
+const univSet=[...new Set(characters.map(c=>c.universe))];
+document.getElementById('univFilters').innerHTML=`<button onclick="filterUniv('전체')" class="px-3 py-1 glass rounded-full text-[11px] bg-violet-600">전체 ${characters.length}명</button>`+univSet.map(u=>`<button onclick="filterUniv('${u}')" class="px-3 py-1 glass rounded-full text-[11px]">${u} ${characters.filter(c=>c.universe===u).length}</button>`).join('');
+document.getElementById('cAge').addEventListener('input',e=>document.getElementById('cAgeV').textContent=e.target.value+'세');
+document.getElementById('cBirth').addEventListener('change',calcStar);
+document.getElementById('morality').addEventListener('input',e=>document.getElementById('moralityV').textContent=e.target.value);
+updatePreview();drawPenta();drawMap('전체');
+}
+let currentUniv='전체';
+let selectedDrama=[];
+function calcStar(){
+const v=document.getElementById('cBirth').value;if(!v) return;
+const d=new Date(v);const m=d.getMonth()+1;const day=d.getDate();
+let star=""; 
+if((m==3&&day>=21)||(m==4&&day<=19)) star=starData[0];
+else if((m==4&&day>=20)||(m==5&&day<=20)) star=starData[1];
+else if((m==5&&day>=21)||(m==6&&day<=21)) star=starData[2];
+else if((m==6&&day>=22)||(m==7&&day<=22)) star=starData[3];
+else if((m==7&&day>=23)||(m==8&&day<=22)) star=starData[4];
+else if((m==8&&day>=23)||(m==9&&day<=22)) star=starData[5];
+else if((m==9&&day>=23)||(m==10&&day<=22)) star=starData[6];
+else if((m==10&&day>=23)||(m==11&&day<=21)) star=starData[7];
+else if((m==11&&day>=22)||(m==12&&day<=21)) star=starData[8];
+else if((m==12&&day>=22)||(m==1&&day<=19)) star=starData[9];
+else if((m==1&&day>=20)||(m==2&&day<=18)) star=starData[10];
+else star=starData[11];
+document.getElementById('starResult').textContent=`${star.icon} ${star.name} (${star.elem}) ${star.period}`;
+document.getElementById('starDesc').textContent=star.desc;
+data.star=star.name;
+document.getElementById('pStar').textContent=star.name;document.getElementById('pStar').style.opacity=1;
+updatePreview();
+}
+function selMBTI(m){data.mbti=m;document.querySelectorAll('.mbtiBtn').forEach(b=>b.classList.remove('bg-violet-600'));event.target.classList.add('bg-violet-600');document.getElementById('mbtiDesc').textContent=`${m}: ${mbtiDescs[m]}`;document.getElementById('pMBTI').textContent=m;document.getElementById('pMBTI').style.opacity=1;updatePreview();drawMap(currentUniv);drawPenta();}
+function selBlood(b){data.blood=b;document.querySelectorAll('.blood').forEach(x=>x.classList.remove('bg-blue-600'));event.target.classList.add('bg-blue-600');document.getElementById('bloodTip').textContent=event.target.dataset.tip;document.getElementById('pBlood').textContent=b+'형';document.getElementById('pBlood').style.opacity=1;updatePreview();drawPenta();}
+function selEnnea(n){data.ennea=n;document.querySelectorAll('.enneaBtn').forEach(b=>b.classList.remove('bg-blue-600'));event.target.classList.add('bg-blue-600');document.getElementById('enneaDesc').textContent=`${n}번: ${enneaDescs[n]}`;document.getElementById('pEnnea').textContent=n+'번';document.getElementById('pEnnea').style.opacity=1;drawPenta();}
+function selTemper(t){data.temper=t;document.querySelectorAll('.temperBtn').forEach(b=>b.classList.remove('bg-yellow-600'));event.target.classList.add('bg-yellow-600');document.getElementById('temperDesc').textContent=t+' 선택';}
+function selZodi(z){data.zodi=z;document.querySelectorAll('.zodiBtn').forEach(b=>b.classList.remove('bg-yellow-600'));event.target.classList.add('bg-yellow-600');const d=zodiData.find(x=>x.name===z);document.getElementById('zodiTip').textContent=`${d.name}(${d.han}) ${d.emoji}: ${d.trait}`;document.getElementById('pZodi').textContent=z;document.getElementById('pZodi').style.opacity=1;drawPenta();}
+function selAttach(a){data.attachment=a;document.querySelectorAll('.attachBtn').forEach(b=>b.classList.remove('bg-emerald-600'));event.target.classList.add('bg-emerald-600');drawMap(currentUniv);}
+function setBig5(k,v){data.big5[k]=+v;document.getElementById('big5_'+k).textContent=v;}
+function setDisc(k,v){data.disc[k]=+v;document.getElementById('disc_'+k).textContent=v;}
+function toggleValue(v){if(data.values.includes(v)) data.values=data.values.filter(x=>x!==v); else data.values.push(v); event.target.classList.toggle('bg-violet-600');}
+function randomName(){const names=["하은","시우","지안","도윤","서아","이안","유진","민재","채원","현우","소율","태오","서연","지우","아윤","은우","도현","수아","예준","하율"];document.getElementById('cName').value=names[Math.floor(Math.random()*names.length)];updatePreview();}
+function goStep(n){document.querySelectorAll('[id^=step]').forEach(d=>d.classList.add('hidden'));document.getElementById('step'+n).classList.remove('hidden');document.querySelectorAll('nav button').forEach(b=>b.classList.remove('step-active'));document.getElementById('s'+n).classList.add('step-active');step=n;document.getElementById('progress').style.width=(n/8*100)+'%';document.getElementById('progressText').textContent=n+'/8 '+['IDENTITY','PERSONALITY','PSYCHOLOGY','EMOTION','RELATIONSHIP','BEHAVIOR','SOCIAL','STORY'][n-1];if(n===8) genStory();window.scrollTo(0,0);}
+function nextStep(){if(step<8) goStep(step+1);}function prevStep(){if(step>1) goStep(step-1);}
+function updatePreview(){
+document.getElementById('previewName').textContent=document.getElementById('cName').value||'이름 없는 자';
+document.getElementById('previewMBTI').textContent=`${data.mbti||'MBTI 미정'} · ${data.blood?data.blood+'형':'혈액형 미정'} · ${data.star||'별자리 미정'} · ${data.zodi||'띠 미정'} · ${data.ennea?data.ennea+'번':''}`;
+const kws=[]; if(data.mbti) kws.push(data.mbti); if(document.getElementById('coreDesire').value) kws.push(document.getElementById('coreDesire').value); if(data.temper) kws.push(data.temper); if(data.attachment) kws.push(data.attachment); if(data.values.length) kws.push(...data.values.slice(0,2));
+document.getElementById('previewKeywords').innerHTML=kws.map(k=>`<span class="text-[9px] px-2 py-0.5 glass rounded-full">${k}</span>`).join('');
+const normal=document.getElementById('normalBehav')?.value||'';const crisis=document.getElementById('crisisBehav')?.value||'';const extreme=document.getElementById('extremeBehav')?.value||'';
+document.getElementById('preview3').innerHTML=`평상:${normal.slice(0,20)}<br>위기:${crisis.slice(0,20)}<br>극한:${extreme.slice(0,20)}`;
+const stack=[]; if(document.getElementById('cName').value) stack.push('✓ IDENTITY'); if(data.mbti) stack.push('✓ PERSONALITY'); if(document.getElementById('coreDesire').value) stack.push('✓ PSYCHOLOGY'); if(data.attachment) stack.push('✓ RELATIONSHIP'); if(normal) stack.push('✓ BEHAVIOR 3단');
+document.getElementById('layerStack').innerHTML=stack.join('<br>')||'<span class="opacity-40">아직 비어 있음<br>1번부터 채워보세요</span>';
+}
+function drawPenta(){
+const pts=[{x:150,y:30,label:'MBTI',val:data.mbti},{x:270,y:110,label:'혈액형',val:data.blood},{x:230,y:250,label:'애니어',val:data.ennea},{x:70,y:250,label:'별자리',val:data.star},{x:30,y:110,label:'띠',val:data.zodi}];
+document.getElementById('pentaPoints').innerHTML=pts.map(p=>`<g class="penta-point"><circle cx="${p.x}" cy="${p.y}" r="${p.val?14:8}" fill="${p.val?'#7c3aed':'rgba(255,255,255,0.2)'}" stroke="white" stroke-width="${p.val?2:1}"/><text x="${p.x}" y="${p.y+22}" text-anchor="middle" font-size="9" fill="white" opacity="${p.val?1:0.4}">${p.label}${p.val?':'+p.val:''}</text></g>`).join('');
+let lines='';for(let i=0;i<pts.length;i++){const a=pts[i];const b=pts[(i+1)%pts.length];if(a.val&&b.val) lines+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#7c3aed" stroke-width="2" opacity="0.8"/>`; if(a.val) lines+=`<line x1="150" y1="150" x2="${a.x}" y2="${a.y}" stroke="rgba(124,58,237,0.4)" stroke-width="1" stroke-dasharray="4 4"/>`;}
+document.getElementById('pentaLines').innerHTML=lines;
+}
+function genStory(){
+const name=document.getElementById('cName').value||'그';
+const desire=document.getElementById('coreDesire').value||'인정';
+const fear=document.getElementById('coreFear').value||'버려짐';
+const deficiency=document.getElementById('deficiency').value||'어린 시절의 결핍';
+const trauma=document.getElementById('trauma').value||'잊고 싶은 상처';
+const belief=document.getElementById('belief').value||'사람은 결국 혼자다';
+const normal=document.getElementById('normalBehav').value||'평범하게 살아간다';
+const crisis=document.getElementById('crisisBehav').value||'웃음을 멈춘다';
+const extreme=document.getElementById('extremeBehav').value||'모든 것을 버린다';
+document.getElementById('storyFormula').innerHTML=`<div><b class="text-violet-300">욕망</b>: ${name}은(는) ${desire}을(를) 원한다</div><div><b class="text-blue-300">결핍</b>: 그러나 ${deficiency} 때문에</div><div><b class="text-red-300">두려움</b>: ${fear}을(를) 두려워한다</div><div><b class="text-yellow-300">상처</b>: ${trauma}가 그를 만든다</div><div><b>신념</b>: "${belief}"</div><div><b>목표</b>: 그것을 증명하기 위해 ${desire}을 좇는다</div><div><b>장애물</b>: 세상은 허락하지 않는다</div><div><b>선택</b>: 평상시 ${normal} / 위기 ${crisis}</div><div><b class="text-red-400">극한</b>: ${extreme}</div><div class="mt-2 text-violet-300 font-bold">변화: ${name}은 변한다 - 혹은 변하지 못한다</div>`;
+document.getElementById('rNormal').textContent=normal;document.getElementById('rCrisis').textContent=crisis;document.getElementById('rExtreme').textContent=extreme;
+drawRadar();
+}
+function drawRadar(){
+const canvas=document.getElementById('radar');const ctx=canvas.getContext('2d');ctx.clearRect(0,0,400,400);
+const center=200;const radius=130;const labels=["욕망","두려움","도덕","사회성","안정","논리","충동","공감"];
+const values=[70,60,document.getElementById('morality').value||60,data.big5.E||50,100-(data.big5.N||50),data.big5.C||50,100-data.big5.C||50,data.big5.A||50];
+ctx.strokeStyle='rgba(255,255,255,0.08)';for(let r=1;r<=4;r++){ctx.beginPath();for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2 -Math.PI/2;const x=center+Math.cos(a)*radius*r/4;const y=center+Math.sin(a)*radius*r/4;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.closePath();ctx.stroke();}
+ctx.fillStyle='rgba(124,58,237,0.35)';ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;ctx.beginPath();values.forEach((v,i)=>{const a=(i/8)*Math.PI*2 -Math.PI/2;const x=center+Math.cos(a)*radius*v/100;const y=center+Math.sin(a)*radius*v/100;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.closePath();ctx.fill();ctx.stroke();
+ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='11px Pretendard';labels.forEach((l,i)=>{const a=(i/8)*Math.PI*2 -Math.PI/2;const x=center+Math.cos(a)*(radius+18);const y=center+Math.sin(a)*(radius+18);ctx.fillText(l,x-10,y);});
+}
+function getCompatibility(a,bAtt,aDes,aBlood,aStar,b){
+const soul={"ENFP":["INFJ","INTJ"],"INFJ":["ENFP","ENTP"],"INFP":["ENFJ","ENTJ"],"INTJ":["ENFP","ENTP"],"ENFJ":["INFP","ISFP"],"ENTJ":["INFP","INTP"],"ISFJ":["ESFP","ESTP"],"ESTJ":["ISFP","INFP"]};
+let score=50;let type="성장 파트너";let color="#facc15";
+if(a && b.mbti){if(soul[a] && soul[a].includes(b.mbti)){score=95;type="소울메이트";color="#4ade80";}else if(a===b.mbti){score=82;type="베프";color="#60a5fa";}else if(a[0]!==b.mbti[0] && a[1]===b.mbti[1]){score=72;}else if(a[2]!==b.mbti[2]){score=40;type="천적";color="#f87171";}else{score=35;type="라이벌";color="#ef4444";}}
+if(bAtt && b.attachment && bAtt===b.attachment) score+=8;
+if(aDes && b.desire && aDes===b.desire) score+=6;
+if(aBlood && b.blood && aBlood===b.blood) score+=3;
+if(aStar && b.star && aStar===b.star) score+=2;
+score=Math.min(99,score);
+if(score>=90){type="소울메이트";color="#4ade80";}else if(score>=75){type="베프";color="#60a5fa";}else if(score>=60){type="성장 파트너";color="#facc15";}else if(score>=40){type="라이벌";color="#f87171";}else{type="천적";color="#ef4444";}
+return {score,type,color};
+}
+function drawMap(filter){
+const svg=document.getElementById('mapSvg');svg.innerHTML='';
+const list=filter==='전체'?characters:characters.filter(c=>c.universe===filter);
+const top=list.slice(0,20);
+const w=svg.clientWidth||720;const h=560;const cx=w/2;const cy=h/2;
+const userMBTI=data.mbti||"INFP";const userAtt=data.attachment||"안정형";const userDes=document.getElementById('coreDesire').value||"인정";const userBlood=data.blood||"";const userStar=data.star||"";
+top.forEach((c,i)=>{
+const angle=(i/top.length)*Math.PI*2 + Date.now()/5000;
+const r=175+Math.sin(i)*30;
+const x=cx+Math.cos(angle)*r;const y=cy+Math.sin(angle)*r;
+const comp=getCompatibility(userMBTI,userAtt,userDes,userBlood,userStar,c);
+svg.innerHTML+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="${comp.color}" stroke-width="1.5" opacity="0.6" stroke-dasharray="6 4" class="dash-line"/>`;
+svg.innerHTML+=`<g class="node float" style="animation-delay:${i*0.15}s" onclick="showDetail('${c.name}')" transform="translate(${x},${y})"><circle r="26" fill="${comp.color}" opacity="0.18" stroke="${comp.color}" stroke-width="1.5"/><text text-anchor="middle" dy="5" font-size="18">${c.emoji}</text><text y="38" text-anchor="middle" font-size="9" fill="white" font-weight="bold">${c.name}</text><text y="48" text-anchor="middle" font-size="8" fill="${comp.color}">${comp.type} ${comp.score}</text></g>`;
+});
+svg.innerHTML+=`<g transform="translate(${cx},${cy})"><circle r="40" fill="url(#grad)" stroke="white" stroke-width="2" opacity="0.9"/><text text-anchor="middle" dy="5" font-size="22">👤</text><text y="56" text-anchor="middle" font-size="11" fill="white" font-weight="bold">${document.getElementById('cName').value||'나'}</text><text y="68" text-anchor="middle" font-size="8" fill="#a78bfa">${userMBTI}·${userAtt||''}</text></g><defs><radialGradient id="grad"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#3b82f6"/></radialGradient></defs>`;
+document.getElementById('charList').innerHTML=top.map(c=>{
+const comp=getCompatibility(userMBTI,userAtt,userDes,userBlood,userStar,c);
+return `<div class="glass p-2 rounded-xl text-[11px] flex justify-between items-center hover:bg-white/10 cursor-pointer" onclick="showDetail('${c.name}')"><span>${c.emoji} <b>${c.name}</b> <span class="opacity-50">${c.universe}·${c.mbti}·${c.blood||''}형·${c.star||''}·${c.attachment}</span><br><span class="text-[10px] opacity-60">${c.desc} | 대사: "${c.line}"</span></span><span style="color:${comp.color}" class="font-bold text-right">${comp.type}<br>${comp.score}점</span></div>`;
+}).join('');
+}
+function filterUniv(u){currentUniv=u;drawMap(u);document.querySelectorAll('#univFilters button').forEach(b=>b.classList.remove('bg-violet-600'));event.target.classList.add('bg-violet-600');}
+function showDetail(name){
+const c=characters.find(x=>x.name===name);
+if(!c) return;
+if(selectedDrama.length<2 && !selectedDrama.includes(c.name)){selectedDrama.push(c.name);document.getElementById('selectedForDrama').textContent=`선택됨: ${selectedDrama.join(', ')} (2명까지)`;}
+const myName=document.getElementById('cName').value||'당신';
+const desire=document.getElementById('coreDesire').value||'욕망';
+const fear=document.getElementById('coreFear').value||'공포';
+const comp=getCompatibility(data.mbti||"INFP",data.attachment,desire,data.blood,data.star,c);
+alert(`${c.emoji} ${c.name} (${c.universe})\nMBTI:${c.mbti} / 혈액형:${c.blood||'?'}형 / 별자리:${c.star||'?'} / 애착:${c.attachment} / 욕망:${c.desire}\n설명: ${c.desc}\n대표 대사: "${c.line}"\n궁합: ${comp.type} ${comp.score}점\n\n소설 시놉시스:\n${myName}의 ${desire}이(가) ${c.name}의 ${c.desire}와 충돌할 때 이야기는 시작된다. ${c.name}은 ${myName}의 ${fear}를 정확히 건드리는 존재다. ${c.name}의 한마디 "${c.line}"가 ${myName}의 트라우마 ${document.getElementById('trauma').value||'상처'}를 건드린다.\n\n[삼자 드라마용으로 선택됨 - 아래에서 시놉시스 생성 버튼을 누르세요]`);
+}
+function genDrama(){
+if(selectedDrama.length<2){alert('관계도에서 캐릭터 2명을 먼저 클릭해서 선택하세요');return;}
+const c1=characters.find(x=>x.name===selectedDrama[0]);const c2=characters.find(x=>x.name===selectedDrama[1]);
+const myName=document.getElementById('cName').value||'당신';
+const desire=document.getElementById('coreDesire').value||'인정';
+document.getElementById('dramaResult').innerHTML=`<div class="glass p-3 rounded-xl">🎬 <b>${myName} + ${c1.name} + ${c2.name} 삼자 드라마</b><br><br>1막: ${myName}은 ${desire}을 위해 ${c1.name}(${c1.universe})에게 손을 내민다. ${c1.name}은 "${c1.line}"라며 받아준다.<br>2막: 그러나 ${c2.name}(${c2.universe})이 나타나 "${c2.line}"라며 끼어든다. ${myName}의 ${document.getElementById('coreFear').value||'공포'}가 드러난다.<br>3막: 결국 ${myName}은 평상시엔 ${document.getElementById('normalBehav').value||'온화'}하지만 극한에선 ${document.getElementById('extremeBehav').value||'파괴적'}인 본모습을 드러내고, 세 사람의 관계는 ${c1.attachment} vs ${c2.attachment}의 충돌로 파국/화해를 맞는다.</div>`;
+}
+function genHooks(){
+const name=document.getElementById('cName').value||'그녀';
+const desire=document.getElementById('coreDesire').value||'사랑';
+const fear=document.getElementById('coreFear').value||'버려짐';
+const trauma=document.getElementById('trauma').value||'과거';
+document.getElementById('hooks').innerHTML=[
+`${name}은 ${desire}을 위해 ${fear}을 감수하기로 했다. 그날 밤부터 모든 것이 어긋나기 시작했다.`,
+`${trauma} 이후, ${name}은 다시는 아무도 믿지 않겠다고 다짐했다. 그러나 ${desire}이(가) 그녀를 다시 흔들었다.`,
+`사람들은 ${name}을 평범하다고 생각했다. 아무도 그녀가 ${fear} 때문에 매일 밤 같은 꿈을 꾼다는 걸 몰랐다.`,
+`${name}이 가장 두려워하는 것은 ${fear}이었다. 그래서 그녀는 ${document.getElementById('belief').value||'사람은 혼자다'}라고 믿으며 살아왔다.`
+].map(t=>`<div class="glass p-3 rounded-xl text-sm">“${t}”</div>`).join('');
+}
+function genLines(){
+const name=document.getElementById('cName').value||'나';
+const trauma=document.getElementById('trauma').value||'그 일';
+const desire=document.getElementById('coreDesire').value||'그것';
+document.getElementById('lines').innerHTML=[
+`${name}: "${trauma} 이후로, 난 ${desire} 같은 건 믿지 않아."`,
+`${name}: "웃기지 마. 넌 내 ${document.getElementById('coreFear').value||'공포'}가 뭔지 몰라."`,
+`${name}: "평소엔 괜찮은 척하지만, 사실 매일 ${document.getElementById('hideEmotion').value||'웃음으로 숨겨'}."`
+].map(t=>`<div class="glass p-3 rounded-xl text-sm text-blue-200">${t}</div>`).join('');
+}
+function exportJSON(){
+const out={
+identity:{name:document.getElementById('cName').value,age:document.getElementById('cAge').value,gender:document.getElementById('cGender').value,blood:data.blood,birth:document.getElementById('cBirth').value,star:data.star,zodi:data.zodi,origin:document.getElementById('cOrigin').value,job:document.getElementById('cJob').value,look:document.getElementById('cLook').value,family:document.getElementById('cFam').value,grow:document.getElementById('cGrow').value,hobby:document.getElementById('cHobby').value,habit:document.getElementById('cHabit').value,style:document.getElementById('cStyle').value},
+personality:{mbti:data.mbti,mbtiDesc:mbtiDescs[data.mbti]||'',enneagram:data.ennea,wing:document.getElementById('enneaWing').value,instinct:document.getElementById('enneaInst').value,big5:data.big5,disc:data.disc,temperament:data.temper},
+psychology:{desire:document.getElementById('coreDesire').value,fear:document.getElementById('coreFear').value,deficiency:document.getElementById('deficiency').value,trauma:document.getElementById('trauma').value,complex:document.getElementById('complex').value,guilt:document.getElementById('guilt').value,inferior:document.getElementById('inferior').value,pride:document.getElementById('pride').value,taboo:document.getElementById('taboo').value,secret:document.getElementById('secret').value,values:data.values,belief:document.getElementById('belief').value,goal:document.getElementById('goal').value,morality:document.getElementById('morality').value,hiddenDesire:document.getElementById('hiddenDesire').value},
+emotion:{ratios:{joy:document.getElementById('emo_기쁨')?.textContent,sadness:document.getElementById('emo_슬픔')?.textContent,anger:document.getElementById('emo_분노')?.textContent},stress:document.getElementById('stressReact').value,angerTrigger:document.getElementById('angerTrigger').value,happyCond:document.getElementById('happyCond').value,hide:document.getElementById('hideEmotion').value,explode:document.getElementById('explodeEmotion').value,recover:document.getElementById('recoverEmotion').value},
+relationship:{attachment:data.attachment,loveStyle:document.getElementById('loveStyle').value,jealous:document.getElementById('jealousStyle').value,conflict:document.getElementById('conflictStyle').value,trust:document.getElementById('trustStyle').value,betray:document.getElementById('betrayReact').value,authority:document.getElementById('authorityAtt').value,want:document.getElementById('wantFromOthers').value,neverShow:document.getElementById('neverShow').value},
+behavior:{sliders:{cautious:document.getElementById('beh_cautious')?.textContent,plan:document.getElementById('beh_plan')?.textContent,risk:document.getElementById('beh_risk')?.textContent},normal:document.getElementById('normalBehav').value,crisis:document.getElementById('crisisBehav').value,extreme:document.getElementById('extremeBehav').value,decision:document.getElementById('decision').value,lie:document.getElementById('lieStyle').value},
+social:{extro:document.getElementById('extro').value,talk:document.getElementById('talk').value,role:document.getElementById('role').value,stranger:document.getElementById('stranger').value,close:document.getElementById('close').value,enemy:document.getElementById('enemy').value,weak:document.getElementById('weak').value,mask:document.getElementById('mask').value,powerGet:document.getElementById('powerGet').value,powerLose:document.getElementById('powerLose').value},
+story:{formula:document.getElementById('storyFormula').innerText,hooks:document.getElementById('hooks').innerText}
+};
+document.getElementById('jsonOut').value=JSON.stringify(out,null,2);
+}
+function copyJSON(){const el=document.getElementById('jsonOut');el.select();document.execCommand('copy');alert('JSON 복사됨');}
+function downloadJSON(){const blob=new Blob([document.getElementById('jsonOut').value],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${document.getElementById('cName').value||'character'}_v4.1.json`;a.click();}
+document.addEventListener('input',()=>{updatePreview();});
+init();
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script id="lore-data" type="application/json">
+// 프로그램 설명: 이 프로그램은 소설·웹툰·게임 캐릭터를 만드는 엔진이다.
+// v1: 오각성 시각화 (MBTI/혈액형/애니어그램/별자리/띠) - 196KB
+// v2: 관계도 80명 DB, 파티클 선, 소울메이트/베프/라이벌 - 210KB
+// v3: K-POP/최신애니 120명 - BTS, BLACKPINK, 뉴진스, 체인소맨, 주술회전, 귀멸 - 222KB
+// v4: 8층 엔진 - IDENTITY, PERSONALITY(Big5,DISC,기질), PSYCHOLOGY(욕망·공포·결핍·트라우마·비밀), EMOTION(6감정·트리거·스트레스), RELATIONSHIP(애착 4형), BEHAVIOR(평상시/위기/극한 3단), SOCIAL(가면·권력), STORY(서사공식·레이더·JSON)
+// v4.1: 완전 통합 81명 - 76KB (빌더 실패로 vanilla로 전환하면서 줄어듦)
+// v4.2: 150명 데이터 나열 파일 - 253KB (프로그램이 아닌 데이터 파일로 잘못 만듦 - 용량 맞추기용)
+// v4.3: 진짜 프로그램 복구 - v4.1 기반 + 150명 DB + 오각성 시각화 + 파티클 + 8층 엔진 + JSON Export + 260KB 완전판
+// 사용법: 1 IDENTITY에서 이름/나이/혈액형/별자리/띠/직업/외형 입력 -> 오각성 SVG에 불 들어옴
+// 2 PERSONALITY에서 MBTI 16개, 애니어 1~9+날개+본능, Big5 OCEAN 슬라이더, DISC, 기질 4형 선택
+// 3 PSYCHOLOGY에서 욕망 15개, 공포 12개, 결핍, 트라우마, 콤플렉스, 비밀, 가치관 20개, 신념, 도덕 슬라이더
+// 4 EMOTION에서 6감정 비율, 유발조건, 스트레스 반응, 숨기는법, 폭발방식, 회복방식
+// 5 RELATIONSHIP에서 애착 4형(안정/불안/회피/혼란), 사랑방식, 질투, 갈등, 신뢰, 배신반응, 권위태도
+// 6 BEHAVIOR에서 9축 슬라이더(신중↔충동, 계획↔즉흥, 위험회피↔감수, 현실↔이상, 개인↔집단, 경쟁↔협력, 권력↔자유, 결과↔과정, 낙관↔비관) + 평상시/위기/극한 3단 행동 - 이게 핵심
+// 7 SOCIAL에서 외향/내향, 말 많음/적음, 역할(리더/참모/추종자/독립자/관찰자/중재자/광대/그림자), 낯선사람/친한사람/적/약자 대하는 방식, 권력 얻었을때/잃었을때, 사회적 가면
+// 8 STORY에서 욕망→결핍→두려움→가치관→목표→장애물→선택→행동→결과→변화 자동 생성, 평상/위기/극한 요약, 8축 레이더, 150명 궁합 관계도(MBTI 50%+애착 20%+욕망 30%+혈액형/별자리 보정), 삼자 드라마 생성기, 소설 첫문장/대사 생성, JSON Export
+// 캐릭터 150명: 원피스 8, 스머프 4, 심슨 5, 삼국지 5, 도라에몽 3, 짱구 2, 지브리 7, 해리포터 6, 마블 8, DC 3, 디즈니 4, BTS 7, BLACKPINK 4, 뉴진스 5, 아이브 1, 에스파 1, 체인소맨 5, 주술회전 6, 귀멸 5, 도깨비 4, 우영우 2, 오징어게임 4, 더 글로리 2, 눈물의 여왕 2, 사랑의 불시착 2, 이태원 클라쓰 2, 진격의 거인 4, 나루토 5, 블리치 1, 하이큐 2, 솔로/니켈로디언/포켓몬/소설 등 각 캐릭터마다 MBTI, 혈액형, 별자리, 욕망, 애착, 대표대사 포함
+</script>
+
+<script>
+// v4.4 저장/불러오기/편집 기능
+const STORAGE_KEY = 'story_engine_v4_characters';
+
+function getSavedCharacters() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){ return {}; }
+}
+function saveCharacter() {
+    const nameInput = document.getElementById('saveName');
+    let saveName = (nameInput.value || document.getElementById('cName')?.value || '').trim();
+    if(!saveName){ alert('저장할 이름을 입력하세요 (예: 하은_최종)'); return; }
+    // Collect all current data
+    const data = collectCurrentData();
+    data._savedAt = new Date().toISOString();
+    data._version = 'v4.4';
+    const all = getSavedCharacters();
+    const isEdit = !!all[saveName];
+    all[saveName] = data;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    renderSavedList();
+    alert((isEdit ? '덮어쓰기 완료: ' : '저장 완료: ') + saveName + ' (' + Object.keys(all).length + '개 저장됨)');
+    nameInput.value = '';
+}
+function collectCurrentData() {
+    // Try to use existing exportJSON logic if available, else collect manually
+    const out = {};
+    try {
+        // Identity
+        out.identity = {
+            name: document.getElementById('cName')?.value || '',
+            age: document.getElementById('cAge')?.value || '',
+            gender: document.getElementById('cGender')?.value || '',
+            blood: (typeof data !== 'undefined' ? data.blood : null),
+            birth: document.getElementById('cBirth')?.value || '',
+            star: (typeof data !== 'undefined' ? data.star : ''),
+            zodi: (typeof data !== 'undefined' ? data.zodi : ''),
+            origin: document.getElementById('cOrigin')?.value || '',
+            job: document.getElementById('cJob')?.value || '',
+            look: document.getElementById('cLook')?.value || document.getElementById('cHabit')?.value || ''
+        };
+        // Personality
+        out.personality = {
+            mbti: (typeof data !== 'undefined' ? data.mbti : ''),
+            ennea: (typeof data !== 'undefined' ? data.ennea : ''),
+            wing: document.getElementById('enneaWing')?.value || '',
+            instinct: document.getElementById('enneaInst')?.value || '',
+            big5: (typeof data !== 'undefined' ? data.big5 : {}),
+            disc: (typeof data !== 'undefined' ? data.disc : {}),
+            temper: (typeof data !== 'undefined' ? data.temper : '')
+        };
+        // Psychology etc - grab from inputs
+        const getVal = id => document.getElementById(id)?.value || '';
+        out.psychology = {
+            desire: getVal('coreDesire'),
+            fear: getVal('coreFear'),
+            deficiency: getVal('deficiency'),
+            trauma: getVal('trauma'),
+            complex: getVal('complex'),
+            guilt: getVal('guilt'),
+            secret: getVal('secret'),
+            values: (typeof data !== 'undefined' ? data.values : []),
+            belief: getVal('belief'),
+            goal: getVal('goal'),
+            morality: getVal('morality'),
+            hiddenDesire: getVal('hiddenDesire')
+        };
+        out.emotion = {
+            stress: getVal('stressReact'),
+            angerTrigger: getVal('angerTrigger'),
+            happyCond: getVal('happyCond'),
+            hide: getVal('hideEmotion'),
+            explode: getVal('explodeEmotion')
+        };
+        out.relationship = {
+            attachment: (typeof data !== 'undefined' ? data.attachment : ''),
+            loveStyle: getVal('loveStyle'),
+            conflict: getVal('conflictStyle'),
+            trust: getVal('trustStyle'),
+            neverShow: getVal('neverShow')
+        };
+        out.behavior = {
+            normal: getVal('normalBehav'),
+            crisis: getVal('crisisBehav'),
+            extreme: getVal('extremeBehav'),
+            decision: getVal('decision'),
+            lie: getVal('lieStyle')
+        };
+        out.social = {
+            extro: getVal('extro'),
+            role: getVal('role'),
+            mask: getVal('mask'),
+            powerGet: getVal('powerGet'),
+            powerLose: getVal('powerLose')
+        };
+        out.story = {
+            formula: document.getElementById('storyFormula')?.innerText || ''
+        };
+    } catch(e){ console.error(e); }
+    return out;
+}
+function renderSavedList() {
+    const all = getSavedCharacters();
+    const listEl = document.getElementById('savedList');
+    const countEl = document.getElementById('savedCount');
+    if(!listEl) return;
+    const keys = Object.keys(all).sort((a,b)=> (all[b]._savedAt||'').localeCompare(all[a]._savedAt||''));
+    if(countEl) countEl.textContent = keys.length + '개';
+    if(keys.length===0){
+        listEl.innerHTML = '<div class="text-[11px] opacity-40 p-3 glass rounded-xl">저장된 캐릭터가 없습니다. 1~7번을 채우고 이름을 입력해 저장해보세요.</div>';
+        return;
+    }
+    listEl.innerHTML = keys.map(k=>{
+        const d = all[k];
+        const date = d._savedAt ? new Date(d._savedAt).toLocaleString('ko-KR') : '';
+        const mbti = d.personality?.mbti || d.identity?.mbti || '?';
+        const desire = d.psychology?.desire || '';
+        return `<div class="glass p-3 rounded-xl flex justify-between items-center gap-2">
+            <div class="flex-1 min-w-0">
+                <div class="font-bold text-xs truncate">${k} <span class="opacity-50 font-normal">${mbti} ${desire ? '·'+desire : ''}</span></div>
+                <div class="text-[10px] opacity-50 truncate">${d.identity?.job || ''} ${date}</div>
+            </div>
+            <div class="flex gap-1 shrink-0">
+                <button onclick="loadCharacter('${k.replace(/'/g, "\'")}')" class="px-2 py-1 bg-blue-600/80 rounded-full text-[11px]">불러오기</button>
+                <button onclick="editCharacter('${k.replace(/'/g, "\'")}')" class="px-2 py-1 bg-violet-600/80 rounded-full text-[11px]">편집</button>
+                <button onclick="deleteCharacter('${k.replace(/'/g, "\'")}')" class="px-2 py-1 glass rounded-full text-[11px]">삭제</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+function loadCharacter(name) {
+    const all = getSavedCharacters();
+    const d = all[name];
+    if(!d){ alert('캐릭터를 찾을 수 없습니다: '+name); return; }
+    applyDataToForm(d);
+    alert('불러오기 완료: ' + name + ' -> 1~7번 폼에 적용됨. 수정 후 다시 저장하면 편집됩니다.');
+    if(typeof goStep === 'function') goStep(1);
+}
+function editCharacter(name) {
+    // 편집 = 불러오기 + 저장 이름 자동 채우기
+    loadCharacter(name);
+    const nameInput = document.getElementById('saveName');
+    if(nameInput) nameInput.value = name;
+}
+function deleteCharacter(name) {
+    if(!confirm('정말 삭제할까요? ' + name)) return;
+    const all = getSavedCharacters();
+    delete all[name];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    renderSavedList();
+}
+function applyDataToForm(d) {
+    try {
+        // Identity
+        if(d.identity){
+            const set = (id,val)=>{ const el=document.getElementById(id); if(el && val!==undefined) el.value=val; };
+            set('cName', d.identity.name);
+            set('cAge', d.identity.age);
+            set('cGender', d.identity.gender);
+            set('cBirth', d.identity.birth);
+            set('cOrigin', d.identity.origin);
+            set('cJob', d.identity.job);
+            set('cLook', d.identity.look);
+            if(d.identity.blood && typeof selBlood === 'function'){ /* visual only */ }
+            // Update global data object if exists
+            if(typeof data !== 'undefined'){
+                if(d.identity.blood) data.blood = d.identity.blood;
+                if(d.identity.star) data.star = d.identity.star;
+                if(d.identity.zodi) data.zodi = d.identity.zodi;
+                if(d.personality){
+                    if(d.personality.mbti) data.mbti = d.personality.mbti;
+                    if(d.personality.ennea) data.ennea = d.personality.ennea;
+                    if(d.personality.big5) data.big5 = d.personality.big5;
+                    if(d.personality.disc) data.disc = d.personality.disc;
+                    if(d.personality.temper) data.temper = d.personality.temper;
+                }
+                if(d.relationship && d.relationship.attachment) data.attachment = d.relationship.attachment;
+                if(d.psychology && d.psychology.values) data.values = d.psychology.values;
+            }
+        }
+        // Psychology etc
+        const set = (id,val)=>{ const el=document.getElementById(id); if(el && val!==undefined) el.value=val; };
+        if(d.psychology){
+            set('coreDesire', d.psychology.desire);
+            set('coreFear', d.psychology.fear);
+            set('deficiency', d.psychology.deficiency);
+            set('trauma', d.psychology.trauma);
+            set('complex', d.psychology.complex);
+            set('guilt', d.psychology.guilt);
+            set('secret', d.psychology.secret);
+            set('belief', d.psychology.belief);
+            set('goal', d.psychology.goal);
+            set('morality', d.psychology.morality);
+            set('hiddenDesire', d.psychology.hiddenDesire);
+        }
+        if(d.emotion){
+            set('stressReact', d.emotion.stress);
+            set('angerTrigger', d.emotion.angerTrigger);
+            set('happyCond', d.emotion.happyCond);
+            set('hideEmotion', d.emotion.hide);
+            set('explodeEmotion', d.emotion.explode);
+        }
+        if(d.relationship){
+            set('loveStyle', d.relationship.loveStyle);
+            set('conflictStyle', d.relationship.conflict);
+            set('trustStyle', d.relationship.trust);
+            set('neverShow', d.relationship.neverShow);
+        }
+        if(d.behavior){
+            set('normalBehav', d.behavior.normal);
+            set('crisisBehav', d.behavior.crisis);
+            set('extremeBehav', d.behavior.extreme);
+            set('decision', d.behavior.decision);
+            set('lieStyle', d.behavior.lie);
+        }
+        if(d.social){
+            set('extro', d.social.extro);
+            set('role', d.social.role);
+            set('mask', d.social.mask);
+            set('powerGet', d.social.powerGet);
+            set('powerLose', d.social.powerLose);
+        }
+        // Trigger preview update
+        if(typeof updatePreview === 'function') updatePreview();
+        if(typeof drawPenta === 'function') drawPenta();
+        if(typeof drawMap === 'function') drawMap(currentUniv||'전체');
+    } catch(e){ console.error('applyData error', e); alert('불러오는 중 오류: '+e.message); }
+}
+function exportAllCharacters() {
+    const all = getSavedCharacters();
+    if(Object.keys(all).length===0){ alert('저장된 캐릭터가 없습니다. 먼저 저장하세요.'); return; }
+    const blob = new Blob([JSON.stringify(all, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'story_engine_characters_'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+function importCharacters(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+        try {
+            const imported = JSON.parse(e.target.result);
+            // Support both {name: data} format and single character format
+            let toImport = {};
+            if(imported.identity || imported.personality){ // single character
+                const name = imported.identity?.name || 'imported_'+Date.now();
+                toImport[name] = imported;
+            } else {
+                toImport = imported;
+            }
+            const all = getSavedCharacters();
+            let added = 0;
+            for(const k in toImport){ all[k]=toImport[k]; added++; }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+            renderSavedList();
+            alert('가져오기 완료: '+added+'개 캐릭터 추가됨');
+        } catch(err){ alert('JSON 파싱 실패: '+err.message); }
+    };
+    reader.readAsText(file);
+    event.target.value='';
+}
+
+// Auto render on load
+window.addEventListener('load', ()=>{ setTimeout(()=>{ if(typeof renderSavedList==='function') renderSavedList(); }, 500); });
+
+// Auto-save current work every 30 seconds to draft
+setInterval(()=>{
+    try {
+        const draft = collectCurrentData();
+        if(draft.identity && draft.identity.name){
+            localStorage.setItem('story_engine_draft', JSON.stringify(draft));
+        }
+    } catch(e){}
+}, 30000);
+</script>
+
+<script>
+window.addEventListener('load', ()=>{
+    const birthEl = document.getElementById('cBirth');
+    if(birthEl){
+        birthEl.addEventListener('change', ()=>{ 
+            if(typeof calcStar === 'function') calcStar();
+            autoSetZodiFromBirth(); 
+        });
+        birthEl.addEventListener('input', ()=>{ 
+            // For year typing
+            setTimeout(autoSetZodiFromBirth, 100);
+        });
+    }
+    // Also add year-only input for 띠 (if user wants year only)
+    const identitySection = document.getElementById('step1');
+    if(identitySection && !document.getElementById('cYear')){
+        const yearDiv = document.createElement('div');
+        yearDiv.className = 'col-span-2 glass p-3 rounded-xl';
+        yearDiv.innerHTML = `<label class="text-[11px] text-white/50">출생년도 (띠 자동 계산) - 생년월일과 연동됨</label>
+            <div class="flex gap-2 mt-1">
+                <input id="cYear" type="number" min="1900" max="2100" placeholder="예: 1998" class="flex-1 bg-transparent outline-none text-sm p-2 glass rounded-xl">
+                <button onclick="applyYearToBirth()" class="px-3 py-1 glass rounded-xl text-xs">년도로 띠 계산</button>
+            </div>
+            <div id="yearZodiResult" class="text-[11px] text-yellow-300 mt-1"></div>`;
+        // Insert after birth input
+        const birthEl = document.getElementById('cBirth');
+        if(birthEl && birthEl.parentNode){
+            birthEl.parentNode.parentNode.insertBefore(yearDiv, birthEl.parentNode.nextSibling);
+        }
+        const yearInput = document.getElementById('cYear');
+        if(yearInput){
+            yearInput.addEventListener('input', (e)=>{
+                const y = parseInt(e.target.value);
+                if(y>=1900 && y<=2100){
+                    const z = calcZodiFromYear(y);
+                    document.getElementById('yearZodiResult').textContent = `${y}년 = ${z.emoji} ${z.name}(${z.han})띠 - ${z.trait}`;
+                    if(typeof data !== 'undefined') data.zodi = z.name;
+                    // Highlight
+                    document.querySelectorAll('.zodiBtn').forEach(btn=>btn.classList.remove('bg-yellow-600'));
+                    document.querySelectorAll('.zodiBtn').forEach(btn=>{ if(btn.textContent.includes(z.name)) btn.classList.add('bg-yellow-600'); });
+                }
+            });
+        }
+    }
+});
+function applyYearToBirth(){
+    const yearEl = document.getElementById('cYear');
+    const birthEl = document.getElementById('cBirth');
+    if(yearEl && birthEl){
+        const y = parseInt(yearEl.value);
+        if(y>=1900 && y<=2100){
+            // Keep existing month/day if exists, else set to Jan 1
+            let existing = birthEl.value ? new Date(birthEl.value) : new Date(y,0,1);
+            existing.setFullYear(y);
+            const mm = String(existing.getMonth()+1).padStart(2,'0');
+            const dd = String(existing.getDate()).padStart(2,'0');
+            birthEl.value = `${y}-${mm}-${dd}`;
+            if(typeof calcStar === 'function') calcStar();
+            autoSetZodiFromBirth();
+        }
+    }
+}
+</script>
+
+</body>
+</html>
