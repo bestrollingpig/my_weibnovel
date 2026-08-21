@@ -213,8 +213,9 @@ async def papers_page(
 @app.get("/api/trends")
 async def trends_report(
     days: int = Query(7, ge=1, le=30, description="최근 N일 스냅샷 범위"),
+    source: str = Query("", description="소스 키로 필터 (비우면 전체, 예: naver_series_top100)"),
 ):
-    report = analyze_trends(days)
+    report = analyze_trends(days, source or None)
     if report is None:
         raise HTTPException(status_code=404, detail="수집된 트렌드 스냅샷이 없습니다. GitHub Actions 수집을 확인하세요.")
     return report

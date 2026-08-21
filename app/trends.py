@@ -23,19 +23,34 @@ def _load_all() -> list[dict]:
     return out
 
 
-def _all_items(snap: dict | None) -> list[dict]:
+def _all_items(snap: dict | None, source: str | None = None) -> list[dict]:
     if not snap:
         return []
     out = []
-    for lst in (snap.get("data") or {}).values():
+    for key, lst in (snap.get("data") or {}).items():
+        if source and key != source:
+            continue
         if isinstance(lst, list):
             out.extend(lst)
     return out
 
 
-def _ranked_items(snap: dict | None) -> list[dict]:
-    items = _all_items(snap)
+def _ranked_items(snap: dict | None, source: str | None = None) -> list[dict]:
+    items = _all_items(snap, source)
     return [it for it in items if isinstance(it.get("rank"), int) and it["rank"] >= 1]
+
+
+def _source_options(snap: dict | None) -> list[dict]:
+    """스냅샷에 수집된 소스 목록 (플랫폼·리스트 라벨 포함)."""
+    if not snap:
+        return []
+    out = []
+    for key, lst in (snap.get("data") or {}).items():
+        if isinstance(lst, list) and lst and isinstance(lst[0], dict):
+            platform = lst[0].get("platform") or key
+            name = lst[0].get("list") or key
+            out.append({"key": key, "label": f"{platform} · {name}", "count": len(lst)})
+    return out
 
 
 def _unique_items(items: list[dict]) -> list[dict]:
@@ -65,17 +80,17 @@ def _title_tokens(title: str) -> list[str]:
     return tokens
 
 
-def analyze(days: int = 7) -> dict | None:
+def analyze(days: int = 7, source: str | None = None) -> dict | None:
     snaps = _load_all()[-days:]
     if not snaps:
         return None
 
     latest = snaps[-1]
     prev = snaps[-2] if len(snaps) >= 2 else None
-    items = _all_items(latest)
-    prev_items = _all_items(prev)
-    rank_items = _ranked_items(latest)
-    prev_rank_items = _ranked_items(prev)
+    items = _all_items(latest, source)
+    prev_items = _all_items(prev, source)
+    rank_items = _ranked_items(latest, source)
+    prev_rank_items = _ranked_items(prev, source)
 
     ranked_by_no = {it.get("product_no"): it for it in rank_items}
     prev_rank_by_no = {it.get("product_no"): it for it in prev_rank_items}
@@ -175,13 +190,20 @@ def analyze(days: int = 7) -> dict | None:
         new_keywords = new_keywords[:12]
 
     total_unique = len(unique)
-    counted_sources = {k for k in (latest.get("data") or {}) if k.startswith("naver_series")}
+    counted_sources = {
+        k for k in (latest.get("data") or {})
+        if isinstance(latest.get("data", {}).get(k), list) and (not source or k == source)
+    }
+    options = _source_options(latest)
+    source_label = next((o["label"] for o in options if o["key"] == source), "") if source else ""
 
     return {
         "latest_date": latest.get("collected_at", "")[:10],
         "prev_date": prev.get("collected_at", "")[:10] if prev else "",
         "snapshot_count": len(snaps),
         "sources": sorted(counted_sources),
+        "source_options": options,
+        "source_label": source_label,
         "total_items": len(items),
         "total_unique": total_unique,
         "ranked_items": len(rank_items),
@@ -194,5 +216,5 @@ def analyze(days: int = 7) -> dict | None:
         "new_keywords": new_keywords,
         "latest_titles": sorted(
             rank_items, key=lambda it: it["rank"]
-        )[:20],
+        )[:30 if source else 20],
     }

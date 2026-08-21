@@ -54,7 +54,7 @@ def fetch(url: str) -> str:
 
 def parse_series_items(html: str, source_label: str) -> list[dict]:
     items = []
-    for block in RE_LI.findall(html):
+    for idx, block in enumerate(RE_LI.findall(html), start=1):
         if "score_num" not in block and "top_num" not in block:
             continue
         title_m = RE_TITLE.search(block)
@@ -83,7 +83,7 @@ def parse_series_items(html: str, source_label: str) -> list[dict]:
             {
                 "platform": "네이버 시리즈",
                 "list": source_label,
-                "rank": int(rank_m.group(1)) if rank_m else None,
+                "rank": int(rank_m.group(1)) if rank_m else idx,
                 "move": RE_SPACE.sub("", RE_MOVE.search(block).group(1)) if RE_MOVE.search(block) else "",
                 "title": title,
                 "product_no": product_no.group(1) if product_no else "",
@@ -102,9 +102,9 @@ def parse_series_items(html: str, source_label: str) -> list[dict]:
     return items
 
 
-def fetch_genre(code: int) -> list[dict]:
+def fetch_genre(label: str, code: int) -> list[dict]:
     url = f"https://series.naver.com/novel/categoryProductList.series?categoryTypeCode=genre&genreCode={code}"
-    return parse_series_items(fetch(url), f"장르:{code}")
+    return parse_series_items(fetch(url), label)
 
 
 def parse_count(text: str) -> int | None:
@@ -151,7 +151,7 @@ def main() -> int:
 
     for key, label, code in GENRE_SOURCES:
         try:
-            items = fetch_genre(code)
+            items = fetch_genre(label, code)
             if items:
                 collected[f"naver_series_genre_{key}"] = items
             else:

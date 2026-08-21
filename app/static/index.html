@@ -154,7 +154,13 @@
 </div>
   <div id="trendTab" style="display:none;">
     <section>
-      <h2>웹소설 랭킹 트렌드 <span style="font-weight:normal;font-size:12px;color:var(--muted);">(네이버 시리즈 TOP 20, 매일 자동 수집)</span></h2>
+      <h2>웹소설 랭킹 트렌드 <span style="font-weight:normal;font-size:12px;color:var(--muted);">(매일 자동 수집)</span></h2>
+      <div style="margin:10px 0;">
+        <label for="trendSource" style="font-size:13px;margin-right:6px;">플랫폼/리스트:</label>
+        <select id="trendSource" onchange="loadTrends(this.value)" style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);">
+          <option value="">전체</option>
+        </select>
+      </div>
       <div id="trendInfo"></div>
       <div id="trendKw" style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;"></div>
       <div id="trendComments"></div>
@@ -197,11 +203,11 @@ function switchTab(name) {
 
 let trendLoaded = false;
 
-async function loadTrends() {
+async function loadTrends(source = "") {
   trendLoaded = true;
   $("trendInfo").innerHTML = "불러오는 중...";
   try {
-    const res = await fetch("/api/trends?days=7");
+    const res = await fetch(`/api/trends?days=7${source ? `&source=${encodeURIComponent(source)}` : ""}`);
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.detail || "조회 실패");
@@ -213,6 +219,16 @@ async function loadTrends() {
 }
 
 function renderTrends(d) {
+  const sel = $("trendSource");
+  if (d.source_options && d.source_options.length && !sel.dataset.filled) {
+    sel.dataset.filled = "1";
+    for (const o of d.source_options) {
+      const opt = document.createElement("option");
+      opt.value = o.key;
+      opt.textContent = `${o.label} (${o.count})`;
+      sel.appendChild(opt);
+    }
+  }
   const kw = d.keywords.map(k => `<span class="kw-chip">${k.word} <b>${k.count}</b>` +
     (k.delta > 0 ? ` <i class="kw-up">▲${k.delta}</i>` : "") +
     (d.prev_date && k.prev_count === 0 ? ` <i class="kw-new">NEW</i>` : "") +
@@ -223,13 +239,14 @@ function renderTrends(d) {
   $("trendInfo").innerHTML =
     `<div style="font-size:13px;color:var(--muted);">최근 수집: ${d.latest_date}` +
     (d.prev_date ? ` · 이전: ${d.prev_date}` : "") +
-    ` · TOP20 + 장르별 리스트 · 유니크 ${d.total_unique}작품 · 스냅샷 ${d.snapshot_count}일치</div>` + noCompare;
+    (d.source_label ? ` · 보기: ${d.source_label}` : " · 전체 리스트") +
+    ` · 유니크 ${d.total_unique}작품 · 스냅샷 ${d.snapshot_count}일치</div>` + noCompare;
   $("trendKw").innerHTML = kw || "";
-  $("trendComments").innerHTML = `
+  $("trendComments").innerHTML = d.comment_top.length ? `
     <h3 style="font-size:1rem;margin:18px 0 8px;">독자 참여 (댓글 수) TOP — 집계 숫자만 공개</h3>
     <div class="trend-item">${
       d.comment_top.map(c => `<div><b>${c.title}</b> 💬 ${c.comment_total.toLocaleString()} · ${c.rank}위 · ${c.author}</div>`).join("")
-    }</div>`;
+    }</div>` : "";
   $("trendPacing").innerHTML = d.snapshot_count < 2 ? "" : `
     <h3 style="font-size:1rem;margin:18px 0 8px;">연재 리듬 — 화수 증가 TOP (${d.latest_date} vs ${d.prev_date})</h3>
     <div class="trend-item">${
@@ -247,7 +264,7 @@ function renderTrends(d) {
     }</div>`;
   $("trendNew").insertAdjacentHTML("afterend", "");
   $("trendTitles").innerHTML = `
-    <h3 style="font-size:1rem;margin:18px 0 8px;">금일 TOP 20</h3>
+    <h3 style="font-size:1rem;margin:18px 0 8px;">금일 순위${d.source_label ? ` — ${d.source_label}` : " (리스트별 1위~)"}</h3>
     <div class="trend-item">${
       d.latest_titles.map(r => `<div><span class="rank-no">${r.rank}.</span> ${r.title} <span style="color:var(--muted);">· ${r.author} · ⭐${r.score ?? "-"}${r.free_info ? ` · 🎁${r.free_info}${r.free_remain ? `(${r.free_remain})` : ""}` : ""}${r.episode_info ? ` · ${r.episode_info}` : ""}</span></div>`).join("")
     }</div>`;
