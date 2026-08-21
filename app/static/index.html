@@ -164,6 +164,7 @@
       </div>
       <div id="trendInfo"></div>
       <div id="trendKw" style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;"></div>
+      <div id="trendPhrases"></div>
       <div id="trendComments"></div>
       <div id="trendPacing"></div>
       <div id="trendRisers"></div>
@@ -241,10 +242,15 @@ function renderTrends(d) {
       sel.appendChild(opt);
     }
   }
-  const kw = d.keywords.map(k => `<span class="kw-chip">${k.word} <b>${k.count}</b>` +
+  const kw = d.keywords.map(k => `<span class="kw-chip" title="순위점수 ${k.score ?? 0} · 평균 ${k.avg_rank ?? "-"}위 · 최고 ${k.best_rank ?? "-"}위">${k.word} <b>${k.count}</b>` +
     (k.delta > 0 ? ` <i class="kw-up">▲${k.delta}</i>` : "") +
     (d.prev_date && k.prev_count === 0 ? ` <i class="kw-new">NEW</i>` : "") +
     `</span>`).join("");
+  $("trendPhrases").innerHTML = d.phrases && d.phrases.length ? `
+    <h3 style="font-size:1rem;margin:18px 0 8px;">반복되는 제목 조합 <span style="font-weight:normal;font-size:12px;color:var(--muted);">(2어절, 순위 가중 정렬)</span></h3>
+    <div class="trend-item">${
+      d.phrases.map(p => `<div><b>${p.phrase}</b> — ${p.count}회 · 순위점수 ${p.score}</div>`).join("")
+    }</div>` : "";
   const noCompare = d.snapshot_count < 2
     ? `<div class="empty" style="margin:8px 0;">스냅샷이 ${d.snapshot_count}일치입니다 — 내일 자동 수집되면 순위 상승·신규 진입이 표시됩니다</div>`
     : "";

@@ -80,6 +80,13 @@ def _title_tokens(title: str) -> list[str]:
     return tokens
 
 
+def _rank_weight(rank) -> int | None:
+    """순위 가중치: 31−순위 (30위 이내만, 참고 구현과 동일 공식)."""
+    if isinstance(rank, int) and 1 <= rank <= 30:
+        return 31 - rank
+    return None
+
+
 def analyze(days: int = 7, source: str | None = None) -> dict | None:
     snaps = _load_all()[-days:]
     if not snaps:
@@ -166,26 +173,59 @@ def analyze(days: int = 7, source: str | None = None) -> dict | None:
     unique = _unique_items(items)
     prev_unique = _unique_items(prev_items)
 
-    cur_counter = Counter()
+    tok_stats: dict[str, dict] = {}
+    phrase_stats: dict[str, dict] = {}
     for it in unique:
-        for tok in _title_tokens(it.get("title", "")):
-            cur_counter[tok] += 1
+        weight = _rank_weight(it.get("rank"))
+        toks = _title_tokens(it.get("title", ""))
+        for tok in set(toks):
+            st = tok_stats.setdefault(tok, {"count": 0, "score": 0, "ranks": []})
+            st["count"] += 1
+            if weight is not None:
+                st["score"] += weight
+                st["ranks"].append(it["rank"])
+        for a, b in set(zip(toks, toks[1:])):
+            ph = phrase_stats.setdefault(f"{a} {b}", {"count": 0, "score": 0})
+            ph["count"] += 1
+            if weight is not None:
+                ph["score"] += weight
     prev_counter = Counter()
     for it in prev_unique:
-        for tok in _title_tokens(it.get("title", "")):
+        for tok in set(_title_tokens(it.get("title", ""))):
             prev_counter[tok] += 1
 
     keywords = []
-    for word, count in cur_counter.most_common(20):
+    for word, st in tok_stats.items():
         prev_count = prev_counter.get(word, 0)
-        delta = count - prev_count if prev else None
-        keywords.append({"word": word, "count": count, "prev_count": prev_count if prev else None, "delta": delta})
+        delta = st["count"] - prev_count if prev else None
+        ranks = st["ranks"]
+        keywords.append(
+            {
+                "word": word,
+                "count": st["count"],
+                "score": st["score"],
+                "avg_rank": round(sum(ranks) / len(ranks), 1) if ranks else None,
+                "best_rank": min(ranks) if ranks else None,
+                "prev_count": prev_count if prev else None,
+                "delta": delta,
+            }
+        )
+    keywords.sort(key=lambda k: (k["score"], k["count"]), reverse=True)
+    keywords = keywords[:20]
+
+    phrases = [
+        {"phrase": p, "count": st["count"], "score": st["score"]}
+        for p, st in phrase_stats.items()
+        if st["count"] >= 2
+    ]
+    phrases.sort(key=lambda p: (p["score"], p["count"]), reverse=True)
+    phrases = phrases[:8]
 
     new_keywords = []
     if prev:
-        for word, count in cur_counter.items():
-            if count >= 2 and prev_counter.get(word, 0) == 0:
-                new_keywords.append({"word": word, "count": count})
+        for word, st in tok_stats.items():
+            if st["count"] >= 2 and prev_counter.get(word, 0) == 0:
+                new_keywords.append({"word": word, "count": st["count"]})
         new_keywords.sort(key=lambda k: k["count"], reverse=True)
         new_keywords = new_keywords[:12]
 
@@ -213,6 +253,7 @@ def analyze(days: int = 7, source: str | None = None) -> dict | None:
         "pacing": pacing,
         "comment_top": comment_top,
         "keywords": keywords,
+        "phrases": phrases,
         "new_keywords": new_keywords,
         "latest_titles": sorted(
             rank_items, key=lambda it: it["rank"]
