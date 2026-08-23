@@ -126,6 +126,16 @@ async function discoverJsonFiles(){
       }
     }
   }catch(e){}
+  // 3) 로컬 http.server 디렉토리 인덱스 파싱 (manifest/GitHub API 없을 때)
+  try{
+    const r = await fetch('json/', {cache:'no-store'});
+    if(r.ok){
+      const html = await r.text();
+      const matches = [...html.matchAll(/href="([^"]+\.json)"/gi)].map(m=>decodeURIComponent(m[1].split('/').pop()));
+      const uniq = [...new Set(matches)].filter(n=>n.endsWith('.json'));
+      if(uniq.length) return uniq;
+    }
+  }catch(e){}
   return [];
 }
 
