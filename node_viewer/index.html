@@ -43,6 +43,11 @@ body{font-family:'Malgun Gothic',sans-serif;background:#fafafa;color:#111;height
 <div style="flex:1;display:flex;flex-direction:column;position:relative;min-height:0">
 <div id="cy" style="flex:1;min-height:0"></div>
 <div id="empty">json 폴더에 JSON 파일을 넣으면<br>탭으로 자동 표시됩니다</div>
+<div style="position:absolute;right:12px;bottom:50px;display:flex;flex-direction:column;gap:6px;z-index:10">
+  <button onclick="cy.zoom(cy.zoom()*1.25); cy.center();" style="width:36px;height:36px;border-radius:50%;border:1px solid #ddd;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;font-size:18px;line-height:1">+</button>
+  <button onclick="cy.zoom(cy.zoom()*0.8); cy.center();" style="width:36px;height:36px;border-radius:50%;border:1px solid #ddd;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;font-size:18px;line-height:1">−</button>
+  <button onclick="cy.fit(null,40)" style="width:36px;height:36px;border-radius:50%;border:1px solid #ddd;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;font-size:14px" title="전체 보기">⟲</button>
+</div>
 </div>
 <div id="info">📊 <span id="infoText">로딩 중...</span></div>
 <div id="tooltip"></div>
