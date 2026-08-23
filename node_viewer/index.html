@@ -27,8 +27,8 @@ header h1{font-size:14px;color:#FFD700;white-space:nowrap}
 <div id="tabs"></div>
 <span id="info"></span>
 </header>
-<div style="flex:1;position:relative">
-<div id="cy"></div>
+<div style="flex:1;display:flex;flex-direction:column;position:relative;min-height:0">
+<div id="cy" style="flex:1;min-height:0"></div>
 <div id="empty">json 폴더에 JSON 파일을 넣으면<br>탭으로 자동 표시됩니다</div>
 </div>
 <div id="tooltip"></div>
@@ -86,8 +86,11 @@ function loadData(data){
   if(!elems.length){ infoEl.textContent='노드/엣지를 찾지 못했습니다'; return; }
   cy.elements().remove(); cy.add(elems);
   const hasPos = elems.some(el=>el.position && typeof el.position.x==='number');
-  cy.layout({name: hasPos?'preset':'cose', animate:false}).run();
-  setTimeout(()=>cy.fit(null,40),80);
+  cy.resize();
+  const lay = cy.layout({name: hasPos?'preset':'cose', animate:false});
+  lay.on('layoutstop', ()=>{ cy.resize(); cy.fit(null,40); });
+  lay.run();
+  if(hasPos) setTimeout(()=>{ cy.resize(); cy.fit(null,40); },150);
   infoEl.textContent = `노드 ${cy.nodes().length}개 / 엣지 ${cy.edges().length}개`;
 }
 
