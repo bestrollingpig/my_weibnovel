@@ -104,7 +104,10 @@ async function discoverJsonFiles(){
   // 2) GitHub API (github.io 에서만)
   try{
     if(GITHUB_REPO && location.hostname.endsWith('github.io')){
-      const api = `https://api.github.com/repos/${GITHUB_REPO}/contents/json`;
+      const p2 = location.pathname.split('/').filter(Boolean);
+      const sp2 = p2.slice(1).join('/').replace(/\/index\.html$/,'').replace(/\/$/,'');
+      const ap2 = sp2 ? `${sp2}/json` : `json`;
+      const api = `https://api.github.com/repos/${GITHUB_REPO}/contents/${ap2}`;
       const r = await fetch(api);
       if(r.ok){
         const j = await r.json();
@@ -115,8 +118,10 @@ async function discoverJsonFiles(){
       const parts = location.pathname.split('/').filter(Boolean);
       const repo = parts[0];
       const user = location.hostname.split('.')[0];
+      const subPath = parts.slice(1).join('/').replace(/\/index\.html$/,'').replace(/\/$/,'');
+      const apiPath = subPath ? `${subPath}/json` : `json`;
       if(repo){
-        const api = `https://api.github.com/repos/${user}/${repo}/contents/json`;
+        const api = `https://api.github.com/repos/${user}/${repo}/contents/${apiPath}`;
         const r = await fetch(api);
         if(r.ok){
           const j = await r.json();
