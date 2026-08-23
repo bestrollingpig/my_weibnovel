@@ -108,8 +108,8 @@ function loadData(data){
   if(!elems.length){ infoText.textContent='노드/엣지를 찾지 못했습니다'; return; }
   const nCount = elems.filter(e=>e.group==='nodes').length;
   let w=110,h=44,fs=12;
-  if(nCount>300){ w=70; h=28; fs=10; }
-  else if(nCount>150){ w=85; h=34; fs=11; }
+  if(nCount>300){ w=55; h=24; fs=9; }
+  else if(nCount>150){ w=75; h=30; fs=10; }
   else if(nCount>80){ w=95; h=38; fs=11; }
   cy.style().selector('node').style({'width':w,'height':h,'font-size':fs}).update();
   cy.elements().remove(); cy.add(elems);
@@ -119,10 +119,12 @@ function loadData(data){
   const dynLen = 300;
   const rep = 30000;
   const opts = (hasPos || isCached) ? {name:'preset', animate:false}
-    : {name:'cose', animate:false, idealEdgeLength:dynLen, nodeRepulsion:rep+8000, gravity:0.15, numIter:1500, tile:true, nodeDimensionsIncludeLabels:true, componentSpacing:100};
+    : {name:'cola', animate:false, avoidOverlap:true, nodeSpacing:40, edgeLength:360, handleDisconnected:true, infinite:false, fit:false, padding:80, randomize:true, maxSimulationTime:4000, unconstrIter:1, userConstIter:1};
   const lay = cy.layout(opts);
   lay.on('layoutstop', ()=>{
-    cy.resize(); cy.fit(null,40);
+    cy.resize();
+    if(hasPos || isCached) cy.fit(null,40);
+    else { cy.fit(null,80); cy.zoom(cy.zoom()*0.88); cy.center(); }
     if(currentFileName && !positionCache[currentFileName]){
       const c={}; cy.nodes().forEach(n=>{ c[n.id()]={...n.position()}; }); positionCache[currentFileName]=c;
     }
