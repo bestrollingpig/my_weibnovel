@@ -1,0 +1,6573 @@
+{
+  "nodes": [
+    {
+      "data": {
+        "id": "ROOT",
+        "label": "☯ 무극 (SF 근원)",
+        "color": "#FFD700",
+        "group": "depth0",
+        "notes": "모든 SF 세계관의 근원. 4가지 근본 기운(시간·우주·기술·종말)으로 분기되며, 'SF의 기준'이라는 철학적 질문 노드도 이 무극에서 출발한다.",
+        "_lockedX": 675.0440461106264,
+        "_lockedY": 1719.1473415027983
+      },
+      "position": {
+        "x": 702.8022890593894,
+        "y": 1688.0097966462733
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "NODE_SF_CRITERIA",
+        "label": "⚖️ SF의 기준: 무엇이 SF를 SF로 만드는가?",
+        "color": "#FFD700",
+        "group": "meta_discussion",
+        "notes": "【이 노드는 SF 장르의 경계를 정의하는 철학적 질문이다.】\n\nSF(과학 소설)의 정의는 시대와 학자에 따라 다양하지만, 일반적으로 다음 4가지 조건이 충족될 때 SF로 분류한다.\n\n1. 과학적/기술적 요소: 현실에 없지만 과학적 원리로 설명 가능한 장치나 현상이 등장함.\n2. 미래/대체 현실 배경: 현재와 다른 시대적, 사회적, 기술적 배경을 가짐.\n3. 과학적 상상력의 중심성: 과학적/기술적 요소가 이야기의 핵심 동력이거나 주요 주제임.\n4. 인간 존재에 대한 질문: 기술이나 과학이 인간의 정체성, 사회, 윤리에 어떤 영향을 미치는지 탐구함.\n\n이 그래프는 이 기준을 '절대적 법칙'이 아닌 '열린 질문'으로 제시한다. 각 작품이 이 기준을 얼마나 충족하는지는 독자의 판단에 맡긴다.",
+        "_lockedX": 878.9180280721384,
+        "_lockedY": 1615.5880911704264
+      },
+      "position": {
+        "x": 1044.6422499292523,
+        "y": 1709.0725256126689
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "NODE_SF_SPECTRUM",
+        "label": "📊 SF 스펙트럼 (SF적 요소의 농도)",
+        "color": "#F39C12",
+        "group": "meta_discussion",
+        "notes": "【SF를 이분법( SF / 비SF )으로 나누지 않고, 'SF적 요소의 농도'에 따라 5단계로 분류하는 개념】\n\n① 핵심 SF (Core SF): 과학적/기술적 요소가 이야기의 핵심 동력이며, 인간 존재에 대한 철학적 질문을 던짐. (예: 2001, 듄, 에반게리온)\n② SF 드라마: SF적 설정을 배경으로 하지만, 주된 관심은 인간 관계와 감정에 있음. (예: E.T., 콘택트, 인터스텔라)\n③ SF 어드벤처: SF적 요소가 모험의 도구로 사용되며, 과학적 탐구보다는 흥미진진한 이야기에 초점. (예: 스타워즈, 가디언즈 오브 갤럭시, 트랜스포머)\n④ SF 요소 포함 (SF-lite): SF적 장치가 등장하지만, 이야기의 중심은 다른 장르(코미디, 드라마, 판타지)에 있음. (예: 아기공룡 둘리, 백 투 더 퓨처, 그라운드호그 데이)\n⑤ 비SF (Non-SF): SF적 요소가 전혀 없음. (예: 일반 드라마, 로맨스, 순수 역사극)\n\n이 스펙트럼은 고정된 것이 아니라, 작품을 바라보는 관점에 따라 유동적으로 변화할 수 있다.",
+        "_lockedX": 853.183305663804,
+        "_lockedY": 1817.685196500371
+      },
+      "position": {
+        "x": 1039.6744304252954,
+        "y": 1810.9354846349156
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_DOOLY_BOUNDARY",
+        "label": "❓ 아기공룡 둘리 (1983)",
+        "color": "#17d31b",
+        "group": "work",
+        "notes": "【이 노드는 SF인가? 독자의 판단에 맡깁니다.】\n\n【SF 요소 보유】\n✅ 우주선: 둘리를 존재가게 한 지구에 온 도구.\n✅ 외계인:  유일한 공룡 둘리의 유전자를 남김.\n✅ 초능력: 투시, 순간이동, 입김으로 물체를 얼리는 능력. 호이!\n✅ 시간 여행: 과거와 미래를 오가는 도우너 에피소드.\n✅ 냉동인간: 둘리가 냉동에 들어가는 장면.\n\n\n【SF 판정 기준 적용 결과】\n1. 과학적/기술적 요소: ✅ (다수 존재)\n2. 미래/대체 현실 배경: △ (현대지만 외계·초능력 존재)\n3. 과학적 상상력의 중심성: ❌ (이야기의 핵심 동력 아님)\n4. 인간 존재에 대한 질문: ❌ (핵심은 가족·우정·성장)\n\n【종합 판정】\n이 작품은 'SF 요소를 가진 가족 드라마/코미디' (SF-lite)에 해당한다. 엄밀한 의미의 SF는 아니지만, SF적 상상력이 풍부하게 녹아 있는 작품이다.\n\n【웹소설 집필 참고】\nSF적 장치를 무겁지 않게 일상에 녹여내는 방법을 연구할 때 훌륭한 참고 사례다. '우주선을 타고 온 공룡이 서울 변두리에서 살아간다'는 설정은 SF적 상상력과 일상적 드라마를 자연스럽게 결합하는 방법을 보여준다. SF가 반드시 진지하고 어두울 필요는 없다는 점도 시사한다.\n\n【이 그래프에서의 위치】\n이 노드는 ROOT 아래 'SF의 기준' 노드에 연결되어, 독자가 직접 판단할 수 있도록 열려 있다. 이는 'SF가 무엇인가'라는 질문에 대한 답을 강요하지 않고, 독자의 상상력과 해석을 존중하려는 의도다.",
+        "image": "",
+        "_lockedX": 1351.2126338881844,
+        "_lockedY": 1515.980582897694
+      },
+      "position": {
+        "x": 1035.0908158793954,
+        "y": 1902.3199292197792
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "G_TIME",
+        "label": "⏳ 시간과 역사",
+        "color": "#00A8FF",
+        "group": "depth1",
+        "notes": "과거·현재·미래의 흐름과 역사적 변곡점을 탐구하는 분류.",
+        "_lockedX": 591.1597598711716,
+        "_lockedY": 2221.12394756742
+      },
+      "position": {
+        "x": 180.67095950575253,
+        "y": 1716.2166567442998
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "G_SPACE",
+        "label": "🚀 우주와 문명",
+        "color": "#FF6B00",
+        "group": "depth1",
+        "notes": "우주 공간, 외계 문명, 항성계를 무대로 한 서사.",
+        "_lockedX": 449.1186822504581,
+        "_lockedY": 1217.949404891783
+      },
+      "position": {
+        "x": 802.2209574281844,
+        "y": 1307.7577152594224
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "G_TECH",
+        "label": "💻 기술과 존재",
+        "color": "#F5F5F5",
+        "group": "depth1",
+        "notes": "AI, 사이버네틱스, 유전자 조작, 국가별 SF 문화를 탐구.",
+        "_lockedX": 742.4320044921484,
+        "_lockedY": 2088.5050235825893
+      },
+      "position": {
+        "x": 714.1547431711684,
+        "y": 2172.4924680751396
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "G_APOC",
+        "label": "☢️ 종말과 생존",
+        "color": "#1A1A2E",
+        "group": "depth1",
+        "notes": "대재앙, 멸망, 생존, 공포를 다루는 하위 장르의 근간.",
+        "_lockedX": 805.0168709850774,
+        "_lockedY": 1394.8584567385578
+      },
+      "position": {
+        "x": 474.86187721981094,
+        "y": 1079.7251368669827
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S_TT",
+        "label": "타임 트래블",
+        "color": "#FF6B00",
+        "group": "depth2",
+        "notes": "시간 여행을 통해 인과율을 바꾸거나 미래를 보는 이야기.",
+        "_lockedX": 648.2556683173098,
+        "_lockedY": 2455.6363223667595
+      },
+      "position": {
+        "x": -97.44744630656523,
+        "y": 1781.760064679465
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S_AH",
+        "label": "대체 역사",
+        "color": "#1A1A2E",
+        "group": "depth2",
+        "notes": "특정 역사적 사건의 결과가 달라진 세계를 배경으로 한다.",
+        "_lockedX": 299.09353538054114,
+        "_lockedY": 2659.313148424865
+      },
+      "position": {
+        "x": 225.06782785320058,
+        "y": 1484.661654391176
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S_SO",
+        "label": "스페이스 오페라",
+        "color": "#1A1A2E",
+        "group": "depth2",
+        "notes": "은하계를 무대로 한 정치·전쟁·모험의 장대한 서사시.",
+        "_lockedX": 558.5016135927057,
+        "_lockedY": 622.1053003737844
+      },
+      "position": {
+        "x": 1036.3423060903076,
+        "y": 681.4410936863334
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S_MS",
+        "label": "밀리터리 SF",
+        "color": "#00A8FF",
+        "group": "depth2",
+        "notes": "미래의 군사 기술, 전술, 함대전 또는 지상전.",
+        "_lockedX": 79.73920718997027,
+        "_lockedY": 1279.6063871277124
+      },
+      "position": {
+        "x": 1009.5646250638996,
+        "y": 1355.092557973219
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S_TECH_THEMES",
+        "label": "AI/사이버/생체",
+        "color": "#F5F5F5",
+        "group": "depth2",
+        "notes": "인공지능, 사이버네틱스, 생명 공학 등 기술적 테마.",
+        "_lockedX": 308.785695708633,
+        "_lockedY": 2097.0515580089755
+      },
+      "position": {
+        "x": 475.8920228903869,
+        "y": 2291.588667935979
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S_NATIONAL",
+        "label": "🌏 국가별 SF",
+        "color": "#FFD700",
+        "group": "depth2",
+        "notes": "한국과 일본의 SF 작품을 독립적으로 분류.",
+        "_lockedX": 1196.8127091737174,
+        "_lockedY": 2184.635687814249
+      },
+      "position": {
+        "x": 1476.3306693435284,
+        "y": 2149.4680579380833
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S_PA",
+        "label": "포스트 아포칼립스",
+        "color": "#00A8FF",
+        "group": "depth2",
+        "notes": "대규모 파멸 이후 황폐화된 세계에서의 생존과 재건.",
+        "_lockedX": 973.3195176396035,
+        "_lockedY": 1159.119959324919
+      },
+      "position": {
+        "x": 574.3403552588172,
+        "y": 882.9151362700169
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "S_SH",
+        "label": "SF 호러",
+        "color": "#F5F5F5",
+        "group": "depth2",
+        "notes": "외계 생명체, 돌연변이, 우주적 공포로 인간을 압도하는 공포물.",
+        "_lockedX": 633.3012460340884,
+        "_lockedY": 1196.0226730261925
+      },
+      "position": {
+        "x": 253.04322138663088,
+        "y": 763.472566885858
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_LOOP",
+        "label": "타임 루프",
+        "color": "#F5F5F5",
+        "group": "depth3",
+        "notes": "같은 시간대를 반복하며 진실을 찾아가는 서사.",
+        "_lockedX": 616.2659760799127,
+        "_lockedY": 2793.5302418339966
+      },
+      "position": {
+        "x": -203.0339751011715,
+        "y": 1892.6188474433654
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_PARADOX",
+        "label": "시간 역설",
+        "color": "#1A1A2E",
+        "group": "depth3",
+        "notes": "과거 개입이 오히려 미래를 확정짓는 역설적 이야기.",
+        "_lockedX": 329.6089472870428,
+        "_lockedY": 2482.925762182465
+      },
+      "position": {
+        "x": 63.95620081621263,
+        "y": 1954.1707466368512
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_WIN",
+        "label": "승리자 역사",
+        "color": "#1A1A2E",
+        "group": "depth3",
+        "notes": "역사에서 승리한 세력의 관점에서 쓰여진 대체 역사.",
+        "_lockedX": 163.82126199893332,
+        "_lockedY": 2816.8304416327123
+      },
+      "position": {
+        "x": 91.30834065038104,
+        "y": 1591.983210134809
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_LOSE",
+        "label": "패배자 역사",
+        "color": "#00A8FF",
+        "group": "depth3",
+        "notes": "역사에서 패배한 세력이 주인공이 된 대체 역사.",
+        "_lockedX": 450.13077503193676,
+        "_lockedY": 2661.189007499215
+      },
+      "position": {
+        "x": 211.7911108977985,
+        "y": 1357.8466032238653
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_EPIC_A",
+        "label": "제국 서사 (A)",
+        "color": "#1A1A2E",
+        "group": "depth3",
+        "notes": "거대 세력 간의 운명적 대결 (A 그룹).",
+        "_lockedX": 745.0817820244332,
+        "_lockedY": 720.9124905006934
+      },
+      "position": {
+        "x": 804.8959011480018,
+        "y": 890.4165391273652
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_EPIC_B",
+        "label": "제국 서사 (B)",
+        "color": "#1A1A2E",
+        "group": "depth3",
+        "notes": "거대 세력 간의 운명적 대결 (B 그룹).",
+        "_lockedX": 420.57147669679847,
+        "_lockedY": 551.3434921551179
+      },
+      "position": {
+        "x": 1970.044459172243,
+        "y": 1037.362545830002
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_FRONTIER_A",
+        "label": "개척 탐험 (A)",
+        "color": "#FF6B00",
+        "group": "depth3",
+        "notes": "미지의 우주를 개척하고 신비한 존재를 만나는 탐험극 (A 그룹).",
+        "_lockedX": 266.10573117642036,
+        "_lockedY": 631.3241615937105
+      },
+      "position": {
+        "x": 1196.7379329124801,
+        "y": 828.942691611003
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_FRONTIER_B",
+        "label": "개척 탐험 (B)",
+        "color": "#FF6B00",
+        "group": "depth3",
+        "notes": "미지의 우주를 개척하고 신비한 존재를 만나는 탐험극 (B 그룹).",
+        "_lockedX": 620.5369208538964,
+        "_lockedY": 237.5123346971341
+      },
+      "position": {
+        "x": 1267.8662381122551,
+        "y": 557.1435908495813
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_FLEET",
+        "label": "함대전",
+        "color": "#00A8FF",
+        "group": "depth3",
+        "notes": "우주 공간에서 벌어지는 대규모 함대 지휘 및 전술 전투.",
+        "_lockedX": -37.85453318437754,
+        "_lockedY": 1334.018766869251
+      },
+      "position": {
+        "x": 1010.2874389514778,
+        "y": 1177.5667231508446
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_GROUND_A",
+        "label": "지상전 (A)",
+        "color": "#1A1A2E",
+        "group": "depth3",
+        "notes": "행성 표면에서 벌어지는 보병 및 기갑 부대의 전투 (A 그룹).",
+        "_lockedX": -60.42605559739867,
+        "_lockedY": 987.73906171699
+      },
+      "position": {
+        "x": 1352.1561748214883,
+        "y": 1380.6914300775443
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_GROUND_B",
+        "label": "지상전 (B)",
+        "color": "#1A1A2E",
+        "group": "depth3",
+        "notes": "행성 표면에서 벌어지는 보병 및 기갑 부대의 전투 (B 그룹).",
+        "_lockedX": -220.98330616236998,
+        "_lockedY": 1267.1039492996406
+      },
+      "position": {
+        "x": 1195.0326765998686,
+        "y": 1251.7723597066883
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_AI_THEMES_A",
+        "label": "AI/반란/공존 (A)",
+        "color": "#F5F5F5",
+        "group": "depth3",
+        "notes": "인공지능과 인간의 관계를 탐구 (A 그룹).",
+        "_lockedX": 313.69565698877227,
+        "_lockedY": 2312.0733890646543
+      },
+      "position": {
+        "x": 2.038708439080865,
+        "y": 2441.8946492383325
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_AI_THEMES_B",
+        "label": "AI/반란/공존 (B)",
+        "color": "#F5F5F5",
+        "group": "depth3",
+        "notes": "인공지능과 인간의 관계를 탐구 (B 그룹).",
+        "_lockedX": 415.6521317111541,
+        "_lockedY": 1673.2979091236516
+      },
+      "position": {
+        "x": 412.7714924459876,
+        "y": 2663.6990594476274
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_CYBER_A",
+        "label": "사이버/디스토피아 (A)",
+        "color": "#FF6B00",
+        "group": "depth3",
+        "notes": "첨단 기술이 만든 디스토피아적 도시와 인간성 상실 (A 그룹).",
+        "_lockedX": 87.68583494402823,
+        "_lockedY": 2185.07587108372
+      },
+      "position": {
+        "x": 112.5174059753847,
+        "y": 2607.867252707424
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_CYBER_B",
+        "label": "사이버/디스토피아 (B)",
+        "color": "#FF6B00",
+        "group": "depth3",
+        "notes": "첨단 기술이 만든 디스토피아적 도시와 인간성 상실 (B 그룹).",
+        "_lockedX": 153.3136047580709,
+        "_lockedY": 1999.999421540905
+      },
+      "position": {
+        "x": 760.5789197845994,
+        "y": 2757.954103896239
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_KOREA_SF_A",
+        "label": "🇰🇷 한국 SF (A)",
+        "color": "#FF6B00",
+        "group": "depth3",
+        "notes": "1970년대부터 현재까지의 한국 SF (A 그룹).",
+        "_lockedX": 1356.1838463059569,
+        "_lockedY": 2553.1646478748817
+      },
+      "position": {
+        "x": 1637.1400065334217,
+        "y": 2265.4471942700247
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_KOREA_SF_B",
+        "label": "🇰🇷 한국 SF (B)",
+        "color": "#FF6B00",
+        "group": "depth3",
+        "notes": "1970년대부터 현재까지의 한국 SF (B 그룹).",
+        "_lockedX": 1081.699341817748,
+        "_lockedY": 2801.837361446268
+      },
+      "position": {
+        "x": 1609.866991836594,
+        "y": 2597.7950174674647
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_JAPAN_SF_A",
+        "label": "🇯🇵 일본 SF (A)",
+        "color": "#E74C3C",
+        "group": "depth3",
+        "notes": "일본의 SF 애니메이션 및 메카닉 명작들 (A 그룹).",
+        "_lockedX": 1648.775162451129,
+        "_lockedY": 2612.4985083993133
+      },
+      "position": {
+        "x": 1393.6690206562187,
+        "y": 1774.3761533666093
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_JAPAN_SF_B",
+        "label": "🇯🇵 일본 SF (B)",
+        "color": "#E74C3C",
+        "group": "depth3",
+        "notes": "일본의 SF 애니메이션 및 메카닉 명작들 (B 그룹).",
+        "_lockedX": 1077.8610247593492,
+        "_lockedY": 1864.3536129428228
+      },
+      "position": {
+        "x": 1673.4494974433806,
+        "y": 1971.4089366644491
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_TRANSFORMERS",
+        "label": "🤖 트랜스포머 세계관",
+        "color": "#E74C3C",
+        "group": "depth3",
+        "notes": "외계 행성 사이버트론에서 시작된 자아를 가진 변신 로봇 종족의 서사. 오토봇과 디셉티콘의 대립을 중심으로, 전쟁, 존재의 의미, 평화와 자유에 대한 철학적 질문을 던진다. 실사영화, 애니메이션, 코믹스 등 다양한 매체로 확장된 대표적인 SF 프랜차이즈.",
+        "_lockedX": 1027.027838375216,
+        "_lockedY": 2380.072924632981
+      },
+      "position": {
+        "x": 1220.9598892588742,
+        "y": 2913.0717160541694
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_MCU",
+        "label": "🦸 마블 시네마틱 유니버스 (MCU)",
+        "color": "#3498DB",
+        "group": "depth3",
+        "notes": "마블 코믹스를 원작으로 하는 공유 세계관 슈퍼히어로 영화 시리즈. 2008년 <아이언맨>을 시작으로 30편이 넘는 영화와 다수의 드라마 시리즈로 확장되었다. 초인, 외계인, 마법, 평행우주, 인공지능 등 다양한 SF 요소를 포괄하며, 장르적 경계를 넘나드는 복합 서사 구조를 가진다.",
+        "_lockedX": 1475.1294648349565,
+        "_lockedY": 2053.9571288587936
+      },
+      "position": {
+        "x": 987.1799429324393,
+        "y": 2415.772683701155
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_NUCLEAR_A",
+        "label": "핵겨울/환경 (A)",
+        "color": "#00A8FF",
+        "group": "depth3",
+        "notes": "핵전쟁, 환경 파괴, 자연재앙 이후의 생존 드라마 (A 그룹).",
+        "_lockedX": 1131.725661859001,
+        "_lockedY": 1208.2193603119963
+      },
+      "position": {
+        "x": 945.1344240759057,
+        "y": 562.6184300968175
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_NUCLEAR_B",
+        "label": "핵겨울/환경 (B)",
+        "color": "#00A8FF",
+        "group": "depth3",
+        "notes": "핵전쟁, 환경 파괴, 자연재앙 이후의 생존 드라마 (B 그룹).",
+        "_lockedX": 993.5214100965925,
+        "_lockedY": 1395.3955567193104
+      },
+      "position": {
+        "x": 769.2503110967436,
+        "y": 487.8702161496789
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_PLAGUE",
+        "label": "전염병",
+        "color": "#FF6B00",
+        "group": "depth3",
+        "notes": "치명적 전염병이 인류 문명을 붕괴시킨 세계.",
+        "_lockedX": 1080.883858076158,
+        "_lockedY": 966.4350133787422
+      },
+      "position": {
+        "x": 443.11661354861445,
+        "y": 792.395503951675
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_CREATURE_A",
+        "label": "외계/괴수 (A)",
+        "color": "#1A1A2E",
+        "group": "depth3",
+        "notes": "외계 생명체, 돌연변이, 거대 괴수와의 대립 (A 그룹).",
+        "_lockedX": 409.5832425063128,
+        "_lockedY": 1034.271079592662
+      },
+      "position": {
+        "x": 101.89632635096555,
+        "y": 652.8332223321007
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_CREATURE_B",
+        "label": "외계/괴수 (B)",
+        "color": "#1A1A2E",
+        "group": "depth3",
+        "notes": "외계 생명체, 돌연변이, 거대 괴수와의 대립 (B 그룹).",
+        "_lockedX": 659.3169731532156,
+        "_lockedY": 935.0190537480856
+      },
+      "position": {
+        "x": 363.70131038539535,
+        "y": 1005.4586487582944
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_SPACE_HORROR_A",
+        "label": "우주적 공포 (A)",
+        "color": "#F5F5F5",
+        "group": "depth3",
+        "notes": "인간의 이해를 초월한 우주적 차원의 공포와 경이 (A 그룹).",
+        "_lockedX": 526.0858324277788,
+        "_lockedY": 1342.9594783464827
+      },
+      "position": {
+        "x": 217.4322779116621,
+        "y": 574.8278809092153
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "D_SPACE_HORROR_B",
+        "label": "우주적 공포 (B)",
+        "color": "#F5F5F5",
+        "group": "depth3",
+        "notes": "인간의 이해를 초월한 우주적 차원의 공포와 경이 (B 그룹).",
+        "_lockedX": 762.6411633166414,
+        "_lockedY": 1167.311325154063
+      },
+      "position": {
+        "x": 226.25387759890052,
+        "y": 926.7110052563906
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_EDGE",
+        "label": "⭐ 엣지 오브 투모로우",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] 외계 생명체와의 전투에서 죽음과 리셋을 반복하며 성장하는 타임 루프.\n[집필 참고] 반복되는 시간 속에서 캐릭터의 성장을 어떻게 자연스럽게 그릴지 연구할 것.",
+        "_lockedX": 516.7421688937313,
+        "_lockedY": 3042.715768570684
+      },
+      "position": {
+        "x": -284.73481561300974,
+        "y": 2272.0193845043855
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GROUNDHOG",
+        "label": "⭐ 그라운드호그 데이",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] 하루를 반복하는 타임 루프.\n[집필 참고] 타임 루프 장르의 원형. 철학적 성장 코미디의 정석. SF-lite의 대표 사례.",
+        "_lockedX": 635.7263685972522,
+        "_lockedY": 3122.753515399737
+      },
+      "position": {
+        "x": -374.7418084020099,
+        "y": 2100.9622548402685
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_SOURCE",
+        "label": "⭐ 소스 코드",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] 8분의 시간 루프 속에서 기차 테러를 막는 SF 스릴러.\n[집필 참고] 시간 압박 속에서 스릴러를 전개하는 방법.",
+        "_lockedX": 729.6383015335778,
+        "_lockedY": 2963.9550228216426
+      },
+      "position": {
+        "x": -132.25522818083115,
+        "y": 2235.223040108977
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_DEJAVU",
+        "label": "⭐ 데자뷰",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] 과거를 들여다보는 첨단 기술.\n[집필 참고] 기술의 윤리적 딜레마를 스릴러와 결합한 사례.",
+        "_lockedX": 606.1247011169668,
+        "_lockedY": 2880.746067651791
+      },
+      "position": {
+        "x": -431.5550499632112,
+        "y": 1851.2401577481721
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_TERMINATOR",
+        "label": "⭐ 터미네이터",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 시간 역설, AI 반란, 사이보그.\n[집필 참고] 시간 역설과 AI 반란을 결합한 SF 액션의 아이콘. 창조물이 창조자에게 반기를 드는 서사.",
+        "_lockedX": 172.42460920359392,
+        "_lockedY": 2441.0961996422243
+      },
+      "position": {
+        "x": 20.32828526219078,
+        "y": 2321.687809344543
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_12MONKEYS",
+        "label": "⭐ 12 몽키즈",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 시간 역설, 전염병, 정신병적 혼란.\n[집필 참고] 시간 역설과 전염병을 교묘히 엮은 SF 스릴러.",
+        "_lockedX": 36.66971811558166,
+        "_lockedY": 2580.9870514148215
+      },
+      "position": {
+        "x": 193.05106193803982,
+        "y": 1908.34229560396
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_PREDEST",
+        "label": "⭐ 프리데스티네이션",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 시간 역설의 결정판.\n[집필 참고] 자기 자신이 과거이자 미래가 되는 이야기. 인과율의 퍼즐을 어떻게 구성할지 연구.",
+        "_lockedX": 125.08289228353985,
+        "_lockedY": 2487.6155057081924
+      },
+      "position": {
+        "x": 0.45936054093309897,
+        "y": 2063.370414002248
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_TIMECRIME",
+        "label": "⭐ 타임크라임",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 시간 루프 스릴러.\n[집필 참고] 스페인산 시간 루프 스릴러. 우연히 시간 여행 장치를 발견한 남자의 혼란.",
+        "_lockedX": 77.57825384259326,
+        "_lockedY": 2694.1108000795716
+      },
+      "position": {
+        "x": 213.1251998813098,
+        "y": 2070.0547302348073
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MANHIGH",
+        "label": "⭐ 높은 성의 사나이",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 대체 역사.\n[집필 참고] 2차대전에서 추축국이 승리한 세계. 대체 역사 장르의 출발점.",
+        "_lockedX": 68.12228464331672,
+        "_lockedY": 2917.6636723343463
+      },
+      "position": {
+        "x": -80.27330043156047,
+        "y": 1676.1746396224144
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_FATHERLAND",
+        "label": "⭐ 파더랜드",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 대체 역사, 탐정 SF.\n[집필 참고] 나치가 승리한 1960년대 세계를 배경으로 한 탐정 SF.",
+        "_lockedX": 307.84913155224314,
+        "_lockedY": 2907.6303468546707
+      },
+      "position": {
+        "x": -114.27363704483014,
+        "y": 1598.9166684842412
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_SSGB",
+        "label": "⭐ SS-GB",
+        "color": "#00A8FF",
+        "group": "work",
+        "notes": "[SF 요소] 대체 역사.\n[집필 참고] 독일이 영국을 점령한 대체 역사 미스터리.",
+        "_lockedX": 684.1014870880674,
+        "_lockedY": 2800.804133172794
+      },
+      "position": {
+        "x": -36.066908928103445,
+        "y": 1402.0414374844336
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_SOUTHWIN",
+        "label": "⭐ 남부의 승리",
+        "color": "#00A8FF",
+        "group": "work",
+        "notes": "[SF 요소] 대체 역사.\n[집필 참고] 남북전쟁에서 남부가 승리한 대체 역사.",
+        "_lockedX": 482.39649419607457,
+        "_lockedY": 2883.706351184831
+      },
+      "position": {
+        "x": 55.49010125909024,
+        "y": 1305.5877466204095
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_LEGEND",
+        "label": "⭐ 은하영웅전설",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 우주 함대전, 정치 서사, 이념 대립.\n[집필 참고] 공화국과 제국의 대립을 그린 장대한 정치 서사시. 두 천재의 대립 구도를 연구할 것.",
+        "_lockedX": 875.7855740259985,
+        "_lockedY": 579.6046664953624
+      },
+      "position": {
+        "x": 609.7992590114022,
+        "y": 987.584395897124
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_STARWARS",
+        "label": "⭐ 스타워즈",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 우주 오페라, 제국 vs 반란군, 포스.\n[집필 참고] 제국 서사의 현대 신화. 반란군이 거대 제국에 맞서는 이야기.",
+        "_lockedX": 873.9031649037083,
+        "_lockedY": 788.3138259780601
+      },
+      "position": {
+        "x": 778.8624401832499,
+        "y": 1014.1150309849115
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_DUNE",
+        "label": "⭐ 듄",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 생태학, 종교, 정치, 향신료.\n[집필 참고] 생태학, 종교, 정치가 얽힌 거대한 서사시. 세계관 구축의 교과서.",
+        "_lockedX": 845.858212794365,
+        "_lockedY": 682.5732942011898
+      },
+      "position": {
+        "x": 591.3184327111229,
+        "y": 1043.6699225492216
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_DUNE_PT2",
+        "label": "⭐ 듄: 파트 2",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 스페이스 오페라 후반부.\n[집필 참고] 폴 아트레이드가 황제에 맞서는 이야기. 영웅의 여정을 완성하는 법.",
+        "_lockedX": 415.7111966378855,
+        "_lockedY": 279.08194418293203
+      },
+      "position": {
+        "x": 1946.6808816309492,
+        "y": 778.0872285363913
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GUNDAM",
+        "label": "⭐ 기동전사 건담",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 리얼로봇, 우주세기 전쟁, 뉴타입.\n[집필 참고] 지구연방 vs 지온의 우주세기 전쟁. 리얼로봇물의 시초.",
+        "_lockedX": 476.1079777644422,
+        "_lockedY": 400.7059102878368
+      },
+      "position": {
+        "x": 2223.824400591337,
+        "y": 982.1041713780694
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_FSS",
+        "label": "⭐ 파이브 스타 스토리",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 거대로봇, 천 년 서사, 화려한 디자인.\n[집필 참고] 천 년의 시간을 넘나드는 화려한 메카닉 판타지.",
+        "_lockedX": 211.36018818817763,
+        "_lockedY": 317.6985275081038
+      },
+      "position": {
+        "x": 1251.6971357134078,
+        "y": 1577.5850271527336
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_FOUNDATION",
+        "label": "⭐ 파운데이션",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 심리역사학, 제국의 흥망성쇠.\n[집필 참고] 심리역사학으로 제국의 흥망을 예측하는 거대 서사.",
+        "_lockedX": 199.63187355129108,
+        "_lockedY": 430.0360455770448
+      },
+      "position": {
+        "x": 2176.156345127971,
+        "y": 817.9980611384975
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_EMPIRE",
+        "label": "⭐ 제국의 역습",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 스타워즈 에피소드 5.\n[집필 참고] 다스 베이더와 루크의 대결. 악당의 매력과 반전의 교과서.",
+        "_lockedX": 278.9267809031016,
+        "_lockedY": 208.26395768191603
+      },
+      "position": {
+        "x": 2069.2764690105796,
+        "y": 1249.2032033729495
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GALAXY999",
+        "label": "⭐ 은하철도 999",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 우주 여행, 성장 드라마.\n[집필 참고] 우주를 여행하는 소년의 성장과 철학적 메시지를 담은 SF 애니메이션.",
+        "_lockedX": 51.224593686932245,
+        "_lockedY": 431.60724857678497
+      },
+      "position": {
+        "x": 1295.0056247296409,
+        "y": 984.7800832871151
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_HARLOCK",
+        "label": "⭐ 캡틴 하록",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 우주해적, 낭만, 자유.\n[집필 참고] 우주해적 하록의 낭만과 모험을 그린 SF 애니메이션.",
+        "_lockedX": -17.440110308621595,
+        "_lockedY": 635.2278727773987
+      },
+      "position": {
+        "x": 1395.0125465165647,
+        "y": 917.1213353538511
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_INTERSTELLAR",
+        "label": "⭐ 인터스텔라",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 개척 탐험, 시간 역설, 블랙홀.\n[집필 참고] 개척 탐험과 시간 역설, 인간의 사랑이 우주를 구하는 서사.",
+        "_lockedX": -86.72140645794073,
+        "_lockedY": 461.3172785288616
+      },
+      "position": {
+        "x": 1077.6296988689096,
+        "y": 919.9400998656085
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_CONTACT",
+        "label": "⭐ 콘택트",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 외계 지적 생명체와의 첫 접촉.\n[집필 참고] 칼 세이건 원작. 외계 지적 생명체와의 첫 접촉을 그린 SF 드라마.",
+        "_lockedX": 821.7226190373951,
+        "_lockedY": 363.02202640919484
+      },
+      "position": {
+        "x": 1450.173085409771,
+        "y": 280.8255463667901
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_2001",
+        "label": "⭐ 2001: 스페이스 오디세이",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 인류의 기원, 진화, HAL 9000.\n[집필 참고] 인류의 기원과 진화를 탐구한 철학적 SF 걸작.",
+        "_lockedX": 703.1133715267406,
+        "_lockedY": -5.66643881261188
+      },
+      "position": {
+        "x": 1504.1743610267395,
+        "y": 151.58602984775257
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_STARGATE",
+        "label": "⭐ 스타게이트",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 초공간 이동 장치, 고대 문명.\n[집필 참고] 고대 유물로 발견된 초공간 이동 장치를 둘러싼 SF 모험.",
+        "_lockedX": 792.1612101720489,
+        "_lockedY": 296.29401617769554
+      },
+      "position": {
+        "x": 1563.3148446519779,
+        "y": 482.5679526264445
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_SUNSHINE",
+        "label": "⭐ 선샤인",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 태양 임무, 우주적 공포.\n[집필 참고] 죽어가는 태양을 되살리기 위한 우주선의 마지막 임무.",
+        "_lockedX": 2504.8959536269595,
+        "_lockedY": 52.38967419628823
+      },
+      "position": {
+        "x": 1956.6916277131768,
+        "y": 578.0446248861462
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MOON",
+        "label": "⭐ 문",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 복제인간, 정체성.\n[집필 참고] 달 기지에서 홀로 근무하는 우주비행사가 자신의 복제본을 발견하는 이야기.",
+        "_lockedX": 275.1421171960979,
+        "_lockedY": 3056.655461027624
+      },
+      "position": {
+        "x": 2195.616767670023,
+        "y": 321.4152970693895
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GRAVITY",
+        "label": "⭐ 그래비티",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 우주 생존, 하드 SF.\n[집필 참고] 우주 정거장 폭발 후 우주에 홀로 남겨진 두 우주비행사의 생존기.",
+        "_lockedX": 1444.3970497071953,
+        "_lockedY": 268.05232181067726
+      },
+      "position": {
+        "x": 2034.8238821429488,
+        "y": 384.0632396190742
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MARTIAN",
+        "label": "⭐ 더 마션",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 화성 생존, 과학적 문제 해결.\n[집필 참고] 화성에 홀로 남겨진 우주비행사의 과학적 생존기. 하드 SF의 대중화 사례.",
+        "_lockedX": 1363.7437185661554,
+        "_lockedY": 37.55182859440445
+      },
+      "position": {
+        "x": 2035.7977551270953,
+        "y": 225.6865687075882
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_FOREVERWAR",
+        "label": "⭐ 영원한 전쟁",
+        "color": "#00A8FF",
+        "group": "work",
+        "notes": "[SF 요소] 시간 팽창, 밀리터리 SF.\n[집필 참고] 시간 팽창 속에서 벌어지는 전쟁의 참혹함을 그린 밀리터리 SF.",
+        "_lockedX": 69.55303266010611,
+        "_lockedY": 1479.4241075963064
+      },
+      "position": {
+        "x": 1129.071883866825,
+        "y": 1092.3108232771447
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_FLEETCMD",
+        "label": "⭐ 함대 사령관",
+        "color": "#00A8FF",
+        "group": "work",
+        "notes": "[SF 요소] 우주 함대 지휘.\n[집필 참고] 우주 함대를 지휘하는 주인공의 전략적 성장을 그린 밀리터리 SF.",
+        "_lockedX": -130.9364805547337,
+        "_lockedY": 1449.0647842603319
+      },
+      "position": {
+        "x": 1012.0599210716409,
+        "y": 1053.6366710756395
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_STARSHIP",
+        "label": "⭐ 스타십 트루퍼스",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 외계 곤충과의 전쟁, 밀리터리 SF.\n[집필 참고] 밀리터리 SF의 교과서. 시민 의무와 전쟁의 의미를 탐구.",
+        "_lockedX": -248.56196568408802,
+        "_lockedY": 1011.724877022103
+      },
+      "position": {
+        "x": 1559.5459085195168,
+        "y": 1222.5287698857649
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_OLDMAN",
+        "label": "⭐ 올드 맨즈 워",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 노인의 전사 환생.\n[집필 참고] 노인이 젊은 전사로 환생하여 우주 전쟁에 참전하는 밀리터리 SF.",
+        "_lockedX": 61.85183926747799,
+        "_lockedY": 799.9614694402302
+      },
+      "position": {
+        "x": 1392.2322206705237,
+        "y": 1125.664584896668
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ENDER",
+        "label": "⭐ 엔더의 게임",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 밀리터리 SF, 아동 심리.\n[집필 참고] 밀리터리 SF와 아동 심리를 결합한 걸작.",
+        "_lockedX": -110.83882672827644,
+        "_lockedY": 733.4512671326258
+      },
+      "position": {
+        "x": 1556.8400751574318,
+        "y": 1128.8050379984031
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_DISTRICT9",
+        "label": "⭐ 디스트릭트 9",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 외계 난민, 인종 차별.\n[집필 참고] 외계 난민들이 지구에 정착하면서 벌어지는 SF. 인종 차별을 우화적으로 그린 작품.",
+        "_lockedX": -365.78846106439903,
+        "_lockedY": 1249.0745201851878
+      },
+      "position": {
+        "x": 1280.054412133061,
+        "y": 1180.3000268197136
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_EXMACHINA",
+        "label": "⭐ 엑스 마키나",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] AI, 튜링 테스트.\n[집필 참고] 튜링 테스트를 통한 AI의 자아와 조종의 역전을 그린 SF 스릴러.",
+        "_lockedX": 138.52293796517273,
+        "_lockedY": 2350.0407083377277
+      },
+      "position": {
+        "x": -256.7597896406021,
+        "y": 2471.803348205008
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_UPGRADE",
+        "label": "⭐ 업그레이드",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] AI 칩, 복수, 사이버네틱스.\n[집필 참고] 첨단 AI 칩을 이식받은 남성이 아내의 죽음을 둘러싼 진실을 추적하는 SF 액션.",
+        "_lockedX": 484.5045237136273,
+        "_lockedY": 2161.008174477453
+      },
+      "position": {
+        "x": -145.62169326444445,
+        "y": 2624.2775624965698
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_CREATOR",
+        "label": "⭐ 더 크리에이터",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] AI와 인간의 전쟁, 소녀 로봇.\n[집필 참고] 인공지능과 인간의 전쟁 속에서 AI가 만든 소녀 로봇을 보호하려는 이야기.",
+        "_lockedX": 313.7047247255437,
+        "_lockedY": 1874.4192092092533
+      },
+      "position": {
+        "x": 274.2370870297969,
+        "y": 2798.9277075675614
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_HER",
+        "label": "⭐ 그녀 (Her)",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] AI, 인간의 고독, 사랑.\n[집필 참고] AI와 인간의 사랑과 소통, 인간의 고독을 그린 작품.",
+        "_lockedX": 546.7537801795077,
+        "_lockedY": 1577.0762700515083
+      },
+      "position": {
+        "x": 540.0137147375314,
+        "y": 2679.7146369522375
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GITS",
+        "label": "⭐ 공각기동대",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 사이버펑크, 고스트, 네트워크.\n[집필 참고] 인간과 AI의 경계를 탐구한 사이버펑크의 정수.",
+        "_lockedX": 437.12442694930473,
+        "_lockedY": 1472.0512906996973
+      },
+      "position": {
+        "x": 536.9526270904772,
+        "y": 2882.2889491773135
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_BLADERUNNER",
+        "label": "⭐ 블레이드 러너",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 사이버펑크, 복제인간.\n[집필 참고] 하이테크 디스토피아의 시각적 교과서. 인간과 복제인간의 경계를 묻는다.",
+        "_lockedX": -49.563878569573575,
+        "_lockedY": 2471.0807516819955
+      },
+      "position": {
+        "x": -28.72887546783994,
+        "y": 2910.123023635303
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MATRIX",
+        "label": "⭐ 매트릭스",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 가상현실, 인간 각성.\n[집필 참고] 디스토피아 SF의 혁명. 가상과 현실의 경계를 허물다.",
+        "_lockedX": -65.95802352595211,
+        "_lockedY": 2396.692464496426
+      },
+      "position": {
+        "x": 163.28019686064533,
+        "y": 2869.1987973685614
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_JUDGE",
+        "label": "⭐ 저지 드레드",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 메가시티, 법관, 디스토피아.\n[집필 참고] 범죄가 만연한 메가시티 속 법관의 냉혹한 정의를 그린 SF 액션.",
+        "_lockedX": -161.98748323663648,
+        "_lockedY": 2256.4451556175736
+      },
+      "position": {
+        "x": -140.01041354957,
+        "y": 2838.4209699463363
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_EQUALIBRIUM",
+        "label": "⭐ 이퀄리브리엄",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 감정 금지, 디스토피아.\n[집필 참고] 감정이 금지된 디스토피아 세계에서 감정을 느끼게 된 경찰관의 반란.",
+        "_lockedX": -152.75287807006683,
+        "_lockedY": 2172.4362243017076
+      },
+      "position": {
+        "x": 925.5321738501192,
+        "y": 2890.0243083672103
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_INCEPTION",
+        "label": "⭐ 인셉션",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 꿈 속의 꿈, 의식 해킹.\n[집필 참고] 꿈 속의 꿈을 침투하는 의식 해킹 스릴러.",
+        "_lockedX": 154.96692115538798,
+        "_lockedY": 1722.8416321503666
+      },
+      "position": {
+        "x": 689.4695604109043,
+        "y": 2819.876698535406
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_TOTAL",
+        "label": "⭐ 토탈 리콜",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 기억 조작, 화성 식민지.\n[집필 참고] 기억 조작과 화성 식민지를 둘러싼 SF 액션.",
+        "_lockedX": -65.2278152560826,
+        "_lockedY": 1930.762234001365
+      },
+      "position": {
+        "x": 889.5503731523564,
+        "y": 3228.458896420459
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_EVANGELION",
+        "label": "⭐ 신세기 에반게리온",
+        "color": "#00A8FF",
+        "group": "work",
+        "notes": "[SF 요소] 생체 메카닉, 인류보완계획, 심리적 붕괴.\n[집필 참고] 생체 메카닉, 인류보완계획, 심리적 붕괴를 그린 SF 애니메이션.",
+        "_lockedX": 953.10176826202,
+        "_lockedY": 273.24915038099186
+      },
+      "position": {
+        "x": 1693.8803282554607,
+        "y": 72.7703420625186
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GUYVER",
+        "label": "⭐ 강식장갑 가이버",
+        "color": "#00A8FF",
+        "group": "work",
+        "notes": "[SF 요소] 생체 유닛, 융합, 인류의 기원.\n[집필 참고] 생체 유닛과 융합, 인류의 기원과 진화에 대한 질문을 던지는 바이오펑크.",
+        "_lockedX": 1120.1122615426625,
+        "_lockedY": 556.4130846453303
+      },
+      "position": {
+        "x": 1802.5130520486455,
+        "y": -14.234861091314588
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ET",
+        "label": "⭐ E.T. (1982)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 외계인과 인간의 우정, 첫 접촉.\n[집필 참고] 스필버그 감독. 지구에 불시착한 외계인 E.T.와 소년 엘리엇의 우정을 그린 감동적인 SF 드라마. SF가 인간적 감동과 어떻게 결합할 수 있는지 보여주는 사례.",
+        "_lockedX": 144.8928697562366,
+        "_lockedY": 1142.6062595931626
+      },
+      "position": {
+        "x": 151.8527570099597,
+        "y": 424.9317043337947
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_CLOSE_ENCOUNTERS",
+        "label": "⭐ 미지와의 조우 (1977)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 외계 지적 생명체와의 첫 접촉.\n[집필 참고] 스필버그 감독. 인간의 호기심과 외계인과의 소통을 감동적으로 그려냈다.",
+        "_lockedX": 495.9920298616223,
+        "_lockedY": -39.48065075872085
+      },
+      "position": {
+        "x": 1260.708473786027,
+        "y": 192.19264933839227
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_JURASSIC_PARK",
+        "label": "⭐ 쥬라기 공원 (1993)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 복제 공룡, 인간의 오만.\n[집필 참고] 스필버그 감독. 복제 공룡을 소재로 한 SF 블록버스터. 인간의 오만과 자연의 섭리를 그린 작품.",
+        "_lockedX": 155.15594864175233,
+        "_lockedY": 1029.2258600158157
+      },
+      "position": {
+        "x": -180.4511017880062,
+        "y": 770.2996005823629
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_LOST_WORLD_JP",
+        "label": "⭐ 쥬라기 공원 2: 잃어버린 세계 (1997)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 복제 공룡, 생존 드라마.\n[집필 참고] 스필버그 감독. 쥬라기 공원의 속편.",
+        "_lockedX": 181.17420917559286,
+        "_lockedY": 975.983406724323
+      },
+      "position": {
+        "x": -136.98876533985904,
+        "y": 413.3833307716564
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_AI_ARTIFICIAL",
+        "label": "⭐ A.I. 인공지능 (2001)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 인공지능 소년, 사랑, 철학적 SF.\n[집필 참고] 스필버그 감독. 스탠리 큐브릭의 구상을 바탕으로 제작. 사랑을 갈망하는 인공지능 소년 데이비드의 여정을 그린 철학적 SF.",
+        "_lockedX": 282.3527475683598,
+        "_lockedY": 1594.9527547387645
+      },
+      "position": {
+        "x": 290.2743390548187,
+        "y": 2999.5457635147995
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MINORITY_REPORT",
+        "label": "⭐ 마이너리티 리포트 (2002)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 미래 범죄 예측, 예지력, 자유 의지.\n[집필 참고] 스필버그 감독. 필립 K. 딕 원작. 미래 범죄를 예측하는 시스템을 둘러싼 SF 스릴러. 예지력과 자유 의지의 갈등을 다룬다.",
+        "_lockedX": 31.60687171673538,
+        "_lockedY": 1840.8565112602596
+      },
+      "position": {
+        "x": 798.1818073202514,
+        "y": 3098.175913447997
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_WAR_OF_WORLDS",
+        "label": "⭐ 우주전쟁 (2005)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 외계인 침공.\n[집필 참고] 스필버그 감독. H.G. 웰스의 고전을 현대적으로 재해석한 외계인 침공 SF.",
+        "_lockedX": 356.05233123136856,
+        "_lockedY": 705.5216956638438
+      },
+      "position": {
+        "x": -163.95361622755672,
+        "y": 632.7824696993185
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_INDIANA_CRYSTAL",
+        "label": "⭐ 인디아나 존스: 크리스탈 해골의 왕국 (2008)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 고고학 모험, 외계인.\n[집필 참고] 스필버그 감독. 고고학 모험에 외계인과 초자연적 요소를 가미한 SF 액션 모험물.",
+        "_lockedX": 985.3781242921497,
+        "_lockedY": -7.0119546837390585
+      },
+      "position": {
+        "x": 1381.3178319478957,
+        "y": -26.17496455261769
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_READY_PLAYER_ONE",
+        "label": "⭐ 레디 플레이어 원 (2018)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 가상현실 게임, 80년대 문화.\n[집필 참고] 스필버그 감독. 어니스트 클라인 원작. 가상현실 게임 '오아시스'를 배경으로 한 SF 모험물. 80년대 대중문화에 대한 오마주가 가득하다.",
+        "_lockedX": -124.0837535026753,
+        "_lockedY": 2095.575471735937
+      },
+      "position": {
+        "x": 540.3485531581276,
+        "y": 3059.190290784201
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_IRON_MAN",
+        "label": "⭐ 아이언맨 (2008)",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 파워드 슈트, 인공지능 비서, 테크놀로지 히어로.\n[집필 참고] 기술의 발전이 인간성을 어떻게 변화시키는지, 주인공이 자신의 창조물에 대해 가지는 책임감과 죄책감을 어떻게 그려낼지 참고할 것.",
+        "_lockedX": 1803.0851670973805,
+        "_lockedY": 1935.575589516374
+      },
+      "position": {
+        "x": 781.6902736946143,
+        "y": 2429.7328865030963
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_AVENGERS",
+        "label": "⭐ 어벤져스 (2012)",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 초인, 외계인 침공, 크로스오버.\n[집필 참고] 개별 주인공들이 어떻게 하나의 팀이 될 수 있을지, 각 캐릭터의 개성과 갈등을 유지하면서 공통의 적 앞에서 연대하는 과정을 연구할 것.",
+        "_lockedX": 1834.510705994088,
+        "_lockedY": 2119.298522367726
+      },
+      "position": {
+        "x": 687.9808772911861,
+        "y": 2307.1602775586757
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GUARDIANS_GALAXY",
+        "label": "⭐ 가디언즈 오브 갤럭시 (2014)",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 스페이스 오페라, 외계 종족, 유쾌한 팀워크.\n[집필 참고] SF와 코미디의 성공적 결합. 무법자들이 모여 가족이 된다는 서사를 연구할 것.",
+        "_lockedX": 1779.3653526238745,
+        "_lockedY": 2347.367850701787
+      },
+      "position": {
+        "x": 952.6672973678155,
+        "y": 2273.4800885992486
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": true,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_AVENGERS_INFINITY_WAR",
+        "label": "⭐ 어벤져스: 인피니티 워 (2018)",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 우주적 자원 문제, 인피니티 스톤, 시공간 조작.\n[집필 참고] 빌런(타노스)의 철학을 어떻게 설득력 있게 구축할지, 단순한 악당이 아닌 신념을 가진 빌런을 그리는 방법을 연구.",
+        "_lockedX": 1682.4523027390217,
+        "_lockedY": 1817.0849166193557
+      },
+      "position": {
+        "x": 1189.4012103898372,
+        "y": 2214.6665917710548
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_AVENGERS_ENDGAME",
+        "label": "⭐ 어벤져스: 엔드게임 (2019)",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 시간 여행, 평행 우주, 양자 역학.\n[집필 참고] 장기 연재 세계관의 피날레를 어떻게 장엄하게 마무리할지, 시간 여행이라는 복잡한 SF 장치를 대중적으로 푸는 방법을 연구.",
+        "_lockedX": 1513.4984091131735,
+        "_lockedY": 2389.558854793996
+      },
+      "position": {
+        "x": 1018.6738913860019,
+        "y": 2644.956712376894
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_BLACK_PANTHER",
+        "label": "⭐ 블랙 팬서 (2018)",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 비브라늄, 아프리카 미래주의, 나노 기술.\n[집필 참고] SF의 무대가 반드시 서구나 우주일 필요는 없다는 점을 보여준 작품. 첨단 기술을 가진 고립된 문명의 독특한 문화를 세계관에 녹여내는 방법을 연구.",
+        "_lockedX": 1412.7456387504064,
+        "_lockedY": 1661.2176886561617
+      },
+      "position": {
+        "x": 1214.920134824608,
+        "y": 2568.6189265888656
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_DOCTOR_STRANGE",
+        "label": "⭐ 닥터 스트레인지 (2016)",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 다중 우주, 차원 이동, 마법과 과학의 경계, 시간 조작.\n[집필 참고] SF와 판타지의 경계를 허무는 세계관 구축의 좋은 예시. 마법을 과학적으로 재해석하는 방법을 연구.",
+        "_lockedX": 1627.4651439097004,
+        "_lockedY": 1614.8415474579149
+      },
+      "position": {
+        "x": 840.6573443764016,
+        "y": 2606.103333887458
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_TRANSFORMERS_G1",
+        "label": "⭐ 트랜스포머 G1 (1984)",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 외계 행성 사이버트론, 자아를 가진 변신 로봇, 오토봇 vs 디셉티콘.\n[집필 참고] '살아있는 기계'라는 개념을 구체화하는 방법, 종족 간의 이념 대립을 통해 전쟁 서사에 깊이를 더하는 방법을 연구.",
+        "_lockedX": 1017.8699313275517,
+        "_lockedY": 2283.785398767123
+      },
+      "position": {
+        "x": 1324.2450151577527,
+        "y": 3010.1771950915313
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_TRANSFORMERS_MOVIE",
+        "label": "⭐ 트랜스포머 실사영화 (2007)",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 큐브(올스파크), 외계 고도 문명의 지구 개입.\n[집필 참고] 외계 고도 문명이 지구에 개입할 때 그 이유와 자원에 대한 설득력 있는 배경을 만드는 방법, 거대한 스케일의 전투와 인간 캐릭터의 감정선을 조화시키는 방법을 연구.",
+        "_lockedX": 846.8467914215722,
+        "_lockedY": 2395.082203544658
+      },
+      "position": {
+        "x": 1105.5073874313405,
+        "y": 3103.5977088989553
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_TRANSFORMERS_BUMBLEBEE",
+        "label": "⭐ 범블비 (2018)",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 외계 로봇과 지구 소녀의 우정.\n[집필 참고] 거대한 세계관 속에서도 '한 명의 외계인과 한 명의 인간'이라는 작은 관계에서 시작하는 서사가 강력한 감동을 줄 수 있다는 점을 참고.",
+        "_lockedX": 879.5869308397364,
+        "_lockedY": 2532.1502860781115
+      },
+      "position": {
+        "x": 1546.867770759022,
+        "y": 3059.5823958254728
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_20TH_KNIGHTS",
+        "label": "⭐ 20세기 기사단",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 밀리터리 SF, 냉전 시대.\n[집필 참고] 한국 SF 만화의 효시. 냉전 시대의 긴장감을 SF적으로 표현하는 방법.",
+        "_lockedX": 1529.0770609993563,
+        "_lockedY": 2866.544870280937
+      },
+      "position": {
+        "x": 1833.257761901933,
+        "y": 2260.5014878965003
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_21ST_KNIGHTS",
+        "label": "⭐ 21세기 기사단",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 미래 배경의 SF 밀리터리.\n[집필 참고] 김형배 작. 20세기 기사단의 후속작.",
+        "_lockedX": 1382.7203741454266,
+        "_lockedY": 2893.2266516607265
+      },
+      "position": {
+        "x": 1808.0375497661782,
+        "y": 2426.957507482118
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ELECTRONIC_337",
+        "label": "⭐ 전자인간 337",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 사이버펑크, 메카닉.\n[집필 참고] 초창기 사이버펑크/메카닉 요소를 도입한 한국 SF 만화.",
+        "_lockedX": 1309.7096167574728,
+        "_lockedY": 2778.9099612927944
+      },
+      "position": {
+        "x": 1660.2612186696344,
+        "y": 2495.1109748171243
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ROBOT_TAEKWON",
+        "label": "⭐ 로보트 태권V",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 슈퍼로봇.\n[집필 참고] 태권V의 만화판. 한국 메카닉물의 원형.",
+        "_lockedX": 1236.66079125601,
+        "_lockedY": 3001.0921884697827
+      },
+      "position": {
+        "x": 1640.2043407704282,
+        "y": 2848.2696040232677
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ROBOT_KING",
+        "label": "⭐ 로보트 킹",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 우주, 초능력, 모험.\n[집필 참고] 고유성 작. 한국 SF 만화의 대표작.",
+        "_lockedX": 1065.1482201846682,
+        "_lockedY": 2978.2656612259584
+      },
+      "position": {
+        "x": 1495.9621403432561,
+        "y": 2781.017887921783
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_30000_YEARS",
+        "label": "⭐ 30000세",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 머나먼 미래.\n[집필 참고] 박동파 작. 한국 SF 만화 3대 거장의 대표작.",
+        "_lockedX": 941.656668812084,
+        "_lockedY": 2925.839553516275
+      },
+      "position": {
+        "x": 1457.0189192115167,
+        "y": 2679.288271725438
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_AMAGEDDON",
+        "label": "⭐ 아마겟돈",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 한국 SF 만화.\n[집필 참고] 이현세 작.",
+        "_lockedX": 892.8946450447071,
+        "_lockedY": 2775.3583354225098
+      },
+      "position": {
+        "x": 1825.1013002599789,
+        "y": 2722.0048519645125
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_NAITEURUN",
+        "label": "⭐ 나이트런",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 포스트 아포칼립스, 웹툰.\n[집필 참고] 한국 SF 웹툰의 대표작.",
+        "_lockedX": 892.7088171623896,
+        "_lockedY": 2858.542159564673
+      },
+      "position": {
+        "x": 1738.4455123052549,
+        "y": 2805.3688490568675
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GIEOK_JEONJAENG",
+        "label": "⭐ 기억 전쟁",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 하드 SF, 기억 조작, 유전자.\n[집필 참고] 김보영 작. 한국 하드 SF/바이오펑크의 대표작.",
+        "_lockedX": 1178.3655692684179,
+        "_lockedY": 172.99621442687234
+      },
+      "position": {
+        "x": 1545.035446245637,
+        "y": 653.7158265985948
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_JONG_UI_GIWON",
+        "label": "⭐ 종의 기원",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 유전자 조작, 인간성.\n[집필 참고] 김보영 작. 유전자 조작과 인간성의 경계를 탐구한 SF 소설.",
+        "_lockedX": 1293.0803685306714,
+        "_lockedY": 584.6539921041094
+      },
+      "position": {
+        "x": 2132.2986945706766,
+        "y": 513.3824826008406
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MUL_UI_SIDAE",
+        "label": "⭐ 물의 시대",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 기후 SF.\n[집필 참고] 김보영 작. 지구 온난화 이후를 배경으로 한 기후 SF.",
+        "_lockedX": 1382.4155522144358,
+        "_lockedY": 437.01706400214573
+      },
+      "position": {
+        "x": 1796.883346107496,
+        "y": 157.79194260662845
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_TAWO",
+        "label": "⭐ 타워",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 디스토피아, 타워 도시.\n[집필 참고] 배명훈 작. 거대 타워 도시를 배경으로 한 디스토피아 SF.",
+        "_lockedX": 191.42762799294164,
+        "_lockedY": 2971.520400292706
+      },
+      "position": {
+        "x": 1954.7149548134416,
+        "y": 449.33205081016354
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_JIGU_KKUT_ONSIL",
+        "label": "⭐ 지구 끝의 온실",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 기후 SF, 생태계.\n[집필 참고] 김초엽 작. 한국 기후 SF의 대표작.",
+        "_lockedX": 1319.9184301724154,
+        "_lockedY": 338.47529027419085
+      },
+      "position": {
+        "x": 1784.5790182995659,
+        "y": 682.4235831134573
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_DYSTOPIA_CLUB",
+        "label": "⭐ 디스토피아 클럽",
+        "color": "#3498DB",
+        "group": "work",
+        "notes": "[SF 요소] 청소년 디스토피아.\n[집필 참고] 정소연 작. 청소년 디스토피아 SF.",
+        "_lockedX": 1218.8933071619283,
+        "_lockedY": 291.61464120860256
+      },
+      "position": {
+        "x": 2024.2387915048216,
+        "y": 52.9017117698847
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GOEMUL",
+        "label": "🎬 괴물",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 크리처 SF, 괴물.\n[집필 참고] 봉준호 감독. 한강에서 발생한 괴물 사건을 다룬 한국 SF 영화의 대표적 성공 사례.",
+        "_lockedX": 2591.5666196645507,
+        "_lockedY": 166.89228439891042
+      },
+      "position": {
+        "x": 1743.6075443145292,
+        "y": 599.0225636890958
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_SNOWPIERCER",
+        "label": "🎬 설국열차",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 포스트 아포칼립스, 계급 사회.\n[집필 참고] 봉준호 감독. 종말 이후의 열차 속 계급 사회를 그린 SF. 한국 SF 영화의 이정표.",
+        "_lockedX": 1522.415313970965,
+        "_lockedY": 499.2549167865334
+      },
+      "position": {
+        "x": 1978.925110763336,
+        "y": 696.5948537896705
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GATCHAMAN",
+        "label": "⭐ 독수리 오형제",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] SF 히어로, 5인조 팀.\n[집필 참고] 타츠노코 프로. 5인조 팀이 악의 조직에 맞서는 SF 히어로 애니메이션의 금자탑.",
+        "_lockedX": 1853.3279137622858,
+        "_lockedY": 2833.1632680337175
+      },
+      "position": {
+        "x": 1446.2594265550736,
+        "y": 1548.1173576066747
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_CASSHERN",
+        "label": "⭐ 신조인간 캐산",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 신조인간, 불사의 몸.\n[집필 참고] 타츠노코 프로. 불사의 몸을 가진 신조인간이 로봇에 맞서는 SF 히어로.",
+        "_lockedX": 1872.8079918734136,
+        "_lockedY": 2613.056187983078
+      },
+      "position": {
+        "x": 1592.5484796899768,
+        "y": 1606.9553837520107
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GOLDEN_BAT",
+        "label": "⭐ 황금박쥐",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 일본 최초의 슈퍼히어로.\n[집필 참고] 제1동화. 한국과 일본의 합작 애니메이션.",
+        "_lockedX": 1663.3156314873445,
+        "_lockedY": 2800.192708684017
+      },
+      "position": {
+        "x": 1604.8384566139218,
+        "y": 1736.9314024285695
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_BABEL_2",
+        "label": "⭐ 바벨2세",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 초능력, 악의 조직.\n[집필 참고] 요코야마 미츠테루 원작. 초능력을 가진 소년이 악의 조직에 맞서는 SF.",
+        "_lockedX": 1254.2073275304647,
+        "_lockedY": 1865.4609209007015
+      },
+      "position": {
+        "x": 1865.0361020110793,
+        "y": 1834.5494922295381
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_CYBORG_009",
+        "label": "⭐ 사이보그 009",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 사이보그, 9명의 전사.\n[집필 참고] 이시노모리 쇼타로 원작. 9명의 사이보그 전사들이 블랙 고스트에 맞서는 SF.",
+        "_lockedX": 913.515439121278,
+        "_lockedY": 2013.8545224796014
+      },
+      "position": {
+        "x": 2061.964098859111,
+        "y": 1972.8334284798104
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ZZANGGA",
+        "label": "⭐ 짱가",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 거대로봇.\n[집필 참고] 1972년작. 우주에서 온 로봇 '강가'가 지구를 지키는 SF 거대로봇 애니메이션.",
+        "_lockedX": 1281.6778943855365,
+        "_lockedY": 1724.5805463948632
+      },
+      "position": {
+        "x": 1904.100799907118,
+        "y": 2052.9970274192838
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_SUPERMAN_LOKI",
+        "label": "⭐ 슈퍼맨 로키",
+        "color": "#E74C3C",
+        "group": "work",
+        "notes": "[SF 요소] 초능력자, 우주적 모험.\n[집필 참고] 성유기 원작. 영원한 생명을 가진 초능력자 로크의 우주적 모험.",
+        "_lockedX": 1025.9534917289357,
+        "_lockedY": 1727.219688792292
+      },
+      "position": {
+        "x": 1817.401777834137,
+        "y": 1679.0143940732248
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MADMAX",
+        "label": "⭐ 매드 맥스",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 핵겨울, 포스트 아포칼립스.\n[집필 참고] 조지 밀러 감독. 핵겨울 이후의 세계를 가장 거칠게 그린 포스트 아포칼립스의 교과서.",
+        "_lockedX": 1137.396739383344,
+        "_lockedY": 1406.9773338348416
+      },
+      "position": {
+        "x": 1001.307631728157,
+        "y": 415.1843267628304
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_FURY_ROAD",
+        "label": "⭐ 분노의 도로",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 포스트 아포칼립스 액션.\n[집필 참고] 조지 밀러 감독. 매드 맥스 시리즈의 부활. 액션 SF의 걸작.",
+        "_lockedX": 1182.7542525628626,
+        "_lockedY": 1092.624698157263
+      },
+      "position": {
+        "x": 1142.2789262554384,
+        "y": 417.0115617078073
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ROAD",
+        "label": "⭐ 더 로드",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 핵겨울, 생존기.\n[집필 참고] 아버지와 아들의 절망적인 핵겨울 생존기.",
+        "_lockedX": 1247.6754175670158,
+        "_lockedY": 1291.778409446746
+      },
+      "position": {
+        "x": 1220.2758619631504,
+        "y": 465.6974293375557
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_I_AM_LEGEND",
+        "label": "⭐ 나는 전설이다",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 바이러스, 마지막 생존자.\n[집필 참고] 치명적 바이러스로 인류가 몰락한 뉴욕, 마지막 생존자의 고립된 드라마.",
+        "_lockedX": 884.618788493495,
+        "_lockedY": 1488.1226864821438
+      },
+      "position": {
+        "x": 947.4574814041281,
+        "y": 324.23246626644806
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_NAUSICAA",
+        "label": "⭐ 바람계곡의 나우시카",
+        "color": "#00A8FF",
+        "group": "work",
+        "notes": "[SF 요소] 포스트 아포칼립스, 생태주의.\n[집필 참고] 미야자키 하야오 감독. 포스트 아포칼립스 세계관을 배경으로 한 생태주의 SF의 걸작.",
+        "_lockedX": 1118.9403477459352,
+        "_lockedY": 1493.533386628813
+      },
+      "position": {
+        "x": 756.6061889192647,
+        "y": 294.69630228937234
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_28DAYS",
+        "label": "⭐ 28일 후",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 전염병, 광폭화 바이러스.\n[집필 참고] 광폭화 바이러스가 인류를 몰락시킨 전염병 공포물.",
+        "_lockedX": 978.4071068298831,
+        "_lockedY": 877.9729696803253
+      },
+      "position": {
+        "x": 468.88936370576624,
+        "y": 596.4519482898519
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_QUIET_PLACE",
+        "label": "⭐ 콰이어트 플레이스",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] 외계 괴물, 소리 감지.\n[집필 참고] 소리를 감지하는 외계 괴물이 지배한 세계에서 가족의 생존을 그린 SF 호러.",
+        "_lockedX": 1184.843997427101,
+        "_lockedY": 794.6254697728926
+      },
+      "position": {
+        "x": 595.1785935365417,
+        "y": 572.6307645859054
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_QUIET_PLACE_2",
+        "label": "⭐ 콰이어트 플레이스 2",
+        "color": "#FF6B00",
+        "group": "work",
+        "notes": "[SF 요소] SF 호러, 생존.\n[집필 참고] 전편 이후 확장된 세계관.",
+        "_lockedX": 1039.2903962274459,
+        "_lockedY": 669.2660846391283
+      },
+      "position": {
+        "x": 598.0471762460473,
+        "y": 551.4886202482857
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ALIEN",
+        "label": "⭐ 에일리언",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 외계 생명체, 우주 공포.\n[집필 참고] 우주 공포의 원형이자 외계 생명체 공포의 금자탑.",
+        "_lockedX": 221.04193532738634,
+        "_lockedY": 840.9791776295356
+      },
+      "position": {
+        "x": 40.667499321122314,
+        "y": 904.7471014364804
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_THING",
+        "label": "⭐ 더 씽",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 변신 외계 생명체, 불신.\n[집필 참고] 변신하는 외계 생명체가 만드는 극한의 불신과 공포.",
+        "_lockedX": 449.2300273171483,
+        "_lockedY": 863.5950220104259
+      },
+      "position": {
+        "x": -140.13898589311648,
+        "y": 872.7642750523291
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_PREDATOR",
+        "label": "⭐ 프레데터",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 우주 사냥꾼.\n[집필 참고] 우주 사냥꾼과 정예 병사들의 목숨을 건 추적전.",
+        "_lockedX": 320.4505141589528,
+        "_lockedY": 1187.250084316882
+      },
+      "position": {
+        "x": -15.37599895238154,
+        "y": 328.30139655290816
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_HOST",
+        "label": "⭐ 괴물 (2006)",
+        "color": "#1A1A2E",
+        "group": "work",
+        "notes": "[SF 요소] 크리처 SF.\n[집필 참고] 봉준호 감독. 한강에서 발생한 괴물 사건.",
+        "_lockedX": 638.9887191138072,
+        "_lockedY": 835.5272540317491
+      },
+      "position": {
+        "x": 208.7470131715857,
+        "y": 1176.8630832631961
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_EVENT",
+        "label": "⭐ 이벤트 호라이즌",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] 우주적 공포, 워프 항해.\n[집필 참고] 워프 항해 중 악마적 차원에 빠진 우주선의 공포.",
+        "_lockedX": 304.3075658641173,
+        "_lockedY": 1355.1271640529596
+      },
+      "position": {
+        "x": 308.9059048672399,
+        "y": 501.394447763436
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ANNIHILATION",
+        "label": "⭐ 애나힐레이션",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] X 구역, 변이.\n[집필 참고] 'X 구역'으로 불리는 기이한 현상이 일어난 지역을 탐험하는 SF 호러.",
+        "_lockedX": 335.8727956604149,
+        "_lockedY": 1445.3202662445917
+      },
+      "position": {
+        "x": 253.36886189439068,
+        "y": 365.9913513486442
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_ARRIVAL",
+        "label": "⭐ 도착 (Arrival)",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] 외계 언어, 시간의 비선형성.\n[집필 참고] 외계 언어를 통해 시간의 비선형성을 깨닫는 우주적 공포이자 경이.",
+        "_lockedX": 907.5196435874697,
+        "_lockedY": 1223.5193831998272
+      },
+      "position": {
+        "x": 75.77896300071853,
+        "y": 1027.0545929879895
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_SOLARIS",
+        "label": "⭐ 솔라리스",
+        "color": "#F5F5F5",
+        "group": "work",
+        "notes": "[SF 요소] 철학적 SF, 외계 행성.\n[집필 참고] 안드레이 타르코프스키 감독. 외계 행성의 신비로운 바다가 인간의 의식을 구현하는 철학적 SF.",
+        "_lockedX": 846.5348742486699,
+        "_lockedY": 896.2567277507756
+      },
+      "position": {
+        "x": 158.08464249900464,
+        "y": 1184.5241502293284
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "추가할것들",
+        "label": "추가할것들",
+        "color": "#4facfe",
+        "notes": ""
+      },
+      "position": {
+        "x": 1673.5232436234726,
+        "y": 377.85689266605493
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": false,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "ROOT",
+        "target": "NODE_SF_CRITERIA",
+        "label": "질문",
+        "notes": "SF 장르의 경계를 정의하는 철학적 질문을 그래프에 포함시킴.",
+        "id": "ba37d2fc-00a3-4fe7-a250-8905ec57fb3b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NODE_SF_CRITERIA",
+        "target": "NODE_SF_SPECTRUM",
+        "label": "하위 분류",
+        "notes": "SF적 요소의 농도에 따라 작품을 5단계로 분류하는 개념.",
+        "id": "2d8552db-b651-43cf-84a0-561688d42d87"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "NODE_SF_CRITERIA",
+        "target": "W_DOOLY_BOUNDARY",
+        "label": "❓ 경계 사례: 둘리는 SF인가?",
+        "notes": "이 연결선은 SF 장르의 경계를 시험하는 질문을 상징한다. 우주선, 시간여행, 초능력이라는 SF적 장치를 모두 갖췄지만, 이야기의 중심은 가족과 성장이라는 인간적 드라마다. 이 질문에 대한 답은 SF의 정의를 어떻게 내리느냐에 따라 달라지며, 이 그래프는 그 답을 강요하지 않고 독자(사용자)의 판단에 맡긴다.",
+        "id": "5d375862-8a39-496a-9cb3-d527d58bb7c0"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ROOT",
+        "target": "G_TIME",
+        "label": "분기",
+        "id": "dd46a75e-fa2a-45eb-85f0-0d348e96dd34"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ROOT",
+        "target": "G_SPACE",
+        "label": "분기",
+        "id": "c75e6efa-72b6-49ef-8081-fcde3e63121a"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ROOT",
+        "target": "G_TECH",
+        "label": "분기",
+        "id": "4265e009-f29f-4b16-9282-9a3cfe78f5e4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "ROOT",
+        "target": "G_APOC",
+        "label": "분기",
+        "id": "872fd37e-58fa-46cf-8d80-c209ec3cb2f1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "G_TIME",
+        "target": "S_TT",
+        "label": "분기",
+        "id": "c95136d2-0b47-4384-af47-d6065db54099"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "G_TIME",
+        "target": "S_AH",
+        "label": "분기",
+        "id": "0d0bcf8f-b930-4e07-be98-8c0db024fe8f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "G_SPACE",
+        "target": "S_SO",
+        "label": "분기",
+        "id": "9918497b-a0df-4f66-b191-0013db42cb98"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "G_SPACE",
+        "target": "S_MS",
+        "label": "분기",
+        "id": "3f626164-b58f-4bd3-9559-fab272f2751b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "G_TECH",
+        "target": "S_TECH_THEMES",
+        "label": "분기",
+        "id": "3b9e5261-d00d-40a7-822a-30d4bc4dbc21"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "G_TECH",
+        "target": "S_NATIONAL",
+        "label": "분기",
+        "id": "d0ade196-a6af-4b0e-b107-416b67495b04"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "G_APOC",
+        "target": "S_PA",
+        "label": "분기",
+        "id": "7dd8cdd7-306f-443d-abd2-71be02c5fdc5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "G_APOC",
+        "target": "S_SH",
+        "label": "분기",
+        "id": "d6e89ecb-a389-4eba-8500-6f83b98abc92"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_TT",
+        "target": "D_LOOP",
+        "label": "분기",
+        "id": "69d9604f-e784-4ea9-9e19-4d684f04fd0c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_TT",
+        "target": "D_PARADOX",
+        "label": "분기",
+        "id": "15a0e12a-aa74-4c71-b2cf-40d886e4d21c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_AH",
+        "target": "D_WIN",
+        "label": "분기",
+        "id": "b30fcc6a-e647-42b3-ba5a-447d9fa11dee"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_AH",
+        "target": "D_LOSE",
+        "label": "분기",
+        "id": "006d3fc3-c19d-47de-b712-08a357c4f519"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_SO",
+        "target": "D_EPIC_A",
+        "label": "분기",
+        "id": "275f39b4-4a98-4b1b-bd1e-091b272c4871"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_SO",
+        "target": "D_EPIC_B",
+        "label": "분기",
+        "id": "2c661c2a-e4bd-485d-bcdb-0267052eeab4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_SO",
+        "target": "D_FRONTIER_A",
+        "label": "분기",
+        "id": "5baeb393-06d6-4a99-9be3-34bdf62249b5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_SO",
+        "target": "D_FRONTIER_B",
+        "label": "분기",
+        "id": "10c4260d-df61-42e3-9ec1-6d7b37e5e4c1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_MS",
+        "target": "D_FLEET",
+        "label": "분기",
+        "id": "d1668e22-7e41-4a16-9ee3-c44f63739c31"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_MS",
+        "target": "D_GROUND_A",
+        "label": "분기",
+        "id": "8cccd6a4-97bf-4090-aadb-7e727cb97bca"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_MS",
+        "target": "D_GROUND_B",
+        "label": "분기",
+        "id": "d3c0429e-ce54-4300-a38b-130311113a32"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_TECH_THEMES",
+        "target": "D_AI_THEMES_A",
+        "label": "분기",
+        "id": "7d0e596c-5bba-4991-933d-0fcdefe9f52f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_TECH_THEMES",
+        "target": "D_AI_THEMES_B",
+        "label": "분기",
+        "id": "c98fcdc4-4da8-49de-930f-a3208f9b35f6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_TECH_THEMES",
+        "target": "D_CYBER_A",
+        "label": "분기",
+        "id": "bae9356a-71c0-4690-8b18-d7fa4d393df7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_TECH_THEMES",
+        "target": "D_CYBER_B",
+        "label": "분기",
+        "id": "bf1505cc-6da1-45e3-bfd7-6fd61bc1c732"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_NATIONAL",
+        "target": "CAT_KOREA_SF_A",
+        "label": "분기",
+        "id": "088ee0f5-5f01-4cd3-9ee0-30dde0960a19"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_NATIONAL",
+        "target": "CAT_KOREA_SF_B",
+        "label": "분기",
+        "id": "51707922-9278-4285-a2a9-7cd36bcd7348"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_NATIONAL",
+        "target": "CAT_JAPAN_SF_A",
+        "label": "분기",
+        "id": "f76f3ef7-edbc-41ba-b8b2-8ca4dfee8eec"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_NATIONAL",
+        "target": "CAT_JAPAN_SF_B",
+        "label": "분기",
+        "id": "aa353517-9f90-4732-889b-efa879fcb2e5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_NATIONAL",
+        "target": "CAT_TRANSFORMERS",
+        "label": "분기",
+        "id": "f46eac26-7d54-4fae-90bd-8cd6fa7693c1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_NATIONAL",
+        "target": "CAT_MCU",
+        "label": "분기",
+        "id": "f01657c8-9a5d-443f-bcd7-491ed5660951"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_PA",
+        "target": "D_NUCLEAR_A",
+        "label": "분기",
+        "id": "5dd70738-c0c1-4c14-bc9f-225ff83fe99b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_PA",
+        "target": "D_NUCLEAR_B",
+        "label": "분기",
+        "id": "8f246096-f80f-4567-812c-e61b454e3fdf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_PA",
+        "target": "D_PLAGUE",
+        "label": "분기",
+        "id": "470b2269-84e4-4bbb-a6c5-b2cbafd8c4a9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_SH",
+        "target": "D_CREATURE_A",
+        "label": "분기",
+        "id": "58e9996e-5d21-424a-b6a4-f23eff4ab0e6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_SH",
+        "target": "D_CREATURE_B",
+        "label": "분기",
+        "id": "3e29423b-9da0-4c81-90c9-602c1925acdf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_SH",
+        "target": "D_SPACE_HORROR_A",
+        "label": "분기",
+        "id": "cbc0f087-f8fb-47e0-b074-5055033726ad"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "S_SH",
+        "target": "D_SPACE_HORROR_B",
+        "label": "분기",
+        "id": "7835b033-648b-463f-ae44-4967d9d4130d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_LOOP",
+        "target": "W_EDGE",
+        "label": "소속",
+        "id": "1d7095ca-e17b-4f2e-a255-00f206c7d6fb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_LOOP",
+        "target": "W_GROUNDHOG",
+        "label": "소속",
+        "id": "e7bb6e1b-3034-4db9-8ea9-59f3ba2eeca4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_LOOP",
+        "target": "W_SOURCE",
+        "label": "소속",
+        "id": "8ac1c9af-a8dc-418d-a52e-6d492ac4f042"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_LOOP",
+        "target": "W_DEJAVU",
+        "label": "소속",
+        "id": "d9c9e4ce-2ded-46b1-b267-191b9ef8edb1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_PARADOX",
+        "target": "W_TERMINATOR",
+        "label": "소속",
+        "id": "0eae56b6-9f63-4c5f-a069-a058f0bcd80d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_PARADOX",
+        "target": "W_12MONKEYS",
+        "label": "소속",
+        "id": "e9cf3ec6-bb9f-464d-a0a7-5a086bd74f05"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_PARADOX",
+        "target": "W_PREDEST",
+        "label": "소속",
+        "id": "0a4514dc-ca91-40d6-bc6d-db05b011472c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_PARADOX",
+        "target": "W_TIMECRIME",
+        "label": "소속",
+        "id": "f24146cc-8eed-4dc9-8f0b-6e73bf9db82c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_WIN",
+        "target": "W_MANHIGH",
+        "label": "소속",
+        "id": "cf17883b-5b24-4bb5-98e9-515e3685eeae"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_WIN",
+        "target": "W_FATHERLAND",
+        "label": "소속",
+        "id": "a52271c7-2f02-488d-8f71-ea6861471329"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_LOSE",
+        "target": "W_SSGB",
+        "label": "소속",
+        "id": "120eeb28-cf2d-4bb4-891c-27e2dc6583a9"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_LOSE",
+        "target": "W_SOUTHWIN",
+        "label": "소속",
+        "id": "9c337172-9ceb-4455-92f8-30161a16962b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_EPIC_A",
+        "target": "W_LEGEND",
+        "label": "소속",
+        "id": "e3f9bfc6-b1d6-4bd6-a791-9adbc93147b6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_EPIC_A",
+        "target": "W_STARWARS",
+        "label": "소속",
+        "id": "50b4e76c-98cf-4e44-9c35-15da45fcc67d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_EPIC_A",
+        "target": "W_DUNE",
+        "label": "소속",
+        "id": "d36be7e0-af92-435f-a77a-f54712ab6f72"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_EPIC_B",
+        "target": "W_DUNE_PT2",
+        "label": "소속",
+        "id": "e1fb9c50-df88-462d-b95e-d72deabbc7da"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_EPIC_B",
+        "target": "W_GUNDAM",
+        "label": "소속",
+        "id": "4bc9417a-29f9-45a3-9b2e-2daaec42a193"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_EPIC_B",
+        "target": "W_FSS",
+        "label": "소속",
+        "id": "d466bafc-41d4-4e16-a058-fcca311c1d93"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_EPIC_B",
+        "target": "W_FOUNDATION",
+        "label": "소속",
+        "id": "0687f4d7-c29a-433f-9141-4919be296c9d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_EPIC_B",
+        "target": "W_EMPIRE",
+        "label": "소속",
+        "id": "37db5cb8-22d9-4e49-8b5c-2ed730253b1f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FRONTIER_A",
+        "target": "W_GALAXY999",
+        "label": "소속",
+        "id": "946cb459-e262-4f70-9ddf-d4b32a2fc1e6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FRONTIER_A",
+        "target": "W_HARLOCK",
+        "label": "소속",
+        "id": "063500a8-f45d-40e3-91c9-38ea755271f4"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FRONTIER_A",
+        "target": "W_INTERSTELLAR",
+        "label": "소속",
+        "id": "9c5903fc-9367-4b8c-8215-8d2b425a122e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FRONTIER_B",
+        "target": "W_CONTACT",
+        "label": "소속",
+        "id": "4ffe2f1f-e5ba-43c2-9581-1d99bb54eb6e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FRONTIER_B",
+        "target": "W_2001",
+        "label": "소속",
+        "id": "2cd24a1e-ef93-497b-9dda-54980672f8c1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FRONTIER_B",
+        "target": "W_STARGATE",
+        "label": "소속",
+        "id": "5088b046-45df-4231-97ab-c1364234882b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FRONTIER_B",
+        "target": "W_CLOSE_ENCOUNTERS",
+        "label": "소속",
+        "id": "3d56b9ca-d85f-442e-b21c-83e84b9cda58"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FRONTIER_B",
+        "target": "W_INDIANA_CRYSTAL",
+        "label": "소속",
+        "id": "a369acbc-594e-4b1c-a53f-1cfd875ab99f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FLEET",
+        "target": "W_FOREVERWAR",
+        "label": "소속",
+        "id": "6e551eed-4e39-449c-baa7-9d331e40bb22"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_FLEET",
+        "target": "W_FLEETCMD",
+        "label": "소속",
+        "id": "f0188bf9-0c03-46fe-9eec-40efc639250e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_GROUND_A",
+        "target": "W_STARSHIP",
+        "label": "소속",
+        "id": "e0f89865-bc48-4d16-b4d1-8c99e7f14d77"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_GROUND_A",
+        "target": "W_OLDMAN",
+        "label": "소속",
+        "id": "dfbf62cd-bc19-4003-a45a-bdacbd73cc32"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_GROUND_A",
+        "target": "W_ENDER",
+        "label": "소속",
+        "id": "7a9f2dd1-b1f3-4def-8183-a4099340719b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_GROUND_B",
+        "target": "W_DISTRICT9",
+        "label": "소속",
+        "id": "c0a13bfa-f8c6-40ba-bd39-1847a96fda8b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_AI_THEMES_A",
+        "target": "W_TERMINATOR",
+        "label": "소속",
+        "id": "909de130-e1df-4640-a661-e04de4ceebdd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_AI_THEMES_A",
+        "target": "W_EXMACHINA",
+        "label": "소속",
+        "id": "7a389b53-1064-4ad5-82b3-0c1ef76e682f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_AI_THEMES_A",
+        "target": "W_UPGRADE",
+        "label": "소속",
+        "id": "660ead2a-44e5-4d0d-a0cb-344b1e904096"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_AI_THEMES_B",
+        "target": "W_CREATOR",
+        "label": "소속",
+        "id": "55f3e045-2b5f-4d5b-a746-544f72d525b6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_AI_THEMES_B",
+        "target": "W_HER",
+        "label": "소속",
+        "id": "f995e939-34f8-47dc-8e91-b61178b5da83"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_AI_THEMES_B",
+        "target": "W_GITS",
+        "label": "소속",
+        "id": "ae13d6bb-b9fb-4be9-a1a3-a84358bac64c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_AI_THEMES_B",
+        "target": "W_AI_ARTIFICIAL",
+        "label": "소속",
+        "id": "eb5ace1b-5d38-44aa-b400-0113c66c6964"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CYBER_A",
+        "target": "W_BLADERUNNER",
+        "label": "소속",
+        "id": "d43de44e-79e1-4a16-bbd5-c1ddebef7360"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CYBER_A",
+        "target": "W_MATRIX",
+        "label": "소속",
+        "id": "1c6e747e-87cd-422c-a963-bc4c2c2c5ceb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CYBER_A",
+        "target": "W_JUDGE",
+        "label": "소속",
+        "id": "d68c0c54-b835-43af-bbe7-b01b0b7ff5c1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CYBER_B",
+        "target": "W_EQUALIBRIUM",
+        "label": "소속",
+        "id": "c3082a93-7edc-40c8-9ab4-7219ff7a8880"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CYBER_B",
+        "target": "W_INCEPTION",
+        "label": "소속",
+        "id": "31a46776-576c-4629-be39-3aa0f17043a5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CYBER_B",
+        "target": "W_TOTAL",
+        "label": "소속",
+        "id": "62fb1d47-156b-4fc9-8a8b-64dec408ea22"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CYBER_B",
+        "target": "W_MINORITY_REPORT",
+        "label": "소속",
+        "id": "51f48741-20d9-407f-8574-a191e19bf87d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CYBER_B",
+        "target": "W_READY_PLAYER_ONE",
+        "label": "소속",
+        "id": "979b2e95-c600-4697-afb0-52f503048f74"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_KOREA_SF_A",
+        "target": "W_20TH_KNIGHTS",
+        "label": "소속",
+        "id": "e3b35c57-8d24-41e5-a8dc-e338a02d3fd1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_KOREA_SF_A",
+        "target": "W_21ST_KNIGHTS",
+        "label": "소속",
+        "id": "1a19f15e-5cf5-41f4-9cad-6557f0ae934d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_KOREA_SF_A",
+        "target": "W_ELECTRONIC_337",
+        "label": "소속",
+        "id": "099deab3-7cb5-4989-8efd-8ad1e9f65d28"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_KOREA_SF_B",
+        "target": "W_ROBOT_TAEKWON",
+        "label": "소속",
+        "id": "20c43a70-7a18-45bc-85b1-bb05ed4da0ca"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_KOREA_SF_B",
+        "target": "W_ROBOT_KING",
+        "label": "소속",
+        "id": "6c63cc67-55d3-4755-af3c-61e77920a92b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_KOREA_SF_B",
+        "target": "W_30000_YEARS",
+        "label": "소속",
+        "id": "78742251-34b2-485d-89a0-0218d400a9b7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_KOREA_SF_B",
+        "target": "W_AMAGEDDON",
+        "label": "소속",
+        "id": "e3e2adb0-8ef7-4363-b1e7-c26fa9b617bf"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_KOREA_SF_B",
+        "target": "W_NAITEURUN",
+        "label": "소속",
+        "id": "5f54da8d-37d8-45fe-8a86-f99101d7c846"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_JAPAN_SF_A",
+        "target": "W_GATCHAMAN",
+        "label": "소속",
+        "id": "b8d5aefe-7904-46b6-87bd-622e6bc09c58"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_JAPAN_SF_A",
+        "target": "W_CASSHERN",
+        "label": "소속",
+        "id": "e813ea99-9d26-4623-a1f8-282dff6bf356"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_JAPAN_SF_A",
+        "target": "W_GOLDEN_BAT",
+        "label": "소속",
+        "id": "091a9a86-1277-4b8e-9ff0-754e49e017e7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_JAPAN_SF_B",
+        "target": "W_BABEL_2",
+        "label": "소속",
+        "id": "fe2ab55f-7f0f-406b-aa69-afde9c84257c"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_JAPAN_SF_B",
+        "target": "W_CYBORG_009",
+        "label": "소속",
+        "id": "8c18e55d-f45e-485f-8807-408f7505d344"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_JAPAN_SF_B",
+        "target": "W_ZZANGGA",
+        "label": "소속",
+        "id": "8b0a8031-0808-4272-966c-07e8dadd0728"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_JAPAN_SF_B",
+        "target": "W_SUPERMAN_LOKI",
+        "label": "소속",
+        "id": "0f84c642-f6c2-4bdb-bc68-40874f53d9d7"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_TRANSFORMERS",
+        "target": "W_TRANSFORMERS_G1",
+        "label": "소속",
+        "id": "e826da1a-af39-4bdb-988c-481f10287dfb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_TRANSFORMERS",
+        "target": "W_TRANSFORMERS_MOVIE",
+        "label": "소속",
+        "id": "0923b299-8632-4d9c-9829-6d10036ad1f2"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_TRANSFORMERS",
+        "target": "W_TRANSFORMERS_BUMBLEBEE",
+        "label": "소속",
+        "id": "ac231c9f-3acb-4e8e-b438-7a601e47371e"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_MCU",
+        "target": "W_IRON_MAN",
+        "label": "소속",
+        "id": "ef48e7a9-8667-4f58-9903-bd49f1c0b1cd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_MCU",
+        "target": "W_AVENGERS",
+        "label": "소속",
+        "id": "56895077-a554-4787-ad8a-d11b86c61a0f"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_MCU",
+        "target": "W_GUARDIANS_GALAXY",
+        "label": "소속",
+        "id": "b345d700-897c-4f7d-b621-a77ba93069ea"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_MCU",
+        "target": "W_AVENGERS_INFINITY_WAR",
+        "label": "소속",
+        "id": "02e60dc1-1aec-4bb2-a167-dc0078a1cb64"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_MCU",
+        "target": "W_AVENGERS_ENDGAME",
+        "label": "소속",
+        "id": "62fb3dfa-a173-41b7-908f-195d9bcf9a76"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_MCU",
+        "target": "W_BLACK_PANTHER",
+        "label": "소속",
+        "id": "60489f8e-439f-411d-8eab-be14e3a77580"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "CAT_MCU",
+        "target": "W_DOCTOR_STRANGE",
+        "label": "소속",
+        "id": "81fb9e44-aa43-4506-89ff-8524f067d722"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_NUCLEAR_A",
+        "target": "W_MADMAX",
+        "label": "소속",
+        "id": "2259f0b6-3c5c-4beb-8f43-b24fd63cd1a6"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_NUCLEAR_A",
+        "target": "W_FURY_ROAD",
+        "label": "소속",
+        "id": "0ae58c2a-9b83-4b10-8795-93b048c9b708"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_NUCLEAR_A",
+        "target": "W_ROAD",
+        "label": "소속",
+        "id": "516c8c78-55e7-46d1-b863-f3558db84053"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_NUCLEAR_B",
+        "target": "W_I_AM_LEGEND",
+        "label": "소속",
+        "id": "259c015d-c6e0-48eb-8380-c1addf75eb02"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_NUCLEAR_B",
+        "target": "W_NAUSICAA",
+        "label": "소속",
+        "id": "606de8d8-51af-4647-aa0d-c5e3fdb8514d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_PLAGUE",
+        "target": "W_28DAYS",
+        "label": "소속",
+        "id": "4f320a21-bd65-4834-ba31-d486091a9c04"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_PLAGUE",
+        "target": "W_QUIET_PLACE",
+        "label": "소속",
+        "id": "3f058e6b-d15c-44fb-994f-9ab9c0d9cec5"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_PLAGUE",
+        "target": "W_QUIET_PLACE_2",
+        "label": "소속",
+        "id": "297c942e-9d05-4f7e-aa5f-0cbf8cd37c24"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CREATURE_A",
+        "target": "W_ALIEN",
+        "label": "소속",
+        "id": "7d2cfd8e-28e0-4d5f-bad1-2d9b373cef89"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CREATURE_A",
+        "target": "W_THING",
+        "label": "소속",
+        "id": "43002454-38f5-4d75-8b2a-7f4b806bb4b1"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CREATURE_A",
+        "target": "W_PREDATOR",
+        "label": "소속",
+        "id": "dcf5bb79-6ccb-4926-ba95-c25dca2a13eb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CREATURE_A",
+        "target": "W_ET",
+        "label": "소속",
+        "id": "e804e2e5-5159-4bb6-93d4-8e9213037037"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CREATURE_A",
+        "target": "W_JURASSIC_PARK",
+        "label": "소속",
+        "id": "3cdaff37-ffd2-4be1-83bf-425a20bd2b53"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CREATURE_A",
+        "target": "W_LOST_WORLD_JP",
+        "label": "소속",
+        "id": "d2509558-1bf1-466e-add4-9ebb542b1f67"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CREATURE_A",
+        "target": "W_WAR_OF_WORLDS",
+        "label": "소속",
+        "id": "8d69c7a5-c49c-4721-a8d2-e1208159dc44"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_CREATURE_B",
+        "target": "W_HOST",
+        "label": "소속",
+        "id": "851968fa-6492-4328-a1b8-12cdcf442513"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_SPACE_HORROR_A",
+        "target": "W_EVENT",
+        "label": "소속",
+        "id": "f1a67b69-f740-4bdc-86c3-a2d4a1f187fb"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_SPACE_HORROR_A",
+        "target": "W_ANNIHILATION",
+        "label": "소속",
+        "id": "db408b21-d15a-416a-8d6f-8f553c5d76fd"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_SPACE_HORROR_B",
+        "target": "W_ARRIVAL",
+        "label": "소속",
+        "id": "6c7ee3b9-927d-4bb2-8b02-34f26c05f26d"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "source": "D_SPACE_HORROR_B",
+        "target": "W_SOLARIS",
+        "label": "소속",
+        "id": "7ebb4df8-ac51-4932-857e-7bba04a9307b"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "CAT_JAPAN_SF_A_W_FSS_1785557961557",
+        "source": "CAT_JAPAN_SF_A",
+        "target": "W_FSS",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GIEOK_JEONJAENG_추가할것들_1785557967262",
+        "source": "W_GIEOK_JEONJAENG",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MARTIAN_추가할것들_1785557971352",
+        "source": "W_MARTIAN",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_SUNSHINE_추가할것들_1785557974735",
+        "source": "W_SUNSHINE",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GRAVITY_추가할것들_1785557977907",
+        "source": "W_GRAVITY",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_DYSTOPIA_CLUB_추가할것들_1785557983009",
+        "source": "W_DYSTOPIA_CLUB",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_JIGU_KKUT_ONSIL_추가할것들_1785557999673",
+        "source": "W_JIGU_KKUT_ONSIL",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_JONG_UI_GIWON_추가할것들_1785558005618",
+        "source": "W_JONG_UI_GIWON",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_SNOWPIERCER_추가할것들_1785558009989",
+        "source": "W_SNOWPIERCER",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GOEMUL_추가할것들_1785558014442",
+        "source": "W_GOEMUL",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_GUYVER_추가할것들_1785558018685",
+        "source": "W_GUYVER",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_EVANGELION_추가할것들_1785558022419",
+        "source": "W_EVANGELION",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MUL_UI_SIDAE_추가할것들_1785558025985",
+        "source": "W_MUL_UI_SIDAE",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_TAWO_추가할것들_1785558029846",
+        "source": "W_TAWO",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "W_MOON_추가할것들_1785558091712",
+        "source": "W_MOON",
+        "target": "추가할것들",
+        "label": "",
+        "notes": "",
+        "color": "#999"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "pannable": true,
+      "classes": ""
+    }
+  ]
+}
