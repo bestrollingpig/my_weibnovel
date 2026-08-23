@@ -8,35 +8,47 @@
 <script src="https://unpkg.com/cytoscape-fcose@2.2.0/cytoscape-fcose.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Malgun Gothic',sans-serif;background:#0f0f1a;color:#fff;height:100vh;display:flex;flex-direction:column}
-header{padding:10px 16px;background:#1a1a2e;border-bottom:1px solid #333;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-header h1{font-size:14px;color:#FFD700;white-space:nowrap}
+body{font-family:'Malgun Gothic',sans-serif;background:#fafafa;color:#111;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#cy{flex:1;width:100%;background:#fafafa;min-height:0}
+.header{
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  color:#fff;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;flex-wrap:wrap;gap:10px
+}
+.header h1{font-size:14px;white-space:nowrap}
+.header .hint{font-size:11px;opacity:0.8;white-space:nowrap}
 #tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.tab{padding:6px 14px;border-radius:20px;border:1px solid #444;background:#2a2a40;color:#aaa;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;white-space:nowrap}
+.tab{padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;white-space:nowrap}
 .tab.active{background:#FFD700;color:#1a1a2e;border-color:#FFD700}
-.tab:hover{border-color:#FFD700;color:#fff}
-.tab.active:hover{color:#1a1a2e}
-#info{font-size:11px;color:#888;margin-left:auto;white-space:nowrap}
-#cy{flex:1;background:#0f0f1a}
+.tab:hover{background:rgba(255,255,255,0.3)}
+#info{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:6px 16px;border-radius:20px;font-size:12px;pointer-events:none;z-index:100;backdrop-filter:blur(4px)}
+#info span{font-weight:bold;color:#FFD700}
 #tooltip{position:fixed;display:none;max-width:420px;background:#1e1e2f;border:1px solid #FFD700;border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;line-height:1.5;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.6);white-space:pre-wrap;word-break:break-word}
-#empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#666;font-size:13px;text-align:center;line-height:1.8;display:none}
+#empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-size:13px;text-align:center;line-height:1.8;display:none;pointer-events:none}
+.dark-toggle{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:4px 12px;border-radius:16px;cursor:pointer;font-size:12px}
+.dark-toggle:hover{background:rgba(255,255,255,0.3)}
+[data-theme="dark"] body{background:#0f0f1a;color:#fff}
+[data-theme="dark"] #cy{background:#0f0f1a}
+[data-theme="dark"] #tooltip{background:#1e1e2f;color:#fff;border-color:#FFD700}
 </style>
 </head>
 <body>
-<header>
-<h1>Graph Viewer</h1>
-<div id="tabs"></div>
-<span id="info"></span>
-</header>
+<div class="header">
+  <h1>🌐 Graph Viewer</h1>
+  <div id="tabs"></div>
+  <span class="hint">🔍 호버=메모보기 · 파일명 탭 클릭</span>
+  <button class="dark-toggle" onclick="toggleDark()">🌙 다크모드</button>
+</div>
 <div style="flex:1;display:flex;flex-direction:column;position:relative;min-height:0">
 <div id="cy" style="flex:1;min-height:0"></div>
 <div id="empty">json 폴더에 JSON 파일을 넣으면<br>탭으로 자동 표시됩니다</div>
 </div>
+<div id="info">📊 <span id="infoText">로딩 중...</span></div>
 <div id="tooltip"></div>
 <script>
-const GITHUB_REPO = ""; // 예: "myuser/myrepo" — GitHub Pages에서 탭 자동생성 시 필요, 비워두면 manifest.json만 사용
+const GITHUB_REPO = "";
 const tabsEl = document.getElementById('tabs');
 const infoEl = document.getElementById('info');
+const infoText = document.getElementById('infoText');
 const tooltip = document.getElementById('tooltip');
 const emptyEl = document.getElementById('empty');
 let cy = cytoscape({
@@ -54,7 +66,7 @@ let cy = cytoscape({
       'width':2,'line-color':'data(color)','target-arrow-color':'data(color)',
       'target-arrow-shape':'triangle','curve-style':'bezier',
       'label':'data(label)','color':'#fff','font-size':11,
-      'text-background-color':'#0f0f1a','text-background-opacity':0.85,'text-background-padding':3
+      'text-background-color':'#fafafa','text-background-opacity':0.85,'text-background-padding':3
     }}
   ],
   layout: { name: 'preset' },
@@ -65,13 +77,13 @@ function normalize(raw){
   if(!raw) return [];
   if(Array.isArray(raw)) return raw.map(el=>{
     if(el.group==='nodes'){ if(!el.data) el.data={}; if(!el.data.color) el.data.color='#667eea'; if(!el.data.label) el.data.label=el.data.id||''; if(!el.data.shape) el.data.shape='round-rectangle'; if(!el.position) el.position={x:Math.random()*800,y:Math.random()*600}; }
-    if(el.group==='edges'){ if(!el.data) el.data={}; if(!el.data.color) el.data.color='#e6e6e6'; }
+    if(el.group==='edges'){ if(!el.data) el.data={}; if(!el.data.color) el.data.color='#888'; }
     return el;
   });
   if(raw.elements){ if(Array.isArray(raw.elements)) return normalize(raw.elements); if(raw.elements.nodes||raw.elements.edges) return normalize([...(raw.elements.nodes||[]),...(raw.elements.edges||[])])}
   if(raw.nodes||raw.edges){
     const arr=[]; (raw.nodes||[]).forEach(n=>{ if(!n.data) n.data={}; if(!n.data.color) n.data.color='#667eea'; if(!n.data.label) n.data.label=n.data.id||''; const pos=n.position||{x:Math.random()*900,y:Math.random()*600}; arr.push({group:'nodes',data:n.data,position:pos}); });
-    (raw.edges||[]).forEach(e=>{ if(!e.data) e.data={}; if(!e.data.color) e.data.color='#e6e6e6'; arr.push({group:'edges',data:e.data}); });
+    (raw.edges||[]).forEach(e=>{ if(!e.data) e.data={}; if(!e.data.color) e.data.color='#888'; arr.push({group:'edges',data:e.data}); });
     return arr;
   }
   if(raw.entities||raw.relations){
@@ -84,25 +96,23 @@ function normalize(raw){
 
 function loadData(data){
   const elems = normalize(data);
-  if(!elems.length){ infoEl.textContent='노드/엣지를 찾지 못했습니다'; return; }
+  if(!elems.length){ infoText.textContent='노드/엣지를 찾지 못했습니다'; return; }
+  try{ if(typeof cytoscapeFcose !== 'undefined' && typeof cytoscape.use === 'function') cytoscape.use(cytoscapeFcose); }catch(e){}
   cy.elements().remove(); cy.add(elems);
   const hasPos = elems.some(el=>el.position && typeof el.position.x==='number');
-  try{ if(typeof cytoscapeFcose !== 'undefined' && typeof cytoscape.use === 'function') cytoscape.use(cytoscapeFcose); }catch(e){}
   cy.resize();
-  const useFcose = typeof cy.fcose === 'function';
-  const layoutName = hasPos ? 'preset' : (useFcose ? 'fcose' : 'cose');
+  const useFcose = typeof cytoscapeFcose !== 'undefined';
   const opts = hasPos ? {name:'preset', animate:false}
-    : useFcose ? {name:'fcose', animate:false, idealEdgeLength:120, nodeRepulsion: 8000, gravity:0.1, numIter:3000, tile:true, packComponents:true, nodeDimensionsIncludeLabels:true}
-    : {name:'cose', animate:false, idealEdgeLength:120, nodeRepulsion:15000, gravity:0.2, numIter:1500, tile:true, nodeDimensionsIncludeLabels:true, componentSpacing:80};
+    : useFcose ? {name:'fcose', animate:false, idealEdgeLength:200, nodeRepulsion:16000, gravity:0.05, numIter:3000, tile:true, packComponents:true, nodeDimensionsIncludeLabels:true, nodeSeparation:80}
+    : {name:'cose', animate:false, idealEdgeLength:200, nodeRepulsion:25000, gravity:0.1, numIter:1500, tile:true, nodeDimensionsIncludeLabels:true, componentSpacing:120};
   const lay = cy.layout(opts);
   lay.on('layoutstop', ()=>{ cy.resize(); cy.fit(null,40); });
   lay.run();
   if(hasPos) setTimeout(()=>{ cy.resize(); cy.fit(null,40); },150);
-  infoEl.textContent = `노드 ${cy.nodes().length}개 / 엣지 ${cy.edges().length}개`;
+  infoText.textContent = `노드 ${cy.nodes().length}개 / 엣지 ${cy.edges().length}개`;
 }
 
 async function discoverJsonFiles(){
-  // 1) manifest.json 우선
   try{
     const r = await fetch('json/manifest.json', {cache:'no-store'});
     if(r.ok){
@@ -111,7 +121,6 @@ async function discoverJsonFiles(){
       if(files.length) return files.map(f=> typeof f==='string'?f:f.name||f.file);
     }
   }catch(e){}
-  // 2) GitHub API (github.io 에서만)
   try{
     if(GITHUB_REPO && location.hostname.endsWith('github.io')){
       const p2 = location.pathname.split('/').filter(Boolean);
@@ -141,7 +150,6 @@ async function discoverJsonFiles(){
       }
     }
   }catch(e){}
-  // 3) 로컬 http.server 디렉토리 인덱스 파싱 (manifest/GitHub API 없을 때)
   try{
     const r = await fetch('json/', {cache:'no-store'});
     if(r.ok){
@@ -168,11 +176,25 @@ cy.on('mouseover','edge',e=>{
 cy.on('mousemove',e=>{ if(tooltip.style.display==='block'){ tooltip.style.left=(e.originalEvent.clientX+15)+'px'; tooltip.style.top=(e.originalEvent.clientY+15)+'px'; }});
 cy.on('mouseout','node',hideTip); cy.on('mouseout','edge',hideTip); cy.on('tap',e=>{ if(e.target===cy) hideTip(); });
 
+function toggleDark(){
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  if(isDark){
+    document.documentElement.removeAttribute('data-theme');
+    document.body.style.background='#fafafa';
+    document.getElementById('cy').style.background='#fafafa';
+  } else {
+    document.documentElement.setAttribute('data-theme','dark');
+    document.body.style.background='#0f0f1a';
+    document.getElementById('cy').style.background='#0f0f1a';
+  }
+  setTimeout(()=>{ cy.resize(); cy.fit(null,40); },100);
+}
+
 async function init(){
   const files = await discoverJsonFiles();
   if(!files.length){
     emptyEl.style.display='block';
-    infoEl.textContent='json/*.json 파일을 추가하세요';
+    infoText.textContent='json/*.json 파일을 추가하세요';
     return;
   }
   emptyEl.style.display='none';
@@ -189,11 +211,10 @@ async function init(){
         const j=await r.json();
         loadData(j);
         location.hash = encodeURIComponent(name);
-      }catch(err){ infoEl.textContent='로딩 실패: '+err.message; }
+      }catch(err){ infoText.textContent='로딩 실패: '+err.message; }
     };
     tabsEl.appendChild(btn);
   });
-  // hash로 초기 선택 or 첫번째
   const hash = decodeURIComponent(location.hash.slice(1));
   const initial = files.includes(hash) ? hash : files[0];
   const idx = files.indexOf(initial);
