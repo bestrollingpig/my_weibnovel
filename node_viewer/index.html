@@ -6,6 +6,7 @@
 <title>Graph Viewer</title>
 <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
 <script src="https://unpkg.com/cytoscape-fcose@2.2.0/cytoscape-fcose.js"></script>
+<script src="https://unpkg.com/cytoscape-cola@2.5.1/cytoscape-cola.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Malgun Gothic',sans-serif;background:#fafafa;color:#111;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -36,6 +37,7 @@ body{font-family:'Malgun Gothic',sans-serif;background:#fafafa;color:#111;height
   <h1>🌐 Graph Viewer</h1>
   <div id="tabs"></div>
   <span class="hint">🔍 호버=메모보기 · 파일명 탭 클릭</span>
+  <button class="dark-toggle" id="physicsBtn" onclick="togglePhysics()">🧲 물리 OFF</button>
   <button class="dark-toggle" onclick="toggleDark()">🌙 다크모드</button>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;position:relative;min-height:0">
@@ -199,6 +201,27 @@ function toggleDark(){
     cy.style().selector('edge').style({'color':'#fff','text-background-color':'#0f0f1a','text-outline-color':'#0f0f1a'}).update();
   }
   setTimeout(()=>{ cy.resize(); cy.fit(null,40); },100);
+}
+let physicsRunning=false, colaLayout=null;
+function togglePhysics(){
+  const btn=document.getElementById('physicsBtn');
+  if(physicsRunning){
+    try{ colaLayout.stop(); }catch(e){}
+    physicsRunning=false;
+    btn.textContent='🧲 물리 OFF';
+    btn.style.background='rgba(255,255,255,0.15)';
+  } else {
+    try{
+      colaLayout=cy.layout({name:'cola', infinite:true, fit:false, refresh:1, maxSimulationTime:4000, ungrabifyWhileSimulating:false, nodeSpacing:20, edgeLength:120, handleDisconnected:true});
+      colaLayout.run();
+      physicsRunning=true;
+      btn.textContent='🧲 물리 ON';
+      btn.style.background='rgba(255,215,0,0.3)';
+    }catch(e){
+      const lay=cy.layout({name:'cose', animate:true, animationDuration:800, refresh:1, fit:false, randomize:false});
+      lay.run(); physicsRunning=true; btn.textContent='🧲 물리 ON';
+    }
+  }
 }
 
 async function init(){
