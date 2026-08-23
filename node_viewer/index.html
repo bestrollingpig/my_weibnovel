@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Graph Viewer</title>
 <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
-<script src="https://unpkg.com/cytoscape-fcose@2.2.0/cytoscape-fcose.js"></script>
 <script src="https://unpkg.com/cytoscape-cola@2.5.1/cytoscape-cola.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -53,6 +52,8 @@ const infoEl = document.getElementById('info');
 const infoText = document.getElementById('infoText');
 const tooltip = document.getElementById('tooltip');
 const emptyEl = document.getElementById('empty');
+const positionCache = {};
+let currentFileName = null;
 let cy = cytoscape({
   container: document.getElementById('cy'),
   elements: [],
@@ -98,9 +99,12 @@ function normalize(raw){
 }
 
 function loadData(data){
-  const elems = normalize(data);
+  let elems = normalize(data);
+  if(currentFileName && positionCache[currentFileName]){
+    const cache = positionCache[currentFileName];
+    elems = elems.map(e=>{ if(e.group==='nodes' && cache[e.data.id]) return {...e, position:{...cache[e.data.id]}}; return e; });
+  }
   if(!elems.length){ infoText.textContent='노드/엣지를 찾지 못했습니다'; return; }
-  try{ if(typeof cytoscapeFcose !== 'undefined' && typeof cytoscape.use === 'function') cytoscape.use(cytoscapeFcose); }catch(e){}
   const nCount = elems.filter(e=>e.group==='nodes').length;
   let w=110,h=44,fs=12;
   if(nCount>300){ w=70; h=28; fs=10; }
@@ -110,14 +114,15 @@ function loadData(data){
   cy.elements().remove(); cy.add(elems);
   const hasPos = elems.some(el=>el.position && typeof el.position.x==='number');
   cy.resize();
-  const useFcose = typeof cytoscapeFcose !== 'undefined';
+  const isCached = !!(currentFileName && positionCache[currentFileName]);
   const dynLen = Math.min(260, 80 + nCount*0.35);
   const rep = nCount>300 ? 20000 : nCount>150 ? 16000 : 12000;
-  const opts = hasPos ? {name:'preset', animate:false}
-    : useFcose ? {name:'fcose', animate:false, idealEdgeLength:dynLen, nodeRepulsion: rep, gravity:0.06, numIter:3000, tile:true, packComponents:true, nodeDimensionsIncludeLabels:true, nodeSeparation:60, tilingPaddingVertical:20, tilingPaddingHorizontal:20}
+  const opts = (hasPos || isCached) ? {name:'preset', animate:false}
     : {name:'cose', animate:false, idealEdgeLength:dynLen, nodeRepulsion:rep+8000, gravity:0.15, numIter:1500, tile:true, nodeDimensionsIncludeLabels:true, componentSpacing:100};
   const lay = cy.layout(opts);
-  lay.on('layoutstop', ()=>{ cy.resize(); cy.fit(null,40); });
+  lay.on('layoutstop', ()=>{
+    cy.resize(); cy.fit(null,40);
+    });
   lay.run();
   if(hasPos) setTimeout(()=>{ cy.resize(); cy.fit(null,40); },150);
   infoText.textContent = `노드 ${cy.nodes().length}개 / 엣지 ${cy.edges().length}개`;
@@ -238,6 +243,7 @@ async function init(){
     btn.textContent=name.replace(/\.json$/,'');
     btn.title=name;
     btn.onclick=async()=>{
+      currentFileName=name;
       document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       try{
