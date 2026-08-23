@@ -65,8 +65,9 @@ let cy = cytoscape({
     { selector: 'edge', style: {
       'width':2,'line-color':'data(color)','target-arrow-color':'data(color)',
       'target-arrow-shape':'triangle','curve-style':'bezier',
-      'label':'data(label)','color':'#fff','font-size':11,
-      'text-background-color':'#fafafa','text-background-opacity':0.85,'text-background-padding':3
+      'label':'data(label)','color':'#111','font-size':11,
+      'text-background-color':'#fafafa','text-background-opacity':0.9,'text-background-padding':3,
+      'text-outline-color':'#fafafa','text-outline-width':1
     }}
   ],
   layout: { name: 'preset' },
@@ -98,13 +99,21 @@ function loadData(data){
   const elems = normalize(data);
   if(!elems.length){ infoText.textContent='노드/엣지를 찾지 못했습니다'; return; }
   try{ if(typeof cytoscapeFcose !== 'undefined' && typeof cytoscape.use === 'function') cytoscape.use(cytoscapeFcose); }catch(e){}
+  const nCount = elems.filter(e=>e.group==='nodes').length;
+  let w=110,h=44,fs=12;
+  if(nCount>300){ w=70; h=28; fs=10; }
+  else if(nCount>150){ w=85; h=34; fs=11; }
+  else if(nCount>80){ w=95; h=38; fs=11; }
+  cy.style().selector('node').style({'width':w,'height':h,'font-size':fs}).update();
   cy.elements().remove(); cy.add(elems);
   const hasPos = elems.some(el=>el.position && typeof el.position.x==='number');
   cy.resize();
   const useFcose = typeof cytoscapeFcose !== 'undefined';
+  const dynLen = Math.min(260, 80 + nCount*0.35);
+  const rep = nCount>300 ? 20000 : nCount>150 ? 16000 : 12000;
   const opts = hasPos ? {name:'preset', animate:false}
-    : useFcose ? {name:'fcose', animate:false, idealEdgeLength:200, nodeRepulsion:16000, gravity:0.05, numIter:3000, tile:true, packComponents:true, nodeDimensionsIncludeLabels:true, nodeSeparation:80}
-    : {name:'cose', animate:false, idealEdgeLength:200, nodeRepulsion:25000, gravity:0.1, numIter:1500, tile:true, nodeDimensionsIncludeLabels:true, componentSpacing:120};
+    : useFcose ? {name:'fcose', animate:false, idealEdgeLength:dynLen, nodeRepulsion: rep, gravity:0.06, numIter:3000, tile:true, packComponents:true, nodeDimensionsIncludeLabels:true, nodeSeparation:60, tilingPaddingVertical:20, tilingPaddingHorizontal:20}
+    : {name:'cose', animate:false, idealEdgeLength:dynLen, nodeRepulsion:rep+8000, gravity:0.15, numIter:1500, tile:true, nodeDimensionsIncludeLabels:true, componentSpacing:100};
   const lay = cy.layout(opts);
   lay.on('layoutstop', ()=>{ cy.resize(); cy.fit(null,40); });
   lay.run();
@@ -182,10 +191,12 @@ function toggleDark(){
     document.documentElement.removeAttribute('data-theme');
     document.body.style.background='#fafafa';
     document.getElementById('cy').style.background='#fafafa';
+    cy.style().selector('edge').style({'color':'#111','text-background-color':'#fafafa','text-outline-color':'#fafafa'}).update();
   } else {
     document.documentElement.setAttribute('data-theme','dark');
     document.body.style.background='#0f0f1a';
     document.getElementById('cy').style.background='#0f0f1a';
+    cy.style().selector('edge').style({'color':'#fff','text-background-color':'#0f0f1a','text-outline-color':'#0f0f1a'}).update();
   }
   setTimeout(()=>{ cy.resize(); cy.fit(null,40); },100);
 }
