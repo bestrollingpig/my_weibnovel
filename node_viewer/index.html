@@ -37,6 +37,7 @@ body{font-family:'Malgun Gothic',sans-serif;background:#fafafa;color:#111;height
   <div id="tabs"></div>
   <span class="hint">🔍 호버=메모보기 · 파일명 탭 클릭</span>
   <button class="dark-toggle" id="physicsBtn" onclick="togglePhysics()">🧲 물리 OFF</button>
+  <button class="dark-toggle" onclick="applyMaxSpacing()">📏 최대</button>
   <button class="dark-toggle" onclick="toggleDark()">🌙 다크모드</button>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;position:relative;min-height:0">
@@ -115,15 +116,17 @@ function loadData(data){
   const hasPos = elems.some(el=>el.position && typeof el.position.x==='number');
   cy.resize();
   const isCached = !!(currentFileName && positionCache[currentFileName]);
-  const dynLen = Math.min(260, 80 + nCount*0.35);
-  const rep = nCount>300 ? 20000 : nCount>150 ? 16000 : 12000;
+  const dynLen = 300;
+  const rep = 30000;
   const opts = (hasPos || isCached) ? {name:'preset', animate:false}
     : {name:'cose', animate:false, idealEdgeLength:dynLen, nodeRepulsion:rep+8000, gravity:0.15, numIter:1500, tile:true, nodeDimensionsIncludeLabels:true, componentSpacing:100};
   const lay = cy.layout(opts);
   lay.on('layoutstop', ()=>{
     cy.resize(); cy.fit(null,40);
+    if(currentFileName && !positionCache[currentFileName]){
+      const c={}; cy.nodes().forEach(n=>{ c[n.id()]={...n.position()}; }); positionCache[currentFileName]=c;
+    }
     });
-  lay.run();
   if(hasPos) setTimeout(()=>{ cy.resize(); cy.fit(null,40); },150);
   infoText.textContent = `노드 ${cy.nodes().length}개 / 엣지 ${cy.edges().length}개`;
 }
@@ -229,6 +232,18 @@ function togglePhysics(){
   }
 }
 
+function applyMaxSpacing(){
+  const n = cy.nodes().length;
+  if(!n) return;
+  const lay = cy.layout({
+    name:'cose', animate:false, idealEdgeLength:300, nodeRepulsion:30000, gravity:0, numIter:1000, tile:true, componentSpacing:150, nodeDimensionsIncludeLabels:true, padding:40
+  });
+  lay.on('layoutstop', ()=>{
+    cy.resize(); cy.fit(null,40);
+    if(currentFileName){ const c={}; cy.nodes().forEach(x=>{c[x.id()]={...x.position()}}); positionCache[currentFileName]=c; }
+  });
+  lay.run();
+}
 async function init(){
   const files = await discoverJsonFiles();
   if(!files.length){
