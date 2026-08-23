@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Viewer</title>
+<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Malgun Gothic',sans-serif;background:#0f0f1a;color:#fff;height:100vh;display:flex;flex-direction:column}
+header{padding:10px 16px;background:#1a1a2e;border-bottom:1px solid #333;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:14px;color:#FFD700;white-space:nowrap}
+#tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tab{padding:6px 14px;border-radius:20px;border:1px solid #444;background:#2a2a40;color:#aaa;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;white-space:nowrap}
+.tab.active{background:#FFD700;color:#1a1a2e;border-color:#FFD700}
+.tab:hover{border-color:#FFD700;color:#fff}
+.tab.active:hover{color:#1a1a2e}
+#info{font-size:11px;color:#888;margin-left:auto;white-space:nowrap}
+#cy{flex:1;background:#0f0f1a}
+#tooltip{position:fixed;display:none;max-width:420px;background:#1e1e2f;border:1px solid #FFD700;border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;line-height:1.5;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.6);white-space:pre-wrap;word-break:break-word}
+#empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#666;font-size:13px;text-align:center;line-height:1.8;display:none}
+</style>
+</head>
+<body>
+<header>
+<h1>Graph Viewer</h1>
+<div id="tabs"></div>
+<span id="info"></span>
+</header>
+<div style="flex:1;position:relative">
+<div id="cy"></div>
+<div id="empty">json 폴더에 JSON 파일을 넣으면<br>탭으로 자동 표시됩니다</div>
+</div>
+<div id="tooltip"></div>
+<script>
+const GITHUB_REPO = ""; // 예: "myuser/myrepo" — GitHub Pages에서 탭 자동생성 시 필요, 비워두면 manifest.json만 사용
+const tabsEl = document.getElementById('tabs');
+const infoEl = document.getElementById('info');
+const tooltip = document.getElementById('tooltip');
+const emptyEl = document.getElementById('empty');
+let cy = cytoscape({
+  container: document.getElementById('cy'),
+  elements: [],
+  style: [
+    { selector: 'node', style: {
+      'background-color': 'data(color)', 'label': 'data(label)', 'color': '#fff',
+      'text-outline-color': '#000', 'text-outline-width': 2,
+      'text-valign': 'center','text-halign': 'center','font-size': 12,'font-weight':'bold',
+      'border-width':2,'border-color':'#FFD700','width':110,'height':44,
+      'shape': 'round-rectangle','text-wrap':'wrap','text-max-width':'100px'
+    }},
+    { selector: 'edge', style: {
+      'width':2,'line-color':'data(color)','target-arrow-color':'data(color)',
+      'target-arrow-shape':'triangle','curve-style':'bezier',
+      'label':'data(label)','color':'#fff','font-size':11,
+      'text-background-color':'#0f0f1a','text-background-opacity':0.85,'text-background-padding':3
+    }}
+  ],
+  layout: { name: 'preset' },
+  wheelSensitivity: 0.3
+});
+
+function normalize(raw){
+  if(!raw) return [];
+  if(Array.isArray(raw)) return raw.map(el=>{
+    if(el.group==='nodes'){ if(!el.data) el.data={}; if(!el.data.color) el.data.color='#667eea'; if(!el.data.label) el.data.label=el.data.id||''; if(!el.data.shape) el.data.shape='round-rectangle'; if(!el.position) el.position={x:Math.random()*800,y:Math.random()*600}; }
+    if(el.group==='edges'){ if(!el.data) el.data={}; if(!el.data.color) el.data.color='#e6e6e6'; }
+    return el;
+  });
+  if(raw.elements){ if(Array.isArray(raw.elements)) return normalize(raw.elements); if(raw.elements.nodes||raw.elements.edges) return normalize([...(raw.elements.nodes||[]),...(raw.elements.edges||[])])}
+  if(raw.nodes||raw.edges){
+    const arr=[]; (raw.nodes||[]).forEach(n=>{ if(!n.data) n.data={}; if(!n.data.color) n.data.color='#667eea'; if(!n.data.label) n.data.label=n.data.id||''; const pos=n.position||{x:Math.random()*900,y:Math.random()*600}; arr.push({group:'nodes',data:n.data,position:pos}); });
+    (raw.edges||[]).forEach(e=>{ if(!e.data) e.data={}; if(!e.data.color) e.data.color='#e6e6e6'; arr.push({group:'edges',data:e.data}); });
+    return arr;
+  }
+  if(raw.entities||raw.relations){
+    const arr=[]; (raw.entities||[]).forEach(ent=>{ arr.push({group:'nodes',data:{id:ent.name,label:ent.name,color:ent.color||'#667eea',notes:ent.description||''},position:{x:Math.random()*900,y:Math.random()*600}}); });
+    (raw.relations||[]).forEach(rel=>{ arr.push({group:'edges',data:{source:rel.from,target:rel.to,label:rel.label||''}}); });
+    return arr;
+  }
+  return [];
+}
+
+function loadData(data){
+  const elems = normalize(data);
+  if(!elems.length){ infoEl.textContent='노드/엣지를 찾지 못했습니다'; return; }
+  cy.elements().remove(); cy.add(elems);
+  const hasPos = elems.some(el=>el.position && typeof el.position.x==='number');
+  cy.layout({name: hasPos?'preset':'cose', animate:false}).run();
+  setTimeout(()=>cy.fit(null,40),80);
+  infoEl.textContent = `노드 ${cy.nodes().length}개 / 엣지 ${cy.edges().length}개`;
+}
+
+async function discoverJsonFiles(){
+  // 1) manifest.json 우선
+  try{
+    const r = await fetch('json/manifest.json', {cache:'no-store'});
+    if(r.ok){
+      const j = await r.json();
+      const files = Array.isArray(j) ? j : (j.files||[]);
+      if(files.length) return files.map(f=> typeof f==='string'?f:f.name||f.file);
+    }
+  }catch(e){}
+  // 2) GitHub API (github.io 에서만)
+  try{
+    if(GITHUB_REPO && location.hostname.endsWith('github.io')){
+      const api = `https://api.github.com/repos/${GITHUB_REPO}/contents/json`;
+      const r = await fetch(api);
+      if(r.ok){
+        const j = await r.json();
+        const files = j.filter(x=>x.type==='file' && x.name.endsWith('.json')).map(x=>x.name);
+        if(files.length) return files;
+      }
+    } else if(!GITHUB_REPO && location.hostname.endsWith('github.io')){
+      const parts = location.pathname.split('/').filter(Boolean);
+      const repo = parts[0];
+      const user = location.hostname.split('.')[0];
+      if(repo){
+        const api = `https://api.github.com/repos/${user}/${repo}/contents/json`;
+        const r = await fetch(api);
+        if(r.ok){
+          const j = await r.json();
+          const files = j.filter(x=>x.type==='file' && x.name.endsWith('.json')).map(x=>x.name);
+          if(files.length) return files;
+        }
+      }
+    }
+  }catch(e){}
+  return [];
+}
+
+function esc(s){ return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''; }
+function showTip(h,x,y){ tooltip.innerHTML=h; tooltip.style.left=(x+15)+'px'; tooltip.style.top=(y+15)+'px'; tooltip.style.display='block'; }
+function hideTip(){ tooltip.style.display='none'; }
+cy.on('mouseover','node',e=>{
+  const d=e.target.data();
+  showTip(`<b style="color:#FFD700">${esc(d.label||d.id)}</b><br><small>${esc(d.type||'인물')}</small><br><br>${esc(d.notes||d.memo||d.wiki||d.description||'메모 없음')}`, e.originalEvent.clientX, e.originalEvent.clientY);
+});
+cy.on('mouseover','edge',e=>{
+  const d=e.target.data();
+  showTip(`<b>${esc(d.label||'')}</b><br>${esc(d.source)} → ${esc(d.target)}<br><br>${esc(d.notes||'')}`, e.originalEvent.clientX, e.originalEvent.clientY);
+});
+cy.on('mousemove',e=>{ if(tooltip.style.display==='block'){ tooltip.style.left=(e.originalEvent.clientX+15)+'px'; tooltip.style.top=(e.originalEvent.clientY+15)+'px'; }});
+cy.on('mouseout','node',hideTip); cy.on('mouseout','edge',hideTip); cy.on('tap',e=>{ if(e.target===cy) hideTip(); });
+
+async function init(){
+  const files = await discoverJsonFiles();
+  if(!files.length){
+    emptyEl.style.display='block';
+    infoEl.textContent='json/*.json 파일을 추가하세요';
+    return;
+  }
+  emptyEl.style.display='none';
+  files.sort().forEach((name,i)=>{
+    const btn=document.createElement('button');
+    btn.className='tab'+(i===0?' active':'');
+    btn.textContent=name.replace(/\.json$/,'');
+    btn.title=name;
+    btn.onclick=async()=>{
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      try{
+        const r=await fetch('json/'+encodeURI(name), {cache:'no-store'});
+        const j=await r.json();
+        loadData(j);
+        location.hash = encodeURIComponent(name);
+      }catch(err){ infoEl.textContent='로딩 실패: '+err.message; }
+    };
+    tabsEl.appendChild(btn);
+  });
+  // hash로 초기 선택 or 첫번째
+  const hash = decodeURIComponent(location.hash.slice(1));
+  const initial = files.includes(hash) ? hash : files[0];
+  const idx = files.indexOf(initial);
+  tabsEl.children[idx]?.click();
+}
+init();
+</script>
+</body>
+</html>
